@@ -34,12 +34,13 @@ This is a **static web application** hosted on GitHub Pages that allows users to
 
 ```bash
 .
-├── index.html                # Main webpage
-├── style.css                 # Styling for the UI
-├── script.js                 # UI controls and interaction logic
-├── file_handler_combined.js  # Refactored file handling logic
-├── sample.csv                # Example CSV format
-└── README.md                 # Project overview
+├── index.html                    # Main webpage
+├── style.css                     # Styling for the UI
+├── script.js                     # UI controls and interaction logic
+├── client_file_handling.js       # 
+├── file_handling_integration.js  #
+├── sample.csv                    # Example CSV format
+└── README.md                     # Project overview
 ```
 
 ---
