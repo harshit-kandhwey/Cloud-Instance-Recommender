@@ -6,8 +6,7 @@
     <title>Cloud Instance Recommender</title>
     <link rel="stylesheet" href="style.css" />
     <!-- JavaScript Files in Correct Order -->
-    <script defer src="client_file_handling.js"></script>
-    <script defer src="file_handling_integration.js"></script>
+    <script defer src="optimized_file_handler.js"></script>
     <script defer src="script.js"></script>
   </head>
 
@@ -15,7 +14,6 @@
     <div class="container">
       <header class="header">
         <h1>🌐 Cloud Instance Recommender</h1>
-        <h1> This project is in creation.</h1>
         <p>
           Generate optimal instance recommendations for AWS, Azure, and GCP
           based on your current usage data
@@ -31,7 +29,7 @@
             <span class="toggle-icon">▲</span>
           </div>
           <div class="section-content">
-            <p style="margin-bottom: 20px">
+            <p class="template-description">
               View and download the standard CSV format for optimal
               auto-mapping:
             </p>
@@ -62,7 +60,7 @@
               <div class="file-upload">
                 <input type="file" id="csvFile" accept=".csv" />
                 <label for="csvFile" class="file-upload-label">
-                  <div style="font-size: 2rem; margin-bottom: 10px">📤</div>
+                  <div class="upload-icon">📤</div>
                   <div><strong>Click to upload CSV file</strong></div>
                   <div style="color: #666; margin-top: 5px">
                     or drag and drop your file here
@@ -179,7 +177,7 @@
 
             <!-- Optimization Controls -->
             <div id="optimizationControls" class="optimization-controls hidden">
-              <h3 style="margin-bottom: 20px">🧠 Optimization Settings</h3>
+              <h3 class="optimization-title">🧠 Optimization Settings</h3>
 
               <div class="form-group">
                 <label class="form-label">Optimization Mode:</label>
@@ -233,9 +231,7 @@
 
               <!-- CPU Utilization Ranges -->
               <div class="form-group hidden" id="cpuUtilizationRanges">
-                <label
-                  class="form-label"
-                  style="color: #667eea; font-weight: 700"
+                <label class="form-label cpu-utilization-label"
                   >💻 CPU Utilization Ranges:</label
                 >
                 <div class="range-input">
@@ -247,13 +243,13 @@
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to</span>
                   <input
                     type="number"
                     id="cpuDownsizeMax"
-                    value="60"
+                    value="50"
                     min="0"
                     max="100"
                     onchange="updateCpuRanges()"
@@ -265,17 +261,17 @@
                   <input
                     type="number"
                     id="cpuKeepMin"
-                    value="60"
+                    value="50"
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to</span>
                   <input
                     type="number"
                     id="cpuKeepMax"
-                    value="85"
+                    value="80"
                     min="0"
                     max="100"
                     onchange="updateCpuRanges()"
@@ -287,11 +283,11 @@
                   <input
                     type="number"
                     id="cpuUpsizeMin"
-                    value="85"
+                    value="80"
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to 100%</span>
                 </div>
@@ -299,9 +295,7 @@
 
               <!-- Memory Utilization Ranges -->
               <div class="form-group hidden" id="memoryUtilizationRanges">
-                <label
-                  class="form-label"
-                  style="color: #4ecdc4; font-weight: 700"
+                <label class="form-label memory-utilization-label"
                   >🧠 Memory Utilization Ranges:</label
                 >
                 <div class="range-input">
@@ -313,13 +307,13 @@
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to</span>
                   <input
                     type="number"
                     id="memoryDownsizeMax"
-                    value="60"
+                    value="50"
                     min="0"
                     max="100"
                     onchange="updateMemoryRanges()"
@@ -331,17 +325,17 @@
                   <input
                     type="number"
                     id="memoryKeepMin"
-                    value="60"
+                    value="50"
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to</span>
                   <input
                     type="number"
                     id="memoryKeepMax"
-                    value="85"
+                    value="80"
                     min="0"
                     max="100"
                     onchange="updateMemoryRanges()"
@@ -353,11 +347,11 @@
                   <input
                     type="number"
                     id="memoryUpsizeMin"
-                    value="85"
+                    value="80"
                     min="0"
                     max="100"
                     readonly
-                    style="background: #f8f9fa"
+                    class="readonly-input"
                   />
                   <span>% to 100%</span>
                 </div>
@@ -393,7 +387,7 @@
               <div class="grid-3" id="excludeTypeControls"></div>
             </div>
 
-            <div class="form-group" style="margin-top: 30px">
+            <div class="form-group advanced-family-group">
               <div class="checkbox-item">
                 <input
                   type="checkbox"
@@ -420,9 +414,8 @@
           </div>
           <div class="section-content">
             <button
-              class="btn btn-primary"
+              class="btn btn-primary generate-btn"
               onclick="generateRecommendations()"
-              style="width: 100%; font-size: 1.2rem; padding: 20px"
             >
               🔄 Generate Recommendations
             </button>
@@ -431,26 +424,45 @@
               <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
               </div>
-              <div
-                style="text-align: center; margin-top: 10px"
-                id="progressText"
-              >
-                Processing...
-              </div>
+              <div class="progress-text" id="progressText">Processing...</div>
             </div>
 
-            <div
-              id="downloadSection"
-              class="hidden"
-              style="margin-top: 20px; text-align: center"
-            >
+            <div id="downloadSection" class="hidden download-section">
               <div class="alert alert-success">
-                <span style="margin-right: 10px">✅</span>
+                <span class="success-icon">✅</span>
                 Recommendations generated successfully!
               </div>
               <button class="btn btn-primary" onclick="downloadResults()">
                 📥 Download Results CSV
               </button>
+            </div>
+          </div>
+        </section>
+        <!-- Usage Statistics Counters -->
+        <section class="section">
+          <div class="section-header">
+            <span class="section-icon">📊</span>
+            <h2 class="section-title">Usage Statistics</h2>
+          </div>
+          <div class="section-content">
+            <div class="stats-grid">
+              <div class="counter-card tool-usage-card">
+                <div class="counter-number">
+                  <span id="toolUsageCount">0</span>
+                </div>
+                <div class="counter-title">🔧 Tool Uses</div>
+                <div class="counter-subtitle">
+                  Total recommendations generated
+                </div>
+              </div>
+
+              <div class="counter-card vms-processed-card">
+                <div class="counter-number">
+                  <span id="totalVMsProcessed">0</span>
+                </div>
+                <div class="counter-title">🖥️ VMs Processed</div>
+                <div class="counter-subtitle">Total VM instances analyzed</div>
+              </div>
             </div>
           </div>
         </section>
