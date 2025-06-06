@@ -34,26 +34,6 @@ const instanceData = {
   },
 };
 
-// Region data
-const regionData = {
-  aws: [
-    "us-east-1",
-    "us-west-1",
-    "us-west-2",
-    "eu-west-1",
-    "eu-central-1",
-    "ap-southeast-1",
-  ],
-  azure: [
-    "East US",
-    "West US 2",
-    "North Europe",
-    "Southeast Asia",
-    "Australia East",
-  ],
-  gcp: ["us-central1-a", "us-west1-b", "europe-west1-c", "asia-southeast1-a"],
-};
-
 // Exclude types data
 const excludeTypesData = {
   aws: ["Graviton", "Mac", "Nitro", "GPU", "FPGA"],
@@ -61,11 +41,39 @@ const excludeTypesData = {
   gcp: ["N2D", "TPU", "GPU", "Preemptible"],
 };
 
+// Instance families data
+const familyData = {
+  aws: ["t3", "m5", "c5", "r5", "m4", "c4", "r4"],
+  azure: ["Standard_B", "Standard_D", "Standard_E", "Standard_F"],
+  gcp: ["e2", "n1", "n2", "c2", "m1"],
+};
+
+// Hardcoded column mappings
+const COLUMN_MAPPINGS = {
+  cpu: "CPU Count",
+  memory: "Memory (GB)",
+  cpuUtilization: "CPU Utilization",
+  memoryUtilization: "Memory Utilization",
+  vmName: "VM Name",
+  awsRegion: "AWS Region",
+  azureRegion: "Azure Region",
+  gcpRegion: "GCP Region",
+};
+
 // Initialize page
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize range inputs when page loads
+  // Add file upload event handler
+  const fileInput = document.getElementById("csvFile");
+  if (fileInput) {
+    fileInput.addEventListener("change", handleFileUpload);
+  }
+
+  // Initialize range inputs
   updateCpuRanges();
   updateMemoryRanges();
+
+  // Load usage statistics
+  loadUsageStatistics();
 });
 
 // Toggle section collapse
@@ -93,126 +101,151 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c`;
   document.body.removeChild(a);
 }
 
-// Handle file upload
+// Handle file upload using the integrated file handler
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Use the integrated file handler if available
+  if (window.integrationManager && window.integrationManager.isReady) {
+    // Let the FileHandlerIntegration handle it
+    return;
+  }
+
+  // Fallback to simple parsing if integrated handler not available
   const reader = new FileReader();
   reader.onload = function (e) {
     const csv = e.target.result;
     parseCSV(csv);
   };
   reader.readAsText(file);
-
-  // Show file status
-  const fileStatus = document.getElementById("fileStatus");
-  fileStatus.className = "alert alert-info";
-  fileStatus.innerHTML = `📄 File uploaded: <strong>${file.name}</strong> (${(
-    file.size / 1024
-  ).toFixed(1)} KB)`;
-  fileStatus.classList.remove("hidden");
 }
 
-// Parse CSV and populate dropdowns
+// Parse CSV
 function parseCSV(csvText) {
   const lines = csvText.trim().split("\n");
   const headers = lines[0].split(",").map((h) => h.trim());
 
   columnHeaders = headers;
   csvData = lines.slice(1).map((line) => {
-    const values = line.split(",");
+    const values = line.split(",").map((v) => v.trim());
     const row = {};
     headers.forEach((header, index) => {
-      row[header] = values[index] ? values[index].trim() : "";
+      row[header] = values[index] || "";
     });
     return row;
   });
 
-  populateColumnMappings();
-  checkAutoMapping();
-}
+  // Validate required columns
+  const requiredColumns = Object.values(COLUMN_MAPPINGS).slice(0, 2); // CPU and Memory
+  const missingColumns = requiredColumns.filter(
+    (col) => !headers.includes(col)
+  );
 
-function applyRegionAutoMappings() {
-  if (!window.columnHeaders || columnHeaders.length === 0) return;
-
-  const regionMap = {
-    awsRegionMapping: ["aws region", "aws"],
-    azureRegionMapping: ["azure region", "azure"],
-    gcpRegionMapping: ["gcp region", "gcp", "google"],
-  };
-
-  Object.entries(regionMap).forEach(([selectId, patterns]) => {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-
-    const matched = columnHeaders.find((header) => {
-      const lower = header.toLowerCase();
-      return patterns.some((p) => lower.includes(p));
-    });
-
-    if (matched) {
-      select.value = matched;
-      select.style.backgroundColor = "#e8f5e8";
-    }
-  });
-}
-
-// Populate column mapping dropdowns
-function populateColumnMappings() {
-  const mappingSelects = [
-    "cpuMapping",
-    "memoryMapping",
-    "cpuUtilMapping",
-    "memoryUtilMapping",
-  ];
-
-  mappingSelects.forEach((selectId) => {
-    const select = document.getElementById(selectId);
-    select.innerHTML = '<option value="">Select column...</option>';
-
-    columnHeaders.forEach((header) => {
-      const option = document.createElement("option");
-      option.value = header;
-      option.textContent = header;
-      select.appendChild(option);
-    });
-  });
-}
-
-// Check for auto-mapping
-function checkAutoMapping() {
-  const standardHeaders = {
-    "CPU Count": "cpuMapping",
-    "Memory (GB)": "memoryMapping",
-    "CPU Utilization": "cpuUtilMapping",
-    "Memory Utilization": "memoryUtilMapping",
-  };
-
-  let autoMapped = 0;
-  Object.entries(standardHeaders).forEach(([standardName, selectId]) => {
-    const matchingHeader = columnHeaders.find((h) =>
-      h.toLowerCase().includes(standardName.toLowerCase().replace(/[()]/g, ""))
-    );
-
-    if (matchingHeader) {
-      document.getElementById(selectId).value = matchingHeader;
-      autoMapped++;
-    }
-  });
-
-  if (autoMapped > 0) {
-    const mappingAlert = document.getElementById("mappingAlert");
-    mappingAlert.className = "alert alert-success";
-    mappingAlert.innerHTML = `✅ Detected standard CSV format. Auto-mapped ${autoMapped} column headers.`;
-    mappingAlert.classList.remove("hidden");
+  const fileStatus = document.getElementById("fileStatus");
+  if (missingColumns.length > 0) {
+    fileStatus.className = "alert alert-warning";
+    fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns.join(
+      ", "
+    )}. Please check your CSV format.`;
+  } else {
+    fileStatus.className = "alert alert-success";
+    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${headers.length} columns`;
   }
+  fileStatus.classList.remove("hidden");
+
+  // Show file statistics
+  showFileStatistics();
+}
+
+// Show file statistics
+function showFileStatistics() {
+  const statsSection = document.getElementById("fileStatsSection");
+  if (!statsSection) return;
+
+  const stats = {
+    totalRows: csvData.length,
+    totalColumns: columnHeaders.length,
+    hasRequiredColumns: [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory].every(
+      (col) => columnHeaders.includes(col)
+    ),
+    hasUtilizationData: [
+      COLUMN_MAPPINGS.cpuUtilization,
+      COLUMN_MAPPINGS.memoryUtilization,
+    ].every((col) => columnHeaders.includes(col)),
+  };
+
+  statsSection.innerHTML = `
+    <div class="stats-info">
+      <p><strong>📊 Data Summary:</strong></p>
+      <ul>
+        <li>Total Rows: ${stats.totalRows}</li>
+        <li>Total Columns: ${stats.totalColumns}</li>
+        <li>Required Columns: ${
+          stats.hasRequiredColumns ? "✅ Present" : "❌ Missing"
+        }</li>
+        <li>Utilization Data: ${
+          stats.hasUtilizationData ? "✅ Available" : "⚠️ Not Available"
+        }</li>
+      </ul>
+    </div>
+  `;
+  statsSection.classList.remove("hidden");
+
+  // Show data preview
+  showDataPreview();
+}
+
+// Show data preview
+function showDataPreview() {
+  const previewSection = document.getElementById("dataPreviewSection");
+  if (!previewSection || csvData.length === 0) return;
+
+  const previewData = csvData.slice(0, 5);
+  const headers = columnHeaders;
+
+  let tableHTML = `
+    <p><strong>👁️ Data Preview (first 5 rows):</strong></p>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+          <tr style="background: #f8f9fa;">
+            ${headers
+              .map(
+                (h) =>
+                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${h}</th>`
+              )
+              .join("")}
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  previewData.forEach((row, i) => {
+    const bgColor = i % 2 === 0 ? "#ffffff" : "#f8f9fa";
+    tableHTML += `<tr style="background: ${bgColor};">`;
+    headers.forEach((header) => {
+      const value = row[header] || "";
+      const displayValue =
+        value.length > 20 ? value.substring(0, 20) + "..." : value;
+      tableHTML += `<td style="padding: 8px; border: 1px solid #dee2e6;">${displayValue}</td>`;
+    });
+    tableHTML += `</tr>`;
+  });
+
+  tableHTML += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  previewSection.innerHTML = tableHTML;
+  previewSection.classList.remove("hidden");
 }
 
 // Toggle cloud provider
 function toggleCloudProvider(provider) {
   const checkbox = document.getElementById(provider);
-  const regionSelection = document.getElementById("regionSelection");
 
   if (checkbox.checked) {
     selectedProviders.push(provider);
@@ -220,139 +253,8 @@ function toggleCloudProvider(provider) {
     selectedProviders = selectedProviders.filter((p) => p !== provider);
   }
 
-  if (selectedProviders.length > 0) {
-    regionSelection.classList.remove("hidden");
-    updateRegionControls();
-  } else {
-    regionSelection.classList.add("hidden");
-  }
-
   updateExcludeControls();
   updateFamilyControls();
-}
-
-// Update region controls
-// function updateRegionControls() {
-//   const regionControls = document.getElementById("regionControls");
-//   regionControls.innerHTML = "";
-
-//   selectedProviders.forEach((provider) => {
-//     const div = document.createElement("div");
-//     div.innerHTML = `
-//               <div class="form-group">
-//                   <label class="form-label">${provider.toUpperCase()} Region:</label>
-//                   <select class="form-control" id="${provider}Region">
-//                       <option value="">Select from CSV column</option>
-//                       ${regionData[provider]
-//                         .map(
-//                           (region) =>
-//                             `<option value="${region}">${region}</option>`
-//                         )
-//                         .join("")}
-//                   </select>
-//               </div>
-//           `;
-//     regionControls.appendChild(div);
-//   });
-// }
-// function updateRegionControls() {
-//   const regionControls = document.getElementById("regionControls");
-//   regionControls.innerHTML = "";
-
-//   selectedProviders.forEach((provider) => {
-//     const regionSelectId = `${provider}Region`;
-//     const regionMappingId = `${provider}RegionMapping`;
-
-//     const div = document.createElement("div");
-//     div.innerHTML = `
-//         <div class="form-group">
-//           <label class="form-label">${provider.toUpperCase()} Region:</label>
-//           <select class="form-control" id="${regionSelectId}">
-//             <option value="fromCSV">Select from CSV column</option>
-//             ${regionData[provider]
-//               .map((region) => `<option value="${region}">${region}</option>`)
-//               .join("")}
-//           </select>
-//         </div>
-
-//         <div class="form-group region-mapping" id="${regionMappingId}Wrapper" style="display: none;">
-//           <label class="form-label" for="${regionMappingId}">Map ${provider.toUpperCase()} Region Column:</label>
-//           <select class="form-control" id="${regionMappingId}">
-//             <option value="">Select column...</option>
-//           </select>
-//         </div>
-//       `;
-
-//     regionControls.appendChild(div);
-
-//     // Show mapping dropdown if "fromCSV" is selected
-//     setTimeout(() => {
-//       const regionSelect = document.getElementById(regionSelectId);
-//       const mappingWrapper = document.getElementById(
-//         `${regionMappingId}Wrapper`
-//       );
-
-//       regionSelect.addEventListener("change", () => {
-//         mappingWrapper.style.display =
-//           regionSelect.value === "fromCSV" ? "block" : "none";
-//       });
-//     }, 0);
-//   });
-
-//   populateColumnMappings(); // Ensure region dropdowns are filled
-// }
-function updateRegionControls() {
-  const regionControls = document.getElementById("regionControls");
-  regionControls.innerHTML = "";
-
-  selectedProviders.forEach((provider) => {
-    const regionSelectId = `${provider}Region`;
-    const regionMappingId = `${provider}RegionMapping`;
-
-    const div = document.createElement("div");
-    div.innerHTML = `
-        <div class="form-group">
-          <label class="form-label">${provider.toUpperCase()} Region:</label>
-          <select class="form-control" id="${regionSelectId}">
-            <option value="fromCSV">Select from CSV column</option>
-            ${regionData[provider]
-              .map((region) => `<option value="${region}">${region}</option>`)
-              .join("")}
-          </select>
-        </div>
-  
-        <div class="form-group" id="${regionMappingId}Wrapper" style="display: none;">
-          <label class="form-label">Map ${provider.toUpperCase()} Region Column:</label>
-          <select class="form-control" id="${regionMappingId}">
-            <option value="">Select column...</option>
-          </select>
-        </div>
-      `;
-
-    regionControls.appendChild(div);
-
-    // Set up change listener
-    setTimeout(() => {
-      const regionSelect = document.getElementById(regionSelectId);
-      const mappingWrapper = document.getElementById(
-        `${regionMappingId}Wrapper`
-      );
-
-      regionSelect.addEventListener("change", () => {
-        if (regionSelect.value === "fromCSV") {
-          mappingWrapper.style.display = "block";
-        } else {
-          mappingWrapper.style.display = "none";
-        }
-      });
-    }, 0);
-  });
-
-  // Ensure headers are available before populating mappings
-  setTimeout(() => {
-    populateColumnMappings();
-    applyRegionAutoMappings(); // new function
-  }, 10);
 }
 
 // Handle recommendation type change
@@ -399,6 +301,8 @@ function updateCpuRanges() {
   const cpuKeepMax = document.getElementById("cpuKeepMax");
   const cpuUpsizeMin = document.getElementById("cpuUpsizeMin");
 
+  if (!cpuDownsizeMax || !cpuKeepMin || !cpuKeepMax || !cpuUpsizeMin) return;
+
   const downsizeMaxVal = parseInt(cpuDownsizeMax.value);
   const keepMaxVal = parseInt(cpuKeepMax.value);
 
@@ -424,6 +328,14 @@ function updateMemoryRanges() {
   const memoryKeepMin = document.getElementById("memoryKeepMin");
   const memoryKeepMax = document.getElementById("memoryKeepMax");
   const memoryUpsizeMin = document.getElementById("memoryUpsizeMin");
+
+  if (
+    !memoryDownsizeMax ||
+    !memoryKeepMin ||
+    !memoryKeepMax ||
+    !memoryUpsizeMin
+  )
+    return;
 
   const downsizeMaxVal = parseInt(memoryDownsizeMax.value);
   const keepMaxVal = parseInt(memoryKeepMax.value);
@@ -460,25 +372,27 @@ function toggleExcludeTypes() {
 // Update exclude controls
 function updateExcludeControls() {
   const excludeControls = document.getElementById("excludeTypeControls");
+  if (!excludeControls) return;
+
   excludeControls.innerHTML = "";
 
   selectedProviders.forEach((provider) => {
     const div = document.createElement("div");
     div.innerHTML = `
-              <div class="form-group">
-                  <label class="form-label">${provider.toUpperCase()} Exclude:</label>
-                  ${excludeTypesData[provider]
-                    .map(
-                      (type) => `
-                      <div class="checkbox-item" style="margin-bottom: 10px;">
-                          <input type="checkbox" id="exclude_${provider}_${type}" value="${type}">
-                          <label for="exclude_${provider}_${type}">${type}</label>
-                      </div>
-                  `
-                    )
-                    .join("")}
-              </div>
-          `;
+      <div class="form-group">
+        <label class="form-label">${provider.toUpperCase()} Exclude:</label>
+        ${excludeTypesData[provider]
+          .map(
+            (type) => `
+            <div class="checkbox-item" style="margin-bottom: 10px;">
+              <input type="checkbox" id="exclude_${provider}_${type}" value="${type}">
+              <label for="exclude_${provider}_${type}">${type}</label>
+            </div>
+          `
+          )
+          .join("")}
+      </div>
+    `;
     excludeControls.appendChild(div);
   });
 }
@@ -499,29 +413,22 @@ function toggleRestrictFamilies() {
 // Update family controls
 function updateFamilyControls() {
   const familyControls = document.getElementById("familyTypeControls");
-  familyControls.innerHTML = "";
+  if (!familyControls) return;
 
-  const familyData = {
-    aws: ["t3", "m5", "c5", "r5", "m4", "c4", "r4"],
-    azure: ["Standard_B", "Standard_D", "Standard_E", "Standard_F"],
-    gcp: ["e2", "n1", "n2", "c2", "m1"],
-  };
+  familyControls.innerHTML = "";
 
   selectedProviders.forEach((provider) => {
     const div = document.createElement("div");
     div.innerHTML = `
-              <div class="form-group">
-                  <label class="form-label">${provider.toUpperCase()} Families:</label>
-                  <select class="form-control" id="family_${provider}" multiple style="height: 120px;">
-                      ${familyData[provider]
-                        .map(
-                          (family) =>
-                            `<option value="${family}">${family}</option>`
-                        )
-                        .join("")}
-                  </select>
-              </div>
-          `;
+      <div class="form-group">
+        <label class="form-label">${provider.toUpperCase()} Families:</label>
+        <select class="form-control" id="family_${provider}" multiple style="height: 120px;">
+          ${familyData[provider]
+            .map((family) => `<option value="${family}">${family}</option>`)
+            .join("")}
+        </select>
+      </div>
+    `;
     familyControls.appendChild(div);
   });
 }
@@ -539,11 +446,14 @@ function generateRecommendations() {
     return;
   }
 
-  const cpuColumn = document.getElementById("cpuMapping").value;
-  const memoryColumn = document.getElementById("memoryMapping").value;
+  // Check if required columns exist
+  const requiredColumns = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
+  const missingColumns = requiredColumns.filter(
+    (col) => !columnHeaders.includes(col)
+  );
 
-  if (!cpuColumn || !memoryColumn) {
-    alert("Please map CPU Count and Memory columns.");
+  if (missingColumns.length > 0) {
+    alert(`Missing required columns: ${missingColumns.join(", ")}`);
     return;
   }
 
@@ -585,38 +495,41 @@ function generateRecommendations() {
 
 // Process recommendations
 function processRecommendations() {
-  const cpuColumn = document.getElementById("cpuMapping").value;
-  const memoryColumn = document.getElementById("memoryMapping").value;
-  const cpuUtilColumn = document.getElementById("cpuUtilMapping").value;
-  const memoryUtilColumn = document.getElementById("memoryUtilMapping").value;
   const recommendationType = document.querySelector(
     'input[name="recommendationType"]:checked'
   ).value;
 
   // Process each row
-  processedResults = csvData.map((row) => {
+  processedResults = csvData.map((row, index) => {
     const result = { ...row };
 
     selectedProviders.forEach((provider) => {
-      const cpu = parseInt(row[cpuColumn]) || 0;
-      const memory = parseInt(row[memoryColumn]) || 0;
-      const cpuUtil = parseFloat(row[cpuUtilColumn]) || 0;
-      const memoryUtil = parseFloat(row[memoryUtilColumn]) || 0;
+      const cpu = parseInt(row[COLUMN_MAPPINGS.cpu]) || 0;
+      const memory = parseInt(row[COLUMN_MAPPINGS.memory]) || 0;
+      const cpuUtil = parseFloat(row[COLUMN_MAPPINGS.cpuUtilization]) || 0;
+      const memoryUtil =
+        parseFloat(row[COLUMN_MAPPINGS.memoryUtilization]) || 0;
 
       if (cpu === 0 || memory === 0) {
         result[`${provider.toUpperCase()} Recommendation`] =
-          "Data not present in required column";
+          "Invalid CPU or Memory data";
+        result[`${provider.toUpperCase()} Status`] = "Error";
+        result[`${provider.toUpperCase()} Monthly Cost (USD)`] = "N/A";
         return;
       }
 
       let recommendation = "";
+      let status = "";
+      let monthlyCost = "N/A";
 
       if (
         recommendationType === "like-to-like" ||
         recommendationType === "both"
       ) {
         const likeToLike = findLikeToLikeRecommendation(provider, cpu, memory);
-        recommendation += `Like-to-Like: ${likeToLike}`;
+        recommendation = likeToLike.instanceType;
+        status = "Like-to-Like";
+        monthlyCost = likeToLike.monthlyCost;
       }
 
       if (recommendationType === "optimized" || recommendationType === "both") {
@@ -628,19 +541,31 @@ function processRecommendations() {
             cpuUtil,
             memoryUtil
           );
-          if (recommendation) recommendation += " | ";
-          recommendation += `Optimized: ${optimized}`;
-        } else {
-          if (recommendation) recommendation += " | ";
-          recommendation += "Optimized: Utilization data not available";
+          if (recommendationType === "both" && recommendation) {
+            recommendation += " | " + optimized.instanceType;
+            status += " | Optimized";
+            monthlyCost += " | " + optimized.monthlyCost;
+          } else {
+            recommendation = optimized.instanceType;
+            status = "Optimized";
+            monthlyCost = optimized.monthlyCost;
+          }
+        } else if (recommendationType === "optimized") {
+          recommendation = "No utilization data";
+          status = "Missing Data";
         }
       }
 
       result[`${provider.toUpperCase()} Recommendation`] = recommendation;
+      result[`${provider.toUpperCase()} Status`] = status;
+      result[`${provider.toUpperCase()} Monthly Cost (USD)`] = monthlyCost;
     });
 
     return result;
   });
+
+  // Update usage statistics
+  updateUsageStatistics(csvData.length);
 
   // Show download section
   document.getElementById("downloadSection").classList.remove("hidden");
@@ -653,7 +578,18 @@ function findLikeToLikeRecommendation(provider, cpu, memory) {
     .filter(([name, specs]) => specs.cpu >= cpu && specs.memory >= memory)
     .sort((a, b) => a[1].price - b[1].price);
 
-  return suitable.length > 0 ? suitable[0][0] : "No suitable instance found";
+  if (suitable.length > 0) {
+    const [instanceName, specs] = suitable[0];
+    return {
+      instanceType: instanceName,
+      monthlyCost: (specs.price * 730).toFixed(2), // 730 hours per month
+    };
+  }
+
+  return {
+    instanceType: "No suitable instance found",
+    monthlyCost: "N/A",
+  };
 }
 
 // Find optimized recommendation
@@ -678,10 +614,14 @@ function findOptimizedRecommendation(
     const cpuKeepMax = parseInt(document.getElementById("cpuKeepMax").value);
 
     if (cpuUtil <= cpuDownsizeMax) {
-      // Downsize CPU
-      targetCpu = Math.max(1, Math.ceil(cpu * 0.5));
+      const downsizing = document.querySelector(
+        'input[name="downsizing"]:checked'
+      ).value;
+      targetCpu =
+        downsizing === "half"
+          ? Math.max(1, Math.ceil(cpu * 0.5))
+          : Math.max(1, cpu - 1);
     } else if (cpuUtil > cpuKeepMax) {
-      // Upsize CPU
       targetCpu = Math.ceil(cpu * 1.5);
     }
   }
@@ -696,10 +636,14 @@ function findOptimizedRecommendation(
     );
 
     if (memoryUtil <= memoryDownsizeMax) {
-      // Downsize Memory
-      targetMemory = Math.max(1, Math.ceil(memory * 0.5));
+      const downsizing = document.querySelector(
+        'input[name="downsizing"]:checked'
+      ).value;
+      targetMemory =
+        downsizing === "half"
+          ? Math.max(1, Math.ceil(memory * 0.5))
+          : Math.max(1, memory - 1);
     } else if (memoryUtil > memoryKeepMax) {
-      // Upsize Memory
       targetMemory = Math.ceil(memory * 1.5);
     }
   }
@@ -709,9 +653,21 @@ function findOptimizedRecommendation(
 
 // Download results
 function downloadResults() {
-  if (!processedResults) return;
+  if (!processedResults || processedResults.length === 0) {
+    alert("No results to download. Please generate recommendations first.");
+    return;
+  }
 
-  // Convert to CSV
+  // Use the file handler if available
+  if (
+    window.integrationManager &&
+    window.integrationManager.exportRecommendations
+  ) {
+    window.integrationManager.exportRecommendations(processedResults);
+    return;
+  }
+
+  // Fallback to simple CSV export
   const headers = Object.keys(processedResults[0]);
   const csvContent = [
     headers.join(","),
@@ -719,7 +675,7 @@ function downloadResults() {
       headers
         .map((header) => {
           const value = row[header] || "";
-          return value.includes(",") ? `"${value}"` : value;
+          return value.toString().includes(",") ? `"${value}"` : value;
         })
         .join(",")
     ),
@@ -737,3 +693,105 @@ function downloadResults() {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+// Usage statistics management
+let usageStats = {
+  toolUses: 0,
+  totalVMs: 0,
+};
+
+// Load usage statistics from localStorage (simulating file storage)
+function loadUsageStatistics() {
+  try {
+    const stored = localStorage.getItem("cloudInstanceRecommenderStats");
+    if (stored) {
+      usageStats = JSON.parse(stored);
+      updateUsageCounters();
+    }
+  } catch (e) {
+    console.error("Error loading statistics:", e);
+  }
+}
+
+// Save usage statistics
+function saveUsageStatistics() {
+  try {
+    localStorage.setItem(
+      "cloudInstanceRecommenderStats",
+      JSON.stringify(usageStats)
+    );
+  } catch (e) {
+    console.error("Error saving statistics:", e);
+  }
+}
+
+// Update usage statistics
+function updateUsageStatistics(vmCount) {
+  usageStats.toolUses++;
+  usageStats.totalVMs += vmCount;
+  updateUsageCounters();
+  saveUsageStatistics();
+}
+
+// Update usage counter display
+function updateUsageCounters() {
+  const toolUsageElement = document.getElementById("toolUsageCount");
+  const totalVMsElement = document.getElementById("totalVMsProcessed");
+
+  if (toolUsageElement) toolUsageElement.textContent = usageStats.toolUses;
+  if (totalVMsElement) totalVMsElement.textContent = usageStats.totalVMs;
+}
+
+// Export function to get instance recommendation (for integration with file handler)
+window.getInstanceRecommendation = function (
+  provider,
+  cpu,
+  memory,
+  cpuUtil,
+  memoryUtil,
+  recommendationType
+) {
+  let result = {
+    instanceType: "Not found",
+    status: "No match",
+    monthlyCost: "0",
+    vcpus: 0,
+    memory: 0,
+  };
+
+  if (recommendationType === "like-to-like" || recommendationType === "both") {
+    const recommendation = findLikeToLikeRecommendation(provider, cpu, memory);
+    const instance = instanceData[provider][recommendation.instanceType];
+    if (instance) {
+      result = {
+        instanceType: recommendation.instanceType,
+        status: "Like-to-Like",
+        monthlyCost: recommendation.monthlyCost,
+        vcpus: instance.cpu,
+        memory: instance.memory,
+      };
+    }
+  }
+
+  if (recommendationType === "optimized" && (cpuUtil > 0 || memoryUtil > 0)) {
+    const recommendation = findOptimizedRecommendation(
+      provider,
+      cpu,
+      memory,
+      cpuUtil,
+      memoryUtil
+    );
+    const instance = instanceData[provider][recommendation.instanceType];
+    if (instance) {
+      result = {
+        instanceType: recommendation.instanceType,
+        status: "Optimized",
+        monthlyCost: recommendation.monthlyCost,
+        vcpus: instance.cpu,
+        memory: instance.memory,
+      };
+    }
+  }
+
+  return result;
+};
