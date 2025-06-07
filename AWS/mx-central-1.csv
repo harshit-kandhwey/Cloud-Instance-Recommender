@@ -1,0 +1,229 @@
+instanceType,instanceFamily,instanceFamilyName,location,currentGeneration,hypervisor,processorArchitectures,processorManufacturer,processor,vCpus,memorySizeInGiB,storage,nitroEnclavesSupport,onDemandLinuxHr,onDemandRhelHr,onDemandWindowsHr,reserved3yNoUpfrontLinuxHr,reserved3yNoUpfrontRhelHr,reserved3yNoUpfrontWindowsHr
+c6g.medium,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,1.0,2.0,EBS only,unsupported,0.0357,0.0501,,0.015,0.0294,
+c6gn.medium,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,1.0,2.0,EBS only,unsupported,0.0454,0.0598,,0.0195,0.0339,
+c7g.medium,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,1.0,2.0,EBS only,unsupported,0.0381,0.0525,,0.0167,0.0311,
+m6g.medium,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,1.0,4.0,EBS only,unsupported,0.0404,0.0548,,0.0176,0.032,
+m6gd.medium,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,1.0,4.0,1 x 59 NVMe SSD,unsupported,0.0475,0.0619,,0.0205,0.0349,
+m7g.medium,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,1.0,4.0,EBS only,unsupported,0.0428,0.0572,,0.0194,0.0338,
+m7gd.medium,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,1.0,4.0,1 x 59 NVMe SSD,unsupported,0.0561,0.0705,,0.0242,0.0386,
+r6g.medium,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,1.0,8.0,EBS only,unsupported,0.0529,0.0673,,0.0229,0.0373,
+r7g.medium,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,1.0,8.0,EBS only,unsupported,0.0562,0.0706,,0.0255,0.0399,
+r7gd.medium,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,1.0,8.0,1 x 59 NVMe SSD,unsupported,0.0714,0.0858,,0.0309,0.0453,
+t3.nano,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,2.0,0.5,EBS only,unsupported,0.0055,,0.0101,0.0024,,0.007
+t4g.nano,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,0.5,EBS only,unsupported,0.0044,,,0.0019,,
+t3.micro,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,2.0,1.0,EBS only,unsupported,0.0109,0.0397,0.0201,0.0047,0.0335,0.0139
+t4g.micro,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,1.0,EBS only,unsupported,0.0088,0.0376,,0.0038,0.0326,
+t3.small,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,2.0,2.0,EBS only,unsupported,0.0218,0.0506,0.0402,0.0094,0.0382,0.0278
+t4g.small,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,2.0,EBS only,unsupported,0.0176,0.0464,,0.0076,0.0364,
+c6g.large,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,4.0,EBS only,supported,0.0714,0.1002,,0.0299,0.0587,
+c6gn.large,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,4.0,EBS only,supported,0.0907,0.1195,,0.0389,0.0678,
+c6i.large,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,4.0,EBS only,unsupported,0.0892,0.1181,0.1812,0.0393,0.0681,0.1313
+c6id.large,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,4.0,1 x 118 NVMe SSD,unsupported,0.1058,0.1346,0.1978,0.0442,0.073,0.1362
+c7g.large,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,2.0,4.0,EBS only,supported,0.0761,0.1049,,0.0335,0.0623,
+c7i-flex.large,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),2.0,4.0,EBS only,unsupported,0.089,0.1178,0.1764,0.0392,0.068,0.1266
+c7i.large,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),2.0,4.0,EBS only,unsupported,0.0937,0.1225,0.1857,0.0413,0.0701,0.1333
+t3.medium,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,2.0,4.0,EBS only,unsupported,0.0437,0.0725,0.0621,0.0189,0.0477,0.0373
+t4g.medium,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,4.0,EBS only,unsupported,0.0353,0.0641,,0.0152,0.044,
+m6g.large,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,8.0,EBS only,supported,0.0809,0.1097,,0.0351,0.0639,
+m6gd.large,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,8.0,1 x 118 NVMe SSD,supported,0.0949,0.1237,,0.041,0.0698,
+m6i.large,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,8.0,EBS only,unsupported,0.1008,0.1296,0.1928,0.0457,0.0745,0.1377
+m6id.large,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,8.0,1 x 118 NVMe SSD,unsupported,0.1246,0.1534,0.2166,0.0538,0.0826,0.1458
+m7g.large,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,2.0,8.0,EBS only,supported,0.0857,0.1145,,0.0389,0.0677,
+m7gd.large,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,2.0,8.0,1 x 118 NVMe SSD,supported,0.1121,0.1409,,0.0484,0.0772,
+m7i-flex.large,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),2.0,8.0,EBS only,unsupported,0.1006,0.1293,0.188,0.0456,0.0744,0.133
+m7i.large,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),2.0,8.0,EBS only,unsupported,0.1058,0.1346,0.1978,0.048,0.0768,0.14
+t3.large,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,2.0,8.0,EBS only,unsupported,0.0874,0.1162,0.115,0.0377,0.0665,0.0653
+t4g.large,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,8.0,EBS only,unsupported,0.0706,0.0994,,0.0305,0.0593,
+i3en.large,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,2.0,16.0,1 x 1250 NVMe SSD,unsupported,0.237,0.266,0.329,0.103,0.132,0.195
+i4i.large,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,16.0,1 x 468 NVMe SSD,unsupported,0.18,0.209,0.272,0.083,0.112,0.175
+r6g.large,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,2.0,16.0,EBS only,supported,0.1058,0.1346,,0.0457,0.0745,
+r6i.large,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,16.0,EBS only,unsupported,0.1323,0.1611,0.2243,0.06,0.0888,0.152
+r6id.large,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),2.0,16.0,1 x 118 NVMe SSD,unsupported,0.1588,0.1876,0.2508,0.0686,0.0974,0.1606
+r7g.large,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,2.0,16.0,EBS only,supported,0.1125,0.1413,,0.051,0.0798,
+r7gd.large,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,2.0,16.0,1 x 118 NVMe SSD,supported,0.1429,0.1717,,0.0617,0.0905,
+r7i.large,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),2.0,16.0,EBS only,unsupported,0.1389,0.1677,0.2309,0.063,0.0918,0.155
+c6g.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,8.0,EBS only,supported,0.1428,0.2004,,0.0598,0.1174,
+c6gn.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,8.0,EBS only,supported,0.1814,0.239,,0.0779,0.1355,
+c6i.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,8.0,EBS only,supported,0.1785,0.2361,0.3625,0.0786,0.1362,0.2626
+c6id.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,8.0,1 x 237 NVMe SSD,supported,0.2117,0.2693,0.3957,0.0885,0.1461,0.2725
+c7g.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,4.0,8.0,EBS only,supported,0.1522,0.2098,,0.0669,0.1245,
+c7i-flex.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),4.0,8.0,EBS only,unsupported,0.1781,0.2356,0.3528,0.0784,0.136,0.2532
+c7i.xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),4.0,8.0,EBS only,supported,0.1874,0.245,0.3714,0.0825,0.1401,0.2665
+m6g.xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,16.0,EBS only,supported,0.1617,0.2193,,0.0703,0.1279,
+m6gd.xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,16.0,1 x 237 NVMe SSD,supported,0.1898,0.2474,,0.082,0.1396,
+m6i.xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,16.0,EBS only,supported,0.2016,0.2592,0.3856,0.0915,0.149,0.2754
+m6id.xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,16.0,1 x 237 NVMe SSD,supported,0.2492,0.3068,0.4332,0.1076,0.1652,0.2916
+m7g.xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,4.0,16.0,EBS only,supported,0.1714,0.229,,0.0777,0.1353,
+m7gd.xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,4.0,16.0,1 x 237 NVMe SSD,supported,0.2242,0.2818,,0.0969,0.1545,
+m7i-flex.xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),4.0,16.0,EBS only,unsupported,0.2011,0.2587,0.3759,0.0912,0.1488,0.266
+m7i.xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),4.0,16.0,EBS only,supported,0.2117,0.2693,0.3957,0.096,0.1536,0.28
+t3.xlarge,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,4.0,16.0,EBS only,unsupported,0.1747,0.2323,0.2483,0.0755,0.1331,0.1491
+t4g.xlarge,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,16.0,EBS only,unsupported,0.1411,0.1987,,0.0609,0.1185,
+i3en.xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,4.0,32.0,1 x 2500 NVMe SSD,supported,0.475,0.532,0.659,0.207,0.264,0.391
+i4i.xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,32.0,1 x 937 NVMe SSD,supported,0.36,0.418,0.544,0.167,0.224,0.351
+r6g.xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,4.0,32.0,EBS only,supported,0.2117,0.2693,,0.0914,0.149,
+r6i.xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,32.0,EBS only,supported,0.2646,0.3222,0.4486,0.12,0.1776,0.304
+r6id.xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),4.0,32.0,1 x 237 NVMe SSD,supported,0.3175,0.3751,0.5015,0.1372,0.1948,0.3212
+r7g.xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,4.0,32.0,EBS only,supported,0.2249,0.2825,,0.102,0.1596,
+r7gd.xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,4.0,32.0,1 x 237 NVMe SSD,supported,0.2858,0.3434,,0.1235,0.1811,
+r7i.xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),4.0,32.0,EBS only,supported,0.2778,0.3354,0.4618,0.126,0.1836,0.31
+c6g.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,16.0,EBS only,supported,0.2856,0.4008,,0.1197,0.2349,
+c6gn.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,16.0,EBS only,supported,0.3629,0.4781,,0.1558,0.271,
+c6i.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,16.0,EBS only,supported,0.357,0.4722,0.725,0.1572,0.2724,0.5252
+c6id.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,16.0,1 x 474 NVMe SSD,supported,0.4234,0.5386,0.7914,0.1769,0.2921,0.5449
+c7g.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,8.0,16.0,EBS only,supported,0.3045,0.4197,,0.1338,0.249,
+c7i-flex.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),8.0,16.0,EBS only,unsupported,0.3561,0.4713,0.7057,0.1568,0.272,0.5064
+c7i.2xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),8.0,16.0,EBS only,supported,0.3748,0.49,0.7428,0.165,0.2802,0.533
+m6g.2xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,32.0,EBS only,supported,0.3234,0.4386,,0.1406,0.2558,
+m6gd.2xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,32.0,1 x 475 NVMe SSD,supported,0.3797,0.4949,,0.164,0.2792,
+m6i.2xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,32.0,EBS only,supported,0.4032,0.5184,0.7712,0.1829,0.2981,0.5509
+m6id.2xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,32.0,1 x 474 NVMe SSD,supported,0.4983,0.6135,0.8663,0.2153,0.3305,0.5833
+m7g.2xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,8.0,32.0,EBS only,supported,0.3427,0.4579,,0.1555,0.2707,
+m7gd.2xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,8.0,32.0,1 x 475 NVMe SSD,supported,0.4485,0.5637,,0.1937,0.3089,
+m7i-flex.2xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),8.0,32.0,EBS only,unsupported,0.4022,0.5174,0.7518,0.1824,0.2976,0.532
+m7i.2xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),8.0,32.0,EBS only,supported,0.4234,0.5386,0.7914,0.192,0.3072,0.56
+t3.2xlarge,t,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Skylake E5 2686 v5,8.0,32.0,EBS only,unsupported,0.3494,0.4646,0.4966,0.151,0.2662,0.2982
+t4g.2xlarge,t,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,32.0,EBS only,unsupported,0.2822,0.3974,,0.1219,0.2371,
+i3en.2xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,8.0,64.0,2 x 2500 NVMe SSD,supported,0.949,1.064,1.317,0.413,0.528,0.781
+i4i.2xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,64.0,1 x 1875 NVMe SSD,supported,0.721,0.836,1.089,0.333,0.449,0.701
+r6g.2xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,8.0,64.0,EBS only,supported,0.4234,0.5386,,0.1829,0.2981,
+r6i.2xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,64.0,EBS only,supported,0.5292,0.6444,0.8972,0.2401,0.3553,0.608
+r6id.2xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),8.0,64.0,1 x 474 NVMe SSD,supported,0.635,0.7502,1.003,0.2744,0.3896,0.6424
+r7g.2xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,8.0,64.0,EBS only,supported,0.4498,0.565,,0.204,0.3192,
+r7gd.2xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,8.0,64.0,1 x 475 NVMe SSD,supported,0.5715,0.6867,,0.247,0.3622,
+r7i.2xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),8.0,64.0,EBS only,supported,0.5557,0.6709,0.9237,0.2521,0.3673,0.6201
+i3en.3xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,12.0,96.0,1 x 7500 NVMe SSD,supported,1.424,1.553,1.976,0.62,0.749,1.172
+c6g.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,16.0,32.0,EBS only,supported,0.5712,0.744,,0.2394,0.4122,
+c6gn.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,16.0,32.0,EBS only,supported,0.7258,0.8986,,0.3116,0.4844,
+c6i.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,32.0,EBS only,supported,0.714,0.8868,1.45,0.3143,0.4871,1.0503
+c6id.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,32.0,1 x 950 NVMe SSD,supported,0.8467,1.0195,1.5827,0.3538,0.5266,1.0898
+c7g.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,16.0,32.0,EBS only,supported,0.609,0.7818,,0.2676,0.4404,
+c7i-flex.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),16.0,32.0,EBS only,unsupported,0.7122,0.885,1.4114,0.3135,0.4864,1.0128
+c7i.4xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),16.0,32.0,EBS only,supported,0.7497,0.9225,1.4857,0.3301,0.5029,1.0661
+m6g.4xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,16.0,64.0,EBS only,supported,0.6469,0.8197,,0.2812,0.454,
+m6gd.4xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,16.0,64.0,1 x 950 NVMe SSD,supported,0.7594,0.9322,,0.328,0.5008,
+m6i.4xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,64.0,EBS only,supported,0.8064,0.9792,1.5424,0.3658,0.5386,1.1018
+m6id.4xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,64.0,1 x 950 NVMe SSD,supported,0.9966,1.1694,1.7326,0.4305,0.6034,1.1665
+m7g.4xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,16.0,64.0,EBS only,supported,0.6854,0.8582,,0.3109,0.4837,
+m7gd.4xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,16.0,64.0,1 x 950 NVMe SSD,supported,0.897,1.0698,,0.3875,0.5603,
+m7i-flex.4xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),16.0,64.0,EBS only,unsupported,0.8044,0.9772,1.5036,0.3648,0.5376,1.064
+m7i.4xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),16.0,64.0,EBS only,supported,0.8467,1.0195,1.5827,0.3841,0.5569,1.1201
+i4i.4xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,128.0,1 x 3750 NVMe SSD,supported,1.441,1.614,2.177,0.667,0.84,1.403
+r6g.4xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,16.0,128.0,EBS only,supported,0.8467,1.0195,,0.3658,0.5386,
+r6i.4xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,128.0,EBS only,supported,1.0584,1.2312,1.7944,0.4801,0.6529,1.2161
+r6id.4xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),16.0,128.0,1 x 950 NVMe SSD,supported,1.2701,1.4429,2.0061,0.5489,0.7217,1.2849
+r7g.4xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,16.0,128.0,EBS only,supported,0.8997,1.0725,,0.4081,0.5809,
+r7gd.4xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,16.0,128.0,1 x 950 NVMe SSD,supported,1.143,1.3158,,0.494,0.6668,
+r7i.4xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),16.0,128.0,EBS only,supported,1.1114,1.2842,1.8474,0.5041,0.6769,1.2401
+i3en.6xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,24.0,192.0,2 x 7500 NVMe SSD,supported,2.848,3.107,3.952,1.239,1.498,2.343
+c6g.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,32.0,64.0,EBS only,supported,1.1424,1.488,,0.4787,0.8243,
+c6gn.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,32.0,64.0,EBS only,supported,1.4515,1.7971,,0.6231,0.9687,
+c6i.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,64.0,EBS only,supported,1.428,1.7736,2.9,0.6287,0.9743,2.1007
+c6id.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,64.0,1 x 1900 NVMe SSD,supported,1.6934,2.039,3.1654,0.7076,1.0532,2.1796
+c7g.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,32.0,64.0,EBS only,supported,1.2179,1.5635,,0.5352,0.8808,
+c7i-flex.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),32.0,64.0,EBS only,unsupported,1.4244,1.77,2.8228,0.6271,0.9727,2.0255
+c7i.8xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),32.0,64.0,EBS only,supported,1.4994,1.845,2.9714,0.6601,1.0057,2.1321
+m6g.8xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,32.0,128.0,EBS only,supported,1.2938,1.6394,,0.5624,0.908,
+m6gd.8xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,32.0,128.0,1 x 1900 NVMe SSD,supported,1.5187,1.8643,,0.6561,1.0017,
+m6i.8xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,128.0,EBS only,supported,1.6128,1.9584,3.0848,0.7316,1.0772,2.2036
+m6id.8xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,128.0,1 x 1900 NVMe SSD,supported,1.9933,2.3389,3.4653,0.8611,1.2067,2.3331
+m7g.8xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,32.0,128.0,EBS only,supported,1.3709,1.7165,,0.6218,0.9674,
+m7gd.8xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,32.0,128.0,1 x 1900 NVMe SSD,supported,1.7939,2.1395,,0.775,1.1206,
+m7i-flex.8xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),32.0,128.0,EBS only,unsupported,1.6088,1.9544,3.0072,0.7297,1.0753,2.1281
+m7i.8xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),32.0,128.0,EBS only,supported,1.6934,2.039,3.1654,0.7681,1.1137,2.2401
+i4i.8xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,256.0,2 x 3750 NVMe SSD,supported,2.883,3.228,4.355,1.334,1.679,2.806
+r6g.8xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,32.0,256.0,EBS only,supported,1.6934,2.039,,0.7316,1.0772,
+r6i.8xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,256.0,EBS only,supported,2.1168,2.4624,3.5888,0.9602,1.3058,2.4322
+r6id.8xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),32.0,256.0,1 x 1900 NVMe SSD,supported,2.5402,2.8858,4.0122,1.0977,1.4433,2.5697
+r7g.8xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,32.0,256.0,EBS only,supported,1.7994,2.145,,0.8162,1.1618,
+r7gd.8xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,32.0,256.0,1 x 1900 NVMe SSD,supported,2.2861,2.6317,,0.9879,1.3335,
+r7i.8xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),32.0,256.0,EBS only,supported,2.2227,2.5683,3.6947,1.0082,1.3538,2.4802
+c6g.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,48.0,96.0,EBS only,supported,1.7136,2.232,,0.7181,1.2365,
+c6gn.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,48.0,96.0,EBS only,supported,2.1773,2.6957,,0.9347,1.4531,
+c6i.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,96.0,EBS only,supported,2.142,2.6604,4.35,0.943,1.4614,3.151
+c6id.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,96.0,2 x 1425 NVMe SSD,supported,2.5402,3.0586,4.7482,1.0614,1.5798,3.2694
+c7g.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,48.0,96.0,EBS only,supported,1.8269,2.3453,,0.8028,1.3212,
+c7i-flex.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),48.0,96.0,EBS only,unsupported,2.1366,2.655,4.3446,0.9406,1.459,3.1486
+c7i.12xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),48.0,96.0,EBS only,supported,2.249,2.7674,4.457,0.9902,1.5086,3.1982
+m6g.12xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,48.0,192.0,EBS only,supported,1.9406,2.459,,0.8436,1.362,
+m6gd.12xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,48.0,192.0,2 x 1425 NVMe SSD,supported,2.2781,2.7965,,0.9841,1.5025,
+m6i.12xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,192.0,EBS only,supported,2.4192,2.9376,4.6272,1.0974,1.6158,3.3053
+m6id.12xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,192.0,2 x 1425 NVMe SSD,supported,2.9899,3.5083,5.1979,1.2916,1.81,3.4996
+m7g.12xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,48.0,192.0,EBS only,supported,2.0563,2.5747,,0.9327,1.4511,
+m7gd.12xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,48.0,192.0,2 x 1425 NVMe SSD,supported,2.6909,3.2093,,1.1625,1.6809,
+m7i-flex.12xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),48.0,192.0,EBS only,unsupported,2.4131,2.9316,4.6212,1.0945,1.6129,3.3025
+m7i.12xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),48.0,192.0,EBS only,supported,2.5402,3.0586,4.7482,1.1522,1.6706,3.3602
+i3en.12xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,48.0,384.0,4 x 7500 NVMe SSD,supported,5.695,6.214,7.903,2.478,2.997,4.686
+i4i.12xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,384.0,3 x 3750 NVMe SSD,supported,4.324,4.843,6.532,2.0,2.519,4.208
+r6g.12xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,48.0,384.0,EBS only,supported,2.5402,3.0586,,1.0973,1.6157,
+r6i.12xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,384.0,EBS only,supported,3.1752,3.6936,5.3832,1.4403,1.9587,3.6483
+r6id.12xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),48.0,384.0,2 x 1425 NVMe SSD,supported,3.8102,4.3286,6.0182,1.6466,2.165,3.8546
+r7g.12xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,48.0,384.0,EBS only,supported,2.699,3.2174,,1.2243,1.7427,
+r7gd.12xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,48.0,384.0,2 x 1425 NVMe SSD,supported,3.4291,3.9475,,1.4819,2.0003,
+r7i.12xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),48.0,384.0,EBS only,supported,3.3341,3.8525,5.5421,1.5123,2.0307,3.7203
+c6g.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,64.0,128.0,EBS only,supported,2.2848,2.976,,0.9574,1.6486,
+c6g.metal,c,Compute optimized,mx-central-1,1.0,,arm64,AWS,AWS Graviton2 Processor,64.0,128.0,EBS only,unsupported,2.2848,2.976,,0.9574,1.6486,
+c6gn.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,64.0,128.0,EBS only,supported,2.903,3.5942,,1.2463,1.9375,
+c6i.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,128.0,EBS only,supported,2.856,3.5472,5.8,1.2574,1.9486,4.2014
+c6id.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,128.0,2 x 1900 NVMe SSD,supported,3.3869,4.0781,6.3309,1.4152,2.1064,4.3592
+c7g.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,64.0,128.0,EBS only,supported,2.4358,3.127,,1.0704,1.7616,
+c7g.metal,c,Compute optimized,mx-central-1,1.0,,arm64,AWS,AWS Graviton3 Processor,64.0,128.0,EBS only,unsupported,2.4358,3.127,,1.0704,1.7616,
+c7i-flex.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),64.0,128.0,EBS only,unsupported,2.8488,3.54,5.7928,1.2542,1.9454,4.1982
+c7i.16xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),64.0,128.0,EBS only,unsupported,2.9987,3.6899,5.9427,1.3202,2.0114,4.2642
+m6g.16xlarge,m6g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,64.0,256.0,EBS only,supported,2.5875,3.2787,,1.1248,1.816,
+m6g.metal,m6g,General purpose,mx-central-1,1.0,,arm64,AWS,AWS Graviton2 Processor,64.0,256.0,EBS only,unsupported,2.5875,3.2787,,1.1248,1.816,
+m6gd.16xlarge,m6gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,64.0,256.0,2 x 1900 NVMe SSD,supported,3.0374,3.7286,,1.3122,2.0034,
+m6gd.metal,m6gd,General purpose,mx-central-1,1.0,,arm64,AWS,AWS Graviton2 Processor,64.0,256.0,2 x 1900 NVMe SSD,unsupported,3.0374,3.7286,,1.3122,2.0034,
+m6i.16xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,256.0,EBS only,supported,3.2256,3.9168,6.1696,1.4631,2.1543,4.4071
+m6id.16xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,256.0,2 x 1900 NVMe SSD,supported,3.9866,4.6778,6.9306,1.7222,2.4134,4.6662
+m7g.16xlarge,m7g,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,64.0,256.0,EBS only,supported,2.7418,3.433,,1.2437,1.9349,
+m7g.metal,m7g,General purpose,mx-central-1,1.0,,arm64,AWS,AWS Graviton3 Processor,64.0,256.0,EBS only,unsupported,2.7418,3.433,,1.2437,1.9349,
+m7gd.16xlarge,m7gd,General purpose,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,64.0,256.0,2 x 1900 NVMe SSD,supported,3.5878,4.279,,1.5499,2.2411,
+m7gd.metal,m7gd,General purpose,mx-central-1,1.0,,arm64,AWS,AWS Graviton3 Processor,64.0,256.0,2 x 1900 NVMe SSD,unsupported,3.5878,4.279,,1.5499,2.2411,
+m7i-flex.16xlarge,m7i-flex,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),64.0,256.0,EBS only,unsupported,3.2175,3.9087,6.1615,1.4594,2.1506,4.4034
+m7i.16xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),64.0,256.0,EBS only,unsupported,3.3869,4.0781,6.3309,1.5363,2.2275,4.4803
+i4i.16xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,512.0,4 x 3750 NVMe SSD,supported,5.766,6.457,8.71,2.667,3.358,5.611
+r6g.16xlarge,r6g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton2 Processor,64.0,512.0,EBS only,supported,3.3869,4.0781,,1.4631,2.1543,
+r6g.metal,r6g,Memory optimized,mx-central-1,1.0,,arm64,AWS,AWS Graviton2 Processor,64.0,512.0,EBS only,unsupported,3.3869,4.0781,,1.4631,2.1543,
+r6i.16xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,512.0,EBS only,supported,4.2336,4.9248,7.1776,1.9204,2.6116,4.8644
+r6id.16xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),64.0,512.0,2 x 1900 NVMe SSD,supported,5.0803,5.7715,8.0243,2.1954,2.8866,5.1394
+r7g.16xlarge,r7g,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,64.0,512.0,EBS only,supported,3.5987,4.2899,,1.6324,2.3236,
+r7g.metal,r7g,Memory optimized,mx-central-1,1.0,,arm64,AWS,AWS Graviton3 Processor,64.0,512.0,EBS only,unsupported,3.5987,4.2899,,1.6324,2.3236,
+r7gd.16xlarge,r7gd,Memory optimized,mx-central-1,1.0,nitro,arm64,AWS,AWS Graviton3 Processor,64.0,512.0,2 x 1900 NVMe SSD,supported,4.5722,5.2634,,1.9758,2.667,
+r7gd.metal,r7gd,Memory optimized,mx-central-1,1.0,,arm64,AWS,AWS Graviton3 Processor,64.0,512.0,2 x 1900 NVMe SSD,unsupported,4.5722,5.2634,,1.9758,2.667,
+r7i.16xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),64.0,512.0,EBS only,unsupported,4.4454,5.1366,7.3894,2.0164,2.7077,4.9604
+c6i.24xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,192.0,EBS only,supported,4.284,5.3208,8.7,1.8861,2.9229,6.3021
+c6id.24xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,192.0,4 x 1425 NVMe SSD,supported,5.0803,6.1171,9.4963,2.1229,3.1597,6.5389
+c7i.24xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,192.0,EBS only,unsupported,4.4981,5.5349,8.9141,1.9803,3.0171,6.3963
+c7i.metal-24xl,c,Compute optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,192.0,EBS only,unsupported,4.4981,5.5349,8.9141,1.9803,3.0171,6.3963
+m6i.24xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,384.0,EBS only,supported,4.8384,5.8752,9.2544,2.1947,3.2315,6.6107
+m6id.24xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,384.0,4 x 1425 NVMe SSD,supported,5.9798,7.0166,10.3958,2.5833,3.6201,6.9993
+m7i.24xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,384.0,EBS only,unsupported,5.0803,6.1171,9.4963,2.3044,3.3412,6.7204
+m7i.metal-24xl,m7i,General purpose,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,384.0,EBS only,unsupported,5.0803,6.1171,9.4963,2.3044,3.3412,6.7204
+i3en.24xlarge,i3en,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Platinum 8175,96.0,768.0,8 x 7500 NVMe SSD,supported,11.39,12.427,15.806,4.956,5.993,9.372
+i3en.metal,i3en,Storage optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Platinum 8175,96.0,768.0,8 x 7500 NVMe SSD,unsupported,11.39,12.427,15.806,4.956,5.993,9.372
+i4i.24xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,768.0,6 x 3750 NVMe SSD,supported,8.6486,9.6854,13.0646,4.0008,5.0376,8.4168
+r6i.24xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,768.0,EBS only,supported,6.3504,7.3872,10.7664,2.8805,3.9173,7.2965
+r6id.24xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),96.0,768.0,4 x 1425 NVMe SSD,supported,7.6205,8.6573,12.0365,3.2931,4.3299,7.7091
+r7i.24xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,768.0,EBS only,unsupported,6.6682,7.705,11.0842,3.0247,4.0615,7.4407
+r7i.metal-24xl,r7i,Memory optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),96.0,768.0,EBS only,unsupported,6.6682,7.705,11.0842,3.0247,4.0615,7.4407
+c6i.32xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,256.0,EBS only,supported,5.712,6.9408,11.6,2.5148,3.7436,8.4028
+c6i.metal,c,Compute optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,256.0,EBS only,unsupported,5.712,6.9408,11.6,2.5148,3.7436,8.4028
+c6id.32xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,256.0,4 x 1900 NVMe SSD,supported,6.7738,8.0026,12.6618,2.8305,4.0593,8.7185
+c6id.metal,c,Compute optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,256.0,4 x 1900 NVMe SSD,unsupported,6.7738,8.0026,12.6618,2.8305,4.0593,8.7185
+m6i.32xlarge,m6i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,512.0,EBS only,supported,6.4512,7.68,12.3392,2.9263,4.1551,8.8143
+m6i.metal,m6i,General purpose,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,512.0,EBS only,unsupported,6.4512,7.68,12.3392,2.9263,4.1551,8.8143
+m6id.32xlarge,m6id,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,512.0,4 x 1900 NVMe SSD,supported,7.9731,9.2019,13.8611,3.4444,4.6732,9.3324
+m6id.metal,m6id,General purpose,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,512.0,4 x 1900 NVMe SSD,unsupported,7.9731,9.2019,13.8611,3.4444,4.6732,9.3324
+i4i.32xlarge,i4i,Storage optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,8 x 3750 SSD,supported,11.5315,12.7603,17.4195,5.3343,6.5631,11.2223
+i4i.metal,i4i,Storage optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,8 x 3750 NVMe SSD,unsupported,11.532,12.76,17.42,5.334,6.563,11.222
+r6i.32xlarge,r6i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,EBS only,supported,8.4672,9.696,14.3552,3.8407,5.0695,9.7287
+r6i.metal,r6i,Memory optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,EBS only,unsupported,8.4672,9.696,14.3552,3.8407,5.0695,9.7287
+r6id.32xlarge,r6id,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,4 x 1900 NVMe SSD,supported,10.1606,11.3894,16.0486,4.3909,5.6197,10.2789
+r6id.metal,r6id,Memory optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon 8375C (Ice Lake),128.0,1024.0,4 x 1900 NVMe SSD,unsupported,10.1606,11.3894,16.0486,4.3909,5.6197,10.2789
+c7i.48xlarge,c,Compute optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,384.0,EBS only,unsupported,8.9962,10.8394,17.8282,3.9607,5.8039,12.7927
+c7i.metal-48xl,c,Compute optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,384.0,EBS only,unsupported,8.9962,10.8394,17.8282,3.9607,5.8039,12.7927
+m7i.48xlarge,m7i,General purpose,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,768.0,EBS only,unsupported,10.1606,12.0038,18.9926,4.6089,6.4521,13.4409
+m7i.metal-48xl,m7i,General purpose,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,768.0,EBS only,unsupported,10.1606,12.0038,18.9926,4.6089,6.4521,13.4409
+r7i.48xlarge,r7i,Memory optimized,mx-central-1,1.0,nitro,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,1536.0,EBS only,unsupported,13.3363,15.1795,22.1683,6.0493,7.8925,14.8813
+r7i.metal-48xl,r7i,Memory optimized,mx-central-1,1.0,,x86_64,Intel,Intel Xeon Scalable (Sapphire Rapids),192.0,1536.0,EBS only,unsupported,13.3363,15.1795,22.1683,6.0493,7.8925,14.8813
