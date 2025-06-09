@@ -494,80 +494,31 @@ function generateRecommendations() {
 }
 
 // Process recommendations
-function processRecommendations() {
-  const recommendationType = document.querySelector(
-    'input[name="recommendationType"]:checked'
-  ).value;
-
-  // Process each row
-  processedResults = csvData.map((row, index) => {
-    const result = { ...row };
-
-    selectedProviders.forEach((provider) => {
-      const cpu = parseInt(row[COLUMN_MAPPINGS.cpu]) || 0;
-      const memory = parseInt(row[COLUMN_MAPPINGS.memory]) || 0;
-      const cpuUtil = parseFloat(row[COLUMN_MAPPINGS.cpuUtilization]) || 0;
-      const memoryUtil =
-        parseFloat(row[COLUMN_MAPPINGS.memoryUtilization]) || 0;
-
-      if (cpu === 0 || memory === 0) {
-        result[`${provider.toUpperCase()} Recommendation`] =
-          "Invalid CPU or Memory data";
-        result[`${provider.toUpperCase()} Status`] = "Error";
-        result[`${provider.toUpperCase()} Monthly Cost (USD)`] = "N/A";
-        return;
-      }
-
-      let recommendation = "";
-      let status = "";
-      let monthlyCost = "N/A";
-
-      if (
-        recommendationType === "like-to-like" ||
-        recommendationType === "both"
-      ) {
-        const likeToLike = findLikeToLikeRecommendation(provider, cpu, memory);
-        recommendation = likeToLike.instanceType;
-        status = "Like-to-Like";
-        monthlyCost = likeToLike.monthlyCost;
-      }
-
-      if (recommendationType === "optimized" || recommendationType === "both") {
-        if (cpuUtil > 0 || memoryUtil > 0) {
-          const optimized = findOptimizedRecommendation(
-            provider,
-            cpu,
-            memory,
-            cpuUtil,
-            memoryUtil
-          );
-          if (recommendationType === "both" && recommendation) {
-            recommendation += " | " + optimized.instanceType;
-            status += " | Optimized";
-            monthlyCost += " | " + optimized.monthlyCost;
-          } else {
-            recommendation = optimized.instanceType;
-            status = "Optimized";
-            monthlyCost = optimized.monthlyCost;
-          }
-        } else if (recommendationType === "optimized") {
-          recommendation = "No utilization data";
-          status = "Missing Data";
-        }
-      }
-
-      result[`${provider.toUpperCase()} Recommendation`] = recommendation;
-      result[`${provider.toUpperCase()} Status`] = status;
-      result[`${provider.toUpperCase()} Monthly Cost (USD)`] = monthlyCost;
-    });
-
-    return result;
-  });
-
-  // Update usage statistics
+async function processRecommendations() {
+  const recommendationType = document.querySelector('input[name="recommendationType"]:checked').value;
+  
+  // Prepare options
+  const options = {
+    cpuBased: document.getElementById("cpuBased").checked,
+    memoryBased: document.getElementById("memoryBased").checked,
+    cpuDownsizeMax: parseInt(document.getElementById("cpuDownsizeMax").value),
+    cpuUpsizeMin: parseInt(document.getElementById("cpuUpsizeMin").value),
+    memoryDownsizeMax: parseInt(document.getElementById("memoryDownsizeMax").value),
+    memoryUpsizeMin: parseInt(document.getElementById("memoryUpsizeMin").value),
+    downsizingStrategy: document.querySelector('input[name="downsizing"]:checked')?.value || 'half',
+    restrictToFamilies: getSelectedFamilies(),
+    excludeTypes: getExcludedTypes()
+  };
+  
+  // Use the new instance selector
+  processedResults = await window.getInstanceRecommendationWithSelector(
+    csvData, 
+    selectedProviders, 
+    options
+  );
+  
+  // Update usage statistics and show download section
   updateUsageStatistics(csvData.length);
-
-  // Show download section
   document.getElementById("downloadSection").classList.remove("hidden");
 }
 
