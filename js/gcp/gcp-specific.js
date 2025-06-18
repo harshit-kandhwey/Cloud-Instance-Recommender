@@ -244,6 +244,61 @@ function getSelectedGCPMachineTypes() {
   return selected;
 }
 
+// Get selected GCP exclude types (ADDED - was missing)
+function getSelectedGCPExcludeTypes() {
+  const selected = [];
+  gcpExcludeTypesData.forEach((type, index) => {
+    const checkbox = document.getElementById(`gcpExclude_${index}`);
+    if (checkbox && checkbox.checked) {
+      selected.push(type);
+    }
+  });
+  return selected;
+}
+
+// Initialize GCP exclude types with enhanced options (ADDED - was missing)
+function initializeGCPExcludeTypes() {
+  const excludeContainer = document.getElementById("excludeTypeControls");
+  if (!excludeContainer) return;
+
+  // Clear existing content
+  excludeContainer.innerHTML = "";
+
+  // Create GCP exclude section
+  const gcpSection = document.createElement("div");
+  gcpSection.className = "provider-exclude-section";
+  gcpSection.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">GCP Exclude Options:</label>
+      <div class="filter-checkbox-grid" id="gcpExcludeCheckboxes">
+        <!-- Will be populated below -->
+      </div>
+    </div>
+  `;
+  excludeContainer.appendChild(gcpSection);
+
+  // Populate GCP exclude checkboxes
+  const gcpExcludeContainer = document.getElementById("gcpExcludeCheckboxes");
+  if (gcpExcludeContainer) {
+    gcpExcludeTypesData.forEach((type, index) => {
+      const div = document.createElement("div");
+      div.className = "exclude-checkbox-item";
+      div.innerHTML = `
+        <div class="checkbox-item">
+          <input type="checkbox" id="gcpExclude_${index}" value="${type}">
+          <label for="gcpExclude_${index}">
+            <strong>❌ ${type}</strong>
+            <small style="display: block; color: #666;">
+              ${getGCPExcludeTypeDescription(type)}
+            </small>
+          </label>
+        </div>
+      `;
+      gcpExcludeContainer.appendChild(div);
+    });
+  }
+}
+
 // Get GCP machine family description (legacy support)
 function getGCPFamilyDescription(family) {
   return getGCPFamilyAdvancedDescription(family.toLowerCase());
@@ -355,19 +410,51 @@ frontend-08,2,4,40,50,europe-west1-c`;
   document.body.removeChild(a);
 }
 
-// GCP-specific cost optimization recommendations
+// GCP-specific cost optimization recommendations (ENHANCED with emojis)
 function getGCPCostOptimizationTips() {
   return [
-    "Use Committed Use Discounts for 1-3 year commitments (up to 57% savings)",
-    "Leverage Preemptible instances for fault-tolerant workloads (up to 80% savings)",
-    "Consider T2A (ARM-based) instances for up to 20% cost savings",
-    "Right-size instances using GCP Recommender suggestions",
-    "Use Sustained Use Discounts (automatic discounts for long-running instances)",
-    "Implement custom machine types to match exact resource needs",
-    "Use E2 instances for cost-optimized general-purpose workloads",
-    "Consider AMD-based N2D and T2D instances for better price-performance",
-    "Implement auto-scaling to match demand patterns",
-    "Use per-second billing to optimize for short-running workloads",
+    "🔹 Use Committed Use Discounts for 1-3 year commitments (up to 57% savings)",
+    "🔹 Leverage Preemptible instances for fault-tolerant workloads (up to 80% savings)",
+    "🔹 Consider T2A (ARM-based) instances for up to 20% cost savings",
+    "🔹 Right-size instances using GCP Recommender suggestions",
+    "🔹 Use Sustained Use Discounts (automatic discounts for long-running instances)",
+    "🔹 Implement custom machine types to match exact resource needs",
+    "🔹 Use E2 instances for cost-optimized general-purpose workloads",
+    "🔹 Consider AMD-based N2D and T2D instances for better price-performance",
+    "🔹 Implement auto-scaling to match demand patterns",
+    "🔹 Use per-second billing to optimize for short-running workloads",
+    "🔹 Enable Cloud Billing Budget alerts for cost monitoring",
+    "🔹 Use resource labels for detailed cost tracking and optimization",
+  ];
+}
+
+// GCP performance optimization recommendations (ADDED - was missing)
+function getGCPPerformanceOptimizationTips() {
+  return [
+    "⚡ Use C2 instances for highest single-threaded performance",
+    "🧠 Choose M1/M2 for memory-intensive workloads",
+    "🔧 Consider N2 for balanced price-performance improvements",
+    "💾 Use Local SSD for high-performance storage needs",
+    "🌐 Select regions closest to your users for lower latency",
+    "📊 Monitor performance with Cloud Monitoring",
+    "🔄 Use managed instance groups for auto-scaling",
+    "🚀 Implement Global Load Balancer for worldwide performance",
+    "💿 Use Persistent Disk with appropriate performance tiers",
+    "🔗 Enable Premium Network Tier for improved connectivity",
+  ];
+}
+
+// GCP sustainability and green computing tips (ADDED - was missing)
+function getGCPSustainabilityTips() {
+  return [
+    "🌱 GCP runs on renewable energy in many regions",
+    "⚡ Use E2 instances for energy-efficient computing",
+    "🌍 Choose regions with high renewable energy percentage",
+    "📊 Monitor carbon footprint with Google Cloud Carbon Footprint",
+    "🔄 Use auto-scaling to reduce idle resource consumption",
+    "♻️ Implement rightsizing to minimize resource waste",
+    "🌿 Consider carbon-neutral regions for environmentally conscious deployments",
+    "🔋 Use scheduled scaling to reduce off-hours energy consumption",
   ];
 }
 
@@ -394,6 +481,7 @@ if (typeof module !== "undefined" && module.exports) {
     gcpRegions,
     getGCPExcludeTypeDescription,
     initializeGCPFilters,
+    initializeGCPExcludeTypes,
     getGCPFamilyDescription,
     getGCPFamilyAdvancedDescription,
     getGCPProcessorDescription,
@@ -404,10 +492,13 @@ if (typeof module !== "undefined" && module.exports) {
     getGCPZones,
     downloadGCPSampleCSV,
     getGCPCostOptimizationTips,
+    getGCPPerformanceOptimizationTips,
+    getGCPSustainabilityTips,
     parseGCPMachineType,
     getSelectedGCPFamilies,
     getSelectedGCPProcessors,
     getSelectedGCPMachineTypes,
+    getSelectedGCPExcludeTypes,
     updateGCPFilterLabels,
   };
 }
