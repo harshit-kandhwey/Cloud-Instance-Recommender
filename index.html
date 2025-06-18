@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cloud Instance Recommender</title>
-    <link rel="stylesheet" href="style.css" />
-    <!-- JavaScript Files in Correct Order -->
-    <script defer src="optimized_file_handler.js"></script>
-    <script defer src="script.js"></script>
+    <link rel="stylesheet" href="css/index_style.css" />
   </head>
 
   <body>
@@ -21,451 +18,85 @@
       </header>
 
       <main class="main-content">
-        <!-- Sample CSV Template Section -->
-        <section class="section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-icon">📄</span>
-            <h2 class="section-title">Sample CSV Template</h2>
-            <span class="toggle-icon">▲</span>
-          </div>
-          <div class="section-content">
-            <p class="template-description">
-              View and download the standard CSV format for optimal
-              auto-mapping:
+        <h2 class="section-title">Choose Your Cloud Provider</h2>
+        <p class="section-description">
+          Select your preferred cloud platform to get started with instance
+          optimization
+        </p>
+
+        <div class="cloud-grid">
+          <a href="aws.html" class="cloud-card aws-card">
+            <img src="logos/aws-logo.png" alt="AWS Logo" class="cloud-icon" />
+            <h3 class="cloud-title">Amazon Web Services</h3>
+            <p class="cloud-description">
+              Optimize your EC2 instances with our comprehensive AWS
+              recommendation engine.
             </p>
+            <ul class="cloud-features">
+              <li>EC2 instance optimization</li>
+              <li>Cost reduction analysis</li>
+              <li>Performance benchmarking</li>
+              <li>Reserved instance planning</li>
+            </ul>
+            <div class="cloud-action">Get AWS Recommendations →</div>
+          </a>
 
-            <div class="sample-csv">
-              <pre>
-              VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region
-              web-server-01,4,16,45,60,us-east-1,East US,us-central1-a
-              db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b
-              app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c
-              </pre>
-            </div>
+          <a href="azure.html" class="cloud-card azure-card">
+            <img
+              src="logos/azure-logo.png"
+              alt="Azure Logo"
+              class="cloud-icon"
+            />
+            <h3 class="cloud-title">Microsoft Azure</h3>
+            <p class="cloud-description">
+              Enhance your Azure Virtual Machines with intelligent sizing
+              recommendations.
+            </p>
+            <ul class="cloud-features">
+              <li>VM size optimization</li>
+              <li>Azure cost management</li>
+              <li>Resource utilization</li>
+              <li>Hybrid cloud support</li>
+            </ul>
+            <div class="cloud-action">Get Azure Recommendations →</div>
+          </a>
 
-            <button class="btn btn-secondary" onclick="downloadSampleCSV()">
-              📥 Download Sample CSV
-            </button>
-          </div>
-        </section>
+          <a href="gcp.html" class="cloud-card gcp-card">
+            <img src="logos/gcp-logo.png" alt="GCP Logo" class="cloud-icon" />
+            <h3 class="cloud-title">Google Cloud Platform</h3>
+            <p class="cloud-description">
+              Maximize your Compute Engine efficiency with smart instance
+              recommendations.
+            </p>
+            <ul class="cloud-features">
+              <li>Compute Engine optimization</li>
+              <li>Machine learning insights</li>
+              <li>Sustainable computing</li>
+              <li>Custom machine types</li>
+            </ul>
+            <div class="cloud-action">Get GCP Recommendations →</div>
+          </a>
 
-        <!-- File Upload Section -->
-        <section class="section">
-          <div class="section-header">
-            <span class="section-icon">📁</span>
-            <h2 class="section-title">Upload CSV File</h2>
-          </div>
-          <div class="section-content">
-            <div class="form-group">
-              <div class="file-upload">
-                <input type="file" id="csvFile" accept=".csv" />
-                <label for="csvFile" class="file-upload-label">
-                  <div class="upload-icon">📤</div>
-                  <div><strong>Click to upload CSV file</strong></div>
-                  <div style="color: #666; margin-top: 5px">
-                    or drag and drop your file here
-                  </div>
-                </label>
-              </div>
-            </div>
-            <div id="fileStatus" class="hidden"></div>
-            <!-- Placeholders for stats and preview -->
-            <div id="fileStatsSection" class="hidden"></div>
-            <div id="dataPreviewSection" class="hidden"></div>
-          </div>
-        </section>
-
-        <!-- Cloud Provider Selection -->
-        <section class="section">
-          <div class="section-header">
-            <span class="section-icon">☁️</span>
-            <h2 class="section-title">Cloud Provider Selection</h2>
-          </div>
-          <div class="section-content">
-            <div class="form-group">
-              <label class="form-label">Select Cloud Providers:</label>
-              <div class="checkbox-group">
-                <div class="checkbox-item">
-                  <input
-                    type="checkbox"
-                    id="aws"
-                    value="aws"
-                    onchange="toggleCloudProvider('aws')"
-                  />
-                  <label for="aws">🔶 AWS</label>
-                </div>
-                <div class="checkbox-item">
-                  <input
-                    type="checkbox"
-                    id="azure"
-                    value="azure"
-                    onchange="toggleCloudProvider('azure')"
-                  />
-                  <label for="azure">🔷 Azure</label>
-                </div>
-                <div class="checkbox-item">
-                  <input
-                    type="checkbox"
-                    id="gcp"
-                    value="gcp"
-                    onchange="toggleCloudProvider('gcp')"
-                  />
-                  <label for="gcp">🔴 GCP</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Recommendation Type -->
-        <section class="section">
-          <div class="section-header">
-            <span class="section-icon">⚙️</span>
-            <h2 class="section-title">Recommendation Type</h2>
-          </div>
-          <div class="section-content">
-            <div class="radio-group">
-              <div class="radio-item">
-                <input
-                  type="radio"
-                  id="likeToLike"
-                  name="recommendationType"
-                  value="like-to-like"
-                  onchange="handleRecommendationTypeChange()"
-                />
-                <label for="likeToLike">
-                  <strong>Like-to-Like Recommendation</strong><br />
-                  <small
-                    >Recommends instances with equal or higher CPU and memory
-                    (cheapest option)</small
-                  >
-                </label>
-              </div>
-              <div class="radio-item">
-                <input
-                  type="radio"
-                  id="optimized"
-                  name="recommendationType"
-                  value="optimized"
-                  onchange="handleRecommendationTypeChange()"
-                />
-                <label for="optimized">
-                  <strong>Optimized Recommendation</strong><br />
-                  <small
-                    >Recommends instances based on actual utilization
-                    data</small
-                  >
-                </label>
-              </div>
-              <div class="radio-item">
-                <input
-                  type="radio"
-                  id="both"
-                  name="recommendationType"
-                  value="both"
-                  onchange="handleRecommendationTypeChange()"
-                />
-                <label for="both">
-                  <strong>Both</strong><br />
-                  <small
-                    >Generates both like-to-like and optimized
-                    recommendations</small
-                  >
-                </label>
-              </div>
-            </div>
-
-            <!-- Optimization Controls -->
-            <div id="optimizationControls" class="optimization-controls hidden">
-              <h3 class="optimization-title">🧠 Optimization Settings</h3>
-
-              <div class="form-group">
-                <label class="form-label">Optimization Mode:</label>
-                <div class="checkbox-group">
-                  <div class="checkbox-item">
-                    <input
-                      type="checkbox"
-                      id="cpuBased"
-                      value="cpu"
-                      onchange="toggleOptimizationMode()"
-                    />
-                    <label for="cpuBased">CPU-Based</label>
-                  </div>
-                  <div class="checkbox-item">
-                    <input
-                      type="checkbox"
-                      id="memoryBased"
-                      value="memory"
-                      onchange="toggleOptimizationMode()"
-                    />
-                    <label for="memoryBased">Memory-Based</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Downsizing Strategy:</label>
-                <div class="radio-group">
-                  <div class="radio-item">
-                    <input
-                      type="radio"
-                      id="halfUsage"
-                      name="downsizing"
-                      value="half"
-                    />
-                    <label for="halfUsage">N/2 - Half of current usage</label>
-                  </div>
-                  <div class="radio-item">
-                    <input
-                      type="radio"
-                      id="closestLower"
-                      name="downsizing"
-                      value="n-1"
-                    />
-                    <label for="closestLower"
-                      >N-1 - Closest lower configuration</label
-                    >
-                  </div>
-                </div>
-              </div>
-
-              <!-- CPU Utilization Ranges -->
-              <div class="form-group hidden" id="cpuUtilizationRanges">
-                <label class="form-label cpu-utilization-label"
-                  >💻 CPU Utilization Ranges:</label
-                >
-                <div class="range-input">
-                  <span>CPU Downsizing:</span>
-                  <input
-                    type="number"
-                    id="cpuDownsizeMin"
-                    value="0"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to</span>
-                  <input
-                    type="number"
-                    id="cpuDownsizeMax"
-                    value="50"
-                    min="0"
-                    max="100"
-                    onchange="updateCpuRanges()"
-                  />
-                  <span>%</span>
-                </div>
-                <div class="range-input">
-                  <span>CPU Keep Same (N):</span>
-                  <input
-                    type="number"
-                    id="cpuKeepMin"
-                    value="50"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to</span>
-                  <input
-                    type="number"
-                    id="cpuKeepMax"
-                    value="80"
-                    min="0"
-                    max="100"
-                    onchange="updateCpuRanges()"
-                  />
-                  <span>%</span>
-                </div>
-                <div class="range-input">
-                  <span>CPU Upsizing (N+1):</span>
-                  <input
-                    type="number"
-                    id="cpuUpsizeMin"
-                    value="80"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to 100%</span>
-                </div>
-              </div>
-
-              <!-- Memory Utilization Ranges -->
-              <div class="form-group hidden" id="memoryUtilizationRanges">
-                <label class="form-label memory-utilization-label"
-                  >🧠 Memory Utilization Ranges:</label
-                >
-                <div class="range-input">
-                  <span>Memory Downsizing:</span>
-                  <input
-                    type="number"
-                    id="memoryDownsizeMin"
-                    value="0"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to</span>
-                  <input
-                    type="number"
-                    id="memoryDownsizeMax"
-                    value="50"
-                    min="0"
-                    max="100"
-                    onchange="updateMemoryRanges()"
-                  />
-                  <span>%</span>
-                </div>
-                <div class="range-input">
-                  <span>Memory Keep Same (N):</span>
-                  <input
-                    type="number"
-                    id="memoryKeepMin"
-                    value="50"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to</span>
-                  <input
-                    type="number"
-                    id="memoryKeepMax"
-                    value="80"
-                    min="0"
-                    max="100"
-                    onchange="updateMemoryRanges()"
-                  />
-                  <span>%</span>
-                </div>
-                <div class="range-input">
-                  <span>Memory Upsizing (N+1):</span>
-                  <input
-                    type="number"
-                    id="memoryUpsizeMin"
-                    value="80"
-                    min="0"
-                    max="100"
-                    readonly
-                    class="readonly-input"
-                  />
-                  <span>% to 100%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Advanced Filtering -->
-        <section class="section collapsed">
-          <div class="section-header" onclick="toggleSection(this)">
-            <span class="section-icon">🔧</span>
-            <h2 class="section-title">
-              Advanced Instance Filtering (Optional)
-            </h2>
-            <span class="toggle-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="form-group">
-              <div class="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="excludeTypes"
-                  onchange="toggleExcludeTypes()"
-                />
-                <label for="excludeTypes"
-                  >Exclude specific instance types</label
-                >
-              </div>
-            </div>
-
-            <div id="excludeControls" class="hidden">
-              <div class="grid-3" id="excludeTypeControls"></div>
-            </div>
-
-            <div class="form-group advanced-family-group">
-              <div class="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="restrictFamilies"
-                  onchange="toggleRestrictFamilies()"
-                />
-                <label for="restrictFamilies"
-                  >Restrict to selected instance families only</label
-                >
-              </div>
-            </div>
-
-            <div id="familyControls" class="hidden">
-              <div class="grid-3" id="familyTypeControls"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Generate Recommendations -->
-        <section class="section">
-          <div class="section-header">
-            <span class="section-icon">🚀</span>
-            <h2 class="section-title">Generate Recommendations</h2>
-          </div>
-          <div class="section-content">
-            <button
-              class="btn btn-primary generate-btn"
-              onclick="generateRecommendations()"
-            >
-              🔄 Generate Recommendations
-            </button>
-
-            <div id="processingStatus" class="hidden">
-              <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-              </div>
-              <div class="progress-text" id="progressText">Processing...</div>
-            </div>
-
-            <div id="downloadSection" class="hidden download-section">
-              <div class="alert alert-success">
-                <span class="success-icon">✅</span>
-                Recommendations generated successfully!
-              </div>
-              <button class="btn btn-primary" onclick="downloadResults()">
-                📥 Download Results CSV
-              </button>
-            </div>
-          </div>
-        </section>
-        <!-- Usage Statistics Counters -->
-        <section class="section">
-          <div class="section-header">
-            <span class="section-icon">📊</span>
-            <h2 class="section-title">Usage Statistics</h2>
-          </div>
-          <div class="section-content">
-            <div class="stats-grid">
-              <div class="counter-card tool-usage-card">
-                <div class="counter-number">
-                  <span id="toolUsageCount">0</span>
-                </div>
-                <div class="counter-title">🔧 Tool Uses</div>
-                <div class="counter-subtitle">
-                  Total recommendations generated
-                </div>
-              </div>
-
-              <div class="counter-card vms-processed-card">
-                <div class="counter-number">
-                  <span id="totalVMsProcessed">0</span>
-                </div>
-                <div class="counter-title">🖥️ VMs Processed</div>
-                <div class="counter-subtitle">Total VM instances analyzed</div>
-              </div>
-            </div>
-          </div>
-        </section>
+          <a href="multicloud.html" class="cloud-card multicloud-card">
+            <img
+              src="logos/multicloud-logo.png"
+              alt="Multi-Cloud Logo"
+              class="cloud-icon"
+            />
+            <h3 class="cloud-title">Multi-Cloud Strategy</h3>
+            <p class="cloud-description">
+              Compare and optimize across multiple cloud providers for maximum
+              efficiency.
+            </p>
+            <ul class="cloud-features">
+              <li>Cross-cloud comparison</li>
+              <li>Unified cost analysis</li>
+              <li>Migration planning</li>
+              <li>Vendor lock-in prevention</li>
+            </ul>
+            <div class="cloud-action">Compare All Clouds →</div>
+          </a>
+        </div>
       </main>
     </div>
   </body>

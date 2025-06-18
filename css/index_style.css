@@ -1,0 +1,239 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.header {
+  background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 2.8rem;
+  margin-bottom: 15px;
+  font-weight: 300;
+}
+
+.header p {
+  opacity: 0.9;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.main-content {
+  padding: 50px 40px;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.section-description {
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cloud-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  margin-top: 30px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cloud-card {
+  background: white;
+  border: 2px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 35px 25px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.cloud-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(102, 126, 234, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.cloud-card:hover::before {
+  left: 100%;
+}
+
+.cloud-card:hover {
+  border-color: #667eea;
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+}
+
+.cloud-icon {
+  width: 200px;
+  height: 100px;
+  margin: 0 auto 20px auto;
+  display: block;
+  object-fit: contain;
+}
+
+.aws-card {
+  border-left: 4px solid #ff9900;
+}
+
+.aws-card:hover {
+  border-color: #ff9900;
+  box-shadow: 0 15px 35px rgba(255, 153, 0, 0.2);
+}
+
+.azure-card {
+  border-left: 4px solid #0078d4;
+}
+
+.azure-card:hover {
+  border-color: #0078d4;
+  box-shadow: 0 15px 35px rgba(0, 120, 212, 0.2);
+}
+
+.gcp-card {
+  border-left: 4px solid #4285f4;
+}
+
+.gcp-card:hover {
+  border-color: #4285f4;
+  box-shadow: 0 15px 35px rgba(66, 133, 244, 0.2);
+}
+
+.multicloud-card {
+  border-left: 4px solid #667eea;
+}
+
+.multicloud-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+}
+
+.aws-card .cloud-icon,
+.azure-card .cloud-icon,
+.gcp-card .cloud-icon,
+.multicloud-card .cloud-icon {
+  filter: none;
+}
+
+.cloud-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.cloud-description {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.cloud-features {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 25px;
+}
+
+.cloud-features li {
+  color: #555;
+  margin-bottom: 8px;
+  padding-left: 20px;
+  position: relative;
+  font-size: 0.9rem;
+}
+
+.cloud-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #4ecdc4;
+  font-weight: bold;
+}
+
+.cloud-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.cloud-card:hover .cloud-action {
+  transform: translateX(5px);
+  transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 30px 20px;
+  }
+
+  .header h1 {
+    font-size: 2.2rem;
+  }
+
+  .main-content {
+    padding: 30px 20px;
+  }
+
+  .cloud-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 400px;
+  }
+
+  .cloud-card {
+    padding: 25px 20px;
+  }
+}
