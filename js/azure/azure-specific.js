@@ -161,7 +161,7 @@ function updateAzureFilterLabels() {
   }
 }
 
-// Enhanced Azure series descriptions
+// Enhanced Azure series descriptions (FIXED - removed duplicate)
 function getAzureSeriesDescription(series) {
   const descriptions = {
     "A-series": "Basic compute needs, entry-level workloads",
@@ -266,21 +266,61 @@ function getSelectedAzureVMFamilies() {
   return selected;
 }
 
-// Get Azure instance series description
-function getAzureSeriesDescription(series) {
-  const descriptions = {
-    "A-series": "Basic compute needs, development/test",
-    "B-series": "Burstable performance instances",
-    "D-series": "General purpose with fast processors",
-    "E-series": "Memory optimized for in-memory applications",
-    "F-series": "Compute optimized with high CPU-to-memory ratio",
-    "G-series": "Memory and storage optimized",
-    "H-series": "High performance computing",
-    "L-series": "Storage optimized with high disk throughput",
-    "M-series": "Memory optimized for large in-memory workloads",
-    "N-series": "GPU enabled instances",
-  };
-  return descriptions[series] || "Specialized Azure instance series";
+// Get selected Azure exclude types
+function getSelectedAzureExcludeTypes() {
+  const selected = [];
+  azureExcludeTypesData.forEach((type, index) => {
+    const checkbox = document.getElementById(`azureExclude_${index}`);
+    if (checkbox && checkbox.checked) {
+      selected.push(type);
+    }
+  });
+  return selected;
+}
+
+// Initialize Azure exclude types with enhanced options
+function initializeAzureExcludeTypes() {
+  const excludeContainer = document.getElementById("excludeTypeControls");
+  if (!excludeContainer) return;
+
+  // Clear existing content
+  excludeContainer.innerHTML = "";
+
+  // Create Azure exclude section
+  const azureSection = document.createElement("div");
+  azureSection.className = "provider-exclude-section";
+  azureSection.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Azure Exclude Options:</label>
+      <div class="filter-checkbox-grid" id="azureExcludeCheckboxes">
+        <!-- Will be populated below -->
+      </div>
+    </div>
+  `;
+  excludeContainer.appendChild(azureSection);
+
+  // Populate Azure exclude checkboxes
+  const azureExcludeContainer = document.getElementById(
+    "azureExcludeCheckboxes"
+  );
+  if (azureExcludeContainer) {
+    azureExcludeTypesData.forEach((type, index) => {
+      const div = document.createElement("div");
+      div.className = "exclude-checkbox-item";
+      div.innerHTML = `
+        <div class="checkbox-item">
+          <input type="checkbox" id="azureExclude_${index}" value="${type}">
+          <label for="azureExclude_${index}">
+            <strong>❌ ${type}</strong>
+            <small style="display: block; color: #666;">
+              ${getAzureExcludeTypeDescription(type)}
+            </small>
+          </label>
+        </div>
+      `;
+      azureExcludeContainer.appendChild(div);
+    });
+  }
 }
 
 // Azure region mapping and validation
@@ -374,14 +414,27 @@ frontend-08,2,4,40,50,North Europe`;
 // Azure-specific cost optimization recommendations
 function getAzureCostOptimizationTips() {
   return [
-    "Consider Reserved Instances for 1-3 year commitments (up to 72% savings)",
-    "Use Azure Hybrid Benefit if you have Windows Server licenses",
-    "Leverage Spot Instances for fault-tolerant workloads (up to 90% savings)",
-    "Right-size instances based on actual utilization metrics",
-    "Use Dps and Eps series (ARM-based) for cost-effective compute",
-    "Consider B-series for variable workloads with burstable performance",
-    "Implement auto-scaling to match demand patterns",
-    "Use Azure Advisor recommendations for optimization insights",
+    "🔹 Consider Reserved Instances for 1-3 year commitments (up to 72% savings)",
+    "🔹 Use Azure Hybrid Benefit if you have Windows Server licenses",
+    "🔹 Leverage Spot Instances for fault-tolerant workloads (up to 90% savings)",
+    "🔹 Right-size instances based on actual utilization metrics",
+    "🔹 Use Dps and Eps series (ARM-based) for cost-effective compute",
+    "🔹 Consider B-series for variable workloads with burstable performance",
+    "🔹 Implement auto-scaling to match demand patterns",
+    "🔹 Use Azure Advisor recommendations for optimization insights",
+    "🔹 Enable Azure Cost Management for continuous monitoring",
+    "🔹 Use managed disks with appropriate performance tiers",
+  ];
+}
+
+// Azure region optimization recommendations
+function getAzureRegionOptimizationTips() {
+  return [
+    "🌍 Choose regions closest to your users for better latency",
+    "💰 Consider pricing differences between regions (up to 20% variation)",
+    "⚡ Use availability zones for high availability within regions",
+    "🔄 Implement geo-redundancy for disaster recovery",
+    "📊 Monitor bandwidth costs for inter-region data transfer",
   ];
 }
 
@@ -395,6 +448,7 @@ if (typeof module !== "undefined" && module.exports) {
     azureRegions,
     getAzureExcludeTypeDescription,
     initializeAzureFilters,
+    initializeAzureExcludeTypes,
     getAzureSeriesDescription,
     getAzureProcessorDescription,
     getAzureVMFamilyDescription,
@@ -403,9 +457,11 @@ if (typeof module !== "undefined" && module.exports) {
     getAzurePricingZone,
     downloadAzureSampleCSV,
     getAzureCostOptimizationTips,
+    getAzureRegionOptimizationTips,
     getSelectedAzureSeries,
     getSelectedAzureProcessors,
     getSelectedAzureVMFamilies,
+    getSelectedAzureExcludeTypes,
     updateAzureFilterLabels,
   };
 }
