@@ -413,10 +413,10 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
             <div id="instanceFamilyNameControls" class="hidden">
               <div class="form-group">
                 <label class="form-label"
-                  >AWS Instance Family Categories:</label
+                  >Instance Family Categories (Dynamic by Provider):</label
                 >
                 <div class="filter-checkbox-grid" id="familyNameCheckboxes">
-                  <!-- Will be populated by JavaScript -->
+                  <!-- Will be populated by JavaScript based on selected providers -->
                 </div>
               </div>
             </div>
@@ -440,9 +440,11 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
 
             <div id="processorManufacturerControls" class="hidden">
               <div class="form-group">
-                <label class="form-label">AWS Processor Manufacturers:</label>
+                <label class="form-label"
+                  >Processor Architectures (Dynamic by Provider):</label
+                >
                 <div class="filter-checkbox-grid" id="processorCheckboxes">
-                  <!-- Will be populated by JavaScript -->
+                  <!-- Will be populated by JavaScript based on selected providers -->
                 </div>
               </div>
             </div>
@@ -458,7 +460,7 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
                 <label for="restrictMainFamilies">
                   <strong>📋 Restrict to specific instance families</strong>
                   <small style="display: block; color: #666">
-                    Choose main instance families (C, M, R, T, etc.)
+                    Choose main instance families (varies by provider)
                   </small>
                 </label>
               </div>
@@ -466,9 +468,11 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
 
             <div id="mainFamiliesControls" class="hidden">
               <div class="form-group">
-                <label class="form-label">AWS Main Instance Families:</label>
+                <label class="form-label"
+                  >Main Instance Families (Dynamic by Provider):</label
+                >
                 <div class="filter-checkbox-grid" id="mainFamiliesCheckboxes">
-                  <!-- Will be populated by JavaScript -->
+                  <!-- Will be populated by JavaScript based on selected providers -->
                 </div>
               </div>
             </div>
@@ -491,7 +495,9 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
             </div>
 
             <div id="excludeControls" class="hidden">
-              <div class="grid-3" id="excludeTypeControls"></div>
+              <div class="grid-3" id="excludeTypeControls">
+                <!-- Will be populated dynamically based on selected providers -->
+              </div>
             </div>
           </div>
         </section>
@@ -559,5 +565,194 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c</pre
         </section>
       </main>
     </div>
+
+    <!-- Enhanced Multi-Cloud Filter Initialization -->
+    <script>
+      // Enhanced multi-cloud filter management
+      function updateMultiCloudFilters() {
+        console.log(
+          "Updating multi-cloud filters for selected providers:",
+          selectedProviders
+        );
+
+        // Clear existing filter options
+        clearFilterOptions();
+
+        // Update filters based on selected providers
+        selectedProviders.forEach((provider) => {
+          updateFiltersForProvider(provider);
+        });
+
+        // Update labels to be generic for multi-cloud
+        updateMultiCloudLabels();
+      }
+
+      function clearFilterOptions() {
+        // Clear all dynamic filter containers
+        [
+          "familyNameCheckboxes",
+          "processorCheckboxes",
+          "mainFamiliesCheckboxes",
+        ].forEach((containerId) => {
+          const container = document.getElementById(containerId);
+          if (container) {
+            container.innerHTML = "";
+          }
+        });
+      }
+
+      function updateFiltersForProvider(provider) {
+        console.log(`Adding filters for ${provider}`);
+
+        // Add provider-specific filters based on available functions
+        switch (provider) {
+          case "aws":
+            if (typeof initializeAWSFilters !== "undefined") {
+              addAWSFiltersToMultiCloud();
+            }
+            break;
+          case "azure":
+            if (typeof initializeAzureFilters !== "undefined") {
+              addAzureFiltersToMultiCloud();
+            }
+            break;
+          case "gcp":
+            if (typeof initializeGCPFilters !== "undefined") {
+              addGCPFiltersToMultiCloud();
+            }
+            break;
+        }
+      }
+
+      function addAWSFiltersToMultiCloud() {
+        // Add AWS-specific filter options with provider prefix
+        const familyContainer = document.getElementById("familyNameCheckboxes");
+        const processorContainer = document.getElementById(
+          "processorCheckboxes"
+        );
+        const mainFamiliesContainer = document.getElementById(
+          "mainFamiliesCheckboxes"
+        );
+
+        if (typeof awsFilterData !== "undefined" && familyContainer) {
+          awsFilterData.instanceFamilyNames?.forEach((name, index) => {
+            const div = document.createElement("div");
+            div.className = "filter-checkbox-item";
+            div.innerHTML = `
+              <input type="checkbox" id="aws_family_${index}" value="${name}">
+              <label for="aws_family_${index}">
+                <strong>🔶 AWS: ${name}</strong>
+                <span class="filter-description">${
+                  typeof getFamilyNameDescription !== "undefined"
+                    ? getFamilyNameDescription(name)
+                    : ""
+                }</span>
+              </label>
+            `;
+            familyContainer.appendChild(div);
+          });
+        }
+      }
+
+      function addAzureFiltersToMultiCloud() {
+        // Add Azure-specific filter options with provider prefix
+        const familyContainer = document.getElementById("familyNameCheckboxes");
+        const processorContainer = document.getElementById(
+          "processorCheckboxes"
+        );
+
+        if (typeof azureAdvancedFilterData !== "undefined" && familyContainer) {
+          azureAdvancedFilterData.instanceSeries?.forEach((series, index) => {
+            const div = document.createElement("div");
+            div.className = "filter-checkbox-item";
+            div.innerHTML = `
+              <input type="checkbox" id="azure_family_${index}" value="${series}">
+              <label for="azure_family_${index}">
+                <strong>🔷 Azure: ${series}</strong>
+                <span class="filter-description">${
+                  typeof getAzureSeriesDescription !== "undefined"
+                    ? getAzureSeriesDescription(series)
+                    : ""
+                }</span>
+              </label>
+            `;
+            familyContainer.appendChild(div);
+          });
+        }
+      }
+
+      function addGCPFiltersToMultiCloud() {
+        // Add GCP-specific filter options with provider prefix
+        const familyContainer = document.getElementById("familyNameCheckboxes");
+        const processorContainer = document.getElementById(
+          "processorCheckboxes"
+        );
+
+        if (typeof gcpAdvancedFilterData !== "undefined" && familyContainer) {
+          gcpAdvancedFilterData.machineFamilies?.forEach((family, index) => {
+            const div = document.createElement("div");
+            div.className = "filter-checkbox-item";
+            div.innerHTML = `
+              <input type="checkbox" id="gcp_family_${index}" value="${family}">
+              <label for="gcp_family_${index}">
+                <strong>🔴 GCP: ${family}</strong>
+                <span class="filter-description">${
+                  typeof getGCPFamilyAdvancedDescription !== "undefined"
+                    ? getGCPFamilyAdvancedDescription(family)
+                    : ""
+                }</span>
+              </label>
+            `;
+            familyContainer.appendChild(div);
+          });
+        }
+      }
+
+      function updateMultiCloudLabels() {
+        // Update filter labels to be generic for multi-cloud
+        const labels = {
+          familyLabel: "Instance Family Categories (All Providers):",
+          processorLabel: "Processor Architectures (All Providers):",
+          mainLabel: "Main Instance Families (All Providers):",
+        };
+
+        const familyLabel = document.querySelector(
+          "#instanceFamilyNameControls .form-label"
+        );
+        if (familyLabel) familyLabel.textContent = labels.familyLabel;
+
+        const processorLabel = document.querySelector(
+          "#processorManufacturerControls .form-label"
+        );
+        if (processorLabel) processorLabel.textContent = labels.processorLabel;
+
+        const mainLabel = document.querySelector(
+          "#mainFamiliesControls .form-label"
+        );
+        if (mainLabel) mainLabel.textContent = labels.mainLabel;
+      }
+
+      // Override the toggleCloudProvider function to update filters
+      const originalToggleCloudProvider = window.toggleCloudProvider;
+      window.toggleCloudProvider = function (provider) {
+        // Call the original function
+        if (originalToggleCloudProvider) {
+          originalToggleCloudProvider(provider);
+        }
+
+        // Update multi-cloud filters
+        setTimeout(() => {
+          updateMultiCloudFilters();
+        }, 100);
+      };
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize multi-cloud filters
+        setTimeout(() => {
+          updateMultiCloudFilters();
+        }, 500);
+      });
+    </script>
   </body>
 </html>

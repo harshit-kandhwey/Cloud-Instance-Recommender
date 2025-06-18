@@ -69,14 +69,47 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize optimization controls
   toggleOptimizationMode();
 
-  // Initialize AWS filter controls (if AWS-specific functions are available)
-  if (typeof initializeAWSFilters !== "undefined") {
-    initializeAWSFilters();
-  }
+  // Initialize ALL provider filter controls
+  initializeAllProviderFilters();
 
   // Initialize recommendation type handlers
   initializeRecommendationTypeHandlers();
 });
+
+// Initialize all provider filter controls
+function initializeAllProviderFilters() {
+  console.log("Initializing all provider filter controls");
+
+  // Initialize AWS filter controls (if AWS-specific functions are available)
+  if (typeof initializeAWSFilters !== "undefined") {
+    try {
+      initializeAWSFilters();
+      console.log("✅ AWS filters initialized");
+    } catch (error) {
+      console.error("❌ Error initializing AWS filters:", error);
+    }
+  }
+
+  // Initialize Azure filter controls (if Azure-specific functions are available)
+  if (typeof initializeAzureFilters !== "undefined") {
+    try {
+      initializeAzureFilters();
+      console.log("✅ Azure filters initialized");
+    } catch (error) {
+      console.error("❌ Error initializing Azure filters:", error);
+    }
+  }
+
+  // Initialize GCP filter controls (if GCP-specific functions are available)
+  if (typeof initializeGCPFilters !== "undefined") {
+    try {
+      initializeGCPFilters();
+      console.log("✅ GCP filters initialized");
+    } catch (error) {
+      console.error("❌ Error initializing GCP filters:", error);
+    }
+  }
+}
 
 // Load provider-specific data
 function loadProviderSpecificData() {
@@ -476,6 +509,69 @@ function updateMemoryRanges() {
   }
 }
 
+// Toggle current generation filter
+function toggleCurrentGenerationFilter() {
+  const checkbox = document.getElementById("currentGenerationOnly");
+  console.log(
+    "Current generation filter:",
+    checkbox.checked ? "Enabled" : "Disabled"
+  );
+}
+
+// Toggle instance family name filter
+function toggleInstanceFamilyNameFilter() {
+  const controls = document.getElementById("instanceFamilyNameControls");
+  const checkbox = document.getElementById("restrictInstanceFamilyNames");
+
+  if (checkbox && controls) {
+    if (checkbox.checked) {
+      controls.classList.remove("hidden");
+    } else {
+      controls.classList.add("hidden");
+    }
+    console.log(
+      "Instance family name filter:",
+      checkbox.checked ? "Enabled" : "Disabled"
+    );
+  }
+}
+
+// Toggle processor manufacturer filter
+function toggleProcessorManufacturerFilter() {
+  const controls = document.getElementById("processorManufacturerControls");
+  const checkbox = document.getElementById("restrictProcessorManufacturers");
+
+  if (checkbox && controls) {
+    if (checkbox.checked) {
+      controls.classList.remove("hidden");
+    } else {
+      controls.classList.add("hidden");
+    }
+    console.log(
+      "Processor manufacturer filter:",
+      checkbox.checked ? "Enabled" : "Disabled"
+    );
+  }
+}
+
+// Toggle main families filter
+function toggleMainFamiliesFilter() {
+  const controls = document.getElementById("mainFamiliesControls");
+  const checkbox = document.getElementById("restrictMainFamilies");
+
+  if (checkbox && controls) {
+    if (checkbox.checked) {
+      controls.classList.remove("hidden");
+    } else {
+      controls.classList.add("hidden");
+    }
+    console.log(
+      "Main families filter:",
+      checkbox.checked ? "Enabled" : "Disabled"
+    );
+  }
+}
+
 // Toggle exclude types
 function toggleExcludeTypes() {
   console.log("toggleExcludeTypes called");
@@ -591,6 +687,127 @@ function getExcludeTypeDescription(provider, type) {
 
   // Fallback to generic description
   return `Exclude ${type} instance types`;
+}
+
+// Fallback getter functions - these will be overridden by provider-specific files if available
+function getSelectedInstanceFamilyNames() {
+  const selected = [];
+  // Look for checked checkboxes with pattern familyName_, azureSeries_, gcpFamily_
+  const checkboxes = document.querySelectorAll(
+    'input[id^="familyName_"]:checked, input[id^="azureSeries_"]:checked, input[id^="gcpFamily_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedProcessorManufacturers() {
+  const selected = [];
+  // Look for checked checkboxes with pattern processor_, azureProcessor_, gcpProcessor_
+  const checkboxes = document.querySelectorAll(
+    'input[id^="processor_"]:checked, input[id^="azureProcessor_"]:checked, input[id^="gcpProcessor_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedMainFamilies() {
+  const selected = [];
+  // Look for checked checkboxes with pattern mainFamily_, azureFamily_, gcpType_
+  const checkboxes = document.querySelectorAll(
+    'input[id^="mainFamily_"]:checked, input[id^="azureFamily_"]:checked, input[id^="gcpType_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+// Azure-specific fallback getter functions
+function getSelectedAzureSeries() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll(
+    'input[id^="azureSeries_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedAzureProcessors() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll(
+    'input[id^="azureProcessor_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedAzureVMFamilies() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll(
+    'input[id^="azureFamily_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+// GCP-specific fallback getter functions
+function getSelectedGCPFamilies() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll(
+    'input[id^="gcpFamily_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedGCPProcessors() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll(
+    'input[id^="gcpProcessor_"]:checked'
+  );
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
+}
+
+function getSelectedGCPMachineTypes() {
+  const selected = [];
+  const checkboxes = document.querySelectorAll('input[id^="gcpType_"]:checked');
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.value) {
+      selected.push(checkbox.value);
+    }
+  });
+  return selected;
 }
 
 // Generate recommendations
@@ -743,33 +960,15 @@ async function processRecommendations() {
     // Legacy Graviton exclusion support (derived from exclude types)
     excludeGraviton: getExcludeGravitonSetting(),
 
-    // Azure-specific options
-    selectedAzureSeries:
-      typeof getSelectedAzureSeries !== "undefined"
-        ? getSelectedAzureSeries()
-        : [],
-    selectedAzureProcessors:
-      typeof getSelectedAzureProcessors !== "undefined"
-        ? getSelectedAzureProcessors()
-        : [],
-    selectedAzureVMFamilies:
-      typeof getSelectedAzureVMFamilies !== "undefined"
-        ? getSelectedAzureVMFamilies()
-        : [],
+    // **FIXED: Azure-specific options**
+    selectedAzureSeries: getSelectedAzureSeries(),
+    selectedAzureProcessors: getSelectedAzureProcessors(),
+    selectedAzureVMFamilies: getSelectedAzureVMFamilies(),
 
-    // GCP-specific options
-    selectedGCPFamilies:
-      typeof getSelectedGCPFamilies !== "undefined"
-        ? getSelectedGCPFamilies()
-        : [],
-    selectedGCPProcessors:
-      typeof getSelectedGCPProcessors !== "undefined"
-        ? getSelectedGCPProcessors()
-        : [],
-    selectedGCPMachineTypes:
-      typeof getSelectedGCPMachineTypes !== "undefined"
-        ? getSelectedGCPMachineTypes()
-        : [],
+    // **FIXED: GCP-specific options**
+    selectedGCPFamilies: getSelectedGCPFamilies(),
+    selectedGCPProcessors: getSelectedGCPProcessors(),
+    selectedGCPMachineTypes: getSelectedGCPMachineTypes(),
   };
 
   console.log("Processing options:", {
@@ -780,6 +979,14 @@ async function processRecommendations() {
       processors: options.selectedProcessorManufacturers.length,
       mainFamilies: options.selectedMainFamilies.length,
       excludeTypes: options.excludeTypes.length,
+      // Azure options
+      azureSeries: options.selectedAzureSeries.length,
+      azureProcessors: options.selectedAzureProcessors.length,
+      azureVMFamilies: options.selectedAzureVMFamilies.length,
+      // GCP options
+      gcpFamilies: options.selectedGCPFamilies.length,
+      gcpProcessors: options.selectedGCPProcessors.length,
+      gcpMachineTypes: options.selectedGCPMachineTypes.length,
     },
     optimization: {
       cpuBased: options.cpuBased,

@@ -105,7 +105,7 @@ app-server-03,2,8,35,45,europe-west1-c</pre
             </div>
           </div>
         </section>
-        <!-- Trigger Azure by default -->
+        <!-- Trigger GCP by default -->
         <script>
           document.addEventListener("DOMContentLoaded", function () {
             toggleCloudProvider("gcp");
@@ -379,9 +379,7 @@ app-server-03,2,8,35,45,europe-west1-c</pre
 
             <div id="instanceFamilyNameControls" class="hidden">
               <div class="form-group">
-                <label class="form-label"
-                  >AWS Instance Family Categories:</label
-                >
+                <label class="form-label">GCP Machine Families:</label>
                 <div class="filter-checkbox-grid" id="familyNameCheckboxes">
                   <!-- Will be populated by JavaScript -->
                 </div>
@@ -407,7 +405,7 @@ app-server-03,2,8,35,45,europe-west1-c</pre
 
             <div id="processorManufacturerControls" class="hidden">
               <div class="form-group">
-                <label class="form-label">AWS Processor Manufacturers:</label>
+                <label class="form-label">GCP Processor Platforms:</label>
                 <div class="filter-checkbox-grid" id="processorCheckboxes">
                   <!-- Will be populated by JavaScript -->
                 </div>
@@ -425,7 +423,7 @@ app-server-03,2,8,35,45,europe-west1-c</pre
                 <label for="restrictMainFamilies">
                   <strong>📋 Restrict to specific instance families</strong>
                   <small style="display: block; color: #666">
-                    Choose main instance families (C, M, R, T, etc.)
+                    Choose main instance families (E2, N1, N2, C2, etc.)
                   </small>
                 </label>
               </div>
@@ -433,7 +431,7 @@ app-server-03,2,8,35,45,europe-west1-c</pre
 
             <div id="mainFamiliesControls" class="hidden">
               <div class="form-group">
-                <label class="form-label">AWS Main Instance Families:</label>
+                <label class="form-label">GCP Machine Types:</label>
                 <div class="filter-checkbox-grid" id="mainFamiliesCheckboxes">
                   <!-- Will be populated by JavaScript -->
                 </div>
