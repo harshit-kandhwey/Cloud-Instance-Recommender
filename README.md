@@ -6,7 +6,9 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 ![Version](https://img.shields.io/badge/Version-1.0.0-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
-> **🌐 Live Demo**: Experience the application at its official deployment URL. This proprietary tool is available for public demonstration and evaluation.
+> **🌐 Live Demo**: Try the interactive Cloud Instance Recommender tool. 
+> Upload your VM data and get optimized recommendations across AWS, Azure, and GCP.
+> https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/
 
 ## 🚀 Features
 
