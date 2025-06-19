@@ -3,10 +3,10 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). This tool helps organizations optimize their cloud infrastructure costs by providing intelligent instance sizing recommendations based on current usage patterns and utilization data.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-1.0.0-green)
+![Version](https://img.shields.io/badge/Version-1.1.0-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
-> **🌐 Live Demo**: Try the interactive Cloud Instance Recommender tool. 
+> **🌐 Live Demo**: Try the interactive Cloud Instance Recommender tool.
 > Upload your VM data and get optimized recommendations across AWS, Azure, and GCP.
 > https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/
 
@@ -139,24 +139,9 @@ cloud-instance-recommender/
 ### **1. Access the Application**
 
 Visit the live application at the official deployment URL to begin using the Cloud Instance Recommender.
+https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/
 
-### **2. For Local Development (Authorized Users)**
-
-If you have received explicit permission for local development:
-
-```bash
-# Serve the files using any web server
-# Python 3
-python -m http.server 8000
-
-# Node.js
-npx serve .
-
-# PHP
-php -S localhost:8000
-```
-
-### **3. Begin Analysis**
+### **2. Begin Analysis**
 
 1. Navigate to your preferred cloud provider section
 2. Download and customize the CSV template
@@ -166,15 +151,27 @@ php -S localhost:8000
 
 ## 📊 Usage Guide
 
-### **Step 1: Prepare Your Data**
+### **Step 1: Navigate to Your Cloud Provider**
 
-Create a CSV file with your current VM inventory:
+1. **Open the Landing Page**: Visit the Cloud Instance Recommender homepage
+2. **Choose Your Provider**: Select your desired cloud platform:
+   - **AWS** - For Amazon EC2 recommendations
+   - **Azure** - For Microsoft Azure Virtual Machines
+   - **GCP** - For Google Cloud Compute Engine
+   - **Multi-Cloud** - For cross-provider comparison
+
+### **Step 2: Download and Prepare Your Data**
+
+1. **Download Sample CSV**: Use the "📥 Download Sample CSV" button on your chosen provider page
+2. **Prepare Your Data**: Follow the sample format to create your VM inventory file
+
+**Sample CSV Format:**
 
 ```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b
-app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region
+web-server-01,4,16,45,60,us-east-1
+db-server-02,8,32,70,80,us-west-2
+app-server-03,2,8,35,45,eu-west-1
 ```
 
 **Required Columns:**
@@ -182,49 +179,62 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c
 - `VM Name`: Identifier for your virtual machine
 - `CPU Count`: Number of vCPUs
 - `Memory (GB)`: RAM in gigabytes
+- `[Provider] Region`: Target region for recommendations (e.g., AWS Region, Azure Region, GCP Region)
 
 **Optional Columns:**
 
 - `CPU Utilization`: Average CPU usage percentage
 - `Memory Utilization`: Average memory usage percentage
-- `[Provider] Region`: Target region for recommendations
 
-### **Step 2: Upload and Configure**
+### **Step 3: Upload and Configure**
 
-1. **Choose Provider**: Select AWS, Azure, GCP, or Multi-Cloud
-2. **Upload CSV**: Drag and drop or select your CSV file
+1. **Upload CSV File**:
+
+   - Drag and drop your CSV file into the upload area, or
+   - Click to select your CSV file from your computer
+
+2. **Select Cloud Providers** (Multi-Cloud only):
+
+   - Check the boxes for AWS, Azure, and/or GCP as needed
+   - You can compare recommendations across multiple providers
+
 3. **Set Recommendation Type**:
-   - **Like-to-Like**: Cheapest instances meeting current specs
-   - **Optimized**: Based on utilization data
-   - **Both**: Generate both recommendation types
+   - **Like-to-Like**: Find cheapest instances that meet or exceed current specs
+   - **Optimized**: Smart recommendations based on actual CPU/memory utilization data
+   - **Both**: Generate both like-to-like and optimized recommendations
 
-### **Step 3: Advanced Configuration**
+### **Step 4: Advanced Configuration (Optional)**
 
 #### **Optimization Settings** (for Optimized recommendations)
 
-- **CPU Thresholds**:
+Configure the N/2, N, N+1 strategy thresholds:
 
-  - Downsize if utilization ≤ 50%
-  - Keep same if 50% < utilization ≤ 80%
-  - Upsize if utilization > 80%
+- **CPU Optimization**:
 
-- **Memory Thresholds**:
-  - Downsize if utilization ≤ 50%
-  - Keep same if 50% < utilization ≤ 80%
-  - Upsize if utilization > 80%
+  - Downsize (N/2) if utilization ≤ 50%
+  - Keep same (N) if 50% < utilization ≤ 80%
+  - Upsize (N+1) if utilization > 80%
 
-#### **Filtering Options**
+- **Memory Optimization**:
+  - Downsize (N/2) if utilization ≤ 50%
+  - Keep same (N) if 50% < utilization ≤ 80%
+  - Upsize (N+1) if utilization > 80%
 
-- **Current Generation Only**: Latest instance types
-- **Processor Preferences**: Intel, AMD, ARM/Graviton
-- **Instance Families**: General purpose, compute optimized, memory optimized
-- **Exclude Types**: Specific categories to avoid
+#### **Advanced Filtering Options**
 
-### **Step 4: Generate and Download**
+- **Current Generation Only**: Include only latest generation instances
+- **Processor Preferences**: Choose Intel, AMD, or ARM/Graviton processors
+- **Instance Families**: Filter by general purpose, compute optimized, memory optimized
+- **Exclude Specific Types**: Avoid certain categories (GPU, Burstable, etc.)
 
-1. Click "Generate Recommendations"
-2. Review processing status and statistics
-3. Download results as CSV with recommendations
+### **Step 5: Generate and Download Results**
+
+1. **Generate Recommendations**: Click "🔄 Generate Recommendations"
+2. **Monitor Progress**: Watch the processing status for your VM inventory
+3. **Review Statistics**: Check usage statistics and processing summary
+4. **Download Results**: Click "📥 Download Results CSV" to get your recommendations
+
+The downloaded CSV will include your original data plus new columns with instance recommendations, pricing, and sizing information for each selected cloud provider.
 
 ## 🔧 Configuration Options
 
