@@ -80,7 +80,7 @@ function initializeAWSFilters() {
         <label for="familyName_${index}">
           <strong>${familyName}</strong>
           <span class="filter-description">${getFamilyNameDescription(
-            familyName
+            familyName,
           )}</span>
         </label>
       `;
@@ -99,7 +99,7 @@ function initializeAWSFilters() {
         <label for="processor_${index}">
           <strong>${processor}</strong>
           <span class="filter-description">${getProcessorDescription(
-            processor
+            processor,
           )}</span>
         </label>
       `;
@@ -109,7 +109,7 @@ function initializeAWSFilters() {
 
   // Initialize main families checkboxes
   const mainFamiliesContainer = document.getElementById(
-    "mainFamiliesCheckboxes"
+    "mainFamiliesCheckboxes",
   );
   if (mainFamiliesContainer) {
     awsFilterData.mainFamilies.forEach((family, index) => {
@@ -120,7 +120,7 @@ function initializeAWSFilters() {
         <label for="mainFamily_${index}">
           <strong>${family.toUpperCase()}</strong>
           <span class="filter-description">${getMainFamilyDescription(
-            family
+            family,
           )}</span>
         </label>
       `;
@@ -185,7 +185,7 @@ function toggleCurrentGenerationFilter() {
   const checkbox = document.getElementById("currentGenerationOnly");
   console.log(
     "Current generation filter:",
-    checkbox.checked ? "Enabled" : "Disabled"
+    checkbox.checked ? "Enabled" : "Disabled",
   );
 }
 
@@ -277,15 +277,15 @@ function getAWSExcludeTypeDescription(type) {
 
 // Download AWS sample CSV
 function downloadAWSSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region
-web-server-01,4,16,45,60,us-east-1
-db-server-02,8,32,70,80,us-west-2
-app-server-03,2,8,35,45,eu-west-1
-cache-server-04,2,4,25,30,us-east-1
-api-server-05,4,8,65,55,us-west-1
-microservice-06,1,2,15,20,us-east-1
-worker-node-07,8,16,85,75,us-west-2
-frontend-08,2,4,40,50,eu-west-1`;
+  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-east-1,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,us-west-2,Production,Windows,Database,PCI,
+app-server-03,2,8,35,45,eu-west-1,Dev,Linux,General,,
+cache-server-04,2,4,25,30,us-east-1,Staging,Linux,Cache,,
+api-server-05,4,8,65,55,us-west-1,Production,Linux,Web Server,,6
+microservice-06,1,2,15,20,us-east-1,Dev,Linux,General,,
+worker-node-07,8,16,85,75,us-west-2,Production,Linux,ML/AI,HIPAA,7
+frontend-08,2,4,40,50,eu-west-1,Staging,Windows,Web Server,,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);

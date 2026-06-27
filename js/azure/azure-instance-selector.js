@@ -297,6 +297,76 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     return regionMappings[region] || region.toLowerCase().replace(/[\s-]/g, "");
   }
 
+  getAllAvailableRegionKeys() {
+    if (!window.AZURE_DATA_READY) return [];
+    // Reverse of normalizeRegionForJS — global key → display name
+    const reverseMap = {
+      eastus: "East US",
+      eastus2: "East US 2",
+      westus: "West US",
+      westus2: "West US 2",
+      westus3: "West US 3",
+      centralus: "Central US",
+      northcentralus: "North Central US",
+      southcentralus: "South Central US",
+      westcentralus: "West Central US",
+      canadacentral: "Canada Central",
+      canadaeast: "Canada East",
+      brazilsouth: "Brazil South",
+      brazilsoutheast: "Brazil Southeast",
+      mexicocentral: "Mexico Central",
+      chilecentral: "Chile Central",
+      northeurope: "North Europe",
+      westeurope: "West Europe",
+      francecentral: "France Central",
+      francesouth: "France South",
+      germanywestcentral: "Germany West Central",
+      germanynorth: "Germany North",
+      norwayeast: "Norway East",
+      norwaywest: "Norway West",
+      switzerlandnorth: "Switzerland North",
+      switzerlandwest: "Switzerland West",
+      uksouth: "UK South",
+      ukwest: "UK West",
+      swedencentral: "Sweden Central",
+      swedensouth: "Sweden South",
+      austriaeast: "Austria East",
+      belgiumcentral: "Belgium Central",
+      denmarkeast: "Denmark East",
+      italynorth: "Italy North",
+      polandcentral: "Poland Central",
+      spaincentral: "Spain Central",
+      eastasia: "East Asia",
+      southeastasia: "Southeast Asia",
+      australiacentral: "Australia Central",
+      australiacentral2: "Australia Central 2",
+      australiaeast: "Australia East",
+      australiasoutheast: "Australia Southeast",
+      newzealandnorth: "New Zealand North",
+      centralindia: "Central India",
+      southindia: "South India",
+      westindia: "West India",
+      japaneast: "Japan East",
+      japanwest: "Japan West",
+      koreacentral: "Korea Central",
+      koreasouth: "Korea South",
+      malaysiawest: "Malaysia West",
+      indonesiacentral: "Indonesia Central",
+      southafricanorth: "South Africa North",
+      southafricawest: "South Africa West",
+      uaecentral: "UAE Central",
+      uaenorth: "UAE North",
+      israelcentral: "Israel Central",
+      qatarcentral: "Qatar Central",
+      usgovarizona: "US Gov Arizona",
+      usgovtexas: "US Gov Texas",
+      usgovvirginia: "US Gov Virginia",
+    };
+    return Object.keys(reverseMap)
+      .filter((k) => typeof window[k] === "object" && window[k] !== null)
+      .map((k) => reverseMap[k]);
+  }
+
   // Azure-specific: Check if instance is ARM-based
   isARMInstance(instance) {
     return (
@@ -326,7 +396,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     const result = super.createInstanceResult(
       instance,
       currentCpu,
-      currentMemory
+      currentMemory,
     );
 
     // Add Azure-specific enhancements
@@ -342,7 +412,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       instances,
       currentCpu,
       currentMemory,
-      options
+      options,
     );
 
     // Azure-specific: ARM filtering
@@ -362,7 +432,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
         const vmSeries = this.getVMSeries(instance.instanceType);
         if (!options.selectedVMSeries.includes(vmSeries)) {
           console.log(
-            `Filtering out VM series: ${instance.instanceType} (series=${vmSeries})`
+            `Filtering out VM series: ${instance.instanceType} (series=${vmSeries})`,
           );
           return false;
         }
@@ -379,7 +449,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
     const armCount = instances.filter((i) => this.isARMInstance(i)).length;
     const vmSeries = new Set(
-      instances.map((i) => this.getVMSeries(i.instanceType))
+      instances.map((i) => this.getVMSeries(i.instanceType)),
     ).size;
 
     console.log(`  - ARM-based: ${armCount} instances`);

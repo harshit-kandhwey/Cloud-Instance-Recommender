@@ -485,7 +485,9 @@ nav a {
   color: white; /* Default link color */
   background-color: transparent;
   border-radius: 4px;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 }
 
 nav a:visited {

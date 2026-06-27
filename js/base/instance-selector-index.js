@@ -106,7 +106,7 @@ async function demonstrateInstanceSelector() {
     const results = await getInstanceRecommendationWithSelector(
       sampleCsvData,
       selectedProviders,
-      options
+      options,
     );
 
     // Display results
@@ -114,20 +114,20 @@ async function demonstrateInstanceSelector() {
     results.forEach((result, index) => {
       console.log(`\nServer ${index + 1}: ${result["Server Name"]}`);
       console.log(
-        `Original: ${result["CPU Count"]}vCPU, ${result["Memory (GB)"]}GB`
+        `Original: ${result["CPU Count"]}vCPU, ${result["Memory (GB)"]}GB`,
       );
       console.log(
-        `Utilization: CPU ${result["CPU Utilization"]}%, Memory ${result["Memory Utilization"]}%`
+        `Utilization: CPU ${result["CPU Utilization"]}%, Memory ${result["Memory Utilization"]}%`,
       );
 
       selectedProviders.forEach((provider) => {
         const providerUpper = provider.toUpperCase();
         console.log(`\n${providerUpper}:`);
         console.log(
-          `  Like-to-Like: ${result[`${providerUpper} Like-to-Like Instance`]} | ${result[`${providerUpper} Like-to-Like vCPUs`]} vCPUs, ${result[`${providerUpper} Like-to-Like Memory (GiB)`]} GiB`
+          `  Like-to-Like: ${result[`${providerUpper} Like-to-Like Instance`]} | ${result[`${providerUpper} Like-to-Like vCPUs`]} vCPUs, ${result[`${providerUpper} Like-to-Like Memory (GiB)`]} GiB`,
         );
         console.log(
-          `  Optimized: ${result[`${providerUpper} Optimized Instance`]} | ${result[`${providerUpper} Optimized vCPUs`]} vCPUs, ${result[`${providerUpper} Optimized Memory (GiB)`]} GiB`
+          `  Optimized: ${result[`${providerUpper} Optimized Instance`]} | ${result[`${providerUpper} Optimized vCPUs`]} vCPUs, ${result[`${providerUpper} Optimized Memory (GiB)`]} GiB`,
         );
       });
     });
@@ -140,16 +140,16 @@ async function demonstrateInstanceSelector() {
         console.log(`\n${provider.toUpperCase()} Statistics:`);
         console.log(`  Total Instances: ${stats.totalInstances}`);
         console.log(
-          `  Current Generation: ${stats.currentGeneration} (${stats.currentGenerationPercentage}%)`
+          `  Current Generation: ${stats.currentGeneration} (${stats.currentGenerationPercentage}%)`,
         );
         console.log(
           `  Processor Types:`,
-          Object.keys(stats.processorBreakdown)
+          Object.keys(stats.processorBreakdown),
         );
         console.log(
           `  Instance Families: ${
             Object.keys(stats.familyNameBreakdown).length
-          }`
+          }`,
         );
       }
     });
@@ -181,7 +181,7 @@ async function demonstrateAWSSelector() {
       "us-east-1",
       2, // 2 vCPUs
       8, // 8GB RAM
-      awsOptions
+      awsOptions,
     );
 
     console.log("AWS Recommendation:", recommendation);
@@ -221,17 +221,17 @@ async function demonstrateRecommendationTypes() {
       generateLikeToLike: true, // Generate like-to-like
       generateOptimized: false, // Skip optimized
       currentGenerationOnly: true,
-    }
+    },
   );
 
   console.log("Like-to-like only result:");
   console.log(
-    `AWS Like-to-Like: ${likeToLikeOnly[0]["AWS Like-to-Like Instance"]}`
+    `AWS Like-to-Like: ${likeToLikeOnly[0]["AWS Like-to-Like Instance"]}`,
   );
   console.log(
     `AWS Optimized: ${
       likeToLikeOnly[0]["AWS Optimized Instance"] || "Not generated"
-    }`
+    }`,
   );
 
   // Scenario 2: Only Optimized recommendations
@@ -248,14 +248,14 @@ async function demonstrateRecommendationTypes() {
       cpuUpsizeMin: 80,
       memoryDownsizeMax: 40,
       memoryUpsizeMin: 85,
-    }
+    },
   );
 
   console.log("Optimized only result:");
   console.log(
     `AWS Like-to-Like: ${
       optimizedOnly[0]["AWS Like-to-Like Instance"] || "Not generated"
-    }`
+    }`,
   );
   console.log(`AWS Optimized: ${optimizedOnly[0]["AWS Optimized Instance"]}`);
 
@@ -270,15 +270,15 @@ async function demonstrateRecommendationTypes() {
       currentGenerationOnly: true,
       cpuBased: true,
       memoryBased: true,
-    }
+    },
   );
 
   console.log("Both recommendations result:");
   console.log(
-    `AWS Like-to-Like: ${bothRecommendations[0]["AWS Like-to-Like Instance"]}`
+    `AWS Like-to-Like: ${bothRecommendations[0]["AWS Like-to-Like Instance"]}`,
   );
   console.log(
-    `AWS Optimized: ${bothRecommendations[0]["AWS Optimized Instance"]}`
+    `AWS Optimized: ${bothRecommendations[0]["AWS Optimized Instance"]}`,
   );
 }
 async function demonstrateOptimizationStrategy() {
@@ -325,7 +325,7 @@ async function demonstrateOptimizationStrategy() {
     console.log(`\n${scenario.name}:`);
     console.log(`  Current: ${scenario.cpu}vCPU, ${scenario.memory}GB`);
     console.log(
-      `  Utilization: ${scenario.cpuUtil}% CPU, ${scenario.memoryUtil}% Memory`
+      `  Utilization: ${scenario.cpuUtil}% CPU, ${scenario.memoryUtil}% Memory`,
     );
 
     const optimized = awsSelector.getOptimizedInstance(
@@ -334,11 +334,11 @@ async function demonstrateOptimizationStrategy() {
       scenario.memory,
       scenario.cpuUtil,
       scenario.memoryUtil,
-      optimizationOptions
+      optimizationOptions,
     );
 
     console.log(
-      `  Recommendation: ${optimized.instanceType} (${optimized.vCpus}vCPU, ${optimized.memory}GB)`
+      `  Recommendation: ${optimized.instanceType} (${optimized.vCpus}vCPU, ${optimized.memory}GB)`,
     );
     console.log(`  Strategy: ${optimized.reason}`);
   });

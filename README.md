@@ -1,378 +1,228 @@
 # 🌐 Cloud Instance Recommender
 
-A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). This tool helps organizations optimize their cloud infrastructure costs by providing intelligent instance sizing recommendations based on current usage patterns and utilization data.
+A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-1.1.0-green)
+![Version](https://img.shields.io/badge/Version-3.0-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
-> **🌐 Live Demo**: Try the interactive Cloud Instance Recommender tool.
-> Upload your VM data and get optimized recommendations across AWS, Azure, and GCP.
-> https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/
+> **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
+
+---
 
 ## 🚀 Features
 
-### 📊 **Multi-Cloud Support**
+### 📊 Multi-Cloud Support
 
-- **AWS**: EC2 instance recommendations with Graviton support
-- **Azure**: Virtual Machine sizing with ARM-based instances
-- **GCP**: Compute Engine optimization with T2A instances
-- **Multi-Cloud**: Side-by-side provider comparison
+- **AWS** — EC2 instance recommendations with Graviton (ARM) support
+- **Azure** — Virtual Machine sizing with ARM (Ampere Altra) instances
+- **GCP** — Compute Engine optimization with T2A (ARM) instances
+- **Multi-Cloud** — Side-by-side comparison across all three providers in one run
 
-### 🎯 **Recommendation Types**
+### 🎯 Recommendation Types
 
-- **Like-to-Like**: Find cheapest instances that meet or exceed current specs
-- **Optimized**: Smart recommendations based on actual CPU/memory utilization
-- **N/2, N, N+1 Strategy**: Intelligent scaling based on utilization patterns
+- **Like-to-Like** — Cheapest instance that meets or exceeds current vCPUs and memory
+- **Optimized** — Smart right-sizing based on actual CPU/memory utilization (N/2, N, N+1 strategy)
+- **Both** — Generate like-to-like and optimized simultaneously; AWS produces two separate bulk template files
 
-### 🔧 **Advanced Filtering**
+### 🧠 Rule Engine (v3.0)
 
-- **Generation Filtering**: Current vs. previous generation instances
-- **Processor Types**: Intel, AMD, ARM/Graviton support
-- **Instance Families**: Compute, memory, storage optimized
-- **Cost Optimization**: Exclude/include specific instance types
+Five interactive dropdowns set global defaults for the entire batch without editing your CSV:
 
-### 📈 **Analytics & Insights**
+| Dropdown       | Purpose                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                    |
+| **OS**         | Linux / Windows / macOS — affects ARM eligibility                                              |
+| **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC — sorts preferred families first |
+| **Compliance** | PCI / HIPAA / FIPS — enforces current-gen and Nitro Enclave requirements                       |
+| **Min Gen**    | Minimum generation number/family — excludes older instance generations                         |
 
-- Usage statistics and processing counters
-- Data quality scoring and validation
-- Cost savings analysis
-- Performance recommendations
+Per-row CSV column values always override these global defaults.
 
-## 🏗️ Architecture
+### ⚠️ Conflict Detection
 
-### **Modular Design**
+The Rule Engine highlights contradicting filter combinations in red and explains the conflict:
 
-The application uses a modular, object-oriented architecture with provider-specific implementations:
+- Current-Gen Only + Previous-Gen preference
+- Burstable excluded (Prod ENV) + Burstable family selected
+- Min Gen + Current Gen Only (redundant but not conflicting)
 
-```
-├── Base Classes
-│   ├── BaseInstanceSelector          # Common functionality
-│   ├── FileHandler                   # CSV processing
-│   └── IntegrationManager           # System orchestration
-│
-├── Provider Implementations
-│   ├── AWSInstanceSelector          # AWS-specific logic
-│   ├── AzureInstanceSelector        # Azure-specific logic
-│   └── GCPInstanceSelector          # GCP-specific logic
-│
-├── UI Components
-│   ├── aws-specific.js              # AWS filtering UI
-│   ├── azure-specific.js            # Azure filtering UI
-│   └── gcp-specific.js              # GCP filtering UI
-│
-└── Integration Layer
-    ├── instance-selector-factory.js # Provider factory
-    └── main-script.js               # Application controller
-```
+### 🔧 Advanced Filtering
 
-### **Key Components**
+- **Current Generation Only** — Exclude end-of-life families
+- **Minimum Generation** — Per-row `Min Gen` CSV column or global default dropdown
+- **Processor Types** — Intel, AMD, ARM (unified across providers in multi-cloud)
+- **Instance Categories** (multi-cloud) — General Purpose, Burstable, Memory Optimized, Compute Optimized, Storage Optimized, GPU, HPC
+- **Exclude Specific Types** — GPU, Burstable, ARM, FPGA, Promo, etc. per provider
 
-#### **BaseInstanceSelector**
+### 📦 AWS Pricing Calculator Bulk Template
 
-- Abstract base class providing common functionality
-- Standardized data processing and filtering
-- Extensible architecture for new cloud providers
+AWS-only export that generates a CSV matching the EC2 Instances worksheet for the AWS Pricing Calculator Bulk Import. When both recommendation types are generated, **two separate files** are produced (Like-to-Like and Optimized) to prevent double-counting.
 
-#### **Provider-Specific Selectors**
+### ⚡ Background Data Loading
 
-- **AWS**: Graviton detection, Nitro support, comprehensive family filtering
-- **Azure**: ARM instance support, VM series categorization
-- **GCP**: T2A ARM instances, machine type categorization
+Instance data (~5 MB per provider) starts loading the moment the page opens. By the time you configure your CSV and options, data is already in memory. If Generate is clicked before loading completes, the request is queued and fires automatically when ready.
 
-#### **FileHandler System**
-
-- Optimized CSV parsing with error handling
-- Data validation and quality scoring
-- Drag-and-drop file upload support
+---
 
 ## 📁 Project Structure
 
 ```
-cloud-instance-recommender/
+Cloud-Instance-Recommender/
+├── index.html               # Landing page
+├── aws.html                 # AWS recommendations
+├── azure.html               # Azure recommendations
+├── gcp.html                 # GCP recommendations
+├── multicloud.html          # Multi-cloud comparison
+├── user-guide.html          # Full user guide (v3.0)
+├── user-guide.pdf           # PDF version of the user guide
 │
-├── 📄 LICENSE                  # Proprietary software license
-├── 📄 README.md               # Project documentation
+├── css/
+│   ├── style.css            # Main application styles
+│   └── index_style.css      # Landing page styles
 │
-├── 📄 HTML Pages
-│   ├── index.html              # Landing page
-│   ├── aws.html               # AWS recommendations
-│   ├── azure.html             # Azure recommendations
-│   ├── gcp.html               # GCP recommendations
-│   └── multicloud.html        # Multi-cloud comparison
+├── logos/                   # Cloud provider logos
 │
-├── 🎨 Styling
-│   ├── css/
-│   │   ├── style.css          # Main application styles
-│   │   └── index_style.css    # Landing page styles
-│   └── logos/                 # Cloud provider logos
-│       ├── aws-logo.png
-│       ├── azure-logo.png
-│       ├── gcp-logo.png
-│       └── multicloud-logo.png
-│
-└── 🧠 Core JavaScript
-    ├── js/base/
-    │   ├── base-instance-selector.js
-    │   ├── instance-selector-factory.js
-    │   ├── optimized_file_handler.js
-    │   └── main-script.js
+└── js/
+    ├── base/
+    │   ├── base-instance-selector.js       # Abstract base class
+    │   ├── instance-selector-factory.js    # Provider factory + recommendation orchestration
+    │   ├── rule-engine.js                  # ENV/OS/Workload/Compliance/MinGen rule logic
+    │   ├── optimized_file_handler.js       # CSV parsing and validation
+    │   └── main-script.js                  # Application controller
     │
-    ├── js/aws/
-    │   ├── aws-instance-selector.js
-    │   ├── aws-specific.js
-    │   └── aws-data.js
+    ├── aws/
+    │   ├── aws-instance-selector.js        # AWS-specific logic
+    │   ├── aws-specific.js                 # AWS filter UI and sample CSV
+    │   └── aws-data.js                     # EC2 instance pricing data (~5 MB)
     │
-    ├── js/azure/
-    │   ├── azure-instance-selector.js
-    │   ├── azure-specific.js
-    │   └── azure-data.js
+    ├── azure/
+    │   ├── azure-instance-selector.js      # Azure-specific logic
+    │   ├── azure-specific.js               # Azure filter UI and sample CSV
+    │   └── azure-data.js                   # Azure VM pricing data
     │
-    └── js/gcp/
-        ├── gcp-instance-selector.js
-        ├── gcp-specific.js
-        └── gcp-data.js
+    └── gcp/
+        ├── gcp-instance-selector.js        # GCP-specific logic
+        ├── gcp-specific.js                 # GCP filter UI and sample CSV
+        └── gcp-data.js                     # GCP Compute Engine pricing data
 ```
+
+---
 
 ## 🚀 Quick Start
 
-### **1. Access the Application**
+### 1. Access the Application
 
-Visit the live application at the official deployment URL to begin using the Cloud Instance Recommender.
-https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/
+[https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 
-### **2. Begin Analysis**
+Or run locally (no build tools needed):
 
-1. Navigate to your preferred cloud provider section
-2. Download and customize the CSV template
-3. Upload your VM inventory data
-4. Configure optimization settings
-5. Generate and download recommendations
+```bash
+git clone https://github.com/harshit-kandhwey/Cloud-Instance-Recommender.git
+cd Cloud-Instance-Recommender
+python -m http.server 8080
+# Open http://localhost:8080
+```
 
-## 📊 Usage Guide
+### 2. Prepare Your CSV
 
-### **Step 1: Navigate to Your Cloud Provider**
+Download the sample CSV from any provider page and fill in your VM inventory.
 
-1. **Open the Landing Page**: Visit the Cloud Instance Recommender homepage
-2. **Choose Your Provider**: Select your desired cloud platform:
-   - **AWS** - For Amazon EC2 recommendations
-   - **Azure** - For Microsoft Azure Virtual Machines
-   - **GCP** - For Google Cloud Compute Engine
-   - **Multi-Cloud** - For cross-provider comparison
+**Required columns:**
+| Column | Description |
+|--------|-------------|
+| `VM Name` | Identifier for the VM |
+| `CPU Count` | Number of vCPUs |
+| `Memory (GB)` | RAM in gigabytes |
+| `[Provider] Region` | e.g. `AWS Region`, `Azure Region`, `GCP Region` |
 
-### **Step 2: Download and Prepare Your Data**
+**Optional columns (enable rule-based filtering per row):**
+| Column | Values | Effect |
+|--------|--------|--------|
+| `CPU Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
+| `Memory Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
+| `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
+| `OS` | Linux / Windows / macOS | Affects ARM/Graviton eligibility |
+| `Workload` | General / Database / Web Server / Cache / ML/AI / Batch / HPC | Sorts preferred families first |
+| `Compliance` | PCI / HIPAA / FIPS | Enforces current-gen + Nitro requirements |
+| `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4 | Minimum instance generation to include |
 
-1. **Download Sample CSV**: Use the "📥 Download Sample CSV" button on your chosen provider page
-2. **Prepare Your Data**: Follow the sample format to create your VM inventory file
-
-**Sample CSV Format:**
+**Example (multi-cloud):**
 
 ```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region
-web-server-01,4,16,45,60,us-east-1
-db-server-02,8,32,70,80,us-west-2
-app-server-03,2,8,35,45,eu-west-1
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
+worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
 ```
 
-**Required Columns:**
+### 3. Generate Recommendations
 
-- `VM Name`: Identifier for your virtual machine
-- `CPU Count`: Number of vCPUs
-- `Memory (GB)`: RAM in gigabytes
-- `[Provider] Region`: Target region for recommendations (e.g., AWS Region, Azure Region, GCP Region)
+1. Upload your CSV file
+2. Select recommendation type (Like-to-Like / Optimized / Both)
+3. Configure optimization thresholds (optional)
+4. Set Rule Engine defaults in Advanced Filtering (optional)
+5. Click **Generate Recommendations**
+6. Download the results CSV (and AWS Bulk Template if on the AWS page)
 
-**Optional Columns:**
+---
 
-- `CPU Utilization`: Average CPU usage percentage
-- `Memory Utilization`: Average memory usage percentage
+## 📊 Output Format
 
-### **Step 3: Upload and Configure**
+The results CSV contains your original columns plus per-provider recommendation columns:
 
-1. **Upload CSV File**:
+| Column                                            | Description                                         |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                |
+| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                  |
+| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                      |
+| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                    |
+| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired |
+| _(Azure and GCP columns follow the same pattern)_ |                                                     |
 
-   - Drag and drop your CSV file into the upload area, or
-   - Click to select your CSV file from your computer
+> **Pricing is intentionally excluded from output.** Cloud pricing depends on region, OS, discounts, Reserved Instances, Savings Plans, and enterprise agreements — a static price in the CSV would be misleading within weeks. Use the provider's pricing calculator with the recommended instance types for authoritative cost figures.
 
-2. **Select Cloud Providers** (Multi-Cloud only):
+### AWS Bulk Template
 
-   - Check the boxes for AWS, Azure, and/or GCP as needed
-   - You can compare recommendations across multiple providers
+Available only on the AWS page. Produces a CSV matching the Amazon EC2 Instances worksheet format for [AWS Pricing Calculator Bulk Import](https://calculator.aws/#/bulk-import). When both L2L and Optimized are generated, two separate files appear — import only one per estimate to avoid double-counting.
 
-3. **Set Recommendation Type**:
-   - **Like-to-Like**: Find cheapest instances that meet or exceed current specs
-   - **Optimized**: Smart recommendations based on actual CPU/memory utilization data
-   - **Both**: Generate both like-to-like and optimized recommendations
+---
 
-### **Step 4: Advanced Configuration (Optional)**
+## 🔧 N/2, N, N+1 Optimization Strategy
 
-#### **Optimization Settings** (for Optimized recommendations)
+Industry-standard thresholds (fully editable in the UI):
 
-Configure the N/2, N, N+1 strategy thresholds (industry-standard defaults, adjustable in the UI):
+| Utilization | CPU action      | Memory action   |
+| ----------- | --------------- | --------------- |
+| ≤ 40%       | Downsize to N/2 | Downsize to N/2 |
+| 40–80%      | Keep same (N)   | Keep same (N)   |
+| > 80%       | Upsize to N+1   | Upsize to N+1   |
 
-- **CPU Optimization**:
+> AWS, Azure, and GCP cost advisors consistently flag resources with sustained average utilization below 40% as over-provisioned. The 80% upsize trigger aligns with SRE practice of maintaining headroom below 80% peak.
 
-  - Downsize (N/2) if average utilization ≤ 40% — preserves headroom for traffic spikes
-  - Keep same (N) if 40% < utilization ≤ 80%
-  - Upsize (N+1) if utilization > 80%
+---
 
-- **Memory Optimization**:
-  - Downsize (N/2) if average utilization ≤ 40%
-  - Keep same (N) if 40% < utilization ≤ 80%
-  - Upsize (N+1) if utilization > 80%
-
-> **Why 40% / 80%?** AWS, Azure, and GCP cost optimisation advisors consistently flag resources with sustained average utilisation below 40% as candidates for downsizing. The 80% upsize trigger aligns with the widely-adopted SRE practice of keeping peak utilisation below 80% to maintain headroom. Both thresholds are fully editable in the UI.
-
-#### **Advanced Filtering Options**
-
-- **Current Generation Only**: Include only latest generation instances
-- **Processor Preferences**: Choose Intel, AMD, or ARM/Graviton processors
-- **Instance Families**: Filter by general purpose, compute optimized, memory optimized
-- **Exclude Specific Types**: Avoid certain categories (GPU, Burstable, etc.)
-
-### **Step 5: Generate and Download Results**
-
-1. **Generate Recommendations**: Click "🔄 Generate Recommendations"
-2. **Monitor Progress**: Watch the processing status for your VM inventory
-3. **Review Statistics**: Check usage statistics and processing summary
-4. **Download Results**: Click "📥 Download Results CSV" to get your recommendations
-
-The downloaded CSV will include your original data plus new columns with instance recommendations (type, vCPUs, memory) and a "Rules Applied" column explaining which ENV/OS/Workload rules were triggered for each row. Pricing is intentionally excluded from output — use the provider's own pricing calculator for authoritative cost data.
-
-## 🔧 Configuration Options
-
-### **Recommendation Strategies**
-
-#### **Like-to-Like Strategy**
+## 🔌 API / Programmatic Usage
 
 ```javascript
-// Finds the cheapest instance that meets or exceeds:
-const requirements = {
-  minCpu: currentCpuCount,
-  minMemory: currentMemoryGB,
-  filters: advancedFilters,
-};
-```
-
-#### **N/2, N, N+1 Optimization Strategy**
-
-```javascript
-const optimizationRules = {
-  // CPU Rules (industry-standard defaults)
-  cpuDownsize: utilization <= 40, // N/2 (half current) — avg below 40% = over-provisioned
-  cpuKeepSame: 40 < utilization <= 80, // N (same) — right-sized zone
-  cpuUpsize: utilization > 80, // N+1 (add one) — approaching saturation
-
-  // Memory Rules (same thresholds)
-  memoryDownsize: utilization <= 40,
-  memoryKeepSame: 40 < utilization <= 80,
-  memoryUpsize: utilization > 80,
-};
-```
-
-### **Provider-Specific Features**
-
-#### **AWS**
-
-```javascript
-const awsOptions = {
-  currentGenerationOnly: true,
-  excludeGraviton: false, // Include ARM instances
-  restrictMainFamilies: ["m", "c", "r"], // Instance families
-  nitroSupport: true, // Latest networking
-};
-```
-
-#### **Azure**
-
-```javascript
-const azureOptions = {
-  restrictVMSeries: ["Dv3", "Ev3"], // VM series
-  excludeARM: false, // Include ARM instances
-  pricingTier: "Standard", // Pricing tier
-};
-```
-
-#### **GCP**
-
-```javascript
-const gcpOptions = {
-  restrictMachineSeries: ["n2", "c2"], // Machine series
-  excludePreemptible: true, // Exclude spot instances
-  customMachineTypes: false, // Standard types only
-};
-```
-
-## 📈 Output Format
-
-The tool generates enhanced CSV files with recommendations:
-
-```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,
-AWS Like-to-Like Instance,AWS Like-to-Like Price,AWS Like-to-Like vCPUs,AWS Like-to-Like Memory,
-AWS Optimized Instance,AWS Optimized Price,AWS Optimized vCPUs,AWS Optimized Memory,
-Azure Like-to-Like Instance,Azure Like-to-Like Price,...
-```
-
-### **Output Columns Explained**
-
-- **Instance Type**: Recommended instance (e.g., m5.large, Standard_D2s_v3)
-- **Price**: Hourly cost in USD
-- **vCPUs**: Number of virtual CPUs
-- **Memory**: RAM in GB
-- **Reasoning**: Why this instance was selected
-
-## 🎯 Advanced Features
-
-### **Data Validation**
-
-- **Quality Scoring**: Automatic data quality assessment (0-100%)
-- **Error Detection**: Missing values, invalid formats, duplicates
-- **Recommendations**: Suggestions for data improvement
-
-### **Filtering Engine**
-
-- **Current Generation**: Latest instance types only
-- **Processor Architecture**: Intel, AMD, ARM support
-- **Performance Tiers**: Burstable, standard, high-performance
-- **Cost Optimization**: Budget-aware recommendations
-
-### **Multi-Cloud Comparison**
-
-- **Side-by-Side**: Compare providers for each workload
-- **Cost Analysis**: Price differences across clouds
-- **Feature Mapping**: Equivalent instance types
-
-## 🔌 API Integration
-
-### **Programmatic Usage**
-
-```javascript
-// Create provider-specific selector
+// Create and initialize a provider selector
 const awsSelector = InstanceSelectorFactory.createSelector("aws");
 await awsSelector.initialize(csvData, regions);
 
-// Get recommendations
-const likeToLike = awsSelector.getLikeToLikeInstance(
-  "us-east-1",
-  4,
-  16,
-  options
-);
+// Like-to-Like
+const l2l = awsSelector.getLikeToLikeInstance("us-east-1", 4, 16, options);
 
+// Optimized
 const optimized = awsSelector.getOptimizedInstance(
   "us-east-1",
   4,
   16,
   45,
   60,
-  options
+  options,
 );
-```
 
-### **Batch Processing**
-
-```javascript
-// Process entire CSV with multiple providers
+// Batch — process full CSV across multiple providers
 const results = await getInstanceRecommendationWithSelector(
   csvData,
   ["aws", "azure", "gcp"],
@@ -380,155 +230,48 @@ const results = await getInstanceRecommendationWithSelector(
     generateLikeToLike: true,
     generateOptimized: true,
     currentGenerationOnly: true,
-  }
+    ruleDefaultEnv: "Production",
+    ruleDefaultWorkload: "Database",
+  },
 );
 ```
 
-## 🛠️ Architecture & Customization
-
-### **Extending Functionality** (For Authorized Developers)
-
-For those with appropriate licensing permissions, the modular architecture supports extensions:
-
-#### **Adding New Providers**
-
-1. **Create Provider Selector**:
-
-```javascript
-class NewProviderSelector extends BaseInstanceSelector {
-  getProviderName() { return "NewProvider"; }
-  getFieldMappings() { return {...}; }
-  getSampleData() { return [...]; }
-}
-```
-
-2. **Register in Factory**:
-
-```javascript
-// Update instance-selector-factory.js
-case 'newprovider':
-  return new NewProviderSelector();
-```
-
-3. **Create UI Components**:
-
-```javascript
-// newprovider-specific.js
-function initializeNewProviderFilters() {
-  // Provider-specific filtering UI
-}
-```
-
-#### **Custom Optimization Strategies** (Licensed Use)
-
-```javascript
-class CustomOptimizationStrategy extends BaseInstanceSelector {
-  getOptimizedInstance(region, cpu, memory, cpuUtil, memUtil, options) {
-    // Custom optimization logic for licensed implementations
-    return this.applyCustomStrategy(cpu, memory, cpuUtil, memUtil);
-  }
-}
-```
-
-## 📋 CSV Template
-
-Download sample CSV templates from the application:
-
-### **Single Provider**
-
-```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region
-web-server-01,4,16,45,60,us-east-1
-```
-
-### **Multi-Cloud**
-
-```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a
-```
-
-## 🐛 Troubleshooting
-
-### **Common Issues**
-
-#### **CSV Upload Failures**
-
-```
-Error: "CSV parsing failed"
-Solution: Ensure proper CSV format, check for special characters
-```
-
-#### **Missing Recommendations**
-
-```
-Error: "No instances meet filtering criteria"
-Solution: Relax filtering options or check region availability
-```
-
-#### **Performance Issues**
-
-```
-Issue: Slow processing with large files
-Solution: Files >1000 rows may take longer, consider splitting
-```
-
-### **Data Quality Issues**
-
-- **Missing Values**: Tool handles gracefully with warnings
-- **Invalid Formats**: Automatic data cleaning and validation
-- **Duplicate Headers**: Error detection with specific guidance
+---
 
 ## 🔒 Security & Privacy
 
-- **Client-Side Processing**: All data processing happens in your browser
-- **No Data Transmission**: CSV files are not uploaded to external servers
-- **Local Storage**: Usage statistics stored locally only
-- **No Authentication**: No login required, fully anonymous
-
-## 🧑‍💻 Technical Overview
-
-### **Code Architecture**
-
-- **JavaScript**: ES6+ with modular design patterns
-- **CSS**: BEM methodology for maintainable styling
-- **HTML**: Semantic markup with accessibility features
-- **Documentation**: Comprehensive inline documentation
-
-### **Demo Functions**
-
-The application includes built-in demonstration functions for testing:
-
-```javascript
-// Available demo functions for exploration
-demonstrateInstanceSelector();
-demonstrateAWSSelector();
-demonstrateRecommendationTypes();
-```
-
-## 📄 License
-
-This project is proprietary software protected by copyright. All rights reserved by Harshit Kandhwey.
-
-**Usage Rights**: This application is available for public viewing and demonstration purposes. For licensing inquiries, usage permissions, or collaboration opportunities, please contact the author directly.
-
-**Source Code**: The code is provided for transparency and educational understanding but may not be copied, modified, or redistributed without explicit permission.
-
-## 🙏 Acknowledgments
-
-- **Cloud Providers**: AWS, Microsoft Azure, Google Cloud Platform for their comprehensive documentation
-- **Technology Stack**: Modern web technologies enabling client-side processing
-- **AI Assistance**: This project was developed with AI assistance under human creative direction and control
-
-## 📞 Support & Contact
-
-- **Live Demo**: Experience the application through its official deployment
-- **Documentation**: Comprehensive guides and technical documentation provided
-- **Feedback**: Questions and suggestions welcome through official channels
-- **Licensing**: Contact for usage rights, partnerships, or collaboration opportunities
-
-For inquiries regarding licensing, commercial use, or technical collaboration, please reach out to the author directly.
+- **Client-Side Only** — All processing runs in your browser
+- **No Data Transmission** — CSV files never leave your machine
+- **No Authentication** — No login, fully anonymous
+- **Local Storage** — Only usage statistics are stored locally
 
 ---
 
-**Made with ❤️ for cloud infrastructure optimization**
+## 🛠️ Architecture
+
+The application uses a modular, class-based architecture:
+
+- **`BaseInstanceSelector`** — Abstract base with common region loading, data parsing, and filtering
+- **`AWSInstanceSelector` / `AzureInstanceSelector` / `GCPInstanceSelector`** — Provider-specific field mappings, region normalization, and generation detection
+- **`RuleEngine`** — Pure function that applies ENV/OS/Workload/Compliance/MinGen rules to the filtered candidate list
+- **`InstanceSelectorFactory`** — Creates the right selector per provider and orchestrates per-row processing
+- **`main-script.js`** — Application controller: file handling, UI events, download generation
+
+---
+
+## 📄 License
+
+Proprietary software — all rights reserved by Harshit Kandhwey.
+
+The application is available for public use and demonstration. Source code is provided for transparency. Copying, modification, or redistribution without explicit permission is not permitted.
+
+## 📞 Contact & Support
+
+- **Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
+- **User Guide**: See `user-guide.html` (or `user-guide.pdf`) in this repository
+- **Bugs / Requests**: Open an issue on GitHub
+- **Email**: harshitkandhwey@gmail.com
+
+---
+
+_Made with ❤️ for cloud infrastructure optimization_

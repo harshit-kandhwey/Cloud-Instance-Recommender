@@ -42,7 +42,7 @@ class InstanceSelectorFactory {
 window.getInstanceRecommendationWithSelector = async function (
   csvData,
   selectedProviders,
-  options
+  options,
 ) {
   console.log("Starting recommendation generation with multi-provider support");
   console.log("Selected providers:", selectedProviders);
@@ -64,7 +64,10 @@ window.getInstanceRecommendationWithSelector = async function (
   for (const provider of selectedProviders) {
     try {
       console.log(`Creating ${provider.toUpperCase()} selector`);
-      const selector = InstanceSelectorFactory.createSelector(provider);
+      // Reuse a pre-warmed selector if available — all regions already parsed in background
+      const selector =
+        (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
+        InstanceSelectorFactory.createSelector(provider);
 
       // Extract regions for this provider
       const regionColumn =
@@ -88,7 +91,7 @@ window.getInstanceRecommendationWithSelector = async function (
               families: Object.keys(stats.familyNameBreakdown).length,
             });
           }
-        })
+        }),
       );
     } catch (error) {
       console.error(`Failed to create selector for ${provider}:`, error);
@@ -120,11 +123,34 @@ window.getInstanceRecommendationWithSelector = async function (
       const region = row[regionColumn] || "";
 
       // Per-row rule engine inputs: CSV column → UI page default → built-in default
-      const rowEnv        = (row["ENV"] || row["Environment"] || options.ruleDefaultEnv || "").trim();
-      const rowOS         = (row["OS"] || row["Operating System"] || options.ruleDefaultOS || "").trim();
-      const rowWorkload   = (row["Workload"] || options.ruleDefaultWorkload || "General").trim();
-      const rowCompliance = (row["Compliance"] || options.ruleDefaultCompliance || "").trim();
-      const rowMinGen     = (row["Min Gen"] || row["MinGen"] || options.ruleDefaultMinGen || "").trim();
+      const rowEnv = (
+        row["ENV"] ||
+        row["Environment"] ||
+        options.ruleDefaultEnv ||
+        ""
+      ).trim();
+      const rowOS = (
+        row["OS"] ||
+        row["Operating System"] ||
+        options.ruleDefaultOS ||
+        ""
+      ).trim();
+      const rowWorkload = (
+        row["Workload"] ||
+        options.ruleDefaultWorkload ||
+        "General"
+      ).trim();
+      const rowCompliance = (
+        row["Compliance"] ||
+        options.ruleDefaultCompliance ||
+        ""
+      ).trim();
+      const rowMinGen = (
+        row["Min Gen"] ||
+        row["MinGen"] ||
+        options.ruleDefaultMinGen ||
+        ""
+      ).trim();
 
       // Merge per-row values into a row-specific options copy
       const rowOptions = {
@@ -138,6 +164,9 @@ window.getInstanceRecommendationWithSelector = async function (
 
       const providerUpper = provider.toUpperCase();
 
+      // Always initialize Rules Applied so the column schema is consistent across all rows
+      result[`${providerUpper} Rules Applied`] = "";
+
       if (!region || cpu === 0 || memory === 0) {
         console.warn(`Missing data for ${provider} in row ${index + 1}`);
 
@@ -145,7 +174,6 @@ window.getInstanceRecommendationWithSelector = async function (
           result[`${providerUpper} Like-to-Like Instance`] = "Missing data";
           result[`${providerUpper} Like-to-Like vCPUs`] = "N/A";
           result[`${providerUpper} Like-to-Like Memory (GiB)`] = "N/A";
-          result[`${providerUpper} Rules Applied`] = "";
         }
 
         if (generateOptimized) {
@@ -162,12 +190,15 @@ window.getInstanceRecommendationWithSelector = async function (
             region,
             cpu,
             memory,
-            rowOptions
+            rowOptions,
           );
-          result[`${providerUpper} Like-to-Like Instance`] = likeToLike.instanceType;
+          result[`${providerUpper} Like-to-Like Instance`] =
+            likeToLike.instanceType;
           result[`${providerUpper} Like-to-Like vCPUs`] = likeToLike.vCpus;
-          result[`${providerUpper} Like-to-Like Memory (GiB)`] = likeToLike.memory;
-          result[`${providerUpper} Rules Applied`] = likeToLike.rulesApplied || "";
+          result[`${providerUpper} Like-to-Like Memory (GiB)`] =
+            likeToLike.memory;
+          result[`${providerUpper} Rules Applied`] =
+            likeToLike.rulesApplied || "";
         }
 
         if (generateOptimized) {
@@ -178,17 +209,21 @@ window.getInstanceRecommendationWithSelector = async function (
               memory,
               cpuUtil,
               memoryUtil,
-              rowOptions
+              rowOptions,
             );
-            result[`${providerUpper} Optimized Instance`] = optimized.instanceType;
+            result[`${providerUpper} Optimized Instance`] =
+              optimized.instanceType;
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
-            result[`${providerUpper} Optimized Memory (GiB)`] = optimized.memory;
+            result[`${providerUpper} Optimized Memory (GiB)`] =
+              optimized.memory;
             // When only Optimized is selected, also record rules in the shared column
             if (!generateLikeToLike) {
-              result[`${providerUpper} Rules Applied`] = optimized.rulesApplied || "";
+              result[`${providerUpper} Rules Applied`] =
+                optimized.rulesApplied || "";
             }
           } else {
-            result[`${providerUpper} Optimized Instance`] = "No utilization data";
+            result[`${providerUpper} Optimized Instance`] =
+              "No utilization data";
             result[`${providerUpper} Optimized vCPUs`] = "N/A";
             result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
           }
@@ -196,14 +231,13 @@ window.getInstanceRecommendationWithSelector = async function (
       } catch (error) {
         console.error(
           `Error processing ${provider} for row ${index + 1}:`,
-          error
+          error,
         );
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Error";
           result[`${providerUpper} Like-to-Like vCPUs`] = "Error";
           result[`${providerUpper} Like-to-Like Memory (GiB)`] = "Error";
-          result[`${providerUpper} Rules Applied`] = "";
         }
 
         if (generateOptimized) {
@@ -238,7 +272,7 @@ function extractUniqueRegions(csvData, regionColumn, provider) {
       InstanceSelectorFactory.getProviderDefaultRegion(provider);
     regions.add(defaultRegion);
     console.log(
-      `No regions found for ${provider}, using default: ${defaultRegion}`
+      `No regions found for ${provider}, using default: ${defaultRegion}`,
     );
   }
 
@@ -272,7 +306,7 @@ window.getAvailableInstanceFamilies = function (provider) {
 window.validateProviderSupport = function (providers) {
   const supported = InstanceSelectorFactory.getSupportedProviders();
   const unsupported = providers.filter(
-    (p) => !supported.includes(p.toLowerCase())
+    (p) => !supported.includes(p.toLowerCase()),
   );
 
   if (unsupported.length > 0) {
@@ -287,9 +321,9 @@ window.validateProviderSupport = function (providers) {
 window.InstanceSelectorFactory = InstanceSelectorFactory;
 
 console.log(
-  "Instance Selector Factory initialized with multi-provider support"
+  "Instance Selector Factory initialized with multi-provider support",
 );
 console.log(
   "Supported providers:",
-  InstanceSelectorFactory.getSupportedProviders()
+  InstanceSelectorFactory.getSupportedProviders(),
 );

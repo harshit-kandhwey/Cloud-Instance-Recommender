@@ -21,6 +21,7 @@ This is a **client-side only** static web application. All data processing happe
 Please **do not** open a public issue for security vulnerabilities.
 
 Use GitHub's **Private Vulnerability Reporting** feature:
+
 1. Go to the [Security tab](../../security) of this repository
 2. Click **"Report a vulnerability"**
 3. Fill in the details
@@ -36,20 +37,22 @@ Alternatively, email: **harshitkandhwey@gmail.com** with the subject line `[SECU
 
 ### Response Timeline
 
-| Stage | Timeline |
-|-------|----------|
-| Acknowledgement | Within 48 hours |
-| Status update | Within 7 days |
+| Stage            | Timeline                               |
+| ---------------- | -------------------------------------- |
+| Acknowledgement  | Within 48 hours                        |
+| Status update    | Within 7 days                          |
 | Fix / Resolution | Within 30 days (depending on severity) |
 
 ### Scope
 
 **In scope:**
+
 - XSS vulnerabilities from CSV parsing
 - Data leakage through third-party script injection
 - Content Security Policy bypasses
 
 **Out of scope:**
+
 - GitHub Pages infrastructure vulnerabilities (report to GitHub)
 - Browser-specific security bugs (report to browser vendors)
 - Social engineering attacks

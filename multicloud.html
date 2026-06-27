@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -64,10 +64,10 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI
-app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,</pre
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
+app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,</pre
               >
             </div>
 
@@ -400,7 +400,10 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                 <input
                   type="checkbox"
                   id="restrictProcessorManufacturers"
-                  onchange="toggleProcessorManufacturerFilter(); checkRuleConflicts()"
+                  onchange="
+                    toggleProcessorManufacturerFilter();
+                    checkRuleConflicts();
+                  "
                 />
                 <label for="restrictProcessorManufacturers">
                   <strong>🔧 Restrict to specific processor types</strong>
@@ -414,10 +417,36 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
             <div id="processorManufacturerControls" class="hidden">
               <div class="form-group">
                 <label class="form-label"
-                  >Processor Architectures (Dynamic by Provider):</label
+                  >Processor Architecture (All Providers):</label
                 >
-                <div class="filter-checkbox-grid" id="processorCheckboxes">
-                  <!-- Will be populated by JavaScript based on selected providers -->
+                <div class="filter-checkbox-grid">
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_proc_intel" value="Intel" />
+                    <label for="mc_proc_intel"
+                      ><strong>Intel</strong>
+                      <span class="filter-description"
+                        >x86-64 · Xeon (AWS, Azure, GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_proc_amd" value="AMD" />
+                    <label for="mc_proc_amd"
+                      ><strong>AMD</strong>
+                      <span class="filter-description"
+                        >x86-64 · EPYC (AWS, Azure, GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_proc_arm" value="ARM" />
+                    <label for="mc_proc_arm"
+                      ><strong>ARM</strong>
+                      <span class="filter-description"
+                        >Graviton (AWS) · Ampere (Azure) · T2A (GCP)</span
+                      ></label
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -428,12 +457,15 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                 <input
                   type="checkbox"
                   id="restrictMainFamilies"
-                  onchange="toggleMainFamiliesFilter(); checkRuleConflicts()"
+                  onchange="
+                    toggleMainFamiliesFilter();
+                    checkRuleConflicts();
+                  "
                 />
                 <label for="restrictMainFamilies">
-                  <strong>📋 Restrict to specific instance families</strong>
+                  <strong>📋 Restrict to specific instance categories</strong>
                   <small style="display: block; color: #666">
-                    Choose main instance families (varies by provider)
+                    Filter by workload category across all providers
                   </small>
                 </label>
               </div>
@@ -442,10 +474,89 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
             <div id="mainFamiliesControls" class="hidden">
               <div class="form-group">
                 <label class="form-label"
-                  >Main Instance Families (Dynamic by Provider):</label
+                  >Instance Category (All Providers):</label
                 >
-                <div class="filter-checkbox-grid" id="mainFamiliesCheckboxes">
-                  <!-- Will be populated by JavaScript based on selected providers -->
+                <div class="filter-checkbox-grid">
+                  <div class="filter-checkbox-item">
+                    <input
+                      type="checkbox"
+                      id="mc_cat_general"
+                      value="general"
+                    />
+                    <label for="mc_cat_general"
+                      ><strong>General Purpose</strong>
+                      <span class="filter-description"
+                        >m/a (AWS) · D-series (Azure) · N1/N2/E2 (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input
+                      type="checkbox"
+                      id="mc_cat_burstable"
+                      value="burstable"
+                    />
+                    <label for="mc_cat_burstable"
+                      ><strong>General Purpose (Burstable)</strong>
+                      <span class="filter-description"
+                        >t (AWS) · B-series (Azure) · E2 shared-core (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_cat_memory" value="memory" />
+                    <label for="mc_cat_memory"
+                      ><strong>Memory Optimized</strong>
+                      <span class="filter-description"
+                        >r/x/z (AWS) · E/M-series (Azure) · M3/M4 (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input
+                      type="checkbox"
+                      id="mc_cat_compute"
+                      value="compute"
+                    />
+                    <label for="mc_cat_compute"
+                      ><strong>Compute Optimized</strong>
+                      <span class="filter-description"
+                        >c/f (AWS) · F-series (Azure) · C2D/C3/C4 (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input
+                      type="checkbox"
+                      id="mc_cat_storage"
+                      value="storage"
+                    />
+                    <label for="mc_cat_storage"
+                      ><strong>Storage Optimized</strong>
+                      <span class="filter-description"
+                        >i/d (AWS) · L-series (Azure) · Z3 (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_cat_gpu" value="gpu" />
+                    <label for="mc_cat_gpu"
+                      ><strong>GPU / Accelerated</strong>
+                      <span class="filter-description"
+                        >p/g/inf/trn (AWS) · N-series (Azure) · A2/A3/G2
+                        (GCP)</span
+                      ></label
+                    >
+                  </div>
+                  <div class="filter-checkbox-item">
+                    <input type="checkbox" id="mc_cat_hpc" value="hpc" />
+                    <label for="mc_cat_hpc"
+                      ><strong>HPC</strong>
+                      <span class="filter-description"
+                        >hpc (AWS) · H-series (Azure) · H3 (GCP)</span
+                      ></label
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -474,32 +585,163 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
             </div>
 
             <!-- Rule Engine Controls -->
-            <div id="ruleEnginePanel" style="margin-top:24px; padding:16px 20px; background:#eef3ff; border:1px solid #b8d0ff; border-radius:8px;">
-              <p style="margin:0 0 4px; font-weight:700; font-size:0.95em; color:#1a3a8f;">🧠 Rule Engine Defaults</p>
-              <p style="margin:0 0 12px; font-size:0.81em; color:#555;">Set page-level defaults applied to all rows across all selected providers. Per-row CSV columns override these. Conflicts with filters above are flagged in red.</p>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:10px; margin-bottom:14px;">
-                <div id="ruleGroupEnv" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
-                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">ENV</label>
-                  <select id="ruleDefaultEnv" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+            <div
+              id="ruleEnginePanel"
+              style="
+                margin-top: 24px;
+                padding: 16px 20px;
+                background: #eef3ff;
+                border: 1px solid #b8d0ff;
+                border-radius: 8px;
+              "
+            >
+              <p
+                style="
+                  margin: 0 0 4px;
+                  font-weight: 700;
+                  font-size: 0.95em;
+                  color: #1a3a8f;
+                "
+              >
+                🧠 Rule Engine Defaults
+              </p>
+              <p style="margin: 0 0 12px; font-size: 0.81em; color: #555">
+                Set page-level defaults applied to all rows across all selected
+                providers. Per-row CSV columns override these. Conflicts with
+                filters above are flagged in red.
+              </p>
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+                  gap: 10px;
+                  margin-bottom: 14px;
+                "
+              >
+                <div
+                  id="ruleGroupEnv"
+                  style="
+                    padding: 8px;
+                    border: 1.5px solid #b8d0ff;
+                    border-radius: 6px;
+                    background: white;
+                  "
+                >
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.8em;
+                      font-weight: 600;
+                      color: #444;
+                      margin-bottom: 4px;
+                    "
+                    >ENV</label
+                  >
+                  <select
+                    id="ruleDefaultEnv"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid #d0d0d0;
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
                     <option value="">— none —</option>
                     <option value="Production">Production</option>
                     <option value="Staging">Staging</option>
                     <option value="Dev">Dev</option>
                   </select>
-                  <div id="conflictEnv" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                  <div
+                    id="conflictEnv"
+                    style="
+                      display: none;
+                      color: #c00;
+                      font-size: 0.74em;
+                      margin-top: 3px;
+                      line-height: 1.3;
+                    "
+                  ></div>
                 </div>
-                <div id="ruleGroupOS" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
-                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">OS</label>
-                  <select id="ruleDefaultOS" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                <div
+                  id="ruleGroupOS"
+                  style="
+                    padding: 8px;
+                    border: 1.5px solid #b8d0ff;
+                    border-radius: 6px;
+                    background: white;
+                  "
+                >
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.8em;
+                      font-weight: 600;
+                      color: #444;
+                      margin-bottom: 4px;
+                    "
+                    >OS</label
+                  >
+                  <select
+                    id="ruleDefaultOS"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid #d0d0d0;
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
                     <option value="">— none —</option>
                     <option value="Linux">Linux</option>
                     <option value="Windows">Windows</option>
                   </select>
-                  <div id="conflictOS" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                  <div
+                    id="conflictOS"
+                    style="
+                      display: none;
+                      color: #c00;
+                      font-size: 0.74em;
+                      margin-top: 3px;
+                      line-height: 1.3;
+                    "
+                  ></div>
                 </div>
-                <div id="ruleGroupWorkload" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
-                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Workload</label>
-                  <select id="ruleDefaultWorkload" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                <div
+                  id="ruleGroupWorkload"
+                  style="
+                    padding: 8px;
+                    border: 1.5px solid #b8d0ff;
+                    border-radius: 6px;
+                    background: white;
+                  "
+                >
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.8em;
+                      font-weight: 600;
+                      color: #444;
+                      margin-bottom: 4px;
+                    "
+                    >Workload</label
+                  >
+                  <select
+                    id="ruleDefaultWorkload"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid #d0d0d0;
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
                     <option value="">— none —</option>
                     <option value="Web Server">Web Server</option>
                     <option value="Database">Database</option>
@@ -509,44 +751,235 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                     <option value="HPC">HPC</option>
                     <option value="SAP">SAP</option>
                   </select>
-                  <div id="conflictWorkload" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                  <div
+                    id="conflictWorkload"
+                    style="
+                      display: none;
+                      color: #c00;
+                      font-size: 0.74em;
+                      margin-top: 3px;
+                      line-height: 1.3;
+                    "
+                  ></div>
                 </div>
-                <div id="ruleGroupCompliance" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
-                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Compliance</label>
-                  <select id="ruleDefaultCompliance" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                <div
+                  id="ruleGroupCompliance"
+                  style="
+                    padding: 8px;
+                    border: 1.5px solid #b8d0ff;
+                    border-radius: 6px;
+                    background: white;
+                  "
+                >
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.8em;
+                      font-weight: 600;
+                      color: #444;
+                      margin-bottom: 4px;
+                    "
+                    >Compliance</label
+                  >
+                  <select
+                    id="ruleDefaultCompliance"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid #d0d0d0;
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
                     <option value="">— none —</option>
                     <option value="HIPAA">HIPAA</option>
                     <option value="PCI">PCI</option>
                     <option value="SOC2">SOC2</option>
                   </select>
-                  <div id="conflictCompliance" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                  <div
+                    id="conflictCompliance"
+                    style="
+                      display: none;
+                      color: #c00;
+                      font-size: 0.74em;
+                      margin-top: 3px;
+                      line-height: 1.3;
+                    "
+                  ></div>
                 </div>
-                <div id="ruleGroupMinGen" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
-                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Min Instance Gen</label>
-                  <select id="ruleDefaultMinGen" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                <div
+                  id="ruleGroupMinGen"
+                  style="
+                    padding: 8px;
+                    border: 1.5px solid #b8d0ff;
+                    border-radius: 6px;
+                    background: white;
+                  "
+                >
+                  <label
+                    style="
+                      display: block;
+                      font-size: 0.8em;
+                      font-weight: 600;
+                      color: #444;
+                      margin-bottom: 4px;
+                    "
+                    >Min Instance Gen</label
+                  >
+                  <select
+                    id="ruleDefaultMinGen"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid #d0d0d0;
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
                     <option value="">— any —</option>
                     <option value="5">AWS m5/r5 · Azure v3 · GCP N2</option>
                     <option value="6">AWS m6/r6 · Azure v4 · GCP N4</option>
                     <option value="7">AWS m7/r7 · Azure v5</option>
                   </select>
-                  <div id="conflictMinGen" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                  <div
+                    id="conflictMinGen"
+                    style="
+                      display: none;
+                      color: #c00;
+                      font-size: 0.74em;
+                      margin-top: 3px;
+                      line-height: 1.3;
+                    "
+                  ></div>
                 </div>
               </div>
-              <details style="font-size:0.82em;">
-                <summary style="cursor:pointer; color:#1a3a8f; font-weight:600; user-select:none;">Rule descriptions ▸</summary>
-                <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+              <details style="font-size: 0.82em">
+                <summary
+                  style="
+                    cursor: pointer;
+                    color: #1a3a8f;
+                    font-weight: 600;
+                    user-select: none;
+                  "
+                >
+                  Rule descriptions ▸
+                </summary>
+                <table
+                  style="
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 8px;
+                  "
+                >
                   <thead>
-                    <tr style="background:#c8deff;">
-                      <th style="padding:5px 8px; text-align:left; border:1px solid #b8d0ff; white-space:nowrap;">Rule</th>
-                      <th style="padding:5px 8px; text-align:left; border:1px solid #b8d0ff;">Effect (all providers)</th>
+                    <tr style="background: #c8deff">
+                      <th
+                        style="
+                          padding: 5px 8px;
+                          text-align: left;
+                          border: 1px solid #b8d0ff;
+                          white-space: nowrap;
+                        "
+                      >
+                        Rule
+                      </th>
+                      <th
+                        style="
+                          padding: 5px 8px;
+                          text-align: left;
+                          border: 1px solid #b8d0ff;
+                        "
+                      >
+                        Effect (all providers)
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">ENV=Production</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes burstable (t-family / B-series / e2-shared), enforces current-gen, min 4 vCPU for web/DB. AWS also requires Nitro under Compliance.</td></tr>
-                    <tr style="background:#f5f8ff;"><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">OS=Windows</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">De-prioritises ARM/Graviton families across all providers; prefers Intel or AMD</td></tr>
-                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Workload=Database</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">AWS r-family first · Azure E/M-series first · GCP n2-highmem/m1 first</td></tr>
-                    <tr style="background:#f5f8ff;"><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Compliance=HIPAA/PCI</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes burstable; enforces current-gen. AWS: requires Nitro-capable.</td></tr>
-                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Min Gen=m6/v4/N4</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes older generations: m5/r5 (AWS), Dsv3/Esv3 (Azure), N1 (GCP). Useful as m5 approaches EOL.</td></tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid #b8d0ff;
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        ENV=Production
+                      </td>
+                      <td style="padding: 5px 8px; border: 1px solid #b8d0ff">
+                        Excludes burstable (t-family / B-series / e2-shared),
+                        enforces current-gen, min 4 vCPU for web/DB. AWS also
+                        requires Nitro under Compliance.
+                      </td>
+                    </tr>
+                    <tr style="background: #f5f8ff">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid #b8d0ff;
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        OS=Windows
+                      </td>
+                      <td style="padding: 5px 8px; border: 1px solid #b8d0ff">
+                        De-prioritises ARM/Graviton families across all
+                        providers; prefers Intel or AMD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid #b8d0ff;
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        Workload=Database
+                      </td>
+                      <td style="padding: 5px 8px; border: 1px solid #b8d0ff">
+                        AWS r-family first · Azure E/M-series first · GCP
+                        n2-highmem/m1 first
+                      </td>
+                    </tr>
+                    <tr style="background: #f5f8ff">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid #b8d0ff;
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        Compliance=HIPAA/PCI
+                      </td>
+                      <td style="padding: 5px 8px; border: 1px solid #b8d0ff">
+                        Excludes burstable; enforces current-gen. AWS: requires
+                        Nitro-capable.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid #b8d0ff;
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        Min Gen=m6/v4/N4
+                      </td>
+                      <td style="padding: 5px 8px; border: 1px solid #b8d0ff">
+                        Excludes older generations: m5/r5 (AWS), Dsv3/Esv3
+                        (Azure), N1 (GCP). Useful as m5 approaches EOL.
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </details>
@@ -583,9 +1016,132 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
               <button class="btn btn-primary" onclick="downloadResults()">
                 📥 Download Results CSV
               </button>
+
+              <!-- Pricing Calculator Steps -->
+              <div
+                style="
+                  margin-top: 14px;
+                  display: grid;
+                  grid-template-columns: repeat(3, 1fr);
+                  gap: 10px;
+                  font-size: 0.82em;
+                "
+              >
+                <div
+                  style="
+                    background: #f0f4ff;
+                    border: 1px solid #c7d7ff;
+                    border-radius: 8px;
+                    padding: 11px;
+                  "
+                >
+                  <div
+                    style="font-weight: 700; color: #2c3e8c; margin-bottom: 5px"
+                  >
+                    🟠
+                    <a
+                      href="https://calculator.aws/#/"
+                      target="_blank"
+                      rel="noopener"
+                      style="color: #2c3e8c"
+                      >AWS Pricing Calculator</a
+                    >
+                  </div>
+                  <ol
+                    style="
+                      margin: 0;
+                      padding-left: 16px;
+                      color: #333;
+                      line-height: 1.65;
+                    "
+                  >
+                    <li>Create estimate</li>
+                    <li>
+                      <strong>Bulk import</strong> (top-right) → select template
+                      → upload CSV → Save
+                    </li>
+                    <li>
+                      <em>Or:</em> search EC2 → Configure → set instance → Save
+                    </li>
+                  </ol>
+                </div>
+                <div
+                  style="
+                    background: #f0f7ff;
+                    border: 1px solid #b3d1ff;
+                    border-radius: 8px;
+                    padding: 11px;
+                  "
+                >
+                  <div
+                    style="font-weight: 700; color: #0050a0; margin-bottom: 5px"
+                  >
+                    🔵
+                    <a
+                      href="https://azure.microsoft.com/en-in/pricing/calculator"
+                      target="_blank"
+                      rel="noopener"
+                      style="color: #0050a0"
+                      >Azure Pricing Calculator</a
+                    >
+                  </div>
+                  <ol
+                    style="
+                      margin: 0;
+                      padding-left: 16px;
+                      color: #333;
+                      line-height: 1.65;
+                    "
+                  >
+                    <li>
+                      Find <strong>Virtual Machines</strong> →
+                      <strong>Add to estimate</strong>
+                    </li>
+                    <li>Scroll down / click <strong>View</strong></li>
+                    <li>Configure region, OS &amp; VM size → Save</li>
+                  </ol>
+                </div>
+                <div
+                  style="
+                    background: #f0fff5;
+                    border: 1px solid #a0d9b3;
+                    border-radius: 8px;
+                    padding: 11px;
+                  "
+                >
+                  <div
+                    style="font-weight: 700; color: #1a6b3c; margin-bottom: 5px"
+                  >
+                    🟢
+                    <a
+                      href="https://cloud.google.com/products/calculator"
+                      target="_blank"
+                      rel="noopener"
+                      style="color: #1a6b3c"
+                      >GCP Pricing Calculator</a
+                    >
+                  </div>
+                  <ol
+                    style="
+                      margin: 0;
+                      padding-left: 16px;
+                      color: #333;
+                      line-height: 1.65;
+                    "
+                  >
+                    <li><strong>Add to estimate</strong></li>
+                    <li>Select <strong>Compute Engine</strong></li>
+                    <li>Configure machine type &amp; region → Save</li>
+                  </ol>
+                </div>
+              </div>
             </div>
 
-            <div id="resultsPreviewSection" class="hidden" style="margin-top:16px;"></div>
+            <div
+              id="resultsPreviewSection"
+              class="hidden"
+              style="margin-top: 16px"
+            ></div>
           </div>
         </section>
 
@@ -620,192 +1176,135 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
       </main>
     </div>
 
-    <!-- Enhanced Multi-Cloud Filter Initialization -->
+    <!-- Multi-Cloud Filter Logic -->
     <script>
-      // Enhanced multi-cloud filter management
+      // ── Helper: collect checked IDs from a category→values map ───────────────
+      function _mcFromMap(map) {
+        const out = new Set();
+        Object.entries(map).forEach(([id, vals]) => {
+          if (document.getElementById(id)?.checked)
+            vals.forEach((v) => out.add(v));
+        });
+        return [...out];
+      }
+
+      // ── Unified processor getter (overrides provider-specific ones) ────────────
+      function _mcProcessors() {
+        const p = [];
+        if (document.getElementById("mc_proc_intel")?.checked) p.push("Intel");
+        if (document.getElementById("mc_proc_amd")?.checked) p.push("AMD");
+        if (document.getElementById("mc_proc_arm")?.checked) {
+          p.push("ARM"); // Azure + GCP
+          p.push("AWS"); // AWS Graviton
+        }
+        return p;
+      }
+
+      // ── Category → AWS main families ─────────────────────────────────────────
+      function _mcAWSFamilies() {
+        return _mcFromMap({
+          mc_cat_general: ["m", "a"],
+          mc_cat_burstable: ["t"],
+          mc_cat_memory: ["r", "x", "z"],
+          mc_cat_compute: ["c", "f"],
+          mc_cat_storage: ["i", "d"],
+          mc_cat_gpu: ["p", "g", "inf", "trn", "dl", "vt"],
+          mc_cat_hpc: ["h"],
+        });
+      }
+
+      // ── Category → Azure series ───────────────────────────────────────────────
+      function _mcAzureSeries() {
+        return _mcFromMap({
+          mc_cat_general: ["D-series", "A-series"],
+          mc_cat_burstable: ["B-series"],
+          mc_cat_memory: ["E-series", "M-series"],
+          mc_cat_compute: ["F-series"],
+          mc_cat_storage: ["L-series"],
+          mc_cat_gpu: ["N-series"],
+          mc_cat_hpc: ["H-series"],
+        });
+      }
+
+      // ── Category → Azure VM families ─────────────────────────────────────────
+      function _mcAzureVMFamilies() {
+        return _mcFromMap({
+          mc_cat_general: ["Standard_D", "Standard_DS", "Standard_A"],
+          mc_cat_burstable: ["Standard_B"],
+          mc_cat_memory: [
+            "Standard_E",
+            "Standard_ES",
+            "Standard_M",
+            "Standard_MS",
+          ],
+          mc_cat_compute: ["Standard_F", "Standard_FS"],
+          mc_cat_storage: ["Standard_L", "Standard_LS"],
+          mc_cat_gpu: [
+            "Standard_N",
+            "Standard_NC",
+            "Standard_ND",
+            "Standard_NV",
+          ],
+          mc_cat_hpc: ["Standard_H"],
+        });
+      }
+
+      // ── Category → GCP machine families ──────────────────────────────────────
+      function _mcGCPFamilies() {
+        return _mcFromMap({
+          mc_cat_general: ["E2", "N1", "N2", "N2D", "N4", "N4D"],
+          mc_cat_burstable: ["E2"],
+          mc_cat_memory: ["M3", "M4"],
+          mc_cat_compute: ["C2D", "C3", "C3D", "C4"],
+          mc_cat_storage: ["Z3"],
+          mc_cat_gpu: ["A2", "A3", "G2"],
+          mc_cat_hpc: ["H3"],
+        });
+      }
+
+      // ── Override provider-specific getters with unified multicloud versions ──
+      window.getSelectedProcessorManufacturers = _mcProcessors;
+      window.getSelectedAzureProcessors = _mcProcessors;
+      window.getSelectedGCPProcessors = _mcProcessors;
+      window.getSelectedMainFamilies = _mcAWSFamilies;
+      window.getSelectedAzureSeries = _mcAzureSeries;
+      window.getSelectedAzureVMFamilies = _mcAzureVMFamilies;
+      window.getSelectedGCPFamilies = _mcGCPFamilies;
+
+      // ── Exclude controls (still dynamic per-provider) ─────────────────────────
       function updateMultiCloudFilters() {
-        console.log(
-          "Updating multi-cloud filters for selected providers:",
-          selectedProviders
-        );
-
-        // Clear existing filter options
-        clearFilterOptions();
-
-        // Update filters based on selected providers
-        selectedProviders.forEach((provider) => {
-          updateFiltersForProvider(provider);
-        });
-
-        // Update labels to be generic for multi-cloud
-        updateMultiCloudLabels();
+        const excludeCheckbox = document.getElementById("excludeTypes");
+        if (excludeCheckbox?.checked) updateExcludeControls();
       }
 
-      function clearFilterOptions() {
-        // Clear all dynamic filter containers
-        [
-          "familyNameCheckboxes",
-          "processorCheckboxes",
-          "mainFamiliesCheckboxes",
-        ].forEach((containerId) => {
-          const container = document.getElementById(containerId);
-          if (container) {
-            container.innerHTML = "";
-          }
-        });
-      }
-
-      function updateFiltersForProvider(provider) {
-        console.log(`Adding filters for ${provider}`);
-
-        // Add provider-specific filters based on available functions
-        switch (provider) {
-          case "aws":
-            if (typeof initializeAWSFilters !== "undefined") {
-              addAWSFiltersToMultiCloud();
-            }
-            break;
-          case "azure":
-            if (typeof initializeAzureFilters !== "undefined") {
-              addAzureFiltersToMultiCloud();
-            }
-            break;
-          case "gcp":
-            if (typeof initializeGCPFilters !== "undefined") {
-              addGCPFiltersToMultiCloud();
-            }
-            break;
-        }
-      }
-
-      function addAWSFiltersToMultiCloud() {
-        // Add AWS-specific filter options with provider prefix
-        const familyContainer = document.getElementById("familyNameCheckboxes");
-        const processorContainer = document.getElementById(
-          "processorCheckboxes"
-        );
-        const mainFamiliesContainer = document.getElementById(
-          "mainFamiliesCheckboxes"
-        );
-
-        if (typeof awsFilterData !== "undefined" && familyContainer) {
-          awsFilterData.instanceFamilyNames?.forEach((name, index) => {
-            const div = document.createElement("div");
-            div.className = "filter-checkbox-item";
-            div.innerHTML = `
-              <input type="checkbox" id="aws_family_${index}" value="${name}">
-              <label for="aws_family_${index}">
-                <strong>🔶 AWS: ${name}</strong>
-                <span class="filter-description">${
-                  typeof getFamilyNameDescription !== "undefined"
-                    ? getFamilyNameDescription(name)
-                    : ""
-                }</span>
-              </label>
-            `;
-            familyContainer.appendChild(div);
-          });
-        }
-      }
-
-      function addAzureFiltersToMultiCloud() {
-        // Add Azure-specific filter options with provider prefix
-        const familyContainer = document.getElementById("familyNameCheckboxes");
-        const processorContainer = document.getElementById(
-          "processorCheckboxes"
-        );
-
-        if (typeof azureAdvancedFilterData !== "undefined" && familyContainer) {
-          azureAdvancedFilterData.instanceSeries?.forEach((series, index) => {
-            const div = document.createElement("div");
-            div.className = "filter-checkbox-item";
-            div.innerHTML = `
-              <input type="checkbox" id="azure_family_${index}" value="${series}">
-              <label for="azure_family_${index}">
-                <strong>🔷 Azure: ${series}</strong>
-                <span class="filter-description">${
-                  typeof getAzureSeriesDescription !== "undefined"
-                    ? getAzureSeriesDescription(series)
-                    : ""
-                }</span>
-              </label>
-            `;
-            familyContainer.appendChild(div);
-          });
-        }
-      }
-
-      function addGCPFiltersToMultiCloud() {
-        // Add GCP-specific filter options with provider prefix
-        const familyContainer = document.getElementById("familyNameCheckboxes");
-        const processorContainer = document.getElementById(
-          "processorCheckboxes"
-        );
-
-        if (typeof gcpAdvancedFilterData !== "undefined" && familyContainer) {
-          gcpAdvancedFilterData.machineFamilies?.forEach((family, index) => {
-            const div = document.createElement("div");
-            div.className = "filter-checkbox-item";
-            div.innerHTML = `
-              <input type="checkbox" id="gcp_family_${index}" value="${family}">
-              <label for="gcp_family_${index}">
-                <strong>🔴 GCP: ${family}</strong>
-                <span class="filter-description">${
-                  typeof getGCPFamilyAdvancedDescription !== "undefined"
-                    ? getGCPFamilyAdvancedDescription(family)
-                    : ""
-                }</span>
-              </label>
-            `;
-            familyContainer.appendChild(div);
-          });
-        }
-      }
-
-      function updateMultiCloudLabels() {
-        // Update filter labels to be generic for multi-cloud
-        const labels = {
-          familyLabel: "Instance Family Categories (All Providers):",
-          processorLabel: "Processor Architectures (All Providers):",
-          mainLabel: "Main Instance Families (All Providers):",
-        };
-
-        const familyLabel = document.querySelector(
-          "#instanceFamilyNameControls .form-label"
-        );
-        if (familyLabel) familyLabel.textContent = labels.familyLabel;
-
-        const processorLabel = document.querySelector(
-          "#processorManufacturerControls .form-label"
-        );
-        if (processorLabel) processorLabel.textContent = labels.processorLabel;
-
-        const mainLabel = document.querySelector(
-          "#mainFamiliesControls .form-label"
-        );
-        if (mainLabel) mainLabel.textContent = labels.mainLabel;
-      }
-
-      // Override the toggleCloudProvider function to update filters
-      const originalToggleCloudProvider = window.toggleCloudProvider;
+      // Override toggleCloudProvider to refresh exclude options when providers change
+      const _origToggleCloudProvider = window.toggleCloudProvider;
       window.toggleCloudProvider = function (provider) {
-        // Call the original function
-        if (originalToggleCloudProvider) {
-          originalToggleCloudProvider(provider);
-        }
-
-        // Update multi-cloud filters
-        setTimeout(() => {
-          updateMultiCloudFilters();
-        }, 100);
+        if (_origToggleCloudProvider) _origToggleCloudProvider(provider);
+        setTimeout(updateMultiCloudFilters, 100);
       };
 
-      // Initialize on page load
+      // ── Init: reset checkboxes, hide panels, wire exclude ────────────────────
       document.addEventListener("DOMContentLoaded", function () {
-        // Initialize multi-cloud filters
-        setTimeout(() => {
-          updateMultiCloudFilters();
-        }, 500);
+        // Force-reset optional filter checkboxes (prevent browser state restoration)
+        [
+          "restrictProcessorManufacturers",
+          "restrictMainFamilies",
+          "excludeTypes",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.checked = false;
+        });
+        [
+          "processorManufacturerControls",
+          "mainFamiliesControls",
+          "excludeControls",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+
+        setTimeout(updateMultiCloudFilters, 300);
       });
     </script>
   </body>

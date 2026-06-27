@@ -1,0 +1,2809 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloud Instance Recommender — User Guide v3.0</title>
+    <style>
+      /* ── Reset & Base ─────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.65;
+        color: #1a202c;
+        background: #fff;
+      }
+
+      /* ── Print setup ──────────────────────────────────────────────────────── */
+      @page {
+        size: A4;
+        margin: 20mm 18mm 20mm 18mm;
+      }
+      @media print {
+        .no-print {
+          display: none !important;
+        }
+        a {
+          color: inherit;
+          text-decoration: none;
+        }
+        .page-break {
+          page-break-before: always;
+        }
+        .avoid-break {
+          page-break-inside: avoid;
+        }
+        /* Preserve background colours and gradients when printing */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+
+      /* ── Colour tokens ────────────────────────────────────────────────────── */
+      :root {
+        --brand: #1a56db;
+        --brand-lt: #ebf2ff;
+        --aws: #ff9900;
+        --aws-lt: #fff8ec;
+        --azure: #0078d4;
+        --azure-lt: #e8f4fd;
+        --gcp: #34a853;
+        --gcp-lt: #eafaf0;
+        --accent: #6b46c1;
+        --accent-lt: #f5f0ff;
+        --warn: #d97706;
+        --warn-lt: #fffbeb;
+        --danger: #dc2626;
+        --gray-50: #f8fafc;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-400: #94a3b8;
+        --gray-600: #475569;
+        --gray-800: #1e293b;
+      }
+
+      /* ── Cover page ───────────────────────────────────────────────────────── */
+      .cover {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e3a8a 50%,
+          #1a56db 100%
+        );
+        color: #fff;
+        padding: 60px 40px;
+        page-break-after: always;
+      }
+      @media print {
+        .cover {
+          height: 297mm;
+        }
+      }
+      .cover-logo {
+        font-size: 72px;
+        margin-bottom: 24px;
+      }
+      .cover h1 {
+        font-size: 34pt;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 10px;
+      }
+      .cover h2 {
+        font-size: 17pt;
+        font-weight: 400;
+        opacity: 0.85;
+        margin-bottom: 40px;
+      }
+      .cover-divider {
+        width: 80px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 2px;
+        margin: 0 auto 40px;
+      }
+      .cover-meta {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        font-size: 10pt;
+        opacity: 0.75;
+      }
+      .cover-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .badge-row {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 9pt;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .badge-aws {
+        background: var(--aws);
+        color: #1a202c;
+      }
+      .badge-azure {
+        background: var(--azure);
+        color: #fff;
+      }
+      .badge-gcp {
+        background: var(--gcp);
+        color: #fff;
+      }
+      .badge-mc {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      /* ── TOC ──────────────────────────────────────────────────────────────── */
+      .toc-page {
+        padding: 48px 0;
+        page-break-after: always;
+      }
+      .toc-page h2 {
+        font-size: 18pt;
+        font-weight: 700;
+        color: var(--brand);
+        border-bottom: 3px solid var(--brand);
+        padding-bottom: 10px;
+        margin-bottom: 28px;
+      }
+      .toc-section {
+        margin-bottom: 6px;
+      }
+      .toc-section > a {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        text-decoration: none;
+        color: var(--gray-800);
+        font-weight: 600;
+        font-size: 10.5pt;
+        padding: 4px 0;
+        border-bottom: 1px dotted var(--gray-200);
+      }
+      .toc-section > a:hover {
+        color: var(--brand);
+      }
+      .toc-sub {
+        padding-left: 20px;
+        margin-top: 2px;
+      }
+      .toc-sub a {
+        display: flex;
+        justify-content: space-between;
+        text-decoration: none;
+        color: var(--gray-600);
+        font-size: 9.5pt;
+        padding: 2px 0;
+      }
+      .toc-num {
+        color: var(--gray-400);
+        font-size: 9pt;
+      }
+
+      /* ── Page wrapper ─────────────────────────────────────────────────────── */
+      .content {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 0 0 48px;
+      }
+
+      /* ── Section headings ─────────────────────────────────────────────────── */
+      .section-heading {
+        margin-top: 48px;
+        margin-bottom: 20px;
+        page-break-after: avoid;
+      }
+      .section-heading h2 {
+        font-size: 17pt;
+        font-weight: 700;
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid var(--brand);
+        padding-bottom: 8px;
+      }
+      .section-heading h3 {
+        font-size: 12pt;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-top: 28px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-heading h4 {
+        font-size: 10.5pt;
+        font-weight: 700;
+        color: var(--gray-600);
+        margin-top: 18px;
+        margin-bottom: 8px;
+      }
+
+      /* ── Tables ───────────────────────────────────────────────────────────── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+        margin: 12px 0 20px;
+        page-break-inside: avoid;
+      }
+      th {
+        background: var(--brand);
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 12px;
+        text-align: left;
+        font-size: 9pt;
+        letter-spacing: 0.3px;
+      }
+      td {
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: top;
+      }
+      tr:nth-child(even) td {
+        background: var(--gray-50);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      /* Provider-coloured table headers */
+      .tbl-aws th {
+        background: var(--aws);
+        color: #1a202c;
+      }
+      .tbl-azure th {
+        background: var(--azure);
+      }
+      .tbl-gcp th {
+        background: var(--gcp);
+      }
+      .tbl-rule th {
+        background: var(--accent);
+      }
+
+      /* ── Callout boxes ────────────────────────────────────────────────────── */
+      .callout {
+        border-left: 4px solid;
+        border-radius: 0 6px 6px 0;
+        padding: 12px 16px;
+        margin: 14px 0;
+        page-break-inside: avoid;
+        font-size: 9.5pt;
+      }
+      .callout-info {
+        border-color: var(--brand);
+        background: var(--brand-lt);
+      }
+      .callout-warn {
+        border-color: var(--warn);
+        background: var(--warn-lt);
+      }
+      .callout-danger {
+        border-color: var(--danger);
+        background: #fff5f5;
+      }
+      .callout-success {
+        border-color: var(--gcp);
+        background: var(--gcp-lt);
+      }
+      .callout strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* ── Provider chips ───────────────────────────────────────────────────── */
+      .chip {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 8.5pt;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+      .chip-aws {
+        background: var(--aws-lt);
+        color: #92400e;
+        border: 1px solid var(--aws);
+      }
+      .chip-azure {
+        background: var(--azure-lt);
+        color: #1e40af;
+        border: 1px solid var(--azure);
+      }
+      .chip-gcp {
+        background: var(--gcp-lt);
+        color: #14532d;
+        border: 1px solid var(--gcp);
+      }
+
+      /* ── Code / CSV blocks ────────────────────────────────────────────────── */
+      pre,
+      code {
+        font-family: "Cascadia Code", "Fira Code", "Consolas", monospace;
+        font-size: 8.5pt;
+      }
+      pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 14px 16px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 10px 0 18px;
+        line-height: 1.5;
+        page-break-inside: avoid;
+      }
+      code {
+        background: var(--gray-100);
+        color: #be185d;
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+
+      /* ── Steps ────────────────────────────────────────────────────────────── */
+      .steps {
+        counter-reset: step;
+        list-style: none;
+        margin: 12px 0 20px;
+      }
+      .steps li {
+        counter-increment: step;
+        display: flex;
+        gap: 14px;
+        margin-bottom: 14px;
+        page-break-inside: avoid;
+      }
+      .steps li::before {
+        content: counter(step);
+        min-width: 28px;
+        height: 28px;
+        background: var(--brand);
+        color: #fff;
+        border-radius: 50%;
+        font-size: 9pt;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      /* ── Bullet lists ─────────────────────────────────────────────────────── */
+      ul,
+      ol {
+        padding-left: 20px;
+        margin: 8px 0 14px;
+      }
+      li {
+        margin-bottom: 4px;
+      }
+      ul.check {
+        list-style: none;
+        padding-left: 4px;
+      }
+      ul.check li::before {
+        content: "✓ ";
+        color: var(--gcp);
+        font-weight: 700;
+      }
+
+      /* ── Rule cards ───────────────────────────────────────────────────────── */
+      .rule-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 14px 0 20px;
+      }
+      .rule-card {
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        page-break-inside: avoid;
+      }
+      .rule-card-header {
+        padding: 8px 14px;
+        font-weight: 700;
+        font-size: 9pt;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .rule-card-body {
+        padding: 10px 14px;
+        font-size: 9pt;
+        line-height: 1.6;
+        color: var(--gray-600);
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      .rule-1a .rule-card-header {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .rule-1b .rule-card-header {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .rule-1c .rule-card-header {
+        background: #d1fae5;
+        color: #064e3b;
+      }
+      .rule-1d .rule-card-header {
+        background: #ede9fe;
+        color: #4c1d95;
+      }
+      .rule-os .rule-card-header {
+        background: #fee2e2;
+        color: #7f1d1d;
+      }
+      .rule-wl .rule-card-header {
+        background: #e0f2fe;
+        color: #0c4a6e;
+      }
+
+      /* ── Output column pills ──────────────────────────────────────────────── */
+      .col-pill {
+        display: inline-block;
+        font-family: monospace;
+        font-size: 8pt;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 4px;
+        padding: 1px 6px;
+        color: var(--gray-800);
+        white-space: nowrap;
+      }
+      .col-pill-new {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #14532d;
+      }
+
+      /* ── Footer ───────────────────────────────────────────────────────────── */
+      .doc-footer {
+        margin-top: 60px;
+        padding-top: 16px;
+        border-top: 1px solid var(--gray-200);
+        font-size: 8.5pt;
+        color: var(--gray-400);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      p {
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════════════════════════════════════
+     COVER PAGE
+     ══════════════════════════════════════════════════════════════════════ -->
+    <div class="cover">
+      <div class="cover-logo">🌐</div>
+      <h1>Cloud Instance Recommender</h1>
+      <h2>Complete User Guide</h2>
+      <div class="cover-divider"></div>
+      <div class="badge-row">
+        <span class="badge badge-aws">🔶 AWS EC2</span>
+        <span class="badge badge-azure">🔷 Azure VMs</span>
+        <span class="badge badge-gcp">🔴 GCP Compute</span>
+        <span class="badge badge-mc">☁ Multi-Cloud</span>
+      </div>
+      <div class="cover-meta">
+        <span>📄 Version 3.0</span>
+        <span>📅 June 2026</span>
+        <span>👥 IT Professionals · Cloud Architects · DevOps Engineers</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ══════════════════════════════════════════════════════════════════════ -->
+    <div class="content">
+      <div class="toc-page page-break">
+        <h2>📋 Table of Contents</h2>
+
+        <div class="toc-section">
+          <a href="#intro">1. Introduction <span class="toc-num">3</span></a>
+        </div>
+        <div class="toc-section">
+          <a href="#start">2. Getting Started <span class="toc-num">4</span></a>
+          <div class="toc-sub">
+            <a href="#requirements"
+              >System Requirements <span class="toc-num">4</span></a
+            >
+            <a href="#access"
+              >Accessing the Platform <span class="toc-num">4</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#data">3. Data Preparation <span class="toc-num">5</span></a>
+          <div class="toc-sub">
+            <a href="#required-cols"
+              >Required Columns <span class="toc-num">5</span></a
+            >
+            <a href="#optional-cols"
+              >Optional Columns (ENV, OS, Workload, Compliance, Min Gen)
+              <span class="toc-num">5</span></a
+            >
+            <a href="#sample-csv"
+              >Sample CSV Structure <span class="toc-num">6</span></a
+            >
+            <a href="#data-tips"
+              >Data Collection Tips <span class="toc-num">7</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#rules"
+            >4. Environment &amp; Workload Rules
+            <span class="toc-num">8</span></a
+          >
+          <div class="toc-sub">
+            <a href="#rule-1a"
+              >Rule 1a — Burstable Exclusion <span class="toc-num">8</span></a
+            >
+            <a href="#rule-1b"
+              >Rule 1b — Generation &amp; Compliance
+              <span class="toc-num">9</span></a
+            >
+            <a href="#rule-1c"
+              >Rule 1c — Minimum Size Floor <span class="toc-num">9</span></a
+            >
+            <a href="#rule-1d"
+              >Rule 1d — Network Preference <span class="toc-num">9</span></a
+            >
+            <a href="#rule-os"
+              >OS Compatibility Rules <span class="toc-num">10</span></a
+            >
+            <a href="#rule-wl"
+              >Workload Preference Rules <span class="toc-num">10</span></a
+            >
+            <a href="#rule-mg"
+              >Min Generation Rule <span class="toc-num">10</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#steps"
+            >5. Step-by-Step Usage Guide <span class="toc-num">11</span></a
+          >
+        </div>
+        <div class="toc-section">
+          <a href="#reco"
+            >6. Understanding Recommendations <span class="toc-num">14</span></a
+          >
+          <div class="toc-sub">
+            <a href="#l2l"
+              >Like-to-Like Strategy <span class="toc-num">14</span></a
+            >
+            <a href="#opt"
+              >N/2, N, N+1 Optimization Strategy
+              <span class="toc-num">14</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#output"
+            >7. Output Columns Explained <span class="toc-num">15</span></a
+          >
+        </div>
+        <div class="toc-section">
+          <a href="#export"
+            >8. Export Options <span class="toc-num">16</span></a
+          >
+          <div class="toc-sub">
+            <a href="#csv-export"
+              >Standard Results CSV <span class="toc-num">16</span></a
+            >
+            <a href="#bulk-export"
+              >AWS Pricing Calculator Bulk Template
+              <span class="toc-num">16</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#advanced"
+            >9. Advanced Filtering <span class="toc-num">17</span></a
+          >
+          <div class="toc-sub">
+            <a href="#rule-engine-ui"
+              >Rule Engine UI Controls <span class="toc-num">17</span></a
+            >
+            <a href="#conflict-detect"
+              >Conflict Detection <span class="toc-num">18</span></a
+            >
+          </div>
+        </div>
+        <div class="toc-section">
+          <a href="#multicloud"
+            >10. Multi-Cloud Comparison <span class="toc-num">19</span></a
+          >
+        </div>
+        <div class="toc-section">
+          <a href="#trouble"
+            >11. Troubleshooting <span class="toc-num">20</span></a
+          >
+        </div>
+        <div class="toc-section">
+          <a href="#best">12. Best Practices <span class="toc-num">22</span></a>
+        </div>
+        <div class="toc-section">
+          <a href="#faq">13. FAQ <span class="toc-num">23</span></a>
+        </div>
+        <div class="toc-section">
+          <a href="#conclusion"
+            >14. Conclusion <span class="toc-num">25</span></a
+          >
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     1. INTRODUCTION
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="intro" class="section-heading page-break">
+        <h2>📖 1. Introduction</h2>
+      </div>
+
+      <p>
+        Welcome to the <strong>Cloud Instance Recommender</strong>, a
+        comprehensive browser-based tool designed to help organisations optimise
+        their cloud infrastructure across AWS, Azure, and Google Cloud Platform.
+        All processing happens entirely in your browser — no data is ever
+        uploaded to an external server.
+      </p>
+
+      <p>
+        Version 3.0 builds on the Rule Engine introduced in v2.0 with five new
+        capabilities: <strong>interactive Rule Engine UI dropdowns</strong> that
+        set global defaults without CSV changes, a
+        <strong>Minimum Generation filter</strong> to exclude EOL instance
+        families (e.g., AWS m5/r5), <strong>conflict detection</strong> that
+        highlights contradicting filter combinations in red, a
+        <strong>split AWS Pricing Calculator Bulk Template</strong> that
+        generates separate files for Like-to-Like and Optimized recommendations,
+        and a <strong>Min Gen CSV column</strong> for per-row generation
+        control.
+      </p>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Benefit</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>📉 Right-sizing</td>
+            <td>
+              Identify over-provisioned VMs and recommend appropriately-sized
+              replacements
+            </td>
+          </tr>
+          <tr>
+            <td>⚙ Smart Scaling</td>
+            <td>
+              N/2, N, N+1 strategy with industry-standard 40 % / 80 % thresholds
+            </td>
+          </tr>
+          <tr>
+            <td>🛡 Rule-based guardrails</td>
+            <td>
+              Production environments automatically block burstable, prev-gen,
+              and undersized instances
+            </td>
+          </tr>
+          <tr>
+            <td>🖥 OS Compatibility</td>
+            <td>
+              Windows workloads automatically exclude ARM/Graviton instances
+              that cannot run them
+            </td>
+          </tr>
+          <tr>
+            <td>☁ Multi-Cloud</td>
+            <td>
+              Side-by-side recommendations across AWS, Azure, and GCP in one run
+            </td>
+          </tr>
+          <tr>
+            <td>📊 Audit trail</td>
+            <td>
+              "Rules Applied" output column explains every recommendation
+              decision
+            </td>
+          </tr>
+          <tr>
+            <td>🔒 Privacy-first</td>
+            <td>
+              100 % client-side — your inventory data never leaves your browser
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🌐 Supported Cloud Providers</h3>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Regions</th>
+            <th>Instance Families</th>
+            <th>Notable Support</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="chip chip-aws">AWS EC2</span></td>
+            <td>35 regions</td>
+            <td>t, m, c, r, x, z, p, g, i, d, trn, inf, mac, hpc…</td>
+            <td>Graviton (ARM), Nitro Enclaves, Bulk Template export</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-azure">Azure VMs</span></td>
+            <td>63 regions</td>
+            <td>B, D, E, F, H, L, M, N, NC, ND, NV…</td>
+            <td>ARM (Dpdsv5, Bpsv2), Burstable B-series detection</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-gcp">GCP Compute</span></td>
+            <td>47 regions</td>
+            <td>E2, N2, N4, C2, C3, C4, M1–M4, A2, A3, G2, T2A, H3, Z3…</td>
+            <td>T2A ARM, shared-core detection, zone normalisation</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     2. GETTING STARTED
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="start" class="section-heading page-break">
+        <h2>🚀 2. Getting Started</h2>
+      </div>
+
+      <div id="requirements">
+        <h3>📋 System Requirements</h3>
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Requirement</th>
+              <th>Specification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser</td>
+              <td>Chrome 80+, Firefox 75+, Edge 80+, Safari 13+</td>
+            </tr>
+            <tr>
+              <td>JavaScript</td>
+              <td>Must be enabled</td>
+            </tr>
+            <tr>
+              <td>CSV file size</td>
+              <td>Up to 10 MB (≈ 5,000–10,000 VMs)</td>
+            </tr>
+            <tr>
+              <td>Internet</td>
+              <td>
+                Required for initial page load; all processing is local
+                thereafter
+              </td>
+            </tr>
+            <tr>
+              <td>Local storage</td>
+              <td>Used for usage statistics only; no sensitive data stored</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="access">
+        <h3>🌐 Accessing the Platform</h3>
+        <p>The tool is hosted on GitHub Pages and requires no installation:</p>
+        <ol class="steps">
+          <li>
+            Open your browser and navigate to the Cloud Instance Recommender
+            URL.
+          </li>
+          <li>
+            From the homepage, select your target: <strong>AWS</strong>,
+            <strong>Azure</strong>, <strong>GCP</strong>, or
+            <strong>Multi-Cloud</strong>.
+          </li>
+          <li>
+            Each provider page loads independently with provider-specific
+            filtering options.
+          </li>
+        </ol>
+
+        <div class="callout callout-info">
+          <strong>Tip</strong>
+          The data files are large (AWS ~5 MB, Azure ~10 MB, GCP ~3 MB). On
+          first load, allow a few seconds for the browser to parse the instance
+          catalogue before uploading your CSV.
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     3. DATA PREPARATION
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="data" class="section-heading page-break">
+        <h2>📊 3. Data Preparation</h2>
+      </div>
+
+      <div id="required-cols">
+        <h3>📋 Required Columns</h3>
+        <p>
+          Every CSV row must contain the following columns. Column names are
+          auto-detected (case-insensitive, spaces/underscores normalised).
+        </p>
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="col-pill">VM Name</span></td>
+              <td>Unique identifier for the virtual machine</td>
+              <td>web-server-01</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill">CPU Count</span></td>
+              <td>Number of vCPUs currently allocated</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill">Memory (GB)</span></td>
+              <td>RAM in gigabytes currently allocated</td>
+              <td>16</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="col-pill">AWS Region</span> /
+                <span class="col-pill">Azure Region</span> /
+                <span class="col-pill">GCP Region</span>
+              </td>
+              <td>
+                Target cloud region for recommendation (provider-specific
+                column)
+              </td>
+              <td>us-east-1 / East US / us-central1-a</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill">CPU Utilization</span></td>
+              <td>
+                Average CPU utilisation % — required for Optimized
+                recommendations
+              </td>
+              <td>45</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill">Memory Utilization</span></td>
+              <td>
+                Average memory utilisation % — required for Optimized
+                recommendations
+              </td>
+              <td>60</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="optional-cols">
+        <h3>⚙ Optional Columns</h3>
+        <p>
+          These five columns activate the <strong>Rule Engine</strong>. All are
+          optional — blank cells use the safe defaults shown below. They can
+          also be set globally via the Rule Engine UI dropdowns in the Advanced
+          Filtering section (CSV per-row values always override the UI
+          defaults).
+        </p>
+
+        <table class="tbl-rule avoid-break">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Accepted Values</th>
+              <th>Default</th>
+              <th>What it activates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="col-pill col-pill-new">ENV</span></td>
+              <td>
+                <code>Production</code>, <code>Prod</code>,
+                <code>Staging</code>, <code>Stage</code>, <code>Dev</code>,
+                <code>Test</code>
+              </td>
+              <td>No rules</td>
+              <td>Rules 1a, 1b, 1c, 1d — see Section 4</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill col-pill-new">OS</span></td>
+              <td>
+                <code>Linux</code>, <code>Windows</code>,
+                <code>Windows Server</code>, <code>macOS</code>
+              </td>
+              <td>Linux</td>
+              <td>
+                ARM/Graviton exclusion for Windows; mac1/mac2-only for macOS
+                (AWS)
+              </td>
+            </tr>
+            <tr>
+              <td><span class="col-pill col-pill-new">Workload</span></td>
+              <td>
+                <code>General</code>, <code>Database</code>,
+                <code>Web Server</code>, <code>Cache</code>, <code>ML/AI</code>,
+                <code>Batch</code>, <code>HPC</code>
+              </td>
+              <td>General</td>
+              <td>
+                Preferred instance families sorted first before cheapest
+                selection
+              </td>
+            </tr>
+            <tr>
+              <td><span class="col-pill col-pill-new">Compliance</span></td>
+              <td><code>PCI</code>, <code>HIPAA</code>, <code>FIPS</code></td>
+              <td>None</td>
+              <td>Forces current-gen + Nitro Enclaves (AWS PCI/HIPAA)</td>
+            </tr>
+            <tr>
+              <td><span class="col-pill col-pill-new">Min Gen</span></td>
+              <td>
+                <span class="chip chip-aws">AWS</span> <code>5</code>,
+                <code>6</code>, <code>7</code><br />
+                <span class="chip chip-azure">Azure</span> <code>3</code>,
+                <code>4</code>, <code>5</code> (v-number)<br />
+                <span class="chip chip-gcp">GCP</span> <code>n2</code>,
+                <code>n2d</code>, <code>n4</code>
+              </td>
+              <td>No minimum</td>
+              <td>
+                Excludes instances older than the specified generation (e.g.,
+                AWS m5 is excluded when Min Gen = 6)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>How rules are applied</strong>
+          Rules are evaluated per-row — each VM in your CSV can have different
+          ENV, OS, Workload, and Compliance values. A
+          <strong>Rules Applied</strong> column in the output CSV documents
+          exactly which rules fired for each VM.
+        </div>
+      </div>
+
+      <div id="sample-csv">
+        <h3>📄 Sample CSV Structure</h3>
+        <pre>
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-east-1,Production,Linux,Web Server,,6
+db-server-02,8,32,70,80,us-west-2,Production,Windows,Database,PCI,7
+app-server-03,2,8,35,45,eu-west-1,Dev,Linux,General,,
+cache-server-04,4,16,25,30,us-east-1,Staging,Linux,Cache,,6
+ml-server-05,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
+        >
+
+        <div class="callout callout-warn">
+          <strong>Formatting rules</strong>
+          Save files as UTF-8 CSV. Do not include currency symbols or % signs in
+          numeric columns — the tool strips them automatically. Region names
+          must match the exact format shown in the in-app sample template.
+        </div>
+      </div>
+
+      <div id="data-tips">
+        <h3>💡 Data Collection Tips</h3>
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Where to get utilisation data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="chip chip-aws">AWS</span></td>
+              <td>
+                CloudWatch → EC2 → CPUUtilization metric (14–90 day average
+                recommended). Cost Explorer for current instance types.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-azure">Azure</span></td>
+              <td>
+                Azure Monitor → Virtual Machines → Percentage CPU &amp;
+                Available Memory. Azure Advisor for existing recommendations.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-gcp">GCP</span></td>
+              <td>
+                Cloud Monitoring →
+                compute.googleapis.com/instance/cpu/utilization. Recommender API
+                for existing rightsizing signals.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>Collection best practices:</strong></p>
+        <ul class="check">
+          <li>
+            Use a 30–90 day average — short windows miss weekly/monthly patterns
+          </li>
+          <li>
+            Include at least one peak business period (quarter end, product
+            launch, etc.)
+          </li>
+          <li>
+            Use P95 or P99 if your workload has spiky traffic, not just averages
+          </li>
+          <li>
+            Validate CPU count and memory against the actual current instance
+            type, not OS-reported values
+          </li>
+        </ul>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     4. RULE ENGINE
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="rules" class="section-heading page-break">
+        <h2>🛡 4. Environment &amp; Workload Rules</h2>
+      </div>
+
+      <p>
+        The Rule Engine applies automatically when optional CSV columns are
+        present. Rules narrow the candidate instance list <em>before</em> the
+        cheapest-match selection runs — so every recommendation already
+        satisfies your environment constraints.
+      </p>
+
+      <div class="rule-grid avoid-break">
+        <div class="rule-card rule-1a">
+          <div class="rule-card-header">⚡ Rule 1a — Burstable Exclusion</div>
+          <div class="rule-card-body">
+            <strong>When:</strong> ENV = Production or Staging<br />
+            <strong>Effect:</strong> Removes CPU-credit-based families<br /><br />
+            <span class="chip chip-aws">AWS</span> t1, t2, t3, t3a, t4g<br />
+            <span class="chip chip-azure">Azure</span> B-series (bsv2, bsv3,
+            bpsv2…)<br />
+            <span class="chip chip-gcp">GCP</span> f1-micro, g1-small, e2
+            shared-core
+          </div>
+        </div>
+        <div class="rule-card rule-1b">
+          <div class="rule-card-header">
+            🕐 Rule 1b — Generation &amp; Compliance
+          </div>
+          <div class="rule-card-body">
+            <strong>When:</strong> ENV = Production OR Compliance set<br />
+            <strong>Effect:</strong> Current-generation instances only<br /><br />
+            Additionally for
+            <span class="chip chip-aws">AWS</span> PCI/HIPAA:<br />
+            Nitro Enclaves support required<br /><br />
+            Rationale: Prev-gen lacks modern security features
+          </div>
+        </div>
+        <div class="rule-card rule-1c">
+          <div class="rule-card-header">📏 Rule 1c — Minimum Size Floor</div>
+          <div class="rule-card-body">
+            <strong>When:</strong> ENV = Production or Staging<br />
+            <strong>Effect:</strong> Excludes undersized instances<br /><br />
+            <span class="chip chip-aws">AWS</span> Excludes nano and micro
+            sizes<br />
+            <span class="chip chip-azure">Azure</span> ≥ 2 vCPUs (Production)<br />
+            <span class="chip chip-gcp">GCP</span> ≥ 2 vCPUs (Production)<br /><br />
+            Rationale: Headroom for monitoring agents and traffic spikes
+          </div>
+        </div>
+        <div class="rule-card rule-1d">
+          <div class="rule-card-header">🌐 Rule 1d — Network Preference</div>
+          <div class="rule-card-body">
+            <strong>When:</strong> ENV = Production AND Workload = Database or
+            Web Server<br />
+            <strong>Effect:</strong> Prefers instances with ≥ 4 vCPUs<br /><br />
+            Rationale: Larger instance sizes map to higher network bandwidth
+            tiers, critical for database replication and high-throughput web
+            traffic
+          </div>
+        </div>
+        <div class="rule-card rule-os">
+          <div class="rule-card-header">🖥 OS — Compatibility Rules</div>
+          <div class="rule-card-body">
+            <strong>OS = Windows / Windows Server:</strong><br />
+            Excludes all ARM/Graviton instances (t4g, m6g, c6g, r6g on AWS;
+            Dpdsv5, Bpsv2 on Azure; T2A on GCP)<br /><br />
+            <strong>OS = macOS</strong>
+            <span class="chip chip-aws">AWS only</span>:<br />
+            Limits to mac1 and mac2 families
+          </div>
+        </div>
+        <div class="rule-card rule-wl">
+          <div class="rule-card-header">🎯 Workload — Family Preference</div>
+          <div class="rule-card-body">
+            Sorts recommended families to the top before cheapest-selection
+            runs. Falls back to cheapest overall if no preferred family has
+            matching instances.
+          </div>
+        </div>
+      </div>
+
+      <div id="rule-mg"></div>
+      <h3>🔢 Min Generation Rule (MG)</h3>
+      <p>
+        The Min Generation rule excludes instances older than a specified
+        hardware generation. This is useful when older generations are
+        approaching end-of-life (e.g., AWS m5/r5 EOL) or when you have a policy
+        requiring modern silicon.
+      </p>
+
+      <table class="tbl-rule avoid-break">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Column / UI value</th>
+            <th>Excluded when set to...</th>
+            <th>Included families</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="chip chip-aws">AWS</span></td>
+            <td><code>5</code>, <code>6</code>, <code>7</code></td>
+            <td>Min Gen = 6 → excludes m5, r5, c5, t3, and all earlier gens</td>
+            <td>m6i, m6a, m7i, m7g, r6i, r7a, c6i, c7g…</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-azure">Azure</span></td>
+            <td><code>3</code>, <code>4</code>, <code>5</code> (v-number)</td>
+            <td>Min Gen = 4 → excludes Dsv3, Esv3 and older</td>
+            <td>Dsv4, Dsv5, Esv4, Esv5, Fsv2…</td>
+          </tr>
+          <tr>
+            <td><span class="chip chip-gcp">GCP</span></td>
+            <td>
+              <code>n2</code>, <code>n2d</code>, <code>n4</code> (family name)
+            </td>
+            <td>Min Gen = n2 → excludes N1, E2 shared-core, F1, G1</td>
+            <td>N2, N2D, C2, C2D, T2A, A2, G2, C3, N4, C4…</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-info">
+        <strong>Multi-Cloud Min Gen</strong>
+        On the Multi-Cloud page, Min Gen uses AWS generation numbers (5/6/7) as
+        a unified reference. Azure values are mapped by subtracting 2 (AWS 6 →
+        Azure v4), and GCP values are mapped to the corresponding generation
+        tier.
+      </div>
+
+      <div id="rule-os"></div>
+      <div id="rule-wl"></div>
+
+      <h3>🎯 Workload Family Mappings</h3>
+
+      <table class="tbl-aws avoid-break">
+        <thead>
+          <tr>
+            <th>Workload</th>
+            <th>AWS Preferred Families</th>
+            <th>Azure Preferred Series</th>
+            <th>GCP Preferred Series</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>General</td>
+            <td>m (General Purpose)</td>
+            <td>D-series</td>
+            <td>N2, E2</td>
+          </tr>
+          <tr>
+            <td>Database</td>
+            <td>r, x, z (Memory-optimised)</td>
+            <td>E-series, M-series</td>
+            <td>M1, M2, M3, M4</td>
+          </tr>
+          <tr>
+            <td>Web Server</td>
+            <td>m, c (General + Compute)</td>
+            <td>D-series, F-series</td>
+            <td>N2, E2, N4</td>
+          </tr>
+          <tr>
+            <td>Cache</td>
+            <td>r, x (Memory-optimised)</td>
+            <td>E-series, M-series</td>
+            <td>M1, M2, M3</td>
+          </tr>
+          <tr>
+            <td>ML/AI</td>
+            <td>p, g, trn, inf (GPU/Accelerated)</td>
+            <td>NC, ND, NV series</td>
+            <td>A2, A3, G2</td>
+          </tr>
+          <tr>
+            <td>Batch</td>
+            <td>c, m (Compute-optimised)</td>
+            <td>F-series, D-series</td>
+            <td>C2, C2D, C3, C3D</td>
+          </tr>
+          <tr>
+            <td>HPC</td>
+            <td>hpc, c</td>
+            <td>HB, HC series</td>
+            <td>H3, C2</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>📋 Rules Reference Summary</h3>
+      <table class="tbl-rule avoid-break">
+        <thead>
+          <tr>
+            <th>Rule</th>
+            <th>Trigger</th>
+            <th>Action</th>
+            <th>Output tag</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1a</td>
+            <td>ENV = Production or Staging</td>
+            <td>Remove burstable families</td>
+            <td><code>1a: Burstable excluded</code></td>
+          </tr>
+          <tr>
+            <td>1b</td>
+            <td>ENV = Production or Compliance set</td>
+            <td>Current-gen only</td>
+            <td><code>1b: Prev-gen excluded</code></td>
+          </tr>
+          <tr>
+            <td>1b-Nitro</td>
+            <td>Compliance = PCI/HIPAA + AWS</td>
+            <td>Nitro Enclaves required</td>
+            <td><code>1b: Nitro required (Compliance)</code></td>
+          </tr>
+          <tr>
+            <td>1c</td>
+            <td>ENV = Production or Staging</td>
+            <td>Size floor (no nano/micro)</td>
+            <td><code>1c: Size floor applied</code></td>
+          </tr>
+          <tr>
+            <td>1d</td>
+            <td>ENV = Production + DB/Web Workload</td>
+            <td>≥ 4 vCPUs preferred</td>
+            <td><code>1d: Network-tier preference (≥4 vCPUs)</code></td>
+          </tr>
+          <tr>
+            <td>OS-Win</td>
+            <td>OS = Windows</td>
+            <td>Exclude ARM/Graviton</td>
+            <td><code>OS: ARM excluded (Windows)</code></td>
+          </tr>
+          <tr>
+            <td>OS-Mac</td>
+            <td>OS = macOS (AWS only)</td>
+            <td>mac1/mac2 families only</td>
+            <td><code>OS: mac1/mac2 only (macOS)</code></td>
+          </tr>
+          <tr>
+            <td>Workload</td>
+            <td>Workload ≠ General</td>
+            <td>Preferred families sorted first</td>
+            <td><code>Workload: database preference</code></td>
+          </tr>
+          <tr>
+            <td>MG</td>
+            <td>Min Gen set (CSV or UI)</td>
+            <td>Exclude instances below specified generation</td>
+            <td><code>MinGen: 6+</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <strong>Fallback behaviour</strong>
+        If a combination of rules eliminates all candidate instances (e.g.,
+        Production + PCI + very small CPU/memory requirement), the engine notes
+        this in the Rules Applied column with a warning and falls back to the
+        closest available instance. Check the Rules Applied column if you see
+        unexpected recommendations.
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     5. STEP-BY-STEP USAGE GUIDE
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="steps" class="section-heading page-break">
+        <h2>📋 5. Step-by-Step Usage Guide</h2>
+      </div>
+
+      <h3>Step 1 — Choose Your Cloud Provider</h3>
+      <ul>
+        <li>
+          <strong>Single provider:</strong> Navigate directly to the AWS, Azure,
+          or GCP page for focused recommendations with provider-specific
+          filtering options.
+        </li>
+        <li>
+          <strong>Multi-cloud:</strong> Use the Multi-Cloud page to compare
+          recommendations across all three providers in a single run from one
+          CSV upload.
+        </li>
+      </ul>
+
+      <h3>Step 2 — Download and Prepare the Template</h3>
+      <ol class="steps">
+        <li>
+          Click <strong>Download Sample CSV</strong> on the provider page to get
+          a template with the correct column headers.
+        </li>
+        <li>
+          Replace the sample rows with your actual VM inventory. Include the
+          optional ENV, OS, Workload, and Compliance columns where applicable.
+        </li>
+        <li>Save the file as UTF-8 CSV.</li>
+      </ol>
+
+      <h3>Step 3 — Upload Your CSV</h3>
+      <ol class="steps">
+        <li>
+          Drag and drop your CSV onto the upload zone, or click it to browse.
+        </li>
+        <li>
+          The tool automatically validates the file, checks required columns,
+          shows a data preview, and assigns a quality score (0–100 %).
+        </li>
+        <li>
+          Review any warnings before proceeding — common issues include missing
+          region columns or non-numeric CPU/memory values.
+        </li>
+      </ol>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Quality Score</th>
+            <th>Level</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>90–100 %</td>
+            <td>✅ Excellent</td>
+            <td>Complete data, minimal issues</td>
+          </tr>
+          <tr>
+            <td>70–89 %</td>
+            <td>🟡 Good</td>
+            <td>Some missing optional values</td>
+          </tr>
+          <tr>
+            <td>50–69 %</td>
+            <td>🟠 Fair</td>
+            <td>Multiple data quality issues</td>
+          </tr>
+          <tr>
+            <td>&lt; 50 %</td>
+            <td>🔴 Poor</td>
+            <td>Significant missing or invalid data</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Step 4 — Select Recommendation Type</h3>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>What it does</th>
+            <th>When to use</th>
+            <th>Data needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Like-to-Like</strong></td>
+            <td>
+              Finds cheapest instance with ≥ current CPU and ≥ current memory
+            </td>
+            <td>Conservative migrations; guaranteed headroom</td>
+            <td>CPU Count, Memory (GB), Region</td>
+          </tr>
+          <tr>
+            <td><strong>Optimized</strong></td>
+            <td>
+              Applies N/2, N, N+1 strategy to right-size based on actual
+              utilisation
+            </td>
+            <td>Cost reduction; over-provisioned estate</td>
+            <td>Above + CPU Utilization, Memory Utilization</td>
+          </tr>
+          <tr>
+            <td><strong>Both</strong></td>
+            <td>Generates both columns per VM for comparison</td>
+            <td>Decision-making; stakeholder reporting</td>
+            <td>All columns</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Step 5 — Configure Optimization Settings</h3>
+      <p><em>(Only relevant for Optimized or Both recommendation types)</em></p>
+
+      <h4>Optimization Mode</h4>
+      <ul>
+        <li>
+          <strong>CPU-Based:</strong> Scale CPU according to utilisation
+          thresholds
+        </li>
+        <li>
+          <strong>Memory-Based:</strong> Scale memory according to utilisation
+          thresholds
+        </li>
+        <li>Both can be enabled simultaneously</li>
+      </ul>
+
+      <h4>N/2, N, N+1 Thresholds (Industry-Standard Defaults)</h4>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Zone</th>
+            <th>CPU / Memory Utilisation</th>
+            <th>Action</th>
+            <th>Rationale</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Downsize (N÷2)</td>
+            <td>≤ <strong>40 %</strong></td>
+            <td>Halve the target resource</td>
+            <td>
+              Avg below 40 % = significantly over-provisioned; AWS, Azure, and
+              GCP advisors all flag this range
+            </td>
+          </tr>
+          <tr>
+            <td>Keep Same (N)</td>
+            <td>40 % – 80 %</td>
+            <td>Use current resource count</td>
+            <td>Right-sized zone with adequate headroom for spikes</td>
+          </tr>
+          <tr>
+            <td>Upsize (N+1)</td>
+            <td>&gt; <strong>80 %</strong></td>
+            <td>Add one unit of the resource</td>
+            <td>
+              SRE best practice: keep utilisation below 80 % to avoid saturation
+              incidents
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-info">
+        <strong>These defaults are editable</strong>
+        The downsize and keep-max thresholds can be adjusted in the UI. For
+        example, if you use P95 utilisation data (not averages), you may want to
+        lower the downsize threshold to 30 %.
+      </div>
+
+      <h3>
+        Step 6 — Configure Rule Engine &amp; Advanced Filtering (Optional)
+      </h3>
+      <p>
+        Expand the <strong>Advanced Filtering</strong> section to access both
+        the Rule Engine UI controls and provider-specific filters.
+      </p>
+
+      <h4>Rule Engine Defaults</h4>
+      <p>
+        Five dropdowns let you set rule defaults for the entire batch without
+        modifying your CSV. Per-row CSV column values always take priority over
+        these UI defaults.
+      </p>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Dropdown</th>
+            <th>Options</th>
+            <th>Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Default Environment</td>
+            <td>— / Production / Staging / Dev / Test</td>
+            <td>Applies ENV rules to every row that has no ENV column value</td>
+          </tr>
+          <tr>
+            <td>Default OS</td>
+            <td>— / Linux / Windows / macOS</td>
+            <td>Applies OS compatibility rules globally</td>
+          </tr>
+          <tr>
+            <td>Default Workload</td>
+            <td>
+              — / General / Database / Web Server / Cache / ML/AI / Batch / HPC
+            </td>
+            <td>Sets family preference order for all rows</td>
+          </tr>
+          <tr>
+            <td>Default Compliance</td>
+            <td>— / PCI / HIPAA / FIPS / SOC2</td>
+            <td>Enforces compliance-grade filtering globally</td>
+          </tr>
+          <tr>
+            <td>Minimum Generation</td>
+            <td>
+              AWS: Gen 5+ / 6+ / 7+ · Azure: v3+ / v4+ / v5+ · GCP: N2 / N2D /
+              N4
+            </td>
+            <td>Excludes instance families below the selected generation</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Conflict Detection</h4>
+      <p>
+        When two selected options directly contradict each other, the
+        conflicting dropdowns are highlighted in red with an explanatory
+        warning. For example:
+      </p>
+      <ul>
+        <li>OS = Windows + processor filter restricted to Graviton/ARM only</li>
+        <li>
+          ENV = Production + main families restricted to burstable types only
+          (t/B/e2)
+        </li>
+        <li>
+          Workload = ML/AI + processor filter restricted to Intel/AMD only (no
+          GPU available)
+        </li>
+      </ul>
+      <p>
+        Resolve conflicts before generating recommendations — rules will still
+        run but may produce unexpected results if contradictions are left in
+        place.
+      </p>
+
+      <h3>Step 7 — Generate and Download Results</h3>
+      <ol class="steps">
+        <li>
+          Click <strong>🔄 Generate Recommendations</strong>. A progress bar
+          shows processing status for large files.
+        </li>
+        <li>
+          Once complete, the download section updates based on what was
+          generated.
+        </li>
+        <li>
+          <strong>AWS page — both Like-to-Like and Optimized selected:</strong>
+          three buttons appear:<br />
+          <strong>📥 Download Results CSV</strong> — all columns in one file<br />
+          <strong>🧾 Bulk Template (Like-to-Like)</strong> — AWS Pricing
+          Calculator format, Like-to-Like instances only<br />
+          <strong>🧾 Bulk Template (Optimized)</strong> — AWS Pricing Calculator
+          format, Optimized instances only
+        </li>
+        <li>
+          <strong>AWS page — single type selected:</strong> Results CSV + one
+          Bulk Template button.
+        </li>
+        <li><strong>Azure / GCP pages:</strong> Results CSV only.</li>
+      </ol>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     6. UNDERSTANDING RECOMMENDATIONS
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="reco" class="section-heading page-break">
+        <h2>🎯 6. Understanding Recommendations</h2>
+      </div>
+
+      <div id="l2l">
+        <h3>🔄 Like-to-Like Strategy</h3>
+        <ol class="steps">
+          <li>
+            The full instance catalogue for the specified region is loaded.
+          </li>
+          <li>
+            All instances with vCPUs &lt; required CPU or memory &lt; required
+            memory are removed.
+          </li>
+          <li>
+            The Rule Engine applies ENV, OS, Workload, and Compliance filters.
+          </li>
+          <li>
+            The cheapest remaining instance is returned (workload preferred
+            families are sorted to the top first).
+          </li>
+        </ol>
+      </div>
+
+      <div id="opt">
+        <h3>⚡ N/2, N, N+1 Optimization Strategy</h3>
+        <ol class="steps">
+          <li>
+            Calculate target CPU and memory from utilisation data using the 40
+            %/80 % thresholds.
+          </li>
+          <li>
+            Run the same Like-to-Like process against the
+            <em>adjusted</em> targets.
+          </li>
+        </ol>
+
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>CPU Util</th>
+              <th>Memory Util</th>
+              <th>Target CPU</th>
+              <th>Target Memory</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Over-provisioned</td>
+              <td>25 %</td>
+              <td>30 %</td>
+              <td>Current ÷ 2</td>
+              <td>Current ÷ 2</td>
+            </tr>
+            <tr>
+              <td>Right-sized</td>
+              <td>55 %</td>
+              <td>65 %</td>
+              <td>Current (N)</td>
+              <td>Current (N)</td>
+            </tr>
+            <tr>
+              <td>Under-provisioned</td>
+              <td>85 %</td>
+              <td>40 %</td>
+              <td>Current + 1</td>
+              <td>Current (N)</td>
+            </tr>
+            <tr>
+              <td>Mixed</td>
+              <td>25 %</td>
+              <td>85 %</td>
+              <td>Current ÷ 2</td>
+              <td>Current + 1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     7. OUTPUT COLUMNS
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="output" class="section-heading page-break">
+        <h2>📊 7. Output Columns Explained</h2>
+      </div>
+
+      <p>
+        The downloaded CSV preserves all original input columns and appends
+        recommendation columns for each selected provider.
+      </p>
+
+      <h3>Original Input Columns (preserved)</h3>
+      <p>
+        VM Name, CPU Count, Memory (GB), CPU Utilization, Memory Utilization,
+        [Provider] Region, ENV, OS, Workload, Compliance — all returned
+        unchanged.
+      </p>
+
+      <h3>Recommendation Columns (added per provider)</h3>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Description</th>
+            <th>Example value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="col-pill">AWS Like-to-Like Instance</span></td>
+            <td>Recommended EC2 instance type (like-for-like)</td>
+            <td>m6i.xlarge</td>
+          </tr>
+          <tr>
+            <td><span class="col-pill">AWS Like-to-Like vCPUs</span></td>
+            <td>vCPU count of the recommended instance</td>
+            <td>4</td>
+          </tr>
+          <tr>
+            <td><span class="col-pill">AWS Like-to-Like Memory (GiB)</span></td>
+            <td>Memory of the recommended instance in GiB</td>
+            <td>16</td>
+          </tr>
+          <tr>
+            <td><span class="col-pill">AWS Optimized Instance</span></td>
+            <td>Recommended EC2 instance type (optimised)</td>
+            <td>m6i.large</td>
+          </tr>
+          <tr>
+            <td><span class="col-pill">AWS Optimized vCPUs</span></td>
+            <td>vCPU count of the optimised instance</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td><span class="col-pill">AWS Optimized Memory (GiB)</span></td>
+            <td>Memory of the optimised instance in GiB</td>
+            <td>8</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="col-pill col-pill-new">AWS Rules Applied</span>
+            </td>
+            <td>Pipe-separated list of rules that fired for this row</td>
+            <td>1a: Burstable excluded | 1c: Size floor applied</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        The same pattern applies for Azure and GCP (replacing "AWS" with the
+        provider name).
+      </p>
+
+      <div class="callout callout-info">
+        <strong>Why no pricing in the output?</strong>
+        Cloud pricing changes frequently and varies with discounts, reserved
+        instances, Savings Plans, and enterprise agreements. This tool uses
+        pricing internally to rank candidates and find the cheapest match, but
+        does not surface prices in the output CSV to avoid giving users stale or
+        context-free figures. Always verify pricing in the official
+        AWS/Azure/GCP pricing calculators before making commitments.
+      </div>
+
+      <h3>Status values for recommendation columns</h3>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>m6i.xlarge</code> (etc.)</td>
+            <td>Successful recommendation</td>
+          </tr>
+          <tr>
+            <td><code>Missing data</code></td>
+            <td>Required input column (CPU, Memory, or Region) was blank</td>
+          </tr>
+          <tr>
+            <td><code>No utilization data</code></td>
+            <td>
+              Optimized type selected but CPU/Memory Utilization were 0 or blank
+            </td>
+          </tr>
+          <tr>
+            <td><code>No data available</code></td>
+            <td>
+              No instance in the region catalogue met the requirements (after
+              rules applied)
+            </td>
+          </tr>
+          <tr>
+            <td><code>Error</code></td>
+            <td>
+              Unexpected processing error — check browser console for details
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     8. EXPORT OPTIONS
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="export" class="section-heading page-break">
+        <h2>📥 8. Export Options</h2>
+      </div>
+
+      <div id="csv-export">
+        <h3>📄 Standard Results CSV</h3>
+        <p>
+          Available on all provider pages. Downloads a CSV containing all
+          original input columns plus the recommendation columns described in
+          Section 7. This file is ready for:
+        </p>
+        <ul class="check">
+          <li>Excel / Google Sheets pivot table analysis</li>
+          <li>Importing into ITSM or CMDB tools</li>
+          <li>Sharing with stakeholders for review</li>
+          <li>
+            Filtering by "Rules Applied" to audit environment-specific decisions
+          </li>
+        </ul>
+      </div>
+
+      <div id="bulk-export">
+        <h3>
+          🧾 AWS Pricing Calculator Bulk Template
+          <span class="chip chip-aws">AWS only</span>
+        </h3>
+        <p>
+          Available exclusively on the <strong>AWS page</strong> after
+          recommendations are generated. Produces a CSV that exactly matches the
+          column schema of the <em>Amazon EC2 Instances</em> worksheet in the
+          AWS Pricing Calculator's Bulk Upload Template.
+        </p>
+
+        <h4>Column mapping</h4>
+        <table class="tbl-aws avoid-break">
+          <thead>
+            <tr>
+              <th>Bulk Template Column</th>
+              <th>Populated from</th>
+              <th>Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Group</td>
+              <td>ENV column value</td>
+              <td>Default</td>
+            </tr>
+            <tr>
+              <td>Description</td>
+              <td>VM Name</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>AWS Region</td>
+              <td>AWS Region column</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Operating System</td>
+              <td>OS column (Windows → "Windows Server", else "Linux")</td>
+              <td>Linux</td>
+            </tr>
+            <tr>
+              <td>Instance Type</td>
+              <td>Like-to-Like or Optimized instance type (one per file)</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Tenancy</td>
+              <td>Fixed</td>
+              <td>Shared Instances</td>
+            </tr>
+            <tr>
+              <td>Number of Instances</td>
+              <td>Fixed</td>
+              <td>1</td>
+            </tr>
+            <tr>
+              <td>Usage Type</td>
+              <td>Fixed</td>
+              <td>Always On</td>
+            </tr>
+            <tr>
+              <td>Purchasing Options</td>
+              <td>Fixed</td>
+              <td>On-Demand</td>
+            </tr>
+            <tr>
+              <td>Storage columns</td>
+              <td>Left blank for manual completion</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warn">
+          <strong>One file per recommendation type</strong>
+          When both Like-to-Like and Optimized are generated, two separate bulk
+          template buttons appear — one for each type. Always import only one
+          file per estimate so you don't double-count instances and inflate the
+          pricing figure.
+        </div>
+
+        <h4>Path A — Bulk Import (recommended for large lists)</h4>
+        <ol class="steps">
+          <li>
+            Open
+            <a href="https://calculator.aws/#/">AWS Pricing Calculator</a> and
+            click <strong>Create estimate</strong>.
+          </li>
+          <li>
+            Click <strong>Bulk import</strong> (top-right corner of the estimate
+            view).
+          </li>
+          <li>Select the correct service template (EC2 Instances).</li>
+          <li>
+            Click <strong>Download template</strong>, then replace its rows with
+            the CSV downloaded from this tool (Like-to-Like
+            <em>or</em> Optimized — not both).
+          </li>
+          <li>
+            Upload the filled template, then click
+            <strong>Save and add service</strong> or
+            <strong>Save and view summary</strong>.
+          </li>
+        </ol>
+
+        <h4>Path B — Manual EC2 configuration</h4>
+        <ol class="steps">
+          <li>
+            Open
+            <a href="https://calculator.aws/#/">AWS Pricing Calculator</a> and
+            click <strong>Create estimate</strong>.
+          </li>
+          <li>
+            Search for <strong>EC2</strong> and click
+            <strong>Configure</strong>.
+          </li>
+          <li>
+            Set the region, OS, instance type, and quantity to match the
+            recommended instances.
+          </li>
+          <li>
+            Click <strong>Save and add service</strong> or
+            <strong>Save and view summary</strong>.
+          </li>
+        </ol>
+
+        <h4>Azure Pricing Calculator steps</h4>
+        <ol class="steps">
+          <li>
+            Open the
+            <a
+              href="https://azure.microsoft.com/en-in/pricing/calculator"
+              target="_blank"
+              rel="noopener"
+              >Azure Pricing Calculator</a
+            >.
+          </li>
+          <li>
+            Find <strong>Virtual Machines</strong> and click
+            <strong>Add to estimate</strong>.
+          </li>
+          <li>
+            Scroll down (or click <strong>View</strong>) to the configuration
+            panel.
+          </li>
+          <li>
+            Set the region, OS, tier, and instance size to match the recommended
+            VM types, then save your estimate.
+          </li>
+        </ol>
+
+        <h4>GCP Pricing Calculator steps</h4>
+        <ol class="steps">
+          <li>
+            Open the
+            <a
+              href="https://cloud.google.com/products/calculator"
+              target="_blank"
+              rel="noopener"
+              >GCP Pricing Calculator</a
+            >.
+          </li>
+          <li>Click <strong>Add to estimate</strong>.</li>
+          <li>Select <strong>Compute Engine</strong>.</li>
+          <li>
+            Configure the machine type, region, and quantity to match the
+            recommended instances, then save.
+          </li>
+        </ol>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     9. ADVANCED FILTERING
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="advanced" class="section-heading page-break">
+        <h2>🔧 9. Advanced Filtering</h2>
+      </div>
+
+      <p>
+        The Advanced Filtering section contains two types of controls: the
+        <strong>Rule Engine UI</strong> (global defaults for
+        ENV/OS/Workload/Compliance/Min Gen) and
+        <strong>provider-specific filters</strong> that narrow the instance
+        candidate pool. Provider filters are applied first; the Rule Engine then
+        runs on the already-filtered set.
+      </p>
+
+      <div id="rule-engine-ui">
+        <h3>⚙ Rule Engine UI Controls</h3>
+        <p>
+          Five dropdowns inside Advanced Filtering set rule defaults for the
+          entire batch. These act as a fallback when a CSV row has no value in
+          the corresponding column — per-row CSV values always override them.
+        </p>
+
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Dropdown</th>
+              <th>AWS options</th>
+              <th>Azure options</th>
+              <th>GCP options</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Default Environment</td>
+              <td colspan="3">
+                Production / Staging / Dev / Test (same across all providers)
+              </td>
+            </tr>
+            <tr>
+              <td>Default OS</td>
+              <td colspan="3">
+                Linux / Windows / macOS (same across all providers)
+              </td>
+            </tr>
+            <tr>
+              <td>Default Workload</td>
+              <td colspan="3">
+                General / Database / Web Server / Cache / ML/AI / Batch / HPC
+              </td>
+            </tr>
+            <tr>
+              <td>Default Compliance</td>
+              <td colspan="3">PCI / HIPAA / FIPS / SOC2</td>
+            </tr>
+            <tr>
+              <td>Minimum Generation</td>
+              <td>Gen 5+ / Gen 6+ / Gen 7+</td>
+              <td>v3+ / v4+ / v5+</td>
+              <td>N2 / N2D / N4</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="conflict-detect">
+        <h3>🚨 Conflict Detection</h3>
+        <p>
+          When a UI selection directly contradicts another filter, the
+          conflicting control is highlighted with a red border and an inline
+          warning message. Three conflict types are detected:
+        </p>
+        <table class="avoid-break">
+          <thead>
+            <tr>
+              <th>Conflict</th>
+              <th>What triggers it</th>
+              <th>Highlighted control</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OS ↔ Processor</td>
+              <td>
+                OS = Windows AND all selected processor filters are
+                ARM/Graviton-only
+              </td>
+              <td>Default OS dropdown</td>
+            </tr>
+            <tr>
+              <td>ENV/Compliance ↔ Families</td>
+              <td>
+                ENV = Production or Compliance set, AND main family filter
+                includes only burstable types (t/B/e2)
+              </td>
+              <td>Default Environment or Default Compliance dropdown</td>
+            </tr>
+            <tr>
+              <td>Workload ↔ Processor</td>
+              <td>
+                Workload = ML/AI AND processor filter excludes all GPU/ARM
+                options
+              </td>
+              <td>Default Workload dropdown</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout callout-warn">
+          <strong>Conflicts are warnings, not blockers</strong>
+          The tool will still generate recommendations when conflicts exist, but
+          the results may not match your intent. Resolve the conflict before
+          generating for best results.
+        </div>
+      </div>
+
+      <h3>🔶 AWS-Specific Filters</h3>
+      <table class="tbl-aws avoid-break">
+        <thead>
+          <tr>
+            <th>Filter</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Current Generation Only</td>
+            <td>
+              Excludes previous-generation families (t2, m4, c4, r4, etc.).
+              Recommended for all new deployments.
+            </td>
+          </tr>
+          <tr>
+            <td>Instance Family Names</td>
+            <td>
+              Restrict to specific family categories: General Purpose, Compute
+              Optimised, Memory Optimised, Storage Optimised, Accelerated
+              Computing
+            </td>
+          </tr>
+          <tr>
+            <td>Processor Manufacturer</td>
+            <td>
+              Intel, AMD, or AWS (Graviton/ARM). Note: selecting AWS Graviton
+              and then setting OS = Windows via the CSV column will still
+              exclude Graviton — OS rules always take priority.
+            </td>
+          </tr>
+          <tr>
+            <td>Main Family Prefix</td>
+            <td>Restrict by family prefix (t, m, c, r, x, z, p, g, i, d…)</td>
+          </tr>
+          <tr>
+            <td>Exclude Types</td>
+            <td>
+              Exclude individual type classes: Graviton/ARM, GPU, Mac instances,
+              previous generation, Nitro-only
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🔷 Azure-Specific Filters</h3>
+      <table class="tbl-azure avoid-break">
+        <thead>
+          <tr>
+            <th>Filter</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>VM Series</td>
+            <td>
+              Filter by series: B (burstable), D (general), E (memory), F
+              (compute), H (HPC), L (storage), M (large memory), N (GPU)
+            </td>
+          </tr>
+          <tr>
+            <td>Processor Architecture</td>
+            <td>Intel x86-64, AMD EPYC, ARM (Ampere)</td>
+          </tr>
+          <tr>
+            <td>VM Families</td>
+            <td>Filter by specific family strings (dv5, ev5, fsv2…)</td>
+          </tr>
+          <tr>
+            <td>Exclude Types</td>
+            <td>Exclude ARM, GPU, or burstable categories</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🔴 GCP-Specific Filters</h3>
+      <table class="tbl-gcp avoid-break">
+        <thead>
+          <tr>
+            <th>Filter</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Machine Families</td>
+            <td>
+              E2, N1, N2, N4, C2, C2D, C3, C3D, C4, M1, M2, M3, M4, A2, A3, G2,
+              T2D, T2A, H3, Z3
+            </td>
+          </tr>
+          <tr>
+            <td>CPU Platform</td>
+            <td>Intel, AMD, ARM</td>
+          </tr>
+          <tr>
+            <td>Machine Type Prefix</td>
+            <td>Filter by standard, highmem, highcpu, ultramem</td>
+          </tr>
+          <tr>
+            <td>Exclude Types</td>
+            <td>Exclude ARM (T2A), GPU, or shared-core families</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     10. MULTI-CLOUD COMPARISON
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="multicloud" class="section-heading page-break">
+        <h2>☁ 10. Multi-Cloud Comparison</h2>
+      </div>
+
+      <p>
+        The Multi-Cloud page processes a single CSV against all three providers
+        simultaneously, producing side-by-side recommendations in one output
+        file. This is useful for migration planning, vendor selection, and
+        lock-in risk assessment.
+      </p>
+
+      <h3>CSV Format for Multi-Cloud</h3>
+      <p>
+        Include region columns for every provider you want to compare. Providers
+        with a blank or missing region column are skipped for that row.
+      </p>
+
+      <pre>
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Linux,Database</pre
+      >
+
+      <h3>Regional Equivalents Reference</h3>
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Geography</th>
+            <th>AWS Region</th>
+            <th>Azure Region</th>
+            <th>GCP Region</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>US East</td>
+            <td>us-east-1</td>
+            <td>East US</td>
+            <td>us-east1-b</td>
+          </tr>
+          <tr>
+            <td>US West</td>
+            <td>us-west-2</td>
+            <td>West US 2</td>
+            <td>us-west1-b</td>
+          </tr>
+          <tr>
+            <td>Europe West</td>
+            <td>eu-west-1</td>
+            <td>North Europe</td>
+            <td>europe-west1-c</td>
+          </tr>
+          <tr>
+            <td>Europe Central</td>
+            <td>eu-central-1</td>
+            <td>Germany West Central</td>
+            <td>europe-west3-a</td>
+          </tr>
+          <tr>
+            <td>Asia Pacific (SE)</td>
+            <td>ap-southeast-1</td>
+            <td>Southeast Asia</td>
+            <td>asia-southeast1-a</td>
+          </tr>
+          <tr>
+            <td>Asia Pacific (NE)</td>
+            <td>ap-northeast-1</td>
+            <td>Japan East</td>
+            <td>asia-northeast1-a</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Interpreting Multi-Cloud Output</h3>
+      <p>
+        The output CSV contains recommendation columns for every selected
+        provider in the same row, making it easy to filter in Excel or Google
+        Sheets:
+      </p>
+      <ul class="check">
+        <li>Sort by VM Name to see all providers for each workload</li>
+        <li>
+          Use the "Rules Applied" columns to understand why providers differ
+        </li>
+        <li>
+          Provider pricing calculators should be used to compare actual costs —
+          do not compare instance types directly as the vCPU/memory ratio
+          differs across providers
+        </li>
+      </ul>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     11. TROUBLESHOOTING
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="trouble" class="section-heading page-break">
+        <h2>🔧 11. Troubleshooting</h2>
+      </div>
+
+      <h3>File Upload Problems</h3>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Problem</th>
+            <th>Likely Cause</th>
+            <th>Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>"CSV parsing failed"</td>
+            <td>Special characters, wrong encoding, or malformed CSV</td>
+            <td>
+              Save the file as UTF-8 CSV (not UTF-8 BOM). Remove characters like
+              <code>&lt;</code> <code>&gt;</code> <code>&amp;</code> from data
+              values. Check for unescaped commas inside quoted fields.
+            </td>
+          </tr>
+          <tr>
+            <td>"File too large"</td>
+            <td>CSV exceeds 10 MB</td>
+            <td>
+              Split into smaller batches. Remove unused columns. Filter to the
+              VMs you need recommendations for.
+            </td>
+          </tr>
+          <tr>
+            <td>"Missing required columns"</td>
+            <td>Column name mismatch</td>
+            <td>
+              Column names are matched case-insensitively and with
+              space/underscore normalisation, but the exact words must be
+              present. Download the sample CSV template and compare your
+              headers.
+            </td>
+          </tr>
+          <tr>
+            <td>"Invalid region name"</td>
+            <td>Typo or wrong provider format</td>
+            <td>
+              AWS regions use hyphens: <code>us-east-1</code>. Azure uses
+              display names: <code>East US</code>. GCP uses zone format:
+              <code>us-central1-a</code>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Recommendation Problems</h3>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Problem</th>
+            <th>Cause</th>
+            <th>Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>"No data available" for all VMs</td>
+            <td>Region not supported or data file not yet loaded</td>
+            <td>
+              Wait for the data files to finish loading (check the browser tab
+              title). Verify the region name is in the supported list (see
+              in-app sample template).
+            </td>
+          </tr>
+          <tr>
+            <td>Recommendations seem too large</td>
+            <td>
+              Utilisation data is missing or zero — falling back to Like-to-Like
+            </td>
+            <td>
+              Ensure CPU Utilization and Memory Utilization columns contain
+              non-zero values when using Optimized mode.
+            </td>
+          </tr>
+          <tr>
+            <td>No recommendation after ENV = Production</td>
+            <td>Rule engine eliminated all candidates</td>
+            <td>
+              Check the Rules Applied column. Try relaxing the Advanced
+              Filtering options. Ensure the region has current-generation
+              instances (all major regions do).
+            </td>
+          </tr>
+          <tr>
+            <td>Windows VMs getting ARM recommendations</td>
+            <td>OS column is blank or misspelled</td>
+            <td>
+              Set the OS column to exactly <code>Windows</code> or
+              <code>Windows Server</code> for affected rows.
+            </td>
+          </tr>
+          <tr>
+            <td>Optimized same as Like-to-Like</td>
+            <td>Utilisation in the 40–80 % "keep same" zone</td>
+            <td>
+              This is expected — the N/2,N,N+1 strategy keeps the same size when
+              utilisation is in the right-sized band.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Browser / Performance Problems</h3>
+
+      <table class="avoid-break">
+        <thead>
+          <tr>
+            <th>Problem</th>
+            <th>Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Page feels slow on first load</td>
+            <td>
+              The data files are large (AWS ~5 MB, Azure ~10 MB). GitHub Pages
+              serves them with gzip compression, but parsing still takes a few
+              seconds. Wait for the browser to finish before uploading.
+            </td>
+          </tr>
+          <tr>
+            <td>Download button does nothing</td>
+            <td>
+              Check that your browser's pop-up blocker is not intercepting the
+              download. Allow pop-ups for the site or use a different browser.
+            </td>
+          </tr>
+          <tr>
+            <td>Processing hangs on large files</td>
+            <td>
+              Split files larger than 2,000 rows into batches. Close other
+              browser tabs to free memory. Refresh the page (this also clears
+              the loaded instance data — allow time to reload).
+            </td>
+          </tr>
+          <tr>
+            <td>Results CSV opens as garbled text in Excel</td>
+            <td>
+              When opening a CSV in Excel, use
+              <strong>Data → From Text/CSV</strong> and select UTF-8 encoding.
+              Do not double-click the file directly.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     12. BEST PRACTICES
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="best" class="section-heading page-break">
+        <h2>✨ 12. Best Practices</h2>
+      </div>
+
+      <h3>📊 Data Collection</h3>
+      <ul class="check">
+        <li>
+          Collect at least 30 days of utilisation data; 90 days is ideal to
+          capture seasonal variation
+        </li>
+        <li>
+          Use the P95 or P99 percentile for CPU if your workload is spiky —
+          average metrics underestimate peak demand
+        </li>
+        <li>
+          Memory utilisation from the OS is more reliable than
+          hypervisor-reported figures — use OS-level agents where possible
+        </li>
+        <li>
+          Tag VMs with their ENV, OS, and Workload in your CMDB and export that
+          metadata directly into the CSV
+        </li>
+      </ul>
+
+      <h3>🚀 Recommendation Implementation</h3>
+      <ul class="check">
+        <li>
+          Start with Dev/Test environments — fast to change and low risk if
+          something is wrong
+        </li>
+        <li>
+          For Production, use Like-to-Like first to establish a safe baseline,
+          then consider Optimized for a second wave
+        </li>
+        <li>
+          Always have a rollback plan: snapshot or image the VM before resizing
+        </li>
+        <li>
+          Monitor for 48–72 hours after a resize before treating it as complete
+        </li>
+      </ul>
+
+      <h3>💰 Cost Strategy</h3>
+      <ul class="check">
+        <li>
+          Use this tool to identify the right instance <em>type</em> — then
+          separately apply Reserved Instance or Savings Plan pricing in the
+          provider's pricing calculator
+        </li>
+        <li>
+          Re-run the tool quarterly for dynamic workloads; semi-annually for
+          stable production systems
+        </li>
+        <li>
+          After a cloud migration, re-run with actual utilisation data from the
+          new environment — the right-sizing picture often changes after
+          migration
+        </li>
+      </ul>
+
+      <h3>🔒 Security &amp; Compliance</h3>
+      <ul class="check">
+        <li>
+          Set <code>Compliance = PCI</code> or
+          <code>Compliance = HIPAA</code> in the CSV for regulated workloads to
+          ensure Nitro-capable (AWS) and current-gen-only instances are
+          recommended
+        </li>
+        <li>
+          For FIPS-boundary requirements, manually verify that recommended
+          regions are within your geographic compliance boundary
+        </li>
+        <li>
+          No inventory data ever leaves your browser — the tool is fully
+          client-side
+        </li>
+      </ul>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     13. FAQ
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="faq" class="section-heading page-break">
+        <h2>❓ 13. Frequently Asked Questions</h2>
+      </div>
+
+      <h3>🌟 General</h3>
+
+      <p>
+        <strong>Q: Is my data secure?</strong><br />
+        A: Yes. All processing happens in your browser — your VM inventory never
+        leaves your machine. The tool loads a static instance catalogue at
+        start-up; there is no backend server receiving your data.
+      </p>
+
+      <p>
+        <strong>Q: Why doesn't the output include pricing?</strong><br />
+        A: Cloud pricing is not static — it changes with region, OS, discounts,
+        Savings Plans, Reserved Instances, and enterprise agreements. Showing a
+        price in the output would be misleading within weeks. This tool
+        identifies the right <em>instance type</em>; use your provider's pricing
+        calculator for accurate cost figures. The AWS Pricing Calculator Bulk
+        Template export makes this workflow seamless for AWS.
+      </p>
+
+      <p>
+        <strong>Q: Can I use this tool offline?</strong><br />
+        A: The initial page load requires an internet connection to download the
+        instance data files. Once loaded, you can process CSV files without
+        connectivity. The instance data is cached in your browser until you
+        refresh the page.
+      </p>
+
+      <p>
+        <strong>Q: Which file formats are supported?</strong><br />
+        A: CSV (comma-separated values) with UTF-8 encoding. Excel files must be
+        saved as CSV first.
+      </p>
+
+      <h3>⚙ Technical</h3>
+
+      <p>
+        <strong
+          >Q: Why does the tool recommend a different instance than our cloud
+          provider's own advisor?</strong
+        ><br />
+        A: Provider advisors (AWS Trusted Advisor, Azure Advisor) typically look
+        at longer time horizons (14–90 days) and use conservative thresholds.
+        This tool applies your chosen utilisation window and thresholds. The
+        recommendations can legitimately differ — treat both as data points
+        rather than absolute answers.
+      </p>
+
+      <p>
+        <strong
+          >Q: Why are the downsize thresholds set to 40 % instead of 50
+          %?</strong
+        ><br />
+        A: The 40 %/80 % thresholds align with the approach used by AWS Cost
+        Optimisation, Azure Advisor, and GCP Recommender. At 40 %, there is
+        still comfortable headroom for traffic spikes and OS/monitoring
+        overhead. The old 50 % default was too aggressive for most production
+        workloads. You can adjust both thresholds in the UI if your environment
+        requires different values.
+      </p>
+
+      <p>
+        <strong
+          >Q: I set ENV = Production but got a t3.large recommendation.
+          Why?</strong
+        ><br />
+        A: Check the Rules Applied column — the rule engine reports exactly what
+        happened. If "1a: Burstable excluded" is not listed, verify that the ENV
+        column value is exactly <code>Production</code> (no extra spaces or
+        different capitalisation).
+      </p>
+
+      <p>
+        <strong>Q: Can I use a mix of ENVs in the same CSV?</strong><br />
+        A: Yes — rules are applied per row. You can have Production, Staging,
+        and Dev rows in the same file; each gets its own rule evaluation.
+      </p>
+
+      <p>
+        <strong
+          >Q: What happens if no instance survives after all rules are
+          applied?</strong
+        ><br />
+        A: The tool notes the failure in the Rules Applied column with a ⚠
+        warning and falls back to the best available instance from the pre-rules
+        candidate set. This is a signal to either relax filters or review
+        whether the requirements are achievable in that region.
+      </p>
+
+      <h3>💼 Business</h3>
+
+      <p>
+        <strong>Q: What typical savings can I expect?</strong><br />
+        A: Organisations commonly see 15–40 % reduction in compute spend from
+        right-sizing alone, before applying Reserved Instances or Savings Plans.
+        The actual figure depends heavily on how over-provisioned the original
+        fleet is.
+      </p>
+
+      <p>
+        <strong>Q: How often should I re-run the tool?</strong><br />
+        A: Monthly for dynamic/seasonal workloads; quarterly for stable
+        production workloads; immediately after any significant architectural
+        change or traffic pattern shift.
+      </p>
+
+      <p>
+        <strong
+          >Q: Can I share results with stakeholders who don't have access to the
+          tool?</strong
+        ><br />
+        A: Yes — the downloaded CSV can be opened in Excel or Google Sheets. The
+        "Rules Applied" column provides plain-English audit notes explaining
+        every recommendation, making it straightforward to present to
+        non-technical stakeholders.
+      </p>
+
+      <p>
+        <strong
+          >Q: Is the AWS Pricing Calculator Bulk Template ready to import
+          immediately?</strong
+        ><br />
+        A: It populates all required columns with On-Demand, Always On, Shared
+        Instances defaults. You will need to manually add storage details (EBS
+        volume type, size, IOPS) in the calculator after import if required for
+        your estimate.
+      </p>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+     14. CONCLUSION
+     ══════════════════════════════════════════════════════════════════════ -->
+      <div id="conclusion" class="section-heading page-break">
+        <h2>🎯 14. Conclusion</h2>
+      </div>
+
+      <p>
+        The Cloud Instance Recommender gives you a fast, privacy-first starting
+        point for cloud rightsizing at any scale — from a handful of VMs to
+        thousands. By combining flexible like-to-like and optimised
+        recommendation modes with a configurable rule engine, it produces
+        recommendations that are not just cheap, but appropriate for the
+        environment, OS, workload type, and compliance posture of each
+        individual VM.
+      </p>
+
+      <p><strong>Key things to remember:</strong></p>
+      <ul class="check">
+        <li>
+          Add ENV, OS, Workload, and Compliance columns to get environment-aware
+          recommendations with a full audit trail
+        </li>
+        <li>
+          Use the 40 %/80 % thresholds as a starting point — adjust them based
+          on whether your utilisation data is averages or percentiles
+        </li>
+        <li>
+          Pricing is intentionally excluded from output — use the AWS Pricing
+          Calculator Bulk Template export for cost estimation
+        </li>
+        <li>
+          Treat recommendations as an informed starting point, not a final
+          answer — validate in a non-production environment first
+        </li>
+        <li>
+          Re-run quarterly to keep pace with changing workloads and the cloud
+          providers' expanding instance catalogues
+        </li>
+      </ul>
+
+      <div class="callout callout-success">
+        <strong>Happy Optimising!</strong>
+        Cloud right-sizing is an ongoing discipline, not a one-time exercise.
+        Build it into your regular operational cadence and it will continue to
+        compound savings over time.
+      </div>
+
+      <div class="doc-footer">
+        <span>Cloud Instance Recommender — User Guide</span>
+        <span>Version 3.0 · June 2026</span>
+        <span
+          >Target: IT Professionals · Cloud Architects · DevOps Engineers</span
+        >
+      </div>
+    </div>
+    <!-- /.content -->
+  </body>
+</html>

@@ -51,7 +51,7 @@ class FileHandler {
           this._updateMetadata(file, result);
 
           console.log(
-            `CSV parsing completed: ${result.data.length} rows, ${result.headers.length} columns`
+            `CSV parsing completed: ${result.data.length} rows, ${result.headers.length} columns`,
           );
 
           resolve({
@@ -117,7 +117,7 @@ class FileHandler {
 
     if (lines.length < 2) {
       throw new Error(
-        "CSV must contain at least a header row and one data row"
+        "CSV must contain at least a header row and one data row",
       );
     }
 
@@ -230,14 +230,14 @@ class FileHandler {
 
     // Check required columns existence
     const missingColumns = ["cpu", "memory"].filter(
-      (key) => !this.columnHeaders.includes(mappings[key])
+      (key) => !this.columnHeaders.includes(mappings[key]),
     );
 
     missingColumns.forEach((key) => {
       issues.push(
         `Required ${key.toUpperCase()} column '${
           mappings[key]
-        }' not found in CSV`
+        }' not found in CSV`,
       );
     });
 
@@ -245,7 +245,7 @@ class FileHandler {
     ["cpu", "memory"].forEach((key) => {
       if (this.columnHeaders.includes(mappings[key])) {
         issues.push(
-          ...this._validateNumericColumn(mappings[key], key.toUpperCase())
+          ...this._validateNumericColumn(mappings[key], key.toUpperCase()),
         );
       }
     });
@@ -266,7 +266,7 @@ class FileHandler {
         const numValue = parseFloat(value);
         if (isNaN(numValue) || numValue <= 0) {
           issues.push(
-            `Invalid ${fieldName} value in row ${index + 1}: "${value}"`
+            `Invalid ${fieldName} value in row ${index + 1}: "${value}"`,
           );
         } else {
           validCount++;
@@ -280,7 +280,7 @@ class FileHandler {
       issues.unshift(
         `Warning: ${fieldName} column has ${
           this.csvData.length - validCount
-        } invalid entries out of ${this.csvData.length} total rows`
+        } invalid entries out of ${this.csvData.length} total rows`,
       );
     }
 
@@ -298,7 +298,7 @@ class FileHandler {
       ["cpu", "memory"].forEach((field) => {
         if (mappings[field] && row[mappings[field]]) {
           cleanedRow[mappings[field]] = this._cleanNumericValue(
-            row[mappings[field]]
+            row[mappings[field]],
           );
         }
       });
@@ -307,7 +307,7 @@ class FileHandler {
       ["cpuUtilization", "memoryUtilization"].forEach((field) => {
         if (mappings[field] && row[mappings[field]]) {
           cleanedRow[mappings[field]] = this._cleanPercentageValue(
-            row[mappings[field]]
+            row[mappings[field]],
           );
         }
       });
@@ -363,7 +363,7 @@ class FileHandler {
       ...data.map((row) =>
         headers
           .map((header) => this._escapeCSVValue(row[header] || ""))
-          .join(",")
+          .join(","),
       ),
     ].join("\n");
 
@@ -409,7 +409,7 @@ class FileHandler {
       ...this.fileMetadata,
       validationErrors: this.validationErrors.length,
       hasRequiredColumns: ["cpu", "memory"].every((key) =>
-        this.columnHeaders.includes(this.config.defaultMappings[key])
+        this.columnHeaders.includes(this.config.defaultMappings[key]),
       ),
       dataQuality: this._calculateDataQuality(),
     };
@@ -524,7 +524,7 @@ class FileHandlerIntegration {
     if (issues.length === 0) return `✅ ${baseMessage}`;
 
     const criticalIssues = issues.filter(
-      (issue) => issue.includes("not found") || issue.includes("missing")
+      (issue) => issue.includes("not found") || issue.includes("missing"),
     );
 
     const warningText =
@@ -547,13 +547,13 @@ class FileHandlerIntegration {
     });
 
     ["dragenter", "dragover"].forEach((event) =>
-      dropZone.addEventListener(event, () => this._highlightDropZone(dropZone))
+      dropZone.addEventListener(event, () => this._highlightDropZone(dropZone)),
     );
 
     ["dragleave", "drop"].forEach((event) =>
       dropZone.addEventListener(event, () =>
-        this._unhighlightDropZone(dropZone)
-      )
+        this._unhighlightDropZone(dropZone),
+      ),
     );
 
     dropZone.addEventListener("drop", (e) => this._handleDrop(e, fileInput));
@@ -654,7 +654,7 @@ class FileHandlerIntegration {
   exportRecommendations(recommendations) {
     return this.fileHandler.exportToCSV(
       recommendations,
-      "instance_recommendations.csv"
+      "instance_recommendations.csv",
     );
   }
 
@@ -662,7 +662,7 @@ class FileHandlerIntegration {
   on(event, callback) {
     if (
       this.callbacks.hasOwnProperty(
-        `on${event.charAt(0).toUpperCase()}${event.slice(1)}`
+        `on${event.charAt(0).toUpperCase()}${event.slice(1)}`,
       )
     ) {
       this.callbacks[`on${event.charAt(0).toUpperCase()}${event.slice(1)}`] =
@@ -709,7 +709,7 @@ class IntegrationManager {
 
     this.uiManager.showProcessingResults(
       validationIssues,
-      this.fileHandler.getDataQuality()
+      this.fileHandler.getDataQuality(),
     );
     this.uiManager.updateFileStatistics(result.metadata);
     this.uiManager.showDataPreview(result.data.slice(0, 5));
@@ -768,7 +768,7 @@ class UIManager {
   showProcessingResults(validationIssues, dataQuality) {
     const { message, alertType } = this._createProcessingMessage(
       validationIssues,
-      dataQuality
+      dataQuality,
     );
 
     // Show in file status area instead of mapping alert
@@ -786,7 +786,7 @@ class UIManager {
 
     if (issues.length > 0) {
       const criticalIssues = issues.filter(
-        (issue) => issue.includes("not found") || issue.includes("missing")
+        (issue) => issue.includes("not found") || issue.includes("missing"),
       );
 
       if (criticalIssues.length > 0) {
@@ -863,8 +863,8 @@ class UIManager {
           .map(
             ([key, value]) =>
               `<div><strong>${this._formatStatLabel(
-                key
-              )}:</strong> ${value}</div>`
+                key,
+              )}:</strong> ${value}</div>`,
           )
           .join("")}
       </div>
@@ -925,7 +925,7 @@ class UIManager {
     const headerHTML = headers
       .map(
         (header) =>
-          `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left; background-color: #f8f9fa;">${header}</th>`
+          `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left; background-color: #f8f9fa;">${header}</th>`,
       )
       .join("");
 
@@ -1009,7 +1009,7 @@ class UIManager {
     };
 
     const specificGuidance = Object.keys(guidance).find((key) =>
-      errorMessage.includes(key)
+      errorMessage.includes(key),
     );
     const guideText = specificGuidance
       ? guidance[specificGuidance]
@@ -1036,7 +1036,7 @@ class UIManager {
   enableRecommendationGeneration() {
     this._toggleRecommendationButton(
       false,
-      "Generate recommendations based on uploaded data"
+      "Generate recommendations based on uploaded data",
     );
   }
 

@@ -18,45 +18,45 @@
 
 const RuleEngine = (() => {
   const AWS_BURSTABLE_FAMILIES = ["t1", "t2", "t3", "t3a", "t4g"];
-  const GCP_BURSTABLE_SERIES   = ["f1", "g1"];
+  const GCP_BURSTABLE_SERIES = ["f1", "g1"];
 
   // Workload → preferred instance family prefixes per provider
   const WORKLOAD_FAMILIES = {
     aws: {
-      general:      ["m"],
-      database:     ["r", "x", "z"],
+      general: ["m"],
+      database: ["r", "x", "z"],
       "web server": ["m", "c"],
-      web:          ["m", "c"],
-      cache:        ["r", "x"],
-      "ml/ai":      ["p", "g", "trn", "inf"],
-      ml:           ["p", "g", "trn", "inf"],
-      ai:           ["p", "g", "trn", "inf"],
-      batch:        ["c", "m"],
-      hpc:          ["hpc", "c"],
+      web: ["m", "c"],
+      cache: ["r", "x"],
+      "ml/ai": ["p", "g", "trn", "inf"],
+      ml: ["p", "g", "trn", "inf"],
+      ai: ["p", "g", "trn", "inf"],
+      batch: ["c", "m"],
+      hpc: ["hpc", "c"],
     },
     azure: {
-      general:      ["d"],
-      database:     ["e", "m"],
+      general: ["d"],
+      database: ["e", "m"],
       "web server": ["d", "f"],
-      web:          ["d", "f"],
-      cache:        ["e", "m"],
-      "ml/ai":      ["nc", "nd", "nv"],
-      ml:           ["nc", "nd", "nv"],
-      ai:           ["nc", "nd", "nv"],
-      batch:        ["f", "d"],
-      hpc:          ["hb", "hc"],
+      web: ["d", "f"],
+      cache: ["e", "m"],
+      "ml/ai": ["nc", "nd", "nv"],
+      ml: ["nc", "nd", "nv"],
+      ai: ["nc", "nd", "nv"],
+      batch: ["f", "d"],
+      hpc: ["hb", "hc"],
     },
     gcp: {
-      general:      ["n2", "e2"],
-      database:     ["m1", "m2", "m3", "m4"],
+      general: ["n2", "e2"],
+      database: ["m1", "m2", "m3", "m4"],
       "web server": ["n2", "e2", "n4"],
-      web:          ["n2", "e2", "n4"],
-      cache:        ["m1", "m2", "m3"],
-      "ml/ai":      ["a2", "a3", "g2"],
-      ml:           ["a2", "a3", "g2"],
-      ai:           ["a2", "a3", "g2"],
-      batch:        ["c2", "c2d", "c3", "c3d"],
-      hpc:          ["h3", "c2"],
+      web: ["n2", "e2", "n4"],
+      cache: ["m1", "m2", "m3"],
+      "ml/ai": ["a2", "a3", "g2"],
+      ml: ["a2", "a3", "g2"],
+      ai: ["a2", "a3", "g2"],
+      batch: ["c2", "c2d", "c3", "c3d"],
+      hpc: ["h3", "c2"],
     },
   };
 
@@ -70,12 +70,15 @@ const RuleEngine = (() => {
 
   function isBurstable(inst, provider) {
     const fam = (inst.family || "").toLowerCase();
-    if (provider === "aws")   return AWS_BURSTABLE_FAMILIES.includes(fam);
+    if (provider === "aws") return AWS_BURSTABLE_FAMILIES.includes(fam);
     if (provider === "azure") return fam.startsWith("b"); // B-series: bsv2, bsv3, bpsv2, …
     if (provider === "gcp") {
       if (GCP_BURSTABLE_SERIES.includes(fam)) return true;
-      // e2 shared-core (micro/small/medium): 2 vCPUs, ≤4 GiB
-      if (fam === "e2" && inst.vCpus <= 2 && inst.memory <= 4) return true;
+      // e2 shared-core: only micro/small/medium (not full e2 standard/highmem/highcpu)
+      if (fam === "e2") {
+        const type = (inst.instanceType || "").toLowerCase();
+        return /(^|-)e2-(micro|small|medium)(-|$)/.test(type);
+      }
     }
     return false;
   }
@@ -87,7 +90,17 @@ const RuleEngine = (() => {
 
   function isARM(inst) {
     const g = inst.isGraviton;
-    return g === 1 || g === 1.0 || g === "1" || g === "1.0";
+    if (g === 1 || g === 1.0 || g === "1" || g === "1.0") return true;
+    const processor = (inst.processor || "").toLowerCase();
+    const family = (inst.family || "").toLowerCase();
+    const type = (inst.instanceType || "").toLowerCase();
+    return (
+      processor.includes("arm") ||
+      processor.includes("graviton") ||
+      processor.includes("ampere") ||
+      family.startsWith("t2a") ||
+      type.startsWith("t2a-")
+    );
   }
 
   function isNitroCapable(inst) {
@@ -98,17 +111,28 @@ const RuleEngine = (() => {
 
   // GCP generation order map (higher = newer)
   const GCP_GEN_ORDER = {
-    "f1":0,"g1":0,
-    "n1":1,"e2":1,
-    "n2":2,"n2d":2,"c2":2,"c2d":2,"t2a":2,"t2d":2,
-    "a2":3,"g2":3,"c3":3,"c3d":3,
-    "n4":4,"c4":4
+    f1: 0,
+    g1: 0,
+    n1: 1,
+    e2: 1,
+    n2: 2,
+    n2d: 2,
+    c2: 2,
+    c2d: 2,
+    t2a: 2,
+    t2d: 2,
+    a2: 3,
+    g2: 3,
+    c3: 3,
+    c3d: 3,
+    n4: 4,
+    c4: 4,
   };
 
   function meetsMinGeneration(inst, minGen, provider) {
     if (!minGen) return true;
-    const type   = (inst.instanceType || "").toLowerCase();
-    const family = (inst.family       || "").toLowerCase();
+    const type = (inst.instanceType || "").toLowerCase();
+    const family = (inst.family || "").toLowerCase();
 
     if (provider === "aws") {
       // m5.xlarge→5, m6i.xlarge→6, r7a.large→7, t3.micro→3
@@ -138,8 +162,8 @@ const RuleEngine = (() => {
         // AWS-centric number: 5→2, 6→3, 7→4
         gcpMin = Math.max(0, minNum - 3);
       }
-      const fam      = family.split("-")[0];
-      const instGen  = GCP_GEN_ORDER[fam] ?? 1;
+      const fam = family.split("-")[0];
+      const instGen = GCP_GEN_ORDER[fam] ?? 1;
       return instGen >= gcpMin;
     }
 
@@ -148,9 +172,11 @@ const RuleEngine = (() => {
 
   function getPreferredFamilies(workload, provider) {
     const wl = (workload || "general").toLowerCase().trim();
-    return (WORKLOAD_FAMILIES[provider] || {})[wl]
-      || (WORKLOAD_FAMILIES[provider] || {})["general"]
-      || [];
+    return (
+      (WORKLOAD_FAMILIES[provider] || {})[wl] ||
+      (WORKLOAD_FAMILIES[provider] || {})["general"] ||
+      []
+    );
   }
 
   // Sort preferred workload families first, cheapest within each tier
@@ -172,18 +198,19 @@ const RuleEngine = (() => {
   // provider:           "aws" | "azure" | "gcp"
   // Returns:            { instances: [...], rules: [string, ...] }
   function apply(instances, options, provider) {
-    const env        = (options.rowEnv        || "").toLowerCase().trim();
-    const os         = (options.rowOS         || "linux").toLowerCase().trim();
-    const workload   = (options.rowWorkload   || "general").toLowerCase().trim();
+    const env = (options.rowEnv || "").toLowerCase().trim();
+    const os = (options.rowOS || "linux").toLowerCase().trim();
+    const workload = (options.rowWorkload || "general").toLowerCase().trim();
     const compliance = (options.rowCompliance || "").toLowerCase().trim();
-    const minGen     = (options.rowMinGen     || "").trim();
+    const minGen = (options.rowMinGen || "").toLowerCase().trim();
 
     let filtered = [...instances];
-    const rules  = [];
+    const rules = [];
 
-    const isProd       = env === "production" || env === "prod";
-    const isStaging    = env === "staging"    || env === "stage";
-    const isCompliance = compliance === "pci" || compliance === "hipaa" || compliance === "fips";
+    const isProd = env === "production" || env === "prod";
+    const isStaging = env === "staging" || env === "stage";
+    const isCompliance = ["pci", "hipaa", "soc2", "fips"].includes(compliance);
+    const requiresAwsNitro = ["pci", "hipaa"].includes(compliance);
 
     // ── 1a: Burstable exclusion ─────────────────────────────────────────────
     if (isProd || isStaging) {
@@ -200,7 +227,7 @@ const RuleEngine = (() => {
     }
 
     // ── 1b: Nitro Enclaves required for AWS under PCI/HIPAA ────────────────
-    if (isCompliance && provider === "aws") {
+    if (requiresAwsNitro && provider === "aws") {
       const nitro = filtered.filter(isNitroCapable);
       if (nitro.length > 0) {
         filtered = nitro;
@@ -213,14 +240,19 @@ const RuleEngine = (() => {
       const before = filtered.length;
       if (provider === "aws") {
         filtered = filtered.filter((i) => awsSizeRank(i.instanceType) >= 2); // ≥ small
-      } else if (isProd) {
-        filtered = filtered.filter((i) => i.vCpus >= 2); // Azure/GCP: ≥ 2 vCPUs for Prod
+      } else {
+        filtered = filtered.filter((i) => i.vCpus >= 2); // Azure/GCP: ≥ 2 vCPUs for Prod/Staging
       }
       if (filtered.length < before) rules.push("1c: Size floor applied");
     }
 
     // ── 1d: Network preference — Production + DB/Web ────────────────────────
-    if (isProd && (workload === "database" || workload === "web server" || workload === "web")) {
+    if (
+      isProd &&
+      (workload === "database" ||
+        workload === "web server" ||
+        workload === "web")
+    ) {
       const net = filtered.filter((i) => i.vCpus >= 4);
       if (net.length > 0) {
         filtered = net;
@@ -237,14 +269,18 @@ const RuleEngine = (() => {
 
     // ── OS: macOS → AWS mac1/mac2 only ─────────────────────────────────────
     if ((os === "macos" || os === "mac") && provider === "aws") {
-      const mac = filtered.filter((i) => (i.family || "").toLowerCase().startsWith("mac"));
+      const mac = filtered.filter((i) =>
+        (i.family || "").toLowerCase().startsWith("mac"),
+      );
       if (mac.length > 0) filtered = mac;
       rules.push("OS: mac1/mac2 only (macOS)");
     }
 
     // ── Min Generation filter ───────────────────────────────────────────────
     if (minGen) {
-      const genFiltered = filtered.filter(i => meetsMinGeneration(i, minGen, provider));
+      const genFiltered = filtered.filter((i) =>
+        meetsMinGeneration(i, minGen, provider),
+      );
       if (genFiltered.length > 0) {
         filtered = genFiltered;
         rules.push(`MinGen: ${minGen}+`);
@@ -264,7 +300,14 @@ const RuleEngine = (() => {
     return { instances: filtered, rules };
   }
 
-  return { apply, getPreferredFamilies, isBurstable, isCurrentGen, isARM, meetsMinGeneration };
+  return {
+    apply,
+    getPreferredFamilies,
+    isBurstable,
+    isCurrentGen,
+    isARM,
+    meetsMinGeneration,
+  };
 })();
 
 window.RuleEngine = RuleEngine;

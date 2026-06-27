@@ -77,7 +77,7 @@ function initializeGCPFilters() {
         <label for="gcpFamily_${index}">
           <strong>${family}</strong>
           <span class="filter-description">${getGCPFamilyAdvancedDescription(
-            family
+            family,
           )}</span>
         </label>
       `;
@@ -96,7 +96,7 @@ function initializeGCPFilters() {
         <label for="gcpProcessor_${index}">
           <strong>${processor}</strong>
           <span class="filter-description">${getGCPProcessorDescription(
-            processor
+            processor,
           )}</span>
         </label>
       `;
@@ -115,7 +115,7 @@ function initializeGCPFilters() {
         <label for="gcpType_${index}">
           <strong>${type}</strong>
           <span class="filter-description">${getGCPMachineTypeDescription(
-            type
+            type,
           )}</span>
         </label>
       `;
@@ -131,7 +131,7 @@ function initializeGCPFilters() {
 function updateGCPFilterLabels() {
   // Update processor label
   const processorLabel = document.querySelector(
-    "#processorManufacturerControls .form-label"
+    "#processorManufacturerControls .form-label",
   );
   if (processorLabel) {
     processorLabel.textContent = "GCP Processor Platforms:";
@@ -139,7 +139,7 @@ function updateGCPFilterLabels() {
 
   // Update family label
   const familyLabel = document.querySelector(
-    "#instanceFamilyNameControls .form-label"
+    "#instanceFamilyNameControls .form-label",
   );
   if (familyLabel) {
     familyLabel.textContent = "GCP Machine Families:";
@@ -431,15 +431,15 @@ function getGCPZones(region) {
 
 // Download GCP sample CSV
 function downloadGCPSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region
-web-server-01,4,16,45,60,us-central1-a
-db-server-02,8,32,70,80,us-west1-b  
-app-server-03,2,8,35,45,europe-west1-c
-cache-server-04,2,4,25,30,us-central1-a
-api-server-05,4,8,65,55,us-west1-b
-microservice-06,1,2,15,20,us-central1-a
-worker-node-07,8,16,85,75,us-west1-b
-frontend-08,2,4,40,50,europe-west1-c`;
+  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-central1,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,us-west1,Production,Windows,Database,PCI,
+app-server-03,2,8,35,45,europe-west1,Dev,Linux,General,,
+cache-server-04,2,4,25,30,us-central1,Staging,Linux,Cache,,
+api-server-05,4,8,65,55,us-west1,Production,Linux,Web Server,,n2
+microservice-06,1,2,15,20,us-central1,Dev,Linux,General,,
+worker-node-07,8,16,85,75,us-west1,Production,Linux,ML/AI,HIPAA,n4
+frontend-08,2,4,40,50,europe-west1,Staging,Windows,Web Server,,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);

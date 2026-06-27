@@ -34,8 +34,127 @@ const COLUMN_MAPPINGS = {
 };
 
 // Initialize page
+// ─── Data readiness + queue-and-auto-start ────────────────────────────────────
+// Each provider data file sets window.{PROVIDER}_DATA_READY = true as its last line.
+// If the user clicks Generate before the data file finishes parsing, we queue the
+// request and auto-execute it the moment the data is confirmed ready.
+
+const DATA_READY_FLAGS = {
+  aws: "AWS_DATA_READY",
+  azure: "AZURE_DATA_READY",
+  gcp: "GCP_DATA_READY",
+};
+let _generateQueued = false;
+
+// Cached pre-warmed selector instances — shared with instance-selector-factory.js via window
+window._prewarmedSelectors = window._prewarmedSelectors || {};
+
+function getPageProviders() {
+  const scripts = Array.from(document.querySelectorAll("script[src]")).map(
+    (s) => s.src,
+  );
+  return Object.keys(DATA_READY_FLAGS).filter((p) =>
+    scripts.some((s) => s.includes(`${p}-data.js`)),
+  );
+}
+
+function allDataReady(providers = getPageProviders()) {
+  return providers.every((p) => window[DATA_READY_FLAGS[p]] === true);
+}
+
+function showDataToast(msg) {
+  let toast = document.getElementById("dataToast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "dataToast";
+    toast.style.cssText = [
+      "position:fixed",
+      "bottom:24px",
+      "left:50%",
+      "transform:translateX(-50%)",
+      "background:#1e293b",
+      "color:#fff",
+      "padding:10px 20px",
+      "border-radius:8px",
+      "font-size:0.88rem",
+      "font-weight:500",
+      "z-index:9999",
+      "box-shadow:0 4px 12px rgba(0,0,0,0.3)",
+      "transition:opacity 0.4s",
+    ].join(";");
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = "1";
+}
+
+function hideDataToast() {
+  const toast = document.getElementById("dataToast");
+  if (toast) {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 400);
+  }
+}
+
+let _watcherStarted = false;
+let _preWarmStarted = false;
+
+// Pre-warms all regions for each provider once its data file is ready.
+// Runs entirely in the background — never blocks the readiness watcher.
+async function preWarmSelectors() {
+  for (const provider of getPageProviders()) {
+    if (!window[DATA_READY_FLAGS[provider]]) continue;
+    if (window._prewarmedSelectors[provider]) continue;
+    try {
+      const selector = InstanceSelectorFactory.createSelector(provider);
+      await selector.preloadAllRegions();
+      window._prewarmedSelectors[provider] = selector;
+      console.log(`[PreWarm] ${provider} ready`);
+    } catch (e) {
+      console.warn(`[PreWarm] ${provider} failed:`, e);
+    }
+  }
+}
+
+function startPreWarm() {
+  if (_preWarmStarted) return;
+  _preWarmStarted = true;
+  preWarmSelectors(); // fire-and-forget
+}
+
+// Watches for all provider data files to finish loading, then auto-fires any
+// queued generate request. Only one watcher ever runs at a time.
+function watchForDataThenRun(providers = getPageProviders()) {
+  if (_watcherStarted) return;
+  _watcherStarted = true;
+
+  function onDataReady() {
+    _watcherStarted = false;
+    hideDataToast();
+    startPreWarm();
+    if (_generateQueued) {
+      _generateQueued = false;
+      generateRecommendations();
+    }
+  }
+
+  if (allDataReady(providers)) {
+    onDataReady();
+    return;
+  }
+
+  const timer = setInterval(() => {
+    if (!allDataReady(providers)) return;
+    clearInterval(timer);
+    onDataReady();
+  }, 500);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Initializing Cloud Instance Recommender with Modular Selectors");
+
+  // Start watching for data readiness; auto-fires any queued generate request
+  watchForDataThenRun();
 
   // Load provider-specific data if available
   loadProviderSpecificData();
@@ -45,11 +164,11 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("✅ Modular Instance Selector System detected");
     console.log(
       "Supported providers:",
-      InstanceSelectorFactory.getSupportedProviders()
+      InstanceSelectorFactory.getSupportedProviders(),
     );
   } else {
     console.warn(
-      "⚠️ Modular Instance Selector System not found. Please include the selector files."
+      "⚠️ Modular Instance Selector System not found. Please include the selector files.",
     );
   }
 
@@ -147,7 +266,7 @@ function loadProviderSpecificData() {
 // Initialize recommendation type handlers
 function initializeRecommendationTypeHandlers() {
   const recommendationTypeInputs = document.querySelectorAll(
-    'input[name="recommendationType"]'
+    'input[name="recommendationType"]',
   );
   recommendationTypeInputs.forEach((input) => {
     input.addEventListener("change", handleRecommendationTypeChange);
@@ -165,15 +284,15 @@ function toggleSection(header) {
 
 // Download sample CSV
 function downloadSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI
-app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
-cache-server-04,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,
-api-server-05,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,
-microservice-06,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,
-worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA
-frontend-08,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,`;
+  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
+app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,
+cache-server-04,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,
+api-server-05,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6
+microservice-06,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,
+worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
+frontend-08,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
@@ -230,14 +349,14 @@ function parseCSV(csvText) {
   // Validate required columns
   const requiredColumns = Object.values(COLUMN_MAPPINGS).slice(0, 2); // CPU and Memory
   const missingColumns = requiredColumns.filter(
-    (col) => !headers.includes(col)
+    (col) => !headers.includes(col),
   );
 
   const fileStatus = document.getElementById("fileStatus");
   if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns.join(
-      ", "
+      ", ",
     )}. Please check your CSV format.`;
     console.warn("Missing required columns:", missingColumns);
   } else {
@@ -289,7 +408,7 @@ function showFileStatistics() {
     totalRows: csvData.length,
     totalColumns: columnHeaders.length,
     hasRequiredColumns: [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory].every(
-      (col) => columnHeaders.includes(col)
+      (col) => columnHeaders.includes(col),
     ),
     hasUtilizationData: [
       COLUMN_MAPPINGS.cpuUtilization,
@@ -335,7 +454,7 @@ function showDataPreview() {
             ${headers
               .map(
                 (h) =>
-                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${h}</th>`
+                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${h}</th>`,
               )
               .join("")}
           </tr>
@@ -382,7 +501,7 @@ function toggleCloudProvider(provider) {
     const isValid = validateProviderSupport(selectedProviders);
     if (!isValid) {
       console.warn(
-        "Some selected providers are not supported by the modular system"
+        "Some selected providers are not supported by the modular system",
       );
     }
   }
@@ -398,7 +517,7 @@ function toggleCloudProvider(provider) {
 function handleRecommendationTypeChange() {
   const optimizationControls = document.getElementById("optimizationControls");
   const selectedType = document.querySelector(
-    'input[name="recommendationType"]:checked'
+    'input[name="recommendationType"]:checked',
   );
 
   if (!selectedType) return;
@@ -515,7 +634,7 @@ function toggleCurrentGenerationFilter() {
   checkRuleConflicts();
   console.log(
     "Current generation filter:",
-    checkbox.checked ? "Enabled" : "Disabled"
+    checkbox.checked ? "Enabled" : "Disabled",
   );
 }
 
@@ -523,11 +642,15 @@ function toggleCurrentGenerationFilter() {
 
 function getRuleDefaults() {
   return {
-    env:        (document.getElementById("ruleDefaultEnv")?.value        || "").trim(),
-    os:         (document.getElementById("ruleDefaultOS")?.value         || "").trim(),
-    workload:   (document.getElementById("ruleDefaultWorkload")?.value   || "").trim(),
-    compliance: (document.getElementById("ruleDefaultCompliance")?.value || "").trim(),
-    minGen:     (document.getElementById("ruleDefaultMinGen")?.value     || "").trim(),
+    env: (document.getElementById("ruleDefaultEnv")?.value || "").trim(),
+    os: (document.getElementById("ruleDefaultOS")?.value || "").trim(),
+    workload: (
+      document.getElementById("ruleDefaultWorkload")?.value || ""
+    ).trim(),
+    compliance: (
+      document.getElementById("ruleDefaultCompliance")?.value || ""
+    ).trim(),
+    minGen: (document.getElementById("ruleDefaultMinGen")?.value || "").trim(),
   };
 }
 
@@ -537,56 +660,107 @@ function onRuleChange() {
 
 function checkRuleConflicts() {
   const rules = getRuleDefaults();
-  const env    = rules.env.toLowerCase();
-  const os     = rules.os.toLowerCase();
+  const env = rules.env.toLowerCase();
+  const os = rules.os.toLowerCase();
 
   // ── Reset all rule group borders and conflict messages ──────────────────
-  const ruleGroupIds = ["ruleGroupEnv","ruleGroupOS","ruleGroupWorkload","ruleGroupCompliance","ruleGroupMinGen"];
-  const conflictIds  = ["conflictEnv","conflictOS","conflictWorkload","conflictCompliance","conflictMinGen"];
-  ruleGroupIds.forEach(id => {
+  const ruleGroupIds = [
+    "ruleGroupEnv",
+    "ruleGroupOS",
+    "ruleGroupWorkload",
+    "ruleGroupCompliance",
+    "ruleGroupMinGen",
+  ];
+  const conflictIds = [
+    "conflictEnv",
+    "conflictOS",
+    "conflictWorkload",
+    "conflictCompliance",
+    "conflictMinGen",
+  ];
+  ruleGroupIds.forEach((id) => {
     const el = document.getElementById(id);
-    if (el) { el.style.border = "1.5px solid #b8d0ff"; el.style.background = "white"; }
+    if (el) {
+      el.style.border = "1.5px solid #b8d0ff";
+      el.style.background = "white";
+    }
   });
-  conflictIds.forEach(id => {
+  conflictIds.forEach((id) => {
     const el = document.getElementById(id);
-    if (el) { el.style.display = "none"; el.textContent = ""; }
+    if (el) {
+      el.style.display = "none";
+      el.textContent = "";
+    }
   });
 
   function flagConflict(groupId, msgId, msg) {
     const g = document.getElementById(groupId);
     const m = document.getElementById(msgId);
-    if (g) { g.style.border = "1.5px solid #e53e3e"; g.style.background = "#fff5f5"; }
-    if (m) { m.style.display = "block"; m.textContent = "⚠ " + msg; }
+    if (g) {
+      g.style.border = "1.5px solid #e53e3e";
+      g.style.background = "#fff5f5";
+    }
+    if (m) {
+      m.style.display = "block";
+      m.textContent = "⚠ " + msg;
+    }
   }
 
   // ── Conflict 1: OS=Windows + Graviton/ARM-only processor filter ─────────
   if (os === "windows") {
-    const procRestrict = document.getElementById("restrictProcessorManufacturers")?.checked;
+    const procRestrict = document.getElementById(
+      "restrictProcessorManufacturers",
+    )?.checked;
     if (procRestrict) {
-      const procBoxes = document.querySelectorAll("#processorCheckboxes input[type=checkbox]:checked");
-      const selected  = Array.from(procBoxes).map(cb => cb.value.toLowerCase());
-      const hasARM    = selected.some(v => v === "aws" || v === "arm" || v === "graviton");
-      const hasIntel  = selected.some(v => v === "intel");
-      const hasAMD    = selected.some(v => v === "amd");
+      const procBoxes = document.querySelectorAll(
+        "#processorCheckboxes input[type=checkbox]:checked",
+      );
+      const selected = Array.from(procBoxes).map((cb) =>
+        cb.value.toLowerCase(),
+      );
+      const hasARM = selected.some(
+        (v) => v === "aws" || v === "arm" || v === "graviton",
+      );
+      const hasIntel = selected.some((v) => v === "intel");
+      const hasAMD = selected.some((v) => v === "amd");
       if (hasARM && !hasIntel && !hasAMD) {
-        flagConflict("ruleGroupOS","conflictOS","Windows needs Intel/AMD — contradicts Graviton-only processor filter");
+        flagConflict(
+          "ruleGroupOS",
+          "conflictOS",
+          "Windows needs Intel/AMD — contradicts Graviton-only processor filter",
+        );
       }
     }
   }
 
   // ── Conflict 2: ENV=Production/Compliance + burstable-only family filter ─
-  const isProdOrCompliance = env === "production" || env === "prod" || rules.compliance;
+  const isProdOrCompliance =
+    env === "production" || env === "prod" || rules.compliance;
   if (isProdOrCompliance) {
-    const mainRestrict = document.getElementById("restrictMainFamilies")?.checked;
+    const mainRestrict = document.getElementById(
+      "restrictMainFamilies",
+    )?.checked;
     if (mainRestrict) {
-      const famBoxes   = document.querySelectorAll("#mainFamiliesCheckboxes input[type=checkbox]:checked");
-      const selected   = Array.from(famBoxes).map(cb => cb.value.toLowerCase());
-      const burstable  = ["t","b","e2"]; // AWS t, Azure B, GCP e2
-      const onlyBurst  = selected.length > 0 && selected.every(f => burstable.some(b => f.startsWith(b)));
+      const famBoxes = document.querySelectorAll(
+        "#mainFamiliesCheckboxes input[type=checkbox]:checked",
+      );
+      const selected = Array.from(famBoxes).map((cb) => cb.value.toLowerCase());
+      const burstable = ["t", "b", "e2"]; // AWS t, Azure B, GCP e2
+      const onlyBurst =
+        selected.length > 0 &&
+        selected.every((f) => burstable.some((b) => f.startsWith(b)));
       if (onlyBurst) {
-        const conflictGroup = rules.compliance ? "ruleGroupCompliance" : "ruleGroupEnv";
-        const conflictMsg   = rules.compliance ? "conflictCompliance"  : "conflictEnv";
-        flagConflict(conflictGroup, conflictMsg, `${rules.compliance || rules.env} excludes burstable — contradicts restriction to burstable-only families`);
+        const conflictGroup = rules.compliance
+          ? "ruleGroupCompliance"
+          : "ruleGroupEnv";
+        const conflictMsg = rules.compliance
+          ? "conflictCompliance"
+          : "conflictEnv";
+        flagConflict(
+          conflictGroup,
+          conflictMsg,
+          `${rules.compliance || rules.env} excludes burstable — contradicts restriction to burstable-only families`,
+        );
       }
     }
   }
@@ -596,13 +770,23 @@ function checkRuleConflicts() {
 
   // ── Conflict 4: Workload=ML/AI + processor filter = Intel/AMD only ───────
   if (rules.workload.toLowerCase() === "ml/ai") {
-    const procRestrict = document.getElementById("restrictProcessorManufacturers")?.checked;
+    const procRestrict = document.getElementById(
+      "restrictProcessorManufacturers",
+    )?.checked;
     if (procRestrict) {
-      const procBoxes = document.querySelectorAll("#processorCheckboxes input[type=checkbox]:checked");
-      const selected  = Array.from(procBoxes).map(cb => cb.value.toLowerCase());
-      const hasGPU    = selected.some(v => v === "aws" || v === "arm");
+      const procBoxes = document.querySelectorAll(
+        "#processorCheckboxes input[type=checkbox]:checked",
+      );
+      const selected = Array.from(procBoxes).map((cb) =>
+        cb.value.toLowerCase(),
+      );
+      const hasGPU = selected.some((v) => v === "aws" || v === "arm");
       if (selected.length > 0 && !hasGPU) {
-        flagConflict("ruleGroupWorkload","conflictWorkload","ML/AI prefers GPU families (Graviton/ARM accelerated) — Intel/AMD-only filter may exclude them");
+        flagConflict(
+          "ruleGroupWorkload",
+          "conflictWorkload",
+          "ML/AI prefers GPU families (Graviton/ARM accelerated) — Intel/AMD-only filter may exclude them",
+        );
       }
     }
   }
@@ -621,7 +805,7 @@ function toggleInstanceFamilyNameFilter() {
     }
     console.log(
       "Instance family name filter:",
-      checkbox.checked ? "Enabled" : "Disabled"
+      checkbox.checked ? "Enabled" : "Disabled",
     );
   }
 }
@@ -639,7 +823,7 @@ function toggleProcessorManufacturerFilter() {
     }
     console.log(
       "Processor manufacturer filter:",
-      checkbox.checked ? "Enabled" : "Disabled"
+      checkbox.checked ? "Enabled" : "Disabled",
     );
   }
 }
@@ -657,7 +841,7 @@ function toggleMainFamiliesFilter() {
     }
     console.log(
       "Main families filter:",
-      checkbox.checked ? "Enabled" : "Disabled"
+      checkbox.checked ? "Enabled" : "Disabled",
     );
   }
 }
@@ -736,11 +920,11 @@ function updateExcludeControls() {
                   <strong>${type}</strong>
                   <span class="filter-description">${getExcludeTypeDescription(
                     provider,
-                    type
+                    type,
                   )}</span>
                 </label>
               </div>
-            `
+            `,
             )
             .join("")}
         </div>
@@ -784,7 +968,7 @@ function getSelectedInstanceFamilyNames() {
   const selected = [];
   // Look for checked checkboxes with pattern familyName_, azureSeries_, gcpFamily_
   const checkboxes = document.querySelectorAll(
-    'input[id^="familyName_"]:checked, input[id^="azureSeries_"]:checked, input[id^="gcpFamily_"]:checked'
+    'input[id^="familyName_"]:checked, input[id^="azureSeries_"]:checked, input[id^="gcpFamily_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -798,7 +982,7 @@ function getSelectedProcessorManufacturers() {
   const selected = [];
   // Look for checked checkboxes with pattern processor_, azureProcessor_, gcpProcessor_
   const checkboxes = document.querySelectorAll(
-    'input[id^="processor_"]:checked, input[id^="azureProcessor_"]:checked, input[id^="gcpProcessor_"]:checked'
+    'input[id^="processor_"]:checked, input[id^="azureProcessor_"]:checked, input[id^="gcpProcessor_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -812,7 +996,7 @@ function getSelectedMainFamilies() {
   const selected = [];
   // Look for checked checkboxes with pattern mainFamily_, azureFamily_, gcpType_
   const checkboxes = document.querySelectorAll(
-    'input[id^="mainFamily_"]:checked, input[id^="azureFamily_"]:checked, input[id^="gcpType_"]:checked'
+    'input[id^="mainFamily_"]:checked, input[id^="azureFamily_"]:checked, input[id^="gcpType_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -826,7 +1010,7 @@ function getSelectedMainFamilies() {
 function getSelectedAzureSeries() {
   const selected = [];
   const checkboxes = document.querySelectorAll(
-    'input[id^="azureSeries_"]:checked'
+    'input[id^="azureSeries_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -839,7 +1023,7 @@ function getSelectedAzureSeries() {
 function getSelectedAzureProcessors() {
   const selected = [];
   const checkboxes = document.querySelectorAll(
-    'input[id^="azureProcessor_"]:checked'
+    'input[id^="azureProcessor_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -852,7 +1036,7 @@ function getSelectedAzureProcessors() {
 function getSelectedAzureVMFamilies() {
   const selected = [];
   const checkboxes = document.querySelectorAll(
-    'input[id^="azureFamily_"]:checked'
+    'input[id^="azureFamily_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -866,7 +1050,7 @@ function getSelectedAzureVMFamilies() {
 function getSelectedGCPFamilies() {
   const selected = [];
   const checkboxes = document.querySelectorAll(
-    'input[id^="gcpFamily_"]:checked'
+    'input[id^="gcpFamily_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -879,7 +1063,7 @@ function getSelectedGCPFamilies() {
 function getSelectedGCPProcessors() {
   const selected = [];
   const checkboxes = document.querySelectorAll(
-    'input[id^="gcpProcessor_"]:checked'
+    'input[id^="gcpProcessor_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
@@ -903,8 +1087,19 @@ function getSelectedGCPMachineTypes() {
 // Generate recommendations
 function generateRecommendations() {
   console.log(
-    "Starting recommendation generation with modular selector system"
+    "Starting recommendation generation with modular selector system",
   );
+
+  // If the provider data files haven't finished parsing yet, queue this run
+  // and auto-execute it the moment they are ready — no blocking, no alert.
+  if (!allDataReady(selectedProviders)) {
+    _generateQueued = true;
+    showDataToast(
+      "⏳ Instance data still loading — will start automatically when ready…",
+    );
+    watchForDataThenRun(selectedProviders);
+    return;
+  }
 
   // Validation
   if (csvData.length === 0) {
@@ -920,7 +1115,7 @@ function generateRecommendations() {
   // Check if modular system is available
   if (typeof getInstanceRecommendationWithSelector === "undefined") {
     alert(
-      "Modular Instance Selector system not found. Please include the required files:\n- base-instance-selector.js\n- aws-instance-selector.js\n- azure-instance-selector.js\n- gcp-instance-selector.js\n- instance-selector-factory.js"
+      "Modular Instance Selector system not found. Please include the required files:\n- base-instance-selector.js\n- aws-instance-selector.js\n- azure-instance-selector.js\n- gcp-instance-selector.js\n- instance-selector-factory.js",
     );
     return;
   }
@@ -928,7 +1123,7 @@ function generateRecommendations() {
   // Check if required columns exist
   const requiredColumns = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
   const missingColumns = requiredColumns.filter(
-    (col) => !columnHeaders.includes(col)
+    (col) => !columnHeaders.includes(col),
   );
 
   if (missingColumns.length > 0) {
@@ -937,7 +1132,7 @@ function generateRecommendations() {
   }
 
   const recommendationType = document.querySelector(
-    'input[name="recommendationType"]:checked'
+    'input[name="recommendationType"]:checked',
   );
   if (!recommendationType) {
     alert("Please select a recommendation type.");
@@ -946,7 +1141,7 @@ function generateRecommendations() {
 
   console.log(
     "Validation passed, starting processing with type:",
-    recommendationType.value
+    recommendationType.value,
   );
 
   // Show processing status
@@ -982,11 +1177,11 @@ function generateRecommendations() {
 // Enhanced process recommendations with modular system and recommendation type control
 async function processRecommendations() {
   console.log(
-    "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy"
+    "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
   );
 
   const recommendationType = document.querySelector(
-    'input[name="recommendationType"]:checked'
+    'input[name="recommendationType"]:checked',
   ).value;
 
   // Determine which recommendation types to generate
@@ -1011,16 +1206,16 @@ async function processRecommendations() {
     cpuBased: document.getElementById("cpuBased")?.checked || false,
     memoryBased: document.getElementById("memoryBased")?.checked || false,
     cpuDownsizeMax: parseInt(
-      document.getElementById("cpuDownsizeMax")?.value || 40
+      document.getElementById("cpuDownsizeMax")?.value || 40,
     ),
     cpuUpsizeMin: parseInt(
-      document.getElementById("cpuUpsizeMin")?.value || 80
+      document.getElementById("cpuUpsizeMin")?.value || 80,
     ),
     memoryDownsizeMax: parseInt(
-      document.getElementById("memoryDownsizeMax")?.value || 40
+      document.getElementById("memoryDownsizeMax")?.value || 40,
     ),
     memoryUpsizeMin: parseInt(
-      document.getElementById("memoryUpsizeMin")?.value || 80
+      document.getElementById("memoryUpsizeMin")?.value || 80,
     ),
 
     // Comprehensive AWS filtering options (only if AWS functions are available)
@@ -1061,11 +1256,17 @@ async function processRecommendations() {
     selectedGCPMachineTypes: getSelectedGCPMachineTypes(),
 
     // Rule Engine page-level defaults (overridden per-row by CSV columns)
-    ...getRuleDefaults().env        ? { ruleDefaultEnv:        getRuleDefaults().env }        : {},
-    ...getRuleDefaults().os         ? { ruleDefaultOS:         getRuleDefaults().os }         : {},
-    ...getRuleDefaults().workload   ? { ruleDefaultWorkload:   getRuleDefaults().workload }   : {},
-    ...getRuleDefaults().compliance ? { ruleDefaultCompliance: getRuleDefaults().compliance } : {},
-    ...getRuleDefaults().minGen     ? { ruleDefaultMinGen:     getRuleDefaults().minGen }     : {},
+    ...(getRuleDefaults().env ? { ruleDefaultEnv: getRuleDefaults().env } : {}),
+    ...(getRuleDefaults().os ? { ruleDefaultOS: getRuleDefaults().os } : {}),
+    ...(getRuleDefaults().workload
+      ? { ruleDefaultWorkload: getRuleDefaults().workload }
+      : {}),
+    ...(getRuleDefaults().compliance
+      ? { ruleDefaultCompliance: getRuleDefaults().compliance }
+      : {}),
+    ...(getRuleDefaults().minGen
+      ? { ruleDefaultMinGen: getRuleDefaults().minGen }
+      : {}),
   };
 
   console.log("Processing options:", {
@@ -1095,18 +1296,18 @@ async function processRecommendations() {
   try {
     // Use the modular instance selector system
     console.log(
-      "Calling getInstanceRecommendationWithSelector with modular system"
+      "Calling getInstanceRecommendationWithSelector with modular system",
     );
     processedResults = await getInstanceRecommendationWithSelector(
       csvData,
       selectedProviders,
-      options
+      options,
     );
 
     console.log("Recommendations processed successfully:", {
       totalRows: processedResults.length,
       sampleColumns: Object.keys(processedResults[0] || {}).filter(
-        (key) => key.includes("Like-to-Like") || key.includes("Optimized")
+        (key) => key.includes("Like-to-Like") || key.includes("Optimized"),
       ),
     });
 
@@ -1124,14 +1325,14 @@ async function processRecommendations() {
     if (processedResults.length > 0) {
       const sampleResult = processedResults[0];
       const generatedColumns = Object.keys(sampleResult).filter(
-        (key) => key.includes("Like-to-Like") || key.includes("Optimized")
+        (key) => key.includes("Like-to-Like") || key.includes("Optimized"),
       );
       console.log("Generated columns:", generatedColumns);
     }
   } catch (error) {
     console.error("Error processing recommendations:", error);
     alert(
-      `An error occurred while processing recommendations: ${error.message}`
+      `An error occurred while processing recommendations: ${error.message}`,
     );
   }
 }
@@ -1149,7 +1350,7 @@ function getExcludeGravitonSetting() {
 
   console.log(
     "Found graviton checkboxes:",
-    gravitonCheckboxes.map((cb) => (cb ? cb.id : "null"))
+    gravitonCheckboxes.map((cb) => (cb ? cb.id : "null")),
   );
 
   // Return true if ANY Graviton exclusion checkbox is checked
@@ -1165,7 +1366,7 @@ function getExcludedTypes() {
 
   selectedProviders.forEach((provider) => {
     const checkboxes = document.querySelectorAll(
-      `input[id^="exclude_${provider}_"]:checked`
+      `input[id^="exclude_${provider}_"]:checked`,
     );
     checkboxes.forEach((checkbox) => {
       excludedTypes.push({
@@ -1179,6 +1380,15 @@ function getExcludedTypes() {
   return excludedTypes;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Show in-browser results preview after generation
 function showResultsPreview(results) {
   const container = document.getElementById("resultsPreviewSection");
@@ -1187,38 +1397,53 @@ function showResultsPreview(results) {
   // Identify recommendation columns (Instance, vCPUs, Memory, Rules Applied)
   const allKeys = Object.keys(results[0] || {});
   const instanceCols = allKeys.filter(
-    (k) => k.includes("Like-to-Like Instance") || k.includes("Optimized Instance")
+    (k) =>
+      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
   );
   const rulesCols = allKeys.filter((k) => k.includes("Rules Applied"));
-  const inputCols = ["VM Name", "CPU Count", "Memory (GB)", "ENV", "OS", "Workload", "Compliance"].filter(
-    (c) => allKeys.includes(c)
-  );
+  const inputCols = [
+    "VM Name",
+    "CPU Count",
+    "Memory (GB)",
+    "ENV",
+    "OS",
+    "Workload",
+    "Compliance",
+  ].filter((c) => allKeys.includes(c));
 
   // Build display columns: input context + each instance group (instance, vCPUs, memory), then rules
   const displayCols = [...inputCols];
   instanceCols.forEach((instCol) => {
     displayCols.push(instCol);
     const vCpuCol = instCol.replace("Instance", "vCPUs");
-    const memCol  = instCol.replace("Instance", "Memory (GiB)");
+    const memCol = instCol.replace("Instance", "Memory (GiB)");
     if (allKeys.includes(vCpuCol)) displayCols.push(vCpuCol);
-    if (allKeys.includes(memCol))  displayCols.push(memCol);
+    if (allKeys.includes(memCol)) displayCols.push(memCol);
   });
   // Rules Applied is a single shared column — append once at the end
-  rulesCols.forEach(r => { if (!displayCols.includes(r)) displayCols.push(r); });
+  rulesCols.forEach((r) => {
+    if (!displayCols.includes(r)) displayCols.push(r);
+  });
 
   // Helper: colour-code rules cell
   function rulesHtml(val) {
     if (!val) return '<span style="color:#aaa">—</span>';
-    const parts = val.split("|").map((p) => p.trim()).filter(Boolean);
-    return parts.map((p) => {
-      const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
-      return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${p}</span>`;
-    }).join(" ");
+    const parts = val
+      .split("|")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return parts
+      .map((p) => {
+        const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
+        return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
+      })
+      .join(" ");
   }
 
   const previewRows = results.slice(0, 20);
   const isRulesCol = (col) => col.includes("Rules Applied");
-  const isInstanceCol = (col) => col.includes("Instance") && !col.includes("Rules");
+  const isInstanceCol = (col) =>
+    col.includes("Instance") && !col.includes("Rules");
 
   let html = `
     <p style="font-weight:600;margin-bottom:6px;">📋 Results Preview (first ${previewRows.length} of ${results.length} rows)</p>
@@ -1226,7 +1451,7 @@ function showResultsPreview(results) {
       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;">
         <thead>
           <tr style="position:sticky;top:0;z-index:1;background:#1a56db;color:#fff;">
-            ${displayCols.map((c) => `<th style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;">${c}</th>`).join("")}
+            ${displayCols.map((c) => `<th style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;">${escapeHtml(c)}</th>`).join("")}
           </tr>
         </thead>
         <tbody>
@@ -1241,11 +1466,18 @@ function showResultsPreview(results) {
       if (isRulesCol(col)) {
         cellContent = rulesHtml(String(val));
       } else if (isInstanceCol(col)) {
-        const isErr = String(val).startsWith("No ") || String(val).startsWith("Missing") || String(val) === "Error";
+        const isErr =
+          String(val).startsWith("No ") ||
+          String(val).startsWith("Missing") ||
+          String(val) === "Error";
         const color = isErr ? "#dc2626" : "#047857";
-        cellContent = `<strong style="color:${color}">${val || "—"}</strong>`;
+        cellContent = val
+          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>`
+          : '<span style="color:#aaa">—</span>';
       } else {
-        cellContent = String(val) || '<span style="color:#aaa">—</span>';
+        cellContent = val
+          ? escapeHtml(String(val))
+          : '<span style="color:#aaa">—</span>';
       }
       html += `<td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;">${cellContent}</td>`;
     });
@@ -1268,13 +1500,13 @@ function updateDownloadButtons(results) {
   const row = document.getElementById("downloadBtnsRow");
   if (!row || !results || results.length === 0) return;
 
-  const keys   = Object.keys(results[0]);
-  const hasL2L = keys.some(k => k.includes("Like-to-Like Instance"));
-  const hasOpt = keys.some(k => k.includes("Optimized Instance"));
+  const keys = Object.keys(results[0]);
+  const hasL2L = keys.some((k) => k.includes("Like-to-Like Instance"));
+  const hasOpt = keys.some((k) => k.includes("Optimized Instance"));
 
-  const hasAzure  = keys.some(k => /^AZURE\s/i.test(k));
-  const hasGCP    = keys.some(k => /^GCP\s/i.test(k));
-  const isAWSOnly = !hasAzure && !hasGCP && keys.some(k => /^AWS\s/i.test(k));
+  const hasAzure = keys.some((k) => /^AZURE\s/i.test(k));
+  const hasGCP = keys.some((k) => /^GCP\s/i.test(k));
+  const isAWSOnly = !hasAzure && !hasGCP && keys.some((k) => /^AWS\s/i.test(k));
 
   if (!isAWSOnly) return;
 
@@ -1331,7 +1563,7 @@ function downloadResults() {
           const value = row[header] || "";
           return value.toString().includes(",") ? `"${value}"` : value;
         })
-        .join(",")
+        .join(","),
     ),
   ].join("\n");
 
@@ -1363,11 +1595,17 @@ function downloadAWSBulkTemplate(type) {
   }
 
   const sampleRow = processedResults[0];
-  const hasL2L = Object.keys(sampleRow).some((k) => k.includes("AWS Like-to-Like Instance"));
-  const hasOpt = Object.keys(sampleRow).some((k) => k.includes("AWS Optimized Instance"));
+  const hasL2L = Object.keys(sampleRow).some((k) =>
+    k.includes("AWS Like-to-Like Instance"),
+  );
+  const hasOpt = Object.keys(sampleRow).some((k) =>
+    k.includes("AWS Optimized Instance"),
+  );
 
   if (!hasL2L && !hasOpt) {
-    alert("No AWS recommendations found. Please select AWS as a provider and regenerate.");
+    alert(
+      "No AWS recommendations found. Please select AWS as a provider and regenerate.",
+    );
     return;
   }
 
@@ -1400,38 +1638,48 @@ function downloadAWSBulkTemplate(type) {
   ];
 
   const osSelector = document.querySelector('input[name="targetOS"]:checked');
-  const selectedOS = osSelector ? osSelector.value : "Linux";
-  const templateOS = selectedOS === "Windows" ? "Windows Server" : "Linux";
+  const pageOS = osSelector ? osSelector.value : "Linux";
 
   const rows = [];
 
   processedResults.forEach((row) => {
-    const vmName   = row["VM Name"] || row["Server Name"] || "VM";
-    const region   = row["AWS Region"] || "";
-    const env      = row["ENV"] || row["Environment"] || "Default";
+    const vmName = row["VM Name"] || row["Server Name"] || "VM";
+    const region = row["AWS Region"] || "";
+    const env = row["ENV"] || row["Environment"] || "Default";
     const sanitize = (s) => String(s).replace(/[><&]/g, "");
 
+    // Per-row OS overrides the page-level default
+    const rowOS = (row["OS"] || row["Operating System"] || pageOS).trim();
+    const templateOS = rowOS.toLowerCase().includes("windows")
+      ? "Windows Server"
+      : "Linux";
+
     const buildRow = (instanceType) => {
-      if (!instanceType || instanceType === "Missing data" || instanceType === "Error" || instanceType === "No utilization data") {
+      if (
+        !instanceType ||
+        instanceType === "Missing data" ||
+        instanceType === "Error" ||
+        instanceType === "No utilization data"
+      ) {
         return null;
       }
       return [
-        sanitize(env),          // Group
-        sanitize(vmName),       // Description — just the VM name, no type label
-        region,                 // AWS Region
-        templateOS,             // Operating System
-        instanceType,           // Instance Type
-        "Shared Instances",     // Tenancy
-        "1",                    // Number of Instances
-        "",                     // Assumed Usage (blank = Always On)
-        "Always On",            // Usage Type
-        "On-Demand",            // Purchasing Options
-        "",                     // Storage Type
-        "",                     // Storage amount
-        "",                     // Provisioning IOPS
-        "",                     // EBS Throughput
-        "",                     // Snapshot Frequency
-        "",                     // EBS Snapshot amount
+        sanitize(env), // Group
+        sanitize(vmName), // Description — just the VM name, no type label
+        region, // AWS Region
+        templateOS, // Operating System (per-row)
+        instanceType, // Instance Type
+        "Shared Instances", // Tenancy
+        "1", // Number of Instances
+        "", // Assumed Usage (blank = Always On)
+        "Always On", // Usage Type
+        "On-Demand", // Purchasing Options
+        "", // Storage Type
+        "", // Storage amount
+        "", // Provisioning IOPS
+        "", // EBS Throughput
+        "", // Snapshot Frequency
+        "", // EBS Snapshot amount
       ];
     };
 
@@ -1445,7 +1693,9 @@ function downloadAWSBulkTemplate(type) {
   });
 
   if (rows.length === 0) {
-    alert("No valid AWS instance recommendations to export. Check that your results contain successful matches.");
+    alert(
+      "No valid AWS instance recommendations to export. Check that your results contain successful matches.",
+    );
     return;
   }
 
@@ -1509,7 +1759,7 @@ function saveUsageStatistics() {
     // Save to localStorage
     localStorage.setItem(
       "cloudInstanceRecommenderStats",
-      JSON.stringify(usageStats)
+      JSON.stringify(usageStats),
     );
 
     console.log("Saved usage statistics:", usageStats);
@@ -1527,7 +1777,7 @@ function updateUsageStatistics(vmCount) {
   saveUsageStatistics();
 
   console.log(
-    `Updated statistics: ${usageStats.toolUses} tool uses, ${usageStats.totalVMs} total VMs processed`
+    `Updated statistics: ${usageStats.toolUses} tool uses, ${usageStats.totalVMs} total VMs processed`,
   );
 }
 
@@ -1547,7 +1797,7 @@ window.getInstanceRecommendation = function (
   memory,
   cpuUtil,
   memoryUtil,
-  recommendationType
+  recommendationType,
 ) {
   let result = {
     instanceType: "Not found",
@@ -1568,12 +1818,12 @@ window.getInstanceRecommendation = function (
       // This would need the selector to be initialized first
       // For now, return the fallback result
       console.log(
-        "Modular selector available but not initialized for single recommendation"
+        "Modular selector available but not initialized for single recommendation",
       );
     } catch (error) {
       console.warn(
         "Error using modular selector for single recommendation:",
-        error
+        error,
       );
     }
   }

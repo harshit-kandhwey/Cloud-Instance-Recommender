@@ -84,7 +84,7 @@ function initializeAzureFilters() {
         <label for="azureSeries_${index}">
           <strong>${series}</strong>
           <span class="filter-description">${getAzureSeriesDescription(
-            series
+            series,
           )}</span>
         </label>
       `;
@@ -104,12 +104,12 @@ function initializeAzureFilters() {
         <label for="azureProcessor_${index}">
           <strong>${processor}</strong>
           <span class="filter-description">${getAzureProcessorDescription(
-            processor
+            processor,
           )}</span>
         </label>
       `;
         processorContainer.appendChild(div);
-      }
+      },
     );
   }
 
@@ -124,7 +124,7 @@ function initializeAzureFilters() {
         <label for="azureFamily_${index}">
           <strong>${family}</strong>
           <span class="filter-description">${getAzureVMFamilyDescription(
-            family
+            family,
           )}</span>
         </label>
       `;
@@ -140,7 +140,7 @@ function initializeAzureFilters() {
 function updateAzureFilterLabels() {
   // Update processor label
   const processorLabel = document.querySelector(
-    "#processorManufacturerControls .form-label"
+    "#processorManufacturerControls .form-label",
   );
   if (processorLabel) {
     processorLabel.textContent = "Azure Processor Architectures:";
@@ -148,7 +148,7 @@ function updateAzureFilterLabels() {
 
   // Update family label
   const familyLabel = document.querySelector(
-    "#instanceFamilyNameControls .form-label"
+    "#instanceFamilyNameControls .form-label",
   );
   if (familyLabel) {
     familyLabel.textContent = "Azure Instance Series:";
@@ -301,7 +301,7 @@ function initializeAzureExcludeTypes() {
 
   // Populate Azure exclude checkboxes
   const azureExcludeContainer = document.getElementById(
-    "azureExcludeCheckboxes"
+    "azureExcludeCheckboxes",
   );
   if (azureExcludeContainer) {
     azureExcludeTypesData.forEach((type, index) => {
@@ -389,15 +389,15 @@ function getAzurePricingZone(region) {
 
 // Download Azure sample CSV
 function downloadAzureSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region
-web-server-01,4,16,45,60,East US
-db-server-02,8,32,70,80,West US 2
-app-server-03,2,8,35,45,North Europe
-cache-server-04,2,4,25,30,East US
-api-server-05,4,8,65,55,West US
-microservice-06,1,2,15,20,East US
-worker-node-07,8,16,85,75,West US 2
-frontend-08,2,4,40,50,North Europe`;
+  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,4,16,45,60,East US,Production,Linux,Web Server,,
+db-server-02,8,32,70,80,West US 2,Production,Windows,Database,PCI,
+app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,
+cache-server-04,2,4,25,30,East US,Staging,Linux,Cache,,
+api-server-05,4,8,65,55,West US,Production,Linux,Web Server,,5
+microservice-06,1,2,15,20,East US,Dev,Linux,General,,
+worker-node-07,8,16,85,75,West US 2,Production,Linux,ML/AI,HIPAA,4
+frontend-08,2,4,40,50,North Europe,Staging,Windows,Web Server,,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);

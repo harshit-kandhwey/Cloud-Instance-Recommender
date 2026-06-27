@@ -18,6 +18,23 @@ class BaseInstanceSelector {
     console.log(`${this.getProviderName()} InstanceSelector initialized`);
   }
 
+  // Returns all region name strings (CSV-format) available in window globals.
+  // Override in each provider subclass.
+  getAllAvailableRegionKeys() {
+    return [];
+  }
+
+  // Pre-warms ALL regions from the data file in the background.
+  async preloadAllRegions() {
+    const regions = this.getAllAvailableRegionKeys();
+    if (!regions.length) return;
+    console.log(
+      `[PreWarm] ${this.getProviderName()}: loading ${regions.length} regions in background`,
+    );
+    await this.loadInstanceData(regions);
+    console.log(`[PreWarm] ${this.getProviderName()}: complete`);
+  }
+
   // Abstract methods to be implemented by provider-specific classes
   getProviderName() {
     throw new Error("getProviderName must be implemented by provider class");
@@ -33,7 +50,7 @@ class BaseInstanceSelector {
 
   normalizeRegionForJS(region) {
     throw new Error(
-      "normalizeRegionForJS must be implemented by provider class"
+      "normalizeRegionForJS must be implemented by provider class",
     );
   }
 
@@ -74,30 +91,32 @@ class BaseInstanceSelector {
       const normalizedRegion = this.normalizeRegionForJS(region);
       let regionData;
 
+      let usedFallback = false;
       try {
         regionData = this.getRegionDataFromGlobal(normalizedRegion);
         console.log(
-          `Successfully retrieved ${normalizedRegion} data from global object`
+          `Successfully retrieved ${normalizedRegion} data from global object`,
         );
-      } catch (fetchError) {
+      } catch {
         console.warn(
-          `Failed to get ${normalizedRegion} data from global object, using fallback:`,
-          fetchError
+          `${this.getProviderName()} ${normalizedRegion} not in global scope yet — using fallback`,
         );
         regionData = this.getFallbackData();
+        usedFallback = true;
       }
 
       const instances = this.parseData(regionData, region);
       this.instanceData[region] = instances;
-      this.loadedRegions.add(
-        `${this.getProviderName().toLowerCase()}-${region}`
-      );
-
+      if (!usedFallback) {
+        this.loadedRegions.add(
+          `${this.getProviderName().toLowerCase()}-${region}`,
+        );
+      }
       this.logLoadingStatistics(instances, region);
     } catch (error) {
       console.error(
         `Failed to load data for ${this.getProviderName()} ${region}:`,
-        error
+        error,
       );
       this.instanceData[region] = this.getFallbackInstances(region);
     }
@@ -128,7 +147,7 @@ class BaseInstanceSelector {
           instanceType,
           instanceDetails,
           region,
-          mapping
+          mapping,
         );
 
         if (this.isValidInstance(standardized)) {
@@ -137,7 +156,7 @@ class BaseInstanceSelector {
       } catch (error) {
         console.warn(
           `Error parsing instance ${instanceType} for ${this.getProviderName()} ${region}:`,
-          error
+          error,
         );
       }
     });
@@ -183,7 +202,7 @@ class BaseInstanceSelector {
     sampleData.forEach((instance) => {
       jsData[instance.instanceType] = this.createJSDataFromSample(
         instance,
-        mapping
+        mapping,
       );
     });
 
@@ -211,14 +230,14 @@ class BaseInstanceSelector {
   // Log loading statistics
   logLoadingStatistics(instances, region) {
     const currentGenCount = instances.filter(
-      (i) => i.generation === 1.0 || i.generation === "1.0"
+      (i) => i.generation === 1.0 || i.generation === "1.0",
     ).length;
     const familyTypes = new Set(instances.map((i) => i.familyName)).size;
 
     console.log(
       `Loaded ${
         instances.length
-      } instances for ${this.getProviderName()} ${region}`
+      } instances for ${this.getProviderName()} ${region}`,
     );
     console.log(`  - Current Generation: ${currentGenCount} instances`);
     console.log(`  - Family Types: ${familyTypes} categories`);
@@ -227,7 +246,7 @@ class BaseInstanceSelector {
   // Common like-to-like instance selection
   getLikeToLikeInstance(region, currentCpu, currentMemory, options = {}) {
     console.log(
-      `Getting like-to-like for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB`
+      `Getting like-to-like for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB`,
     );
 
     this._lastRulesApplied = [];
@@ -242,12 +261,12 @@ class BaseInstanceSelector {
       regionData,
       currentCpu,
       currentMemory,
-      options
+      options,
     );
 
     if (!filteredInstances.length) {
       console.warn(
-        `No instances meet filtering criteria for ${this.getProviderName()} ${region}`
+        `No instances meet filtering criteria for ${this.getProviderName()} ${region}`,
       );
       return this.createEmptyResult("No instances meet filtering requirements");
     }
@@ -257,10 +276,14 @@ class BaseInstanceSelector {
     const bestInstance = filteredInstances[0];
 
     console.log(
-      `Selected ${bestInstance.instanceType} for ${this.getProviderName()} ${region}`
+      `Selected ${bestInstance.instanceType} for ${this.getProviderName()} ${region}`,
     );
 
-    const result = this.createInstanceResult(bestInstance, currentCpu, currentMemory);
+    const result = this.createInstanceResult(
+      bestInstance,
+      currentCpu,
+      currentMemory,
+    );
     result.rulesApplied = (this._lastRulesApplied || []).join(" | ");
     return result;
   }
@@ -330,7 +353,7 @@ class BaseInstanceSelector {
       const ruleResult = RuleEngine.apply(
         filtered,
         options,
-        this.getProviderName().toLowerCase()
+        this.getProviderName().toLowerCase(),
       );
       this._lastRulesApplied = ruleResult.rules;
       if (ruleResult.instances.length > 0) {
@@ -338,7 +361,10 @@ class BaseInstanceSelector {
       }
       // If rule engine empties the list, keep original filtered set and note it
       else if (ruleResult.rules.length > 0) {
-        this._lastRulesApplied = [...ruleResult.rules, "⚠ No matches after rules — fallback to unrestricted"];
+        this._lastRulesApplied = [
+          ...ruleResult.rules,
+          "⚠ No matches after rules — fallback to unrestricted",
+        ];
       }
     }
 
@@ -352,10 +378,10 @@ class BaseInstanceSelector {
     currentMemory,
     cpuUtil,
     memoryUtil,
-    options = {}
+    options = {},
   ) {
     console.log(
-      `Getting optimized for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB, CPU:${cpuUtil}%, Mem:${memoryUtil}%`
+      `Getting optimized for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB, CPU:${cpuUtil}%, Mem:${memoryUtil}%`,
     );
     console.log("Using N/2, N, N+1 optimization strategy");
 
@@ -367,7 +393,7 @@ class BaseInstanceSelector {
       if (cpuUtil <= options.cpuDownsizeMax) {
         targetCpu = Math.max(1, Math.ceil(currentCpu / 2));
         console.log(
-          `CPU Downsizing (N/2): ${currentCpu} -> ${targetCpu} vCPUs`
+          `CPU Downsizing (N/2): ${currentCpu} -> ${targetCpu} vCPUs`,
         );
       } else if (cpuUtil > options.cpuUpsizeMin) {
         targetCpu = currentCpu + 1;
@@ -379,12 +405,12 @@ class BaseInstanceSelector {
       if (memoryUtil <= options.memoryDownsizeMax) {
         targetMemory = Math.max(1, Math.ceil(currentMemory / 2));
         console.log(
-          `Memory Downsizing (N/2): ${currentMemory} -> ${targetMemory} GB`
+          `Memory Downsizing (N/2): ${currentMemory} -> ${targetMemory} GB`,
         );
       } else if (memoryUtil > options.memoryUpsizeMin) {
         targetMemory = currentMemory + 1;
         console.log(
-          `Memory Upsizing (N+1): ${currentMemory} -> ${targetMemory} GB`
+          `Memory Upsizing (N+1): ${currentMemory} -> ${targetMemory} GB`,
         );
       }
     }
@@ -393,7 +419,7 @@ class BaseInstanceSelector {
       region,
       targetCpu,
       targetMemory,
-      options
+      options,
     );
     result.reason = `N/2, N, N+1 Strategy optimization from ${currentCpu}vCPU/${currentMemory}GB to ${targetCpu}vCPU/${targetMemory}GB based on utilization (CPU:${cpuUtil}%, Mem:${memoryUtil}%)`;
 
