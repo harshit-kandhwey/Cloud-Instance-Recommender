@@ -230,6 +230,8 @@ class BaseInstanceSelector {
       `Getting like-to-like for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB`
     );
 
+    this._lastRulesApplied = [];
+
     const regionData = this.instanceData[region];
     if (!regionData?.length) {
       console.warn(`No data available for ${this.getProviderName()} ${region}`);
@@ -250,22 +252,22 @@ class BaseInstanceSelector {
       return this.createEmptyResult("No instances meet filtering requirements");
     }
 
-    const bestInstance = filteredInstances.reduce((cheapest, current) => {
-      return current.price < cheapest.price ? current : cheapest;
-    });
+    // filteredInstances[0] is cheapest (price-sorted by parseData)
+    // or cheapest-within-preferred-workload-family when rule engine re-sorted
+    const bestInstance = filteredInstances[0];
 
     console.log(
-      `Selected ${
-        bestInstance.instanceType
-      } for ${this.getProviderName()} ${region}`
+      `Selected ${bestInstance.instanceType} for ${this.getProviderName()} ${region}`
     );
 
-    return this.createInstanceResult(bestInstance, currentCpu, currentMemory);
+    const result = this.createInstanceResult(bestInstance, currentCpu, currentMemory);
+    result.rulesApplied = (this._lastRulesApplied || []).join(" | ");
+    return result;
   }
 
   // Apply common filters
   applyFilters(instances, currentCpu, currentMemory, options) {
-    return instances.filter((instance) => {
+    let filtered = instances.filter((instance) => {
       // Must meet or exceed CPU and Memory requirements
       if (instance.vCpus < currentCpu || instance.memory < currentMemory) {
         return false;
@@ -322,6 +324,25 @@ class BaseInstanceSelector {
 
       return true;
     });
+
+    // Apply rule engine (ENV / OS / Workload / Compliance rules)
+    if (typeof RuleEngine !== "undefined" && filtered.length > 0) {
+      const ruleResult = RuleEngine.apply(
+        filtered,
+        options,
+        this.getProviderName().toLowerCase()
+      );
+      this._lastRulesApplied = ruleResult.rules;
+      if (ruleResult.instances.length > 0) {
+        filtered = ruleResult.instances;
+      }
+      // If rule engine empties the list, keep original filtered set and note it
+      else if (ruleResult.rules.length > 0) {
+        this._lastRulesApplied = [...ruleResult.rules, "⚠ No matches after rules — fallback to unrestricted"];
+      }
+    }
+
+    return filtered;
   }
 
   // N/2, N, N+1 optimization strategy
@@ -387,6 +408,7 @@ class BaseInstanceSelector {
       memory: 0,
       price: 0,
       hourlyPrice: "0.00",
+      rulesApplied: (this._lastRulesApplied || []).join(" | "),
       reason: reason,
     };
   }

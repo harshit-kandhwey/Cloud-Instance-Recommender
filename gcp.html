@@ -8,6 +8,7 @@
     <!-- JavaScript Files in Correct Order -->
     <script defer src="js/base/optimized_file_handler.js"></script>
     <script defer src="js/gcp/gcp-data.js"></script>
+    <script defer src="js/base/rule-engine.js"></script>
     <script defer src="js/base/base-instance-selector.js"></script>
     <script defer src="js/gcp/gcp-instance-selector.js"></script>
     <script defer src="js/base/instance-selector-factory.js"></script>
@@ -48,12 +49,32 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region
-web-server-01,4,16,45,60,us-central1-a
-db-server-02,8,32,70,80,us-west1-b
-app-server-03,2,8,35,45,europe-west1-c</pre
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region,ENV,OS,Workload,Compliance
+web-server-01,4,16,45,60,us-central1-a,Production,Linux,Web Server,
+db-server-02,8,32,70,80,us-west1-b,Production,Linux,Database,
+app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General,</pre
               >
             </div>
+
+            <details style="margin-top:10px;">
+              <summary style="cursor:pointer; font-weight:600; color:#555;">Optional columns — click to see rule descriptions</summary>
+              <div style="margin-top:8px; font-size:0.875em; line-height:1.6; color:#444;">
+                <table style="border-collapse:collapse; width:100%;">
+                  <thead><tr style="background:#f0f4f8;">
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Column</th>
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Values</th>
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Rules triggered</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>ENV</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">Production / Staging / Dev / Test</td><td style="padding:4px 8px; border:1px solid #ddd;"><strong>1a</strong> f1/g1/e2-shared burstable excluded (Prod/Staging) · <strong>1b</strong> Current-gen only (Prod) · <strong>1c</strong> ≥2 vCPUs (Prod) · <strong>1d</strong> ≥4 vCPU for DB/Web workloads (Prod)</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>OS</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">Linux (default) / Windows</td><td style="padding:4px 8px; border:1px solid #ddd;">Windows → ARM (T2A series) excluded</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>Workload</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">General · Database · Web Server · Cache · ML/AI · Batch · HPC</td><td style="padding:4px 8px; border:1px solid #ddd;">Preferred series sorted first: Database→M1/M2/M3/M4 · Web→N2/E2/N4 · Cache→M1/M2/M3 · ML/AI→A2/A3/G2 · Batch→C2/C3 · HPC→H3/C2</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>Compliance</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">PCI / HIPAA / FIPS</td><td style="padding:4px 8px; border:1px solid #ddd;"><strong>1b</strong> Current-gen only · No burstable</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:6px; color:#666;">All columns are optional — blank cells use safe defaults.</p>
+              </div>
+            </details>
 
             <button class="btn btn-secondary" onclick="downloadGCPSampleCSV()">
               📥 Download Sample CSV
