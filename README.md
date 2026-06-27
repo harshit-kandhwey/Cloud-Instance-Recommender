@@ -34,7 +34,7 @@ Five interactive dropdowns set global defaults for the entire batch without edit
 | **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                    |
 | **OS**         | Linux / Windows / macOS — affects ARM eligibility                                              |
 | **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC — sorts preferred families first |
-| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS) |
+| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)  |
 | **Min Gen**    | Minimum generation number/family — excludes older instance generations                         |
 
 Per-row CSV column values always override these global defaults.

@@ -525,8 +525,14 @@ class FileHandlerIntegration {
   async _processSuccessfulUpload(result) {
     const validationIssues = this.fileHandler.validateRequiredData();
 
-    const hasMissingCols = validationIssues.some((i) => i.includes("not found"));
-    const statusType = hasMissingCols ? "error" : validationIssues.length > 0 ? "warning" : "success";
+    const hasMissingCols = validationIssues.some((i) =>
+      i.includes("not found"),
+    );
+    const statusType = hasMissingCols
+      ? "error"
+      : validationIssues.length > 0
+        ? "warning"
+        : "success";
     const message = this._createStatusMessage(result, validationIssues);
 
     this._showStatus(message, statusType);
@@ -768,8 +774,12 @@ class IntegrationManager {
     }
 
     const mappings = this.fileHandler.getColumnMappings();
-    const headers = this.fileHandler.getHeaders ? this.fileHandler.getHeaders() : this.fileHandler.columnHeaders;
-    const missingCols = [mappings.cpu, mappings.memory].filter(col => !headers.includes(col));
+    const headers = this.fileHandler.getHeaders
+      ? this.fileHandler.getHeaders()
+      : this.fileHandler.columnHeaders;
+    const missingCols = [mappings.cpu, mappings.memory].filter(
+      (col) => !headers.includes(col),
+    );
     if (missingCols.length > 0) {
       return {
         isValid: false,
@@ -977,7 +987,8 @@ class UIManager {
         const cellsHTML = Object.values(row)
           .map((value) => {
             const str = value ? value.toString() : "";
-            const displayValue = str.length > 20 ? str.substring(0, 20) + "..." : str;
+            const displayValue =
+              str.length > 20 ? str.substring(0, 20) + "..." : str;
             return `<td style="padding: 8px; border: 1px solid #dee2e6;">${this._escapeHtml(displayValue)}</td>`;
           })
           .join("");
