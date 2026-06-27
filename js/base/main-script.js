@@ -355,9 +355,9 @@ function parseCSV(csvText) {
   const fileStatus = document.getElementById("fileStatus");
   if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
-    fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns.join(
-      ", ",
-    )}. Please check your CSV format.`;
+    fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
+      .map(escapeHtml)
+      .join(", ")}. Please check your CSV format.`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
@@ -454,7 +454,7 @@ function showDataPreview() {
             ${headers
               .map(
                 (h) =>
-                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${h}</th>`,
+                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${escapeHtml(h)}</th>`,
               )
               .join("")}
           </tr>
@@ -469,7 +469,7 @@ function showDataPreview() {
       const value = row[header] || "";
       const displayValue =
         value.length > 20 ? value.substring(0, 20) + "..." : value;
-      tableHTML += `<td style="padding: 8px; border: 1px solid #dee2e6;">${displayValue}</td>`;
+      tableHTML += `<td style="padding: 8px; border: 1px solid #dee2e6;">${escapeHtml(displayValue)}</td>`;
     });
     tableHTML += `</tr>`;
   });
@@ -1555,15 +1555,15 @@ function downloadResults() {
 
   // Fallback to simple CSV export
   const headers = Object.keys(processedResults[0]);
+  const escapeCell = (val) => {
+    const s = String(val == null ? "" : val);
+    const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
   const csvContent = [
-    headers.join(","),
+    headers.map(escapeCell).join(","),
     ...processedResults.map((row) =>
-      headers
-        .map((header) => {
-          const value = row[header] || "";
-          return value.toString().includes(",") ? `"${value}"` : value;
-        })
-        .join(","),
+      headers.map((header) => escapeCell(row[header] ?? "")).join(","),
     ),
   ].join("\n");
 
@@ -1646,7 +1646,10 @@ function downloadAWSBulkTemplate(type) {
     const vmName = row["VM Name"] || row["Server Name"] || "VM";
     const region = row["AWS Region"] || "";
     const env = row["ENV"] || row["Environment"] || "Default";
-    const sanitize = (s) => String(s).replace(/[><&]/g, "");
+    const sanitize = (s) => {
+      const clean = String(s).replace(/[><&]/g, "");
+      return /^[=+\-@|\t\r]/.test(clean) ? `'${clean}` : clean;
+    };
 
     // Per-row OS overrides the page-level default
     const rowOS = (row["OS"] || row["Operating System"] || pageOS).trim();
@@ -1700,10 +1703,9 @@ function downloadAWSBulkTemplate(type) {
   }
 
   const escapeCell = (v) => {
-    const s = String(v);
-    return s.includes(",") || s.includes('"') || s.includes("\n")
-      ? `"${s.replace(/"/g, '""')}"`
-      : s;
+    const s = String(v == null ? "" : v);
+    const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
 
   const csvContent = [

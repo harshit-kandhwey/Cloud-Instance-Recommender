@@ -331,14 +331,58 @@ class BaseInstanceSelector {
 
       // Exclude types
       if (options.excludeTypes?.length > 0) {
+        const providerName = this.getProviderName().toLowerCase();
         if (
           options.excludeTypes.some((excludeItem) => {
-            if (typeof excludeItem === "string") {
-              return instance.instanceType
-                .toLowerCase()
-                .includes(excludeItem.toLowerCase());
+            if (excludeItem == null) return false;
+            const typeName = (
+              typeof excludeItem === "string"
+                ? excludeItem
+                : excludeItem.type || ""
+            ).toLowerCase().trim();
+            if (!typeName) return false;
+            const itemProvider =
+              typeof excludeItem === "object"
+                ? (excludeItem.provider || "").toLowerCase()
+                : "";
+            if (itemProvider && itemProvider !== providerName) return false;
+
+            const fam = (instance.family || "").toLowerCase();
+            const instType = (instance.instanceType || "").toLowerCase();
+            const familyName = (instance.familyName || "").toLowerCase();
+
+            switch (typeName) {
+              case "burstable":
+                return typeof RuleEngine !== "undefined"
+                  ? RuleEngine.isBurstable(instance, providerName)
+                  : fam.startsWith("t");
+              case "graviton":
+              case "arm":
+                return typeof RuleEngine !== "undefined"
+                  ? RuleEngine.isARM(instance)
+                  : instance.isGraviton === 1 || instance.isGraviton === 1.0;
+              case "gpu":
+                return (
+                  familyName.includes("gpu") ||
+                  familyName.includes("accelerated") ||
+                  ["p", "g", "inf", "trn", "dl", "vt"].some((f) =>
+                    fam.startsWith(f),
+                  ) ||
+                  fam.startsWith("nc") ||
+                  fam.startsWith("nd") ||
+                  fam.startsWith("nv")
+                );
+              case "fpga":
+                return fam.startsWith("f") && providerName === "aws";
+              case "mac":
+                return fam.startsWith("mac");
+              case "previous generation":
+                return typeof RuleEngine !== "undefined"
+                  ? !RuleEngine.isCurrentGen(instance)
+                  : instance.generation !== 1 && instance.generation !== "1.0";
+              default:
+                return instType.includes(typeName);
             }
-            return false;
           })
         ) {
           return false;
