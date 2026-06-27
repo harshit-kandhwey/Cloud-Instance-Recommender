@@ -1253,7 +1253,7 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
       function _mcGCPFamilies() {
         return _mcFromMap({
           mc_cat_general: ["E2", "N1", "N2", "N2D", "N4", "N4D"],
-          mc_cat_burstable: ["E2"],
+          mc_cat_burstable: ["F1", "G1"],
           mc_cat_memory: ["M3", "M4"],
           mc_cat_compute: ["C2D", "C3", "C3D", "C4"],
           mc_cat_storage: ["Z3"],
@@ -1291,6 +1291,16 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
           "restrictProcessorManufacturers",
           "restrictMainFamilies",
           "excludeTypes",
+          "mc_proc_intel",
+          "mc_proc_amd",
+          "mc_proc_arm",
+          "mc_cat_general",
+          "mc_cat_burstable",
+          "mc_cat_memory",
+          "mc_cat_compute",
+          "mc_cat_storage",
+          "mc_cat_gpu",
+          "mc_cat_hpc",
         ].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.checked = false;

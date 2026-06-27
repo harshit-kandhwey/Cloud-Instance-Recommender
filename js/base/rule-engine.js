@@ -269,10 +269,9 @@ const RuleEngine = (() => {
 
     // ── OS: macOS → AWS mac1/mac2 only ─────────────────────────────────────
     if ((os === "macos" || os === "mac") && provider === "aws") {
-      const mac = filtered.filter((i) =>
+      filtered = filtered.filter((i) =>
         (i.family || "").toLowerCase().startsWith("mac"),
       );
-      if (mac.length > 0) filtered = mac;
       rules.push("OS: mac1/mac2 only (macOS)");
     }
 

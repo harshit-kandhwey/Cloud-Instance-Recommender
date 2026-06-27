@@ -34,7 +34,7 @@ Five interactive dropdowns set global defaults for the entire batch without edit
 | **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                    |
 | **OS**         | Linux / Windows / macOS — affects ARM eligibility                                              |
 | **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC — sorts preferred families first |
-| **Compliance** | PCI / HIPAA / FIPS — enforces current-gen and Nitro Enclave requirements                       |
+| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS) |
 | **Min Gen**    | Minimum generation number/family — excludes older instance generations                         |
 
 Per-row CSV column values always override these global defaults.
@@ -144,7 +144,7 @@ Download the sample CSV from any provider page and fill in your VM inventory.
 | `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
 | `OS` | Linux / Windows / macOS | Affects ARM/Graviton eligibility |
 | `Workload` | General / Database / Web Server / Cache / ML/AI / Batch / HPC | Sorts preferred families first |
-| `Compliance` | PCI / HIPAA / FIPS | Enforces current-gen + Nitro requirements |
+| `Compliance` | PCI / HIPAA / SOC2 / FIPS | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS) |
 | `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4 | Minimum instance generation to include |
 
 **Example (multi-cloud):**

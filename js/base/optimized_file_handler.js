@@ -108,12 +108,39 @@ class FileHandler {
     return this.config.allowedTypes.includes(file.type) || extension === "csv";
   }
 
+  // Quote-aware CSV line splitter — keeps quoted multiline cells intact
+  _splitCSVLines(text) {
+    const lines = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+          current += ch;
+        }
+      } else if (ch === "\r" && text[i + 1] === "\n" && !inQuotes) {
+        i++;
+        if (current.trim()) lines.push(current);
+        current = "";
+      } else if (ch === "\n" && !inQuotes) {
+        if (current.trim()) lines.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    if (current.trim()) lines.push(current);
+    return lines;
+  }
+
   // Optimized CSV text processing
   _processCSVText(csvText) {
-    const lines = csvText
-      .trim()
-      .split(/\r?\n/)
-      .filter((line) => line.trim());
+    const lines = this._splitCSVLines(csvText.trim());
 
     if (lines.length < 2) {
       throw new Error(
@@ -404,6 +431,10 @@ class FileHandler {
     return { ...this.config.defaultMappings };
   }
 
+  getHeaders() {
+    return this.columnHeaders;
+  }
+
   getFileStats() {
     return {
       ...this.fileMetadata,
@@ -494,11 +525,12 @@ class FileHandlerIntegration {
   async _processSuccessfulUpload(result) {
     const validationIssues = this.fileHandler.validateRequiredData();
 
-    const statusType = validationIssues.length > 0 ? "warning" : "success";
+    const hasMissingCols = validationIssues.some((i) => i.includes("not found"));
+    const statusType = hasMissingCols ? "error" : validationIssues.length > 0 ? "warning" : "success";
     const message = this._createStatusMessage(result, validationIssues);
 
     this._showStatus(message, statusType);
-    this.state.hasValidData = true;
+    this.state.hasValidData = !hasMissingCols;
 
     // Execute callback with hardcoded mappings
     const mappings = this.fileHandler.getColumnMappings();
@@ -735,11 +767,13 @@ class IntegrationManager {
       };
     }
 
-    if (!this.columnMappings.cpu || !this.columnMappings.memory) {
+    const mappings = this.fileHandler.getColumnMappings();
+    const headers = this.fileHandler.getHeaders ? this.fileHandler.getHeaders() : this.fileHandler.columnHeaders;
+    const missingCols = [mappings.cpu, mappings.memory].filter(col => !headers.includes(col));
+    if (missingCols.length > 0) {
       return {
         isValid: false,
-        error:
-          "Required columns (CPU Count, Memory (GB)) not found in CSV. Please check your column headers.",
+        error: `Required columns missing from CSV: ${missingCols.join(", ")}. Please check your column headers.`,
       };
     }
 
@@ -763,6 +797,15 @@ class IntegrationManager {
 class UIManager {
   constructor() {
     this.alertTimeout = null;
+  }
+
+  _escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   showProcessingResults(validationIssues, dataQuality) {
@@ -820,7 +863,7 @@ class UIManager {
     const fileStatus = document.getElementById("fileStatus");
     if (!fileStatus) return;
 
-    const statsText = `<br><small><strong>File:</strong> ${stats.fileName} | <strong>Size:</strong> ${stats.fileSize} | <strong>Rows:</strong> ${stats.rowCount} | <strong>Columns:</strong> ${stats.columnCount}</small>`;
+    const statsText = `<br><small><strong>File:</strong> ${this._escapeHtml(stats.fileName)} | <strong>Size:</strong> ${this._escapeHtml(stats.fileSize)} | <strong>Rows:</strong> ${this._escapeHtml(stats.rowCount)} | <strong>Columns:</strong> ${this._escapeHtml(stats.columnCount)}</small>`;
     fileStatus.innerHTML += statsText;
   }
 
@@ -925,7 +968,7 @@ class UIManager {
     const headerHTML = headers
       .map(
         (header) =>
-          `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left; background-color: #f8f9fa;">${header}</th>`,
+          `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left; background-color: #f8f9fa;">${this._escapeHtml(header)}</th>`,
       )
       .join("");
 
@@ -933,11 +976,9 @@ class UIManager {
       .map((row, index) => {
         const cellsHTML = Object.values(row)
           .map((value) => {
-            const displayValue =
-              value && value.toString().length > 20
-                ? value.toString().substring(0, 20) + "..."
-                : value || "";
-            return `<td style="padding: 8px; border: 1px solid #dee2e6;">${displayValue}</td>`;
+            const str = value ? value.toString() : "";
+            const displayValue = str.length > 20 ? str.substring(0, 20) + "..." : str;
+            return `<td style="padding: 8px; border: 1px solid #dee2e6;">${this._escapeHtml(displayValue)}</td>`;
           })
           .join("");
 
@@ -1106,11 +1147,13 @@ function getFileHandlerStats() {
   return integrationManager?.fileHandler.getFileStats() || null;
 }
 
-// Auto-initialize when DOM is ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeFileHandler);
-} else {
-  initializeFileHandler();
+// Auto-initialize when DOM is ready (guard for non-browser environments)
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeFileHandler);
+  } else {
+    initializeFileHandler();
+  }
 }
 
 // Export for module systems
