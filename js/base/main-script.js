@@ -921,13 +921,13 @@ async function processRecommendations() {
     cpuBased: document.getElementById("cpuBased")?.checked || false,
     memoryBased: document.getElementById("memoryBased")?.checked || false,
     cpuDownsizeMax: parseInt(
-      document.getElementById("cpuDownsizeMax")?.value || 50
+      document.getElementById("cpuDownsizeMax")?.value || 40
     ),
     cpuUpsizeMin: parseInt(
       document.getElementById("cpuUpsizeMin")?.value || 80
     ),
     memoryDownsizeMax: parseInt(
-      document.getElementById("memoryDownsizeMax")?.value || 50
+      document.getElementById("memoryDownsizeMax")?.value || 40
     ),
     memoryUpsizeMin: parseInt(
       document.getElementById("memoryUpsizeMin")?.value || 80

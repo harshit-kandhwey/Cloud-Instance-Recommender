@@ -207,18 +207,20 @@ app-server-03,2,8,35,45,eu-west-1
 
 #### **Optimization Settings** (for Optimized recommendations)
 
-Configure the N/2, N, N+1 strategy thresholds:
+Configure the N/2, N, N+1 strategy thresholds (industry-standard defaults, adjustable in the UI):
 
 - **CPU Optimization**:
 
-  - Downsize (N/2) if utilization ≤ 50%
-  - Keep same (N) if 50% < utilization ≤ 80%
+  - Downsize (N/2) if average utilization ≤ 40% — preserves headroom for traffic spikes
+  - Keep same (N) if 40% < utilization ≤ 80%
   - Upsize (N+1) if utilization > 80%
 
 - **Memory Optimization**:
-  - Downsize (N/2) if utilization ≤ 50%
-  - Keep same (N) if 50% < utilization ≤ 80%
+  - Downsize (N/2) if average utilization ≤ 40%
+  - Keep same (N) if 40% < utilization ≤ 80%
   - Upsize (N+1) if utilization > 80%
+
+> **Why 40% / 80%?** AWS, Azure, and GCP cost optimisation advisors consistently flag resources with sustained average utilisation below 40% as candidates for downsizing. The 80% upsize trigger aligns with the widely-adopted SRE practice of keeping peak utilisation below 80% to maintain headroom. Both thresholds are fully editable in the UI.
 
 #### **Advanced Filtering Options**
 
@@ -234,7 +236,7 @@ Configure the N/2, N, N+1 strategy thresholds:
 3. **Review Statistics**: Check usage statistics and processing summary
 4. **Download Results**: Click "📥 Download Results CSV" to get your recommendations
 
-The downloaded CSV will include your original data plus new columns with instance recommendations, pricing, and sizing information for each selected cloud provider.
+The downloaded CSV will include your original data plus new columns with instance recommendations (type, vCPUs, memory) and a "Rules Applied" column explaining which ENV/OS/Workload rules were triggered for each row. Pricing is intentionally excluded from output — use the provider's own pricing calculator for authoritative cost data.
 
 ## 🔧 Configuration Options
 
@@ -255,14 +257,14 @@ const requirements = {
 
 ```javascript
 const optimizationRules = {
-  // CPU Rules
-  cpuDownsize: utilization <= 50, // N/2 (half current)
-  cpuKeepSame: 50 < utilization <= 80, // N (same)
-  cpuUpsize: utilization > 80, // N+1 (add one)
+  // CPU Rules (industry-standard defaults)
+  cpuDownsize: utilization <= 40, // N/2 (half current) — avg below 40% = over-provisioned
+  cpuKeepSame: 40 < utilization <= 80, // N (same) — right-sized zone
+  cpuUpsize: utilization > 80, // N+1 (add one) — approaching saturation
 
-  // Memory Rules
-  memoryDownsize: utilization <= 50,
-  memoryKeepSame: 50 < utilization <= 80,
+  // Memory Rules (same thresholds)
+  memoryDownsize: utilization <= 40,
+  memoryKeepSame: 40 < utilization <= 80,
   memoryUpsize: utilization > 80,
 };
 ```
