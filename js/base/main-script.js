@@ -165,15 +165,15 @@ function toggleSection(header) {
 
 // Download sample CSV
 function downloadSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b
-app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c
-cache-server-04,2,4,25,30,us-east-1,East US,us-central1-a
-api-server-05,4,8,65,55,us-west-1,West US,us-west1-b
-microservice-06,1,2,15,20,us-east-1,East US,us-central1-a
-worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b
-frontend-08,2,4,40,50,eu-west-1,North Europe,europe-west1-c`;
+  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI
+app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
+cache-server-04,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,
+api-server-05,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,
+microservice-06,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,
+worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA
+frontend-08,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
@@ -512,10 +512,100 @@ function updateMemoryRanges() {
 // Toggle current generation filter
 function toggleCurrentGenerationFilter() {
   const checkbox = document.getElementById("currentGenerationOnly");
+  checkRuleConflicts();
   console.log(
     "Current generation filter:",
     checkbox.checked ? "Enabled" : "Disabled"
   );
+}
+
+// ─── Rule Engine UI helpers ────────────────────────────────────────────────
+
+function getRuleDefaults() {
+  return {
+    env:        (document.getElementById("ruleDefaultEnv")?.value        || "").trim(),
+    os:         (document.getElementById("ruleDefaultOS")?.value         || "").trim(),
+    workload:   (document.getElementById("ruleDefaultWorkload")?.value   || "").trim(),
+    compliance: (document.getElementById("ruleDefaultCompliance")?.value || "").trim(),
+    minGen:     (document.getElementById("ruleDefaultMinGen")?.value     || "").trim(),
+  };
+}
+
+function onRuleChange() {
+  checkRuleConflicts();
+}
+
+function checkRuleConflicts() {
+  const rules = getRuleDefaults();
+  const env    = rules.env.toLowerCase();
+  const os     = rules.os.toLowerCase();
+
+  // ── Reset all rule group borders and conflict messages ──────────────────
+  const ruleGroupIds = ["ruleGroupEnv","ruleGroupOS","ruleGroupWorkload","ruleGroupCompliance","ruleGroupMinGen"];
+  const conflictIds  = ["conflictEnv","conflictOS","conflictWorkload","conflictCompliance","conflictMinGen"];
+  ruleGroupIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.border = "1.5px solid #b8d0ff"; el.style.background = "white"; }
+  });
+  conflictIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = "none"; el.textContent = ""; }
+  });
+
+  function flagConflict(groupId, msgId, msg) {
+    const g = document.getElementById(groupId);
+    const m = document.getElementById(msgId);
+    if (g) { g.style.border = "1.5px solid #e53e3e"; g.style.background = "#fff5f5"; }
+    if (m) { m.style.display = "block"; m.textContent = "⚠ " + msg; }
+  }
+
+  // ── Conflict 1: OS=Windows + Graviton/ARM-only processor filter ─────────
+  if (os === "windows") {
+    const procRestrict = document.getElementById("restrictProcessorManufacturers")?.checked;
+    if (procRestrict) {
+      const procBoxes = document.querySelectorAll("#processorCheckboxes input[type=checkbox]:checked");
+      const selected  = Array.from(procBoxes).map(cb => cb.value.toLowerCase());
+      const hasARM    = selected.some(v => v === "aws" || v === "arm" || v === "graviton");
+      const hasIntel  = selected.some(v => v === "intel");
+      const hasAMD    = selected.some(v => v === "amd");
+      if (hasARM && !hasIntel && !hasAMD) {
+        flagConflict("ruleGroupOS","conflictOS","Windows needs Intel/AMD — contradicts Graviton-only processor filter");
+      }
+    }
+  }
+
+  // ── Conflict 2: ENV=Production/Compliance + burstable-only family filter ─
+  const isProdOrCompliance = env === "production" || env === "prod" || rules.compliance;
+  if (isProdOrCompliance) {
+    const mainRestrict = document.getElementById("restrictMainFamilies")?.checked;
+    if (mainRestrict) {
+      const famBoxes   = document.querySelectorAll("#mainFamiliesCheckboxes input[type=checkbox]:checked");
+      const selected   = Array.from(famBoxes).map(cb => cb.value.toLowerCase());
+      const burstable  = ["t","b","e2"]; // AWS t, Azure B, GCP e2
+      const onlyBurst  = selected.length > 0 && selected.every(f => burstable.some(b => f.startsWith(b)));
+      if (onlyBurst) {
+        const conflictGroup = rules.compliance ? "ruleGroupCompliance" : "ruleGroupEnv";
+        const conflictMsg   = rules.compliance ? "conflictCompliance"  : "conflictEnv";
+        flagConflict(conflictGroup, conflictMsg, `${rules.compliance || rules.env} excludes burstable — contradicts restriction to burstable-only families`);
+      }
+    }
+  }
+
+  // ── Conflict 3: Min Gen + Current Gen Only = redundant but not a conflict ─
+  // (both restrict the pool, no contradiction — skip)
+
+  // ── Conflict 4: Workload=ML/AI + processor filter = Intel/AMD only ───────
+  if (rules.workload.toLowerCase() === "ml/ai") {
+    const procRestrict = document.getElementById("restrictProcessorManufacturers")?.checked;
+    if (procRestrict) {
+      const procBoxes = document.querySelectorAll("#processorCheckboxes input[type=checkbox]:checked");
+      const selected  = Array.from(procBoxes).map(cb => cb.value.toLowerCase());
+      const hasGPU    = selected.some(v => v === "aws" || v === "arm");
+      if (selected.length > 0 && !hasGPU) {
+        flagConflict("ruleGroupWorkload","conflictWorkload","ML/AI prefers GPU families (Graviton/ARM accelerated) — Intel/AMD-only filter may exclude them");
+      }
+    }
+  }
 }
 
 // Toggle instance family name filter
@@ -969,6 +1059,13 @@ async function processRecommendations() {
     selectedGCPFamilies: getSelectedGCPFamilies(),
     selectedGCPProcessors: getSelectedGCPProcessors(),
     selectedGCPMachineTypes: getSelectedGCPMachineTypes(),
+
+    // Rule Engine page-level defaults (overridden per-row by CSV columns)
+    ...getRuleDefaults().env        ? { ruleDefaultEnv:        getRuleDefaults().env }        : {},
+    ...getRuleDefaults().os         ? { ruleDefaultOS:         getRuleDefaults().os }         : {},
+    ...getRuleDefaults().workload   ? { ruleDefaultWorkload:   getRuleDefaults().workload }   : {},
+    ...getRuleDefaults().compliance ? { ruleDefaultCompliance: getRuleDefaults().compliance } : {},
+    ...getRuleDefaults().minGen     ? { ruleDefaultMinGen:     getRuleDefaults().minGen }     : {},
   };
 
   console.log("Processing options:", {
@@ -1016,6 +1113,12 @@ async function processRecommendations() {
     // Update usage statistics and show download section
     updateUsageStatistics(csvData.length);
     document.getElementById("downloadSection").classList.remove("hidden");
+
+    // Show inline results preview
+    showResultsPreview(processedResults);
+
+    // On AWS page with both types: replace download button with split buttons
+    updateDownloadButtons(processedResults);
 
     // Log what was actually generated
     if (processedResults.length > 0) {
@@ -1076,7 +1179,131 @@ function getExcludedTypes() {
   return excludedTypes;
 }
 
-// Download results
+// Show in-browser results preview after generation
+function showResultsPreview(results) {
+  const container = document.getElementById("resultsPreviewSection");
+  if (!container || !results || results.length === 0) return;
+
+  // Identify recommendation columns (Instance, vCPUs, Memory, Rules Applied)
+  const allKeys = Object.keys(results[0] || {});
+  const instanceCols = allKeys.filter(
+    (k) => k.includes("Like-to-Like Instance") || k.includes("Optimized Instance")
+  );
+  const rulesCols = allKeys.filter((k) => k.includes("Rules Applied"));
+  const inputCols = ["VM Name", "CPU Count", "Memory (GB)", "ENV", "OS", "Workload", "Compliance"].filter(
+    (c) => allKeys.includes(c)
+  );
+
+  // Build display columns: input context + each instance group (instance, vCPUs, memory), then rules
+  const displayCols = [...inputCols];
+  instanceCols.forEach((instCol) => {
+    displayCols.push(instCol);
+    const vCpuCol = instCol.replace("Instance", "vCPUs");
+    const memCol  = instCol.replace("Instance", "Memory (GiB)");
+    if (allKeys.includes(vCpuCol)) displayCols.push(vCpuCol);
+    if (allKeys.includes(memCol))  displayCols.push(memCol);
+  });
+  // Rules Applied is a single shared column — append once at the end
+  rulesCols.forEach(r => { if (!displayCols.includes(r)) displayCols.push(r); });
+
+  // Helper: colour-code rules cell
+  function rulesHtml(val) {
+    if (!val) return '<span style="color:#aaa">—</span>';
+    const parts = val.split("|").map((p) => p.trim()).filter(Boolean);
+    return parts.map((p) => {
+      const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
+      return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${p}</span>`;
+    }).join(" ");
+  }
+
+  const previewRows = results.slice(0, 20);
+  const isRulesCol = (col) => col.includes("Rules Applied");
+  const isInstanceCol = (col) => col.includes("Instance") && !col.includes("Rules");
+
+  let html = `
+    <p style="font-weight:600;margin-bottom:6px;">📋 Results Preview (first ${previewRows.length} of ${results.length} rows)</p>
+    <div style="overflow-x:auto;max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;">
+        <thead>
+          <tr style="position:sticky;top:0;z-index:1;background:#1a56db;color:#fff;">
+            ${displayCols.map((c) => `<th style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;">${c}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  previewRows.forEach((row, i) => {
+    const bg = i % 2 === 0 ? "#fff" : "#f8fafc";
+    html += `<tr style="background:${bg};">`;
+    displayCols.forEach((col) => {
+      const val = row[col] ?? "";
+      let cellContent;
+      if (isRulesCol(col)) {
+        cellContent = rulesHtml(String(val));
+      } else if (isInstanceCol(col)) {
+        const isErr = String(val).startsWith("No ") || String(val).startsWith("Missing") || String(val) === "Error";
+        const color = isErr ? "#dc2626" : "#047857";
+        cellContent = `<strong style="color:${color}">${val || "—"}</strong>`;
+      } else {
+        cellContent = String(val) || '<span style="color:#aaa">—</span>';
+      }
+      html += `<td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;">${cellContent}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  if (results.length > 20) {
+    html += `<p style="font-size:0.82em;color:#64748b;margin-top:4px;">Showing first 20 rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
+  }
+
+  container.innerHTML = html;
+  container.classList.remove("hidden");
+  container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ─── Update bulk template buttons for AWS when both L2L + Optimized generated ─
+
+function updateDownloadButtons(results) {
+  const row = document.getElementById("downloadBtnsRow");
+  if (!row || !results || results.length === 0) return;
+
+  const keys   = Object.keys(results[0]);
+  const hasL2L = keys.some(k => k.includes("Like-to-Like Instance"));
+  const hasOpt = keys.some(k => k.includes("Optimized Instance"));
+
+  const hasAzure  = keys.some(k => /^AZURE\s/i.test(k));
+  const hasGCP    = keys.some(k => /^GCP\s/i.test(k));
+  const isAWSOnly = !hasAzure && !hasGCP && keys.some(k => /^AWS\s/i.test(k));
+
+  if (!isAWSOnly) return;
+
+  if (hasL2L && hasOpt) {
+    // Both types: show Results CSV + two separate bulk template buttons
+    row.innerHTML = `
+      <button class="btn btn-primary" onclick="downloadResults()">
+        📥 Download Results CSV
+      </button>
+      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('l2l')" title="AWS Pricing Calculator Bulk Import — Like-to-Like instances only">
+        🧾 Bulk Template (Like-to-Like)
+      </button>
+      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('optimized')" title="AWS Pricing Calculator Bulk Import — Optimized instances only">
+        🧾 Bulk Template (Optimized)
+      </button>
+    `;
+  } else {
+    // Single type: Results CSV + one bulk template button (auto-resolves to the present type)
+    row.innerHTML = `
+      <button class="btn btn-primary" onclick="downloadResults()">
+        📥 Download Results CSV
+      </button>
+      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate()" title="AWS Pricing Calculator Bulk Import (EC2 Instances template)">
+        🧾 Download AWS Pricing Calculator Bulk Template
+      </button>
+    `;
+  }
+}
+
 function downloadResults() {
   if (!processedResults || processedResults.length === 0) {
     alert("No results to download. Please generate recommendations first.");
@@ -1126,15 +1353,15 @@ function downloadResults() {
 }
 
 // AWS Pricing Calculator Bulk Template download
-// Generates a CSV matching the EC2 Instances BulkUpload Template format so users
-// can import directly into the AWS Pricing Calculator without any manual mapping.
-function downloadAWSBulkTemplate() {
+// Generates a CSV matching the EC2 Instances BulkUpload Template format.
+// type = 'l2l' | 'optimized' — always one type per file to avoid double-counting.
+// If omitted and only one type exists, that type is used automatically.
+function downloadAWSBulkTemplate(type) {
   if (!processedResults || processedResults.length === 0) {
     alert("No results to download. Please generate recommendations first.");
     return;
   }
 
-  // Detect which recommendation columns were generated
   const sampleRow = processedResults[0];
   const hasL2L = Object.keys(sampleRow).some((k) => k.includes("AWS Like-to-Like Instance"));
   const hasOpt = Object.keys(sampleRow).some((k) => k.includes("AWS Optimized Instance"));
@@ -1144,7 +1371,15 @@ function downloadAWSBulkTemplate() {
     return;
   }
 
-  // Bulk template column headers (exact names required by AWS Pricing Calculator)
+  // Resolve which type to use for this file
+  const useL2L = type === "l2l" || (!type && hasL2L);
+  const useOpt = type === "optimized" || (!type && !hasL2L && hasOpt);
+
+  if (!useL2L && !useOpt) {
+    alert("Unknown bulk template type. Use 'l2l' or 'optimized'.");
+    return;
+  }
+
   const bulkHeaders = [
     "Group",
     "Description",
@@ -1164,7 +1399,6 @@ function downloadAWSBulkTemplate() {
     "EBS Snapshot amount per Instance (GB/snapshot)",
   ];
 
-  // Determine OS value for the template
   const osSelector = document.querySelector('input[name="targetOS"]:checked');
   const selectedOS = osSelector ? osSelector.value : "Linux";
   const templateOS = selectedOS === "Windows" ? "Windows Server" : "Linux";
@@ -1172,43 +1406,40 @@ function downloadAWSBulkTemplate() {
   const rows = [];
 
   processedResults.forEach((row) => {
-    const vmName = row["VM Name"] || row["Server Name"] || "VM";
-    const region = row["AWS Region"] || "";
-    const env = row["ENV"] || row["Environment"] || "Default";
-
-    // Sanitize strings: remove characters not allowed in Group/Description
+    const vmName   = row["VM Name"] || row["Server Name"] || "VM";
+    const region   = row["AWS Region"] || "";
+    const env      = row["ENV"] || row["Environment"] || "Default";
     const sanitize = (s) => String(s).replace(/[><&]/g, "");
 
-    const buildRow = (instanceType, label) => {
+    const buildRow = (instanceType) => {
       if (!instanceType || instanceType === "Missing data" || instanceType === "Error" || instanceType === "No utilization data") {
         return null;
       }
       return [
-        sanitize(env),                    // Group
-        sanitize(`${vmName} (${label})`), // Description
-        region,                           // AWS Region
-        templateOS,                       // Operating System
-        instanceType,                     // Instance Type
-        "Shared Instances",               // Tenancy
-        "1",                              // Number of Instances
-        "",                               // Assumed Usage (blank = Always On)
-        "Always On",                      // Usage Type
-        "On-Demand",                      // Purchasing Options
-        "",                               // Storage Type
-        "",                               // Storage amount
-        "",                               // Provisioning IOPS
-        "",                               // EBS Throughput
-        "",                               // Snapshot Frequency
-        "",                               // EBS Snapshot amount
+        sanitize(env),          // Group
+        sanitize(vmName),       // Description — just the VM name, no type label
+        region,                 // AWS Region
+        templateOS,             // Operating System
+        instanceType,           // Instance Type
+        "Shared Instances",     // Tenancy
+        "1",                    // Number of Instances
+        "",                     // Assumed Usage (blank = Always On)
+        "Always On",            // Usage Type
+        "On-Demand",            // Purchasing Options
+        "",                     // Storage Type
+        "",                     // Storage amount
+        "",                     // Provisioning IOPS
+        "",                     // EBS Throughput
+        "",                     // Snapshot Frequency
+        "",                     // EBS Snapshot amount
       ];
     };
 
-    if (hasL2L) {
-      const r = buildRow(row["AWS Like-to-Like Instance"], "Like-to-Like");
+    if (useL2L) {
+      const r = buildRow(row["AWS Like-to-Like Instance"]);
       if (r) rows.push(r);
-    }
-    if (hasOpt) {
-      const r = buildRow(row["AWS Optimized Instance"], "Optimized");
+    } else {
+      const r = buildRow(row["AWS Optimized Instance"]);
       if (r) rows.push(r);
     }
   });
@@ -1235,7 +1466,8 @@ function downloadAWSBulkTemplate() {
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = `aws_pricing_calculator_bulk_${new Date().toISOString().split("T")[0]}.csv`;
+  const suffix = useL2L ? "like_to_like" : "optimized";
+  a.download = `aws_pricing_calculator_bulk_${suffix}_${new Date().toISOString().split("T")[0]}.csv`;
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);

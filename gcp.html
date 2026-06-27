@@ -381,39 +381,13 @@ app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General,</pre
               </div>
             </div>
 
-            <!-- Instance Family Name Filter -->
-            <div class="form-group">
-              <div class="checkbox-item">
-                <input
-                  type="checkbox"
-                  id="restrictInstanceFamilyNames"
-                  onchange="toggleInstanceFamilyNameFilter()"
-                />
-                <label for="restrictInstanceFamilyNames">
-                  <strong>🏷️ Restrict to specific workload types</strong>
-                  <small style="display: block; color: #666">
-                    Choose specific instance family categories
-                  </small>
-                </label>
-              </div>
-            </div>
-
-            <div id="instanceFamilyNameControls" class="hidden">
-              <div class="form-group">
-                <label class="form-label">GCP Machine Families:</label>
-                <div class="filter-checkbox-grid" id="familyNameCheckboxes">
-                  <!-- Will be populated by JavaScript -->
-                </div>
-              </div>
-            </div>
-
             <!-- Processor Manufacturer Filter -->
             <div class="form-group">
               <div class="checkbox-item">
                 <input
                   type="checkbox"
                   id="restrictProcessorManufacturers"
-                  onchange="toggleProcessorManufacturerFilter()"
+                  onchange="toggleProcessorManufacturerFilter(); checkRuleConflicts()"
                 />
                 <label for="restrictProcessorManufacturers">
                   <strong>🔧 Restrict to specific processor types</strong>
@@ -439,7 +413,7 @@ app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General,</pre
                 <input
                   type="checkbox"
                   id="restrictMainFamilies"
-                  onchange="toggleMainFamiliesFilter()"
+                  onchange="toggleMainFamiliesFilter(); checkRuleConflicts()"
                 />
                 <label for="restrictMainFamilies">
                   <strong>📋 Restrict to specific instance families</strong>
@@ -479,6 +453,85 @@ app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General,</pre
             <div id="excludeControls" class="hidden">
               <div class="grid-3" id="excludeTypeControls"></div>
             </div>
+
+            <!-- Rule Engine Controls -->
+            <div id="ruleEnginePanel" style="margin-top:24px; padding:16px 20px; background:#eef3ff; border:1px solid #b8d0ff; border-radius:8px;">
+              <p style="margin:0 0 4px; font-weight:700; font-size:0.95em; color:#1a3a8f;">🧠 Rule Engine Defaults</p>
+              <p style="margin:0 0 12px; font-size:0.81em; color:#555;">Set page-level defaults for all rows. Per-row CSV columns override these. Rules merge with the filters above — conflicts are flagged in red.</p>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:10px; margin-bottom:14px;">
+                <div id="ruleGroupEnv" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
+                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">ENV</label>
+                  <select id="ruleDefaultEnv" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                    <option value="">— none —</option>
+                    <option value="Production">Production</option>
+                    <option value="Staging">Staging</option>
+                    <option value="Dev">Dev</option>
+                  </select>
+                  <div id="conflictEnv" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                </div>
+                <div id="ruleGroupOS" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
+                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">OS</label>
+                  <select id="ruleDefaultOS" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                    <option value="">— none —</option>
+                    <option value="Linux">Linux</option>
+                    <option value="Windows">Windows</option>
+                  </select>
+                  <div id="conflictOS" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                </div>
+                <div id="ruleGroupWorkload" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
+                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Workload</label>
+                  <select id="ruleDefaultWorkload" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                    <option value="">— none —</option>
+                    <option value="Web Server">Web Server</option>
+                    <option value="Database">Database</option>
+                    <option value="Cache">Cache</option>
+                    <option value="General">General</option>
+                    <option value="ML/AI">ML/AI</option>
+                    <option value="HPC">HPC</option>
+                    <option value="SAP">SAP</option>
+                  </select>
+                  <div id="conflictWorkload" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                </div>
+                <div id="ruleGroupCompliance" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
+                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Compliance</label>
+                  <select id="ruleDefaultCompliance" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                    <option value="">— none —</option>
+                    <option value="HIPAA">HIPAA</option>
+                    <option value="PCI">PCI</option>
+                    <option value="SOC2">SOC2</option>
+                  </select>
+                  <div id="conflictCompliance" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                </div>
+                <div id="ruleGroupMinGen" style="padding:8px; border:1.5px solid #b8d0ff; border-radius:6px; background:white;">
+                  <label style="display:block; font-size:0.8em; font-weight:600; color:#444; margin-bottom:4px;">Min Instance Gen</label>
+                  <select id="ruleDefaultMinGen" onchange="onRuleChange()" style="width:100%; padding:5px 6px; border:1px solid #d0d0d0; border-radius:4px; font-size:0.83em; background:white;">
+                    <option value="">— any —</option>
+                    <option value="n2">N2 / C2 (2nd gen+)</option>
+                    <option value="n2d">N2D / C2D+ (AMD)</option>
+                    <option value="n4">N4 / C4 (4th gen+)</option>
+                  </select>
+                  <div id="conflictMinGen" style="display:none; color:#c00; font-size:0.74em; margin-top:3px; line-height:1.3;"></div>
+                </div>
+              </div>
+              <details style="font-size:0.82em;">
+                <summary style="cursor:pointer; color:#1a3a8f; font-weight:600; user-select:none;">Rule descriptions ▸</summary>
+                <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+                  <thead>
+                    <tr style="background:#c8deff;">
+                      <th style="padding:5px 8px; text-align:left; border:1px solid #b8d0ff; white-space:nowrap;">Rule</th>
+                      <th style="padding:5px 8px; text-align:left; border:1px solid #b8d0ff;">Effect</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">ENV=Production</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes shared-core (e2-micro/small), enforces current-gen, min 4 vCPU for web/DB</td></tr>
+                    <tr style="background:#f5f8ff;"><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">OS=Windows</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">De-prioritises T2A (ARM) families; prefers Intel or AMD</td></tr>
+                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Workload=Web Server</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">n2/c2 first; Database → n2-highmem/m1 first; ML/AI → a2/g2 first</td></tr>
+                    <tr style="background:#f5f8ff;"><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Compliance=HIPAA/PCI</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes shared-core; enforces current-gen</td></tr>
+                    <tr><td style="padding:5px 8px; border:1px solid #b8d0ff; font-family:monospace; font-weight:600;">Min Gen=N2+</td><td style="padding:5px 8px; border:1px solid #b8d0ff;">Excludes N1 (1st gen); keeps N2, C2, N2D and newer only</td></tr>
+                  </tbody>
+                </table>
+              </details>
+            </div>
           </div>
         </section>
 
@@ -512,6 +565,8 @@ app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General,</pre
                 📥 Download Results CSV
               </button>
             </div>
+
+            <div id="resultsPreviewSection" class="hidden" style="margin-top:16px;"></div>
           </div>
         </section>
 

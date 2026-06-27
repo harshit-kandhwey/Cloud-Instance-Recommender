@@ -119,11 +119,12 @@ window.getInstanceRecommendationWithSelector = async function (
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const region = row[regionColumn] || "";
 
-      // Per-row rule engine inputs read from CSV columns
-      const rowEnv        = (row["ENV"] || row["Environment"] || "").trim();
-      const rowOS         = (row["OS"] || row["Operating System"] || "Linux").trim();
-      const rowWorkload   = (row["Workload"] || "General").trim();
-      const rowCompliance = (row["Compliance"] || "").trim();
+      // Per-row rule engine inputs: CSV column → UI page default → built-in default
+      const rowEnv        = (row["ENV"] || row["Environment"] || options.ruleDefaultEnv || "").trim();
+      const rowOS         = (row["OS"] || row["Operating System"] || options.ruleDefaultOS || "").trim();
+      const rowWorkload   = (row["Workload"] || options.ruleDefaultWorkload || "General").trim();
+      const rowCompliance = (row["Compliance"] || options.ruleDefaultCompliance || "").trim();
+      const rowMinGen     = (row["Min Gen"] || row["MinGen"] || options.ruleDefaultMinGen || "").trim();
 
       // Merge per-row values into a row-specific options copy
       const rowOptions = {
@@ -132,6 +133,7 @@ window.getInstanceRecommendationWithSelector = async function (
         rowOS,
         rowWorkload,
         rowCompliance,
+        rowMinGen,
       };
 
       const providerUpper = provider.toUpperCase();
@@ -181,6 +183,7 @@ window.getInstanceRecommendationWithSelector = async function (
             result[`${providerUpper} Optimized Instance`] = optimized.instanceType;
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
             result[`${providerUpper} Optimized Memory (GiB)`] = optimized.memory;
+            // When only Optimized is selected, also record rules in the shared column
             if (!generateLikeToLike) {
               result[`${providerUpper} Rules Applied`] = optimized.rulesApplied || "";
             }

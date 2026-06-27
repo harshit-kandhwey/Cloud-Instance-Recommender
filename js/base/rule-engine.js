@@ -1,10 +1,11 @@
-// Rule Engine - ENV, OS, and Workload rules applied before instance selection
+// Rule Engine - ENV, OS, Workload, Compliance, and MinGen rules applied before instance selection
 //
-// CSV input columns consumed here:
+// CSV input columns (also settable via UI Rule Engine defaults):
 //   ENV        : Production | Staging | Dev | Test  (blank = no rules)
 //   OS         : Linux | Windows | macOS             (blank = Linux)
 //   Workload   : General | Database | Web Server | Cache | ML/AI | Batch | HPC  (blank = General)
-//   Compliance : PCI | HIPAA | FIPS                  (blank = none)
+//   Compliance : PCI | HIPAA | SOC2 | FIPS           (blank = none)
+//   Min Gen    : AWS gen number (5/6/7), Azure v-number (3/4/5), GCP family (n2/n4)
 //
 // Rule reference:
 //   1a  Burstable exclusion  — Production/Staging block t-family (AWS), B-series (Azure), f1/g1/e2-shared (GCP)
@@ -12,6 +13,7 @@
 //   1c  Size floor — Production/Staging: no nano/micro (AWS), ≥2 vCPUs (Azure/GCP)
 //   1d  Network preference — Production + DB/Web: prefer ≥4 vCPU instances (higher network bandwidth tier)
 //   OS  Windows: exclude ARM/Graviton; macOS (AWS): mac1/mac2 families only
+//   MG  MinGen: exclude instances older than the specified generation (m5<m6<m7 / Dsv3<Dsv4<Dsv5 / N1<N2<N4)
 //   WL  Workload preference: sort results so workload-appropriate families appear first
 
 const RuleEngine = (() => {
@@ -94,6 +96,56 @@ const RuleEngine = (() => {
     return v === 1 || v === 1.0 || v === "1" || v === "1.0";
   }
 
+  // GCP generation order map (higher = newer)
+  const GCP_GEN_ORDER = {
+    "f1":0,"g1":0,
+    "n1":1,"e2":1,
+    "n2":2,"n2d":2,"c2":2,"c2d":2,"t2a":2,"t2d":2,
+    "a2":3,"g2":3,"c3":3,"c3d":3,
+    "n4":4,"c4":4
+  };
+
+  function meetsMinGeneration(inst, minGen, provider) {
+    if (!minGen) return true;
+    const type   = (inst.instanceType || "").toLowerCase();
+    const family = (inst.family       || "").toLowerCase();
+
+    if (provider === "aws") {
+      // m5.xlarge→5, m6i.xlarge→6, r7a.large→7, t3.micro→3
+      const m = type.match(/^[a-z]+(\d+)/);
+      if (!m) return true;
+      return parseInt(m[1]) >= parseInt(minGen);
+    }
+
+    if (provider === "azure") {
+      // Standard_Dsv3→v3, Standard_D4s_v3→v3, Standard_Esv5→v5
+      // Azure page uses values 3/4/5 (direct v-number)
+      // Multi-cloud page uses values 5/6/7 (AWS-centric: subtract 2 to get v-number)
+      const minNum = parseInt(minGen) || 0;
+      const azureMin = minNum > 4 ? minNum - 2 : minNum;
+      const m = type.match(/v(\d+)/i);
+      if (!m) return azureMin <= 2; // no v-suffix = original old-style, exclude if min≥3
+      return parseInt(m[1]) >= azureMin;
+    }
+
+    if (provider === "gcp") {
+      // GCP page uses family-name values ("n2","n4"); multi-cloud uses numbers (5,6,7→2,3,4)
+      const minNum = parseInt(minGen) || 0;
+      let gcpMin;
+      if (GCP_GEN_ORDER.hasOwnProperty(minGen)) {
+        gcpMin = GCP_GEN_ORDER[minGen];
+      } else {
+        // AWS-centric number: 5→2, 6→3, 7→4
+        gcpMin = Math.max(0, minNum - 3);
+      }
+      const fam      = family.split("-")[0];
+      const instGen  = GCP_GEN_ORDER[fam] ?? 1;
+      return instGen >= gcpMin;
+    }
+
+    return true;
+  }
+
   function getPreferredFamilies(workload, provider) {
     const wl = (workload || "general").toLowerCase().trim();
     return (WORKLOAD_FAMILIES[provider] || {})[wl]
@@ -116,7 +168,7 @@ const RuleEngine = (() => {
   }
 
   // ─── Main entry point ─────────────────────────────────────────────────────
-  // options keys used:  rowEnv, rowOS, rowWorkload, rowCompliance
+  // options keys used:  rowEnv, rowOS, rowWorkload, rowCompliance, rowMinGen
   // provider:           "aws" | "azure" | "gcp"
   // Returns:            { instances: [...], rules: [string, ...] }
   function apply(instances, options, provider) {
@@ -124,6 +176,7 @@ const RuleEngine = (() => {
     const os         = (options.rowOS         || "linux").toLowerCase().trim();
     const workload   = (options.rowWorkload   || "general").toLowerCase().trim();
     const compliance = (options.rowCompliance || "").toLowerCase().trim();
+    const minGen     = (options.rowMinGen     || "").trim();
 
     let filtered = [...instances];
     const rules  = [];
@@ -189,6 +242,16 @@ const RuleEngine = (() => {
       rules.push("OS: mac1/mac2 only (macOS)");
     }
 
+    // ── Min Generation filter ───────────────────────────────────────────────
+    if (minGen) {
+      const genFiltered = filtered.filter(i => meetsMinGeneration(i, minGen, provider));
+      if (genFiltered.length > 0) {
+        filtered = genFiltered;
+        rules.push(`MinGen: ${minGen}+`);
+      }
+      // If filter empties the pool, keep current set and note it
+    }
+
     // ── Workload preference: sort preferred families first ──────────────────
     if (workload && workload !== "general") {
       const preferred = getPreferredFamilies(workload, provider);
@@ -201,7 +264,7 @@ const RuleEngine = (() => {
     return { instances: filtered, rules };
   }
 
-  return { apply, getPreferredFamilies, isBurstable, isCurrentGen, isARM };
+  return { apply, getPreferredFamilies, isBurstable, isCurrentGen, isARM, meetsMinGeneration };
 })();
 
 window.RuleEngine = RuleEngine;
