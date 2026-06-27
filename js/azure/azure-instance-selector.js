@@ -7,6 +7,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
     // Azure region mappings
     this.azureRegions = [
+      // Americas
       "East US",
       "East US 2",
       "West US",
@@ -19,6 +20,10 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       "Canada Central",
       "Canada East",
       "Brazil South",
+      "Brazil Southeast",
+      "Mexico Central",
+      "Chile Central",
+      // Europe
       "North Europe",
       "West Europe",
       "France Central",
@@ -33,12 +38,20 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       "UK West",
       "Sweden Central",
       "Sweden South",
+      "Austria East",
+      "Belgium Central",
+      "Denmark East",
+      "Italy North",
+      "Poland Central",
+      "Spain Central",
+      // Asia Pacific
       "East Asia",
       "Southeast Asia",
       "Australia Central",
       "Australia Central 2",
       "Australia East",
       "Australia Southeast",
+      "New Zealand North",
       "Central India",
       "South India",
       "West India",
@@ -46,10 +59,19 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       "Japan West",
       "Korea Central",
       "Korea South",
+      "Malaysia West",
+      "Indonesia Central",
+      // Middle East & Africa
       "South Africa North",
       "South Africa West",
       "UAE Central",
       "UAE North",
+      "Israel Central",
+      "Qatar Central",
+      // Government
+      "US Gov Arizona",
+      "US Gov Texas",
+      "US Gov Virginia",
     ];
   }
 
@@ -205,6 +227,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
   normalizeRegionForJS(region) {
     const regionMappings = {
+      // Americas
       "East US": "eastus",
       "East US 2": "eastus2",
       "West US": "westus",
@@ -214,22 +237,61 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       "North Central US": "northcentralus",
       "South Central US": "southcentralus",
       "West Central US": "westcentralus",
+      "Canada Central": "canadacentral",
+      "Canada East": "canadaeast",
+      "Brazil South": "brazilsouth",
+      "Brazil Southeast": "brazilsoutheast",
+      "Mexico Central": "mexicocentral",
+      "Chile Central": "chilecentral",
+      // Europe
       "North Europe": "northeurope",
       "West Europe": "westeurope",
       "France Central": "francecentral",
+      "France South": "francesouth",
       "Germany West Central": "germanywestcentral",
+      "Germany North": "germanynorth",
+      "Norway East": "norwayeast",
+      "Norway West": "norwaywest",
+      "Switzerland North": "switzerlandnorth",
+      "Switzerland West": "switzerlandwest",
       "UK South": "uksouth",
       "UK West": "ukwest",
+      "Sweden Central": "swedencentral",
+      "Sweden South": "swedensouth",
+      "Austria East": "austriaeast",
+      "Belgium Central": "belgiumcentral",
+      "Denmark East": "denmarkeast",
+      "Italy North": "italynorth",
+      "Poland Central": "polandcentral",
+      "Spain Central": "spaincentral",
+      // Asia Pacific
       "East Asia": "eastasia",
       "Southeast Asia": "southeastasia",
+      "Australia Central": "australiacentral",
+      "Australia Central 2": "australiacentral2",
       "Australia East": "australiaeast",
       "Australia Southeast": "australiasoutheast",
+      "New Zealand North": "newzealandnorth",
       "Central India": "centralindia",
       "South India": "southindia",
+      "West India": "westindia",
       "Japan East": "japaneast",
       "Japan West": "japanwest",
       "Korea Central": "koreacentral",
-      "Brazil South": "brazilsouth",
+      "Korea South": "koreasouth",
+      "Malaysia West": "malaysiawest",
+      "Indonesia Central": "indonesiacentral",
+      // Middle East & Africa
+      "South Africa North": "southafricanorth",
+      "South Africa West": "southafricawest",
+      "UAE Central": "uaecentral",
+      "UAE North": "uaenorth",
+      "Israel Central": "israelcentral",
+      "Qatar Central": "qatarcentral",
+      // Government
+      "US Gov Arizona": "usgovarizona",
+      "US Gov Texas": "usgovtexas",
+      "US Gov Virginia": "usgovvirginia",
     };
 
     return regionMappings[region] || region.toLowerCase().replace(/[\s-]/g, "");
