@@ -119,6 +119,21 @@ window.getInstanceRecommendationWithSelector = async function (
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const region = row[regionColumn] || "";
 
+      // Per-row rule engine inputs read from CSV columns
+      const rowEnv        = (row["ENV"] || row["Environment"] || "").trim();
+      const rowOS         = (row["OS"] || row["Operating System"] || "Linux").trim();
+      const rowWorkload   = (row["Workload"] || "General").trim();
+      const rowCompliance = (row["Compliance"] || "").trim();
+
+      // Merge per-row values into a row-specific options copy
+      const rowOptions = {
+        ...options,
+        rowEnv,
+        rowOS,
+        rowWorkload,
+        rowCompliance,
+      };
+
       const providerUpper = provider.toUpperCase();
 
       if (!region || cpu === 0 || memory === 0) {
@@ -126,38 +141,33 @@ window.getInstanceRecommendationWithSelector = async function (
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Missing data";
-          result[`${providerUpper} Like-to-Like Price`] = "N/A";
           result[`${providerUpper} Like-to-Like vCPUs`] = "N/A";
-          result[`${providerUpper} Like-to-Like Memory`] = "N/A";
+          result[`${providerUpper} Like-to-Like Memory (GiB)`] = "N/A";
+          result[`${providerUpper} Rules Applied`] = "";
         }
 
         if (generateOptimized) {
           result[`${providerUpper} Optimized Instance`] = "Missing data";
-          result[`${providerUpper} Optimized Price`] = "N/A";
           result[`${providerUpper} Optimized vCPUs`] = "N/A";
-          result[`${providerUpper} Optimized Memory`] = "N/A";
+          result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
         }
         return;
       }
 
       try {
-        // Get like-to-like recommendation only if requested
         if (generateLikeToLike) {
           const likeToLike = selector.getLikeToLikeInstance(
             region,
             cpu,
             memory,
-            options
+            rowOptions
           );
-          result[`${providerUpper} Like-to-Like Instance`] =
-            likeToLike.instanceType;
-          result[`${providerUpper} Like-to-Like Price`] =
-            likeToLike.hourlyPrice;
+          result[`${providerUpper} Like-to-Like Instance`] = likeToLike.instanceType;
           result[`${providerUpper} Like-to-Like vCPUs`] = likeToLike.vCpus;
-          result[`${providerUpper} Like-to-Like Memory`] = likeToLike.memory;
+          result[`${providerUpper} Like-to-Like Memory (GiB)`] = likeToLike.memory;
+          result[`${providerUpper} Rules Applied`] = likeToLike.rulesApplied || "";
         }
 
-        // Get optimized recommendation only if requested and utilization data available
         if (generateOptimized) {
           if (cpuUtil > 0 || memoryUtil > 0) {
             const optimized = selector.getOptimizedInstance(
@@ -166,19 +176,18 @@ window.getInstanceRecommendationWithSelector = async function (
               memory,
               cpuUtil,
               memoryUtil,
-              options
+              rowOptions
             );
-            result[`${providerUpper} Optimized Instance`] =
-              optimized.instanceType;
-            result[`${providerUpper} Optimized Price`] = optimized.hourlyPrice;
+            result[`${providerUpper} Optimized Instance`] = optimized.instanceType;
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
-            result[`${providerUpper} Optimized Memory`] = optimized.memory;
+            result[`${providerUpper} Optimized Memory (GiB)`] = optimized.memory;
+            if (!generateLikeToLike) {
+              result[`${providerUpper} Rules Applied`] = optimized.rulesApplied || "";
+            }
           } else {
-            result[`${providerUpper} Optimized Instance`] =
-              "No utilization data";
-            result[`${providerUpper} Optimized Price`] = "N/A";
+            result[`${providerUpper} Optimized Instance`] = "No utilization data";
             result[`${providerUpper} Optimized vCPUs`] = "N/A";
-            result[`${providerUpper} Optimized Memory`] = "N/A";
+            result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
           }
         }
       } catch (error) {
@@ -189,16 +198,15 @@ window.getInstanceRecommendationWithSelector = async function (
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Error";
-          result[`${providerUpper} Like-to-Like Price`] = "Error";
           result[`${providerUpper} Like-to-Like vCPUs`] = "Error";
-          result[`${providerUpper} Like-to-Like Memory`] = "Error";
+          result[`${providerUpper} Like-to-Like Memory (GiB)`] = "Error";
+          result[`${providerUpper} Rules Applied`] = "";
         }
 
         if (generateOptimized) {
           result[`${providerUpper} Optimized Instance`] = "Error";
-          result[`${providerUpper} Optimized Price`] = "Error";
           result[`${providerUpper} Optimized vCPUs`] = "Error";
-          result[`${providerUpper} Optimized Memory`] = "Error";
+          result[`${providerUpper} Optimized Memory (GiB)`] = "Error";
         }
       }
     });

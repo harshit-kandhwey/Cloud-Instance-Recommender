@@ -8,6 +8,7 @@
     <!-- JavaScript Files in Correct Order -->
     <script defer src="js/base/optimized_file_handler.js"></script>
     <script defer src="js/aws/aws-data.js"></script>
+    <script defer src="js/base/rule-engine.js"></script>
     <script defer src="js/base/base-instance-selector.js"></script>
     <script defer src="js/aws/aws-instance-selector.js"></script>
     <script defer src="js/base/instance-selector-factory.js"></script>
@@ -49,12 +50,32 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region
-web-server-01,4,16,45,60,us-east-1
-db-server-02,8,32,70,80,us-west-2
-app-server-03,2,8,35,45,eu-west-1</pre
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance
+web-server-01,4,16,45,60,us-east-1,Production,Linux,Web Server,
+db-server-02,8,32,70,80,us-west-2,Production,Windows,Database,PCI
+app-server-03,2,8,35,45,eu-west-1,Dev,Linux,General,</pre
               >
             </div>
+
+            <details style="margin-top:10px;">
+              <summary style="cursor:pointer; font-weight:600; color:#555;">Optional columns — click to see rule descriptions</summary>
+              <div style="margin-top:8px; font-size:0.875em; line-height:1.6; color:#444;">
+                <table style="border-collapse:collapse; width:100%;">
+                  <thead><tr style="background:#f0f4f8;">
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Column</th>
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Values</th>
+                    <th style="text-align:left; padding:4px 8px; border:1px solid #ddd;">Rules triggered</th>
+                  </tr></thead>
+                  <tbody>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>ENV</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">Production / Staging / Dev / Test</td><td style="padding:4px 8px; border:1px solid #ddd;"><strong>1a</strong> Burstable excluded (Prod/Staging) · <strong>1b</strong> Current-gen only (Prod) · <strong>1c</strong> No nano/micro (Prod/Staging) · <strong>1d</strong> ≥4 vCPU for DB/Web workloads (Prod)</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>OS</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">Linux (default) / Windows / macOS</td><td style="padding:4px 8px; border:1px solid #ddd;">Windows → ARM/Graviton excluded · macOS → mac1/mac2 families only</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>Workload</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">General · Database · Web Server · Cache · ML/AI · Batch · HPC</td><td style="padding:4px 8px; border:1px solid #ddd;">Preferred families sorted first: Database→r/x/z · Web→m/c · Cache→r/x · ML/AI→p/g/trn/inf · Batch→c/m · HPC→hpc/c</td></tr>
+                    <tr><td style="padding:4px 8px; border:1px solid #ddd;"><strong>Compliance</strong></td><td style="padding:4px 8px; border:1px solid #ddd;">PCI / HIPAA / FIPS</td><td style="padding:4px 8px; border:1px solid #ddd;"><strong>1b</strong> Current-gen only · Nitro Enclaves required (AWS PCI/HIPAA)</td></tr>
+                  </tbody>
+                </table>
+                <p style="margin-top:6px; color:#666;">All columns are optional — blank cells use safe defaults (Linux, General workload, no ENV restrictions).</p>
+              </div>
+            </details>
 
             <button class="btn btn-secondary" onclick="downloadAWSSampleCSV()">
               📥 Download Sample CSV
@@ -492,9 +513,19 @@ app-server-03,2,8,35,45,eu-west-1</pre
                 <span class="success-icon">✅</span>
                 Recommendations generated successfully!
               </div>
-              <button class="btn btn-primary" onclick="downloadResults()">
-                📥 Download Results CSV
-              </button>
+              <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+                <button class="btn btn-primary" onclick="downloadResults()">
+                  📥 Download Results CSV
+                </button>
+                <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate()" title="Generates a CSV pre-formatted for the AWS Pricing Calculator Bulk Import (EC2 Instances template)">
+                  🧾 Download AWS Pricing Calculator Bulk Template
+                </button>
+              </div>
+              <p style="margin-top:8px; font-size:0.85em; color:#555;">
+                The Bulk Template CSV can be imported directly into the
+                <a href="https://calculator.aws/pricing/2/home" target="_blank" rel="noopener">AWS Pricing Calculator</a>
+                via <strong>EC2 → Add group → Bulk import</strong>.
+              </p>
             </div>
           </div>
         </section>

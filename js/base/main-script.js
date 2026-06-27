@@ -1125,6 +1125,125 @@ function downloadResults() {
   console.log("CSV download completed");
 }
 
+// AWS Pricing Calculator Bulk Template download
+// Generates a CSV matching the EC2 Instances BulkUpload Template format so users
+// can import directly into the AWS Pricing Calculator without any manual mapping.
+function downloadAWSBulkTemplate() {
+  if (!processedResults || processedResults.length === 0) {
+    alert("No results to download. Please generate recommendations first.");
+    return;
+  }
+
+  // Detect which recommendation columns were generated
+  const sampleRow = processedResults[0];
+  const hasL2L = Object.keys(sampleRow).some((k) => k.includes("AWS Like-to-Like Instance"));
+  const hasOpt = Object.keys(sampleRow).some((k) => k.includes("AWS Optimized Instance"));
+
+  if (!hasL2L && !hasOpt) {
+    alert("No AWS recommendations found. Please select AWS as a provider and regenerate.");
+    return;
+  }
+
+  // Bulk template column headers (exact names required by AWS Pricing Calculator)
+  const bulkHeaders = [
+    "Group",
+    "Description",
+    "AWS Region",
+    "Operating System",
+    "Instance Type",
+    "Tenancy",
+    "Number of Instances",
+    "Assumed Usage",
+    "Usage Type",
+    "Purchasing Options",
+    "Storage Type",
+    "Storage amount per Instance (GB)",
+    "Provisioning IOPS per instance (gp3, io1, io2)",
+    "EBS Throughput per Instance (Mbps)",
+    "Snapshot Frequency",
+    "EBS Snapshot amount per Instance (GB/snapshot)",
+  ];
+
+  // Determine OS value for the template
+  const osSelector = document.querySelector('input[name="targetOS"]:checked');
+  const selectedOS = osSelector ? osSelector.value : "Linux";
+  const templateOS = selectedOS === "Windows" ? "Windows Server" : "Linux";
+
+  const rows = [];
+
+  processedResults.forEach((row) => {
+    const vmName = row["VM Name"] || row["Server Name"] || "VM";
+    const region = row["AWS Region"] || "";
+    const env = row["ENV"] || row["Environment"] || "Default";
+
+    // Sanitize strings: remove characters not allowed in Group/Description
+    const sanitize = (s) => String(s).replace(/[><&]/g, "");
+
+    const buildRow = (instanceType, label) => {
+      if (!instanceType || instanceType === "Missing data" || instanceType === "Error" || instanceType === "No utilization data") {
+        return null;
+      }
+      return [
+        sanitize(env),                    // Group
+        sanitize(`${vmName} (${label})`), // Description
+        region,                           // AWS Region
+        templateOS,                       // Operating System
+        instanceType,                     // Instance Type
+        "Shared Instances",               // Tenancy
+        "1",                              // Number of Instances
+        "",                               // Assumed Usage (blank = Always On)
+        "Always On",                      // Usage Type
+        "On-Demand",                      // Purchasing Options
+        "",                               // Storage Type
+        "",                               // Storage amount
+        "",                               // Provisioning IOPS
+        "",                               // EBS Throughput
+        "",                               // Snapshot Frequency
+        "",                               // EBS Snapshot amount
+      ];
+    };
+
+    if (hasL2L) {
+      const r = buildRow(row["AWS Like-to-Like Instance"], "Like-to-Like");
+      if (r) rows.push(r);
+    }
+    if (hasOpt) {
+      const r = buildRow(row["AWS Optimized Instance"], "Optimized");
+      if (r) rows.push(r);
+    }
+  });
+
+  if (rows.length === 0) {
+    alert("No valid AWS instance recommendations to export. Check that your results contain successful matches.");
+    return;
+  }
+
+  const escapeCell = (v) => {
+    const s = String(v);
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  };
+
+  const csvContent = [
+    bulkHeaders.map(escapeCell).join(","),
+    ...rows.map((r) => r.map(escapeCell).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = `aws_pricing_calculator_bulk_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+
+  console.log(`AWS bulk template exported: ${rows.length} rows`);
+}
+
 // Enhanced usage statistics management
 let usageStats = {
   toolUses: 0,

@@ -124,14 +124,10 @@ async function demonstrateInstanceSelector() {
         const providerUpper = provider.toUpperCase();
         console.log(`\n${providerUpper}:`);
         console.log(
-          `  Like-to-Like: ${
-            result[`${providerUpper} Like-to-Like Instance`]
-          } - $${result[`${providerUpper} Like-to-Like Price`]}/month`
+          `  Like-to-Like: ${result[`${providerUpper} Like-to-Like Instance`]} | ${result[`${providerUpper} Like-to-Like vCPUs`]} vCPUs, ${result[`${providerUpper} Like-to-Like Memory (GiB)`]} GiB`
         );
         console.log(
-          `  Optimized: ${result[`${providerUpper} Optimized Instance`]} - $${
-            result[`${providerUpper} Optimized Price`]
-          }/month`
+          `  Optimized: ${result[`${providerUpper} Optimized Instance`]} | ${result[`${providerUpper} Optimized vCPUs`]} vCPUs, ${result[`${providerUpper} Optimized Memory (GiB)`]} GiB`
         );
       });
     });
