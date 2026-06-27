@@ -1,0 +1,28 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (if ever added)
+node_modules/
+npm-debug.log*
+
+# Build outputs (if ever added)
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.bak
+scratchpad/

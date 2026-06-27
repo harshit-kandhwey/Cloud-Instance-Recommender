@@ -1,0 +1,57 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make Cloud Instance Recommender better? We'd love to hear it!
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the tool does this relate to?
+      options:
+        - AWS support
+        - Azure support
+        - GCP support
+        - Multi-cloud comparison
+        - Performance / loading speed
+        - UI / UX
+        - Data accuracy / pricing
+        - CSV format
+        - New cloud provider
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: What problem are you trying to solve? Why do you need this?
+      placeholder: "Currently the tool doesn't support... which means I have to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you tried any workarounds?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Mockups, screenshots, or examples of similar tools
