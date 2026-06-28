@@ -251,9 +251,13 @@ class BaseInstanceSelector {
 
     this._lastRulesApplied = [];
 
+    const hasExactRegion = Object.prototype.hasOwnProperty.call(
+      this.instanceData,
+      region,
+    );
     let regionData = this.instanceData[region];
     let usedRegion = region;
-    if (!regionData?.length) {
+    if (!hasExactRegion) {
       const fuzzy = this._findFuzzyRegion(region);
       if (fuzzy) {
         regionData = this.instanceData[fuzzy];
@@ -266,7 +270,9 @@ class BaseInstanceSelector {
     if (!regionData?.length) {
       console.warn(`No data available for ${this.getProviderName()} ${region}`);
       return this.createEmptyResult(
-        `Region '${region}' not found — check spelling or use a supported region name`,
+        hasExactRegion
+          ? `No instance data is available for region '${region}'`
+          : `Region '${region}' not found — check spelling or use a supported region name`,
       );
     }
 
@@ -352,7 +358,9 @@ class BaseInstanceSelector {
               typeof excludeItem === "string"
                 ? excludeItem
                 : excludeItem.type || ""
-            ).toLowerCase().trim();
+            )
+              .toLowerCase()
+              .trim();
             if (!typeName) return false;
             const itemProvider =
               typeof excludeItem === "object"
@@ -497,11 +505,10 @@ class BaseInstanceSelector {
     const exact = candidates.find((k) => normalize(k) === target);
     if (exact) return exact;
     // Prefix match: input starts with candidate or vice versa
-    const prefix = candidates.find(
-      (k) =>
-        normalize(k).startsWith(target) || target.startsWith(normalize(k)),
+    const prefixMatches = candidates.filter(
+      (k) => normalize(k).startsWith(target) || target.startsWith(normalize(k)),
     );
-    return prefix || null;
+    return prefixMatches.length === 1 ? prefixMatches[0] : null;
   }
 
   // Create empty result

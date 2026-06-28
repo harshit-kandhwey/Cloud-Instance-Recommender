@@ -427,36 +427,43 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     }
 
     // GCP-specific: Machine Series Filter
+    // getMachineSeries("n2-standard-4") → "n2"; UI selects "N2" → case-insensitive compare
+    // Gate: restrictMainFamilies (gcp.html and multicloud both use this checkbox)
     if (
-      options.restrictMachineSeries &&
-      options.selectedMachineSeries?.length > 0
+      options.restrictMainFamilies &&
+      options.selectedGCPFamilies?.length > 0
     ) {
       filteredInstances = filteredInstances.filter((instance) => {
         const machineSeries = this.getMachineSeries(instance.instanceType);
-        if (!options.selectedMachineSeries.includes(machineSeries)) {
-          console.log(
-            `Filtering out machine series: ${instance.instanceType} (series=${machineSeries})`,
-          );
-          return false;
-        }
-        return true;
+        return options.selectedGCPFamilies.some(
+          (f) => f.toLowerCase() === machineSeries.toLowerCase(),
+        );
       });
     }
 
     // GCP-specific: Machine Type Category Filter
     if (
-      options.restrictMachineCategory &&
-      options.selectedMachineCategory?.length > 0
+      options.restrictMainFamilies &&
+      options.selectedGCPMachineTypes?.length > 0
     ) {
       filteredInstances = filteredInstances.filter((instance) => {
         const category = this.getMachineTypeCategory(instance.instanceType);
-        if (!options.selectedMachineCategory.includes(category)) {
-          console.log(
-            `Filtering out machine category: ${instance.instanceType} (category=${category})`,
-          );
-          return false;
-        }
-        return true;
+        return options.selectedGCPMachineTypes.includes(category);
+      });
+    }
+
+    // GCP-specific: Processor Platform Filter
+    // UI returns "Intel Skylake"/"AMD Rome"/"ARM Ampere Altra"; instance.processor stores "Intel"/"AMD"/"ARM"
+    if (
+      options.restrictProcessorManufacturers &&
+      options.selectedGCPProcessors?.length > 0
+    ) {
+      filteredInstances = filteredInstances.filter((instance) => {
+        const instProc = (instance.processor || "").toLowerCase().trim();
+        if (!instProc) return true;
+        return options.selectedGCPProcessors.some((p) =>
+          instProc.startsWith(p.split(" ")[0].toLowerCase()),
+        );
       });
     }
 

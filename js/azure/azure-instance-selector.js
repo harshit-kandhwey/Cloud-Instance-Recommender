@@ -427,17 +427,52 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     }
 
     // Azure-specific: VM Series Filter
-    if (options.restrictVMSeries && options.selectedVMSeries?.length > 0) {
+    // getVMSeries("Standard_D2s_v3") → "D"; UI selects "D-series" → compare with suffix
+    // Gate: restrictMainFamilies (azure.html and multicloud both use this checkbox)
+    if (
+      options.restrictMainFamilies &&
+      options.selectedAzureSeries?.length > 0
+    ) {
       filteredInstances = filteredInstances.filter((instance) => {
         const vmSeries = this.getVMSeries(instance.instanceType);
-        if (!options.selectedVMSeries.includes(vmSeries)) {
-          console.log(
-            `Filtering out VM series: ${instance.instanceType} (series=${vmSeries})`,
-          );
+        const seriesLabel = (vmSeries + "-series").toLowerCase();
+        if (
+          !options.selectedAzureSeries.some(
+            (s) => s.toLowerCase() === seriesLabel,
+          )
+        ) {
           return false;
         }
         return true;
       });
+    }
+
+    // Azure-specific: Processor Architecture Filter
+    // UI returns "Intel Xeon"/"AMD EPYC"/"ARM Ampere Altra"; instance.processor stores "Intel"/"AMD"/"ARM"
+    if (
+      options.restrictProcessorManufacturers &&
+      options.selectedAzureProcessors?.length > 0
+    ) {
+      filteredInstances = filteredInstances.filter((instance) => {
+        const instProc = (instance.processor || "").toLowerCase().trim();
+        if (!instProc) return true;
+        return options.selectedAzureProcessors.some((p) =>
+          instProc.startsWith(p.split(" ")[0].toLowerCase()),
+        );
+      });
+    }
+
+    // Azure-specific: VM Family Filter
+    // UI returns "Standard_D"/"Standard_B"/etc.; check instance type prefix
+    if (
+      options.restrictMainFamilies &&
+      options.selectedAzureVMFamilies?.length > 0
+    ) {
+      filteredInstances = filteredInstances.filter((instance) =>
+        options.selectedAzureVMFamilies.some((f) =>
+          instance.instanceType.startsWith(f),
+        ),
+      );
     }
 
     return filteredInstances;

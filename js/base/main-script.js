@@ -159,13 +159,20 @@ function setupStickyGenerate() {
   bar.id = "_stickyGenerateBar";
   bar.innerHTML = `<button class="btn btn-primary" onclick="generateRecommendations()" style="padding:10px 32px;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);">🔄 Generate Recommendations</button>`;
   Object.assign(bar.style, {
-    position: "fixed", bottom: "20px", left: "50%", transform: "translateX(-50%)",
-    zIndex: "999", display: "none", pointerEvents: "auto",
+    position: "fixed",
+    bottom: "20px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: "999",
+    display: "none",
+    pointerEvents: "auto",
   });
   document.body.appendChild(bar);
 
   const observer = new IntersectionObserver(
-    ([entry]) => { bar.style.display = entry.isIntersecting ? "none" : "block"; },
+    ([entry]) => {
+      bar.style.display = entry.isIntersecting ? "none" : "block";
+    },
     { threshold: 0.1 },
   );
   observer.observe(originalBtn);
@@ -817,9 +824,9 @@ function checkRuleConflicts() {
 
   // ── Conflict 5: macOS + non-AWS providers selected ───────────────────────
   if (os === "macos" || os === "mac") {
-    const nonAWS = (typeof selectedProviders !== "undefined" ? selectedProviders : []).filter(
-      (p) => p !== "aws",
-    );
+    const nonAWS = (
+      typeof selectedProviders !== "undefined" ? selectedProviders : []
+    ).filter((p) => p !== "aws");
     if (nonAWS.length > 0) {
       flagConflict(
         "ruleGroupOS",
@@ -1526,8 +1533,12 @@ function showResultsPreview(results) {
     if (allKeys.includes(vCpuCol)) displayCols.push(vCpuCol);
     if (allKeys.includes(memCol)) displayCols.push(memCol);
   });
-  rulesCols.forEach((r) => { if (!displayCols.includes(r)) displayCols.push(r); });
-  reasonCols.forEach((r) => { if (!displayCols.includes(r)) displayCols.push(r); });
+  rulesCols.forEach((r) => {
+    if (!displayCols.includes(r)) displayCols.push(r);
+  });
+  reasonCols.forEach((r) => {
+    if (!displayCols.includes(r)) displayCols.push(r);
+  });
 
   // Store state for sort
   window._previewState = { results, displayCols, sortCol: null, sortDir: 1 };
@@ -1536,15 +1547,25 @@ function showResultsPreview(results) {
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function _renderPreviewTable(container, results, displayCols, sortCol, sortDir) {
+function _renderPreviewTable(
+  container,
+  results,
+  displayCols,
+  sortCol,
+  sortDir,
+) {
   const noMatchValues = new Set([
-    "No data available", "Missing data", "Error", "No utilization data",
+    "No data available",
+    "Missing data",
+    "Error",
+    "No utilization data",
   ]);
   const isNoMatch = (v) =>
     !v || noMatchValues.has(String(v)) || String(v).startsWith("No ");
   const isRulesCol = (c) => c.includes("Rules Applied");
   const isReasonCol = (c) => c.includes("No Match Reason");
-  const isInstanceCol = (c) => c.includes("Instance") && !c.includes("Rules") && !c.includes("Reason");
+  const isInstanceCol = (c) =>
+    c.includes("Instance") && !c.includes("Rules") && !c.includes("Reason");
   const isVcpuCol = (c) => c.includes("vCPUs");
   const isMemCol = (c) => c.includes("Memory (GiB)");
 
@@ -1572,16 +1593,22 @@ function _renderPreviewTable(container, results, displayCols, sortCol, sortDir) 
 
   function rulesHtml(val) {
     if (!val) return '<span style="color:#aaa">—</span>';
-    return val.split("|").map((p) => p.trim()).filter(Boolean).map((p) => {
-      const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
-      return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
-    }).join(" ");
+    return val
+      .split("|")
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => {
+        const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
+        return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
+      })
+      .join(" ");
   }
 
   const previewRows = rows.slice(0, 20);
 
   const sortArrow = (i) => {
-    if (sortCol !== i) return `<span style="opacity:0.35;margin-left:4px;">⇅</span>`;
+    if (sortCol !== i)
+      return `<span style="opacity:0.35;margin-left:4px;">⇅</span>`;
     return sortDir === 1
       ? `<span style="margin-left:4px;">▲</span>`
       : `<span style="margin-left:4px;">▼</span>`;
@@ -1595,26 +1622,32 @@ function _renderPreviewTable(container, results, displayCols, sortCol, sortDir) 
         <thead>
           <tr style="position:sticky;top:0;z-index:1;background:#1a56db;color:#fff;">
             <th style="padding:6px 8px;white-space:nowrap;cursor:default;"></th>
-            ${displayCols.map((c, i) =>
-              `<th onclick="window._sortPreview(${i})" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`
-            ).join("")}
+            ${displayCols
+              .map(
+                (c, i) =>
+                  `<th onclick="window._sortPreview(${i})" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+              )
+              .join("")}
           </tr>
         </thead>
         <tbody>`;
 
   previewRows.forEach((row, ri) => {
     const instCols = displayCols.filter(isInstanceCol);
-    const allNoMatch = instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
+    const allNoMatch =
+      instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
     const bg = allNoMatch ? "#fff5f5" : ri % 2 === 0 ? "#fff" : "#f8fafc";
-    const rowCsv = displayCols.map((c) => {
-      const v = String(row[c] ?? "");
-      return v.includes(",") ? `"${v.replace(/"/g, '""')}"` : v;
-    }).join(",");
+    const rowCsv = displayCols
+      .map((c) => {
+        const v = String(row[c] ?? "");
+        return v.includes(",") ? `"${v.replace(/"/g, '""')}"` : v;
+      })
+      .join(",");
 
     html += `<tr style="background:${bg};">`;
     // Copy button
     html += `<td style="padding:4px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap;">
-      <button onclick="navigator.clipboard.writeText(${JSON.stringify(rowCsv)}).catch(()=>{})"
+      <button onclick="navigator.clipboard.writeText(${escapeHtml(JSON.stringify(rowCsv))}).catch(()=>{})"
         title="Copy row as CSV"
         style="font-size:10px;padding:1px 5px;border:1px solid #cbd5e1;border-radius:3px;background:#f8fafc;cursor:pointer;color:#475569;">⎘</button>
     </td>`;
@@ -1642,15 +1675,18 @@ function _renderPreviewTable(container, results, displayCols, sortCol, sortDir) 
         let diffStyle = "";
         if (!isNaN(l2lVal) && !isNaN(optVal) && l2lVal > 0) {
           if (optVal < l2lVal) diffStyle = "color:#15803d;font-weight:600;";
-          else if (optVal > l2lVal) diffStyle = "color:#d97706;font-weight:600;";
+          else if (optVal > l2lVal)
+            diffStyle = "color:#d97706;font-weight:600;";
         }
-        cellContent = val !== "" && val !== undefined
-          ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
-          : '<span style="color:#aaa">—</span>';
+        cellContent =
+          val !== "" && val !== undefined
+            ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
+            : '<span style="color:#aaa">—</span>';
       } else {
-        cellContent = val !== "" && val !== undefined
-          ? escapeHtml(String(val))
-          : '<span style="color:#aaa">—</span>';
+        cellContent =
+          val !== "" && val !== undefined
+            ? escapeHtml(String(val))
+            : '<span style="color:#aaa">—</span>';
       }
       html += `<td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;">${cellContent}</td>`;
     });
@@ -1674,7 +1710,8 @@ window._sortPreview = function (colIdx) {
   s.sortCol = colIdx;
   s.sortDir = newDir;
   const container = document.getElementById("resultsPreviewSection");
-  if (container) _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir);
+  if (container)
+    _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir);
 };
 
 // ─── Update bulk template buttons for AWS when both L2L + Optimized generated ─
