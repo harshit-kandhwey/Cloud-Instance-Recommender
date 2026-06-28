@@ -31,7 +31,12 @@ python -m http.server 8080
 ├── gcp.html                # GCP recommender
 ├── multicloud.html         # Multi-cloud comparison
 ├── user-guide.html         # Interactive user guide
-├── user-guide.pdf          # PDF user guide
+│
+├── docs/
+│   └── user-guide.pdf      # PDF user guide
+│
+├── assets/
+│   └── templates/aws/      # AWS Pricing Calculator bulk upload templates
 │
 ├── css/
 │   ├── style.css           # Main styles

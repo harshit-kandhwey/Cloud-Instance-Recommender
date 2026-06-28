@@ -78,8 +78,14 @@ Cloud-Instance-Recommender/
 ├── azure.html               # Azure recommendations
 ├── gcp.html                 # GCP recommendations
 ├── multicloud.html          # Multi-cloud comparison
-├── user-guide.html          # Full user guide (v3.0)
-├── user-guide.pdf           # PDF version of the user guide
+├── user-guide.html          # Full user guide (v3.1)
+│
+├── docs/
+│   └── user-guide.pdf       # PDF version of the user guide
+│
+├── assets/
+│   └── templates/
+│       └── aws/             # AWS Pricing Calculator bulk upload templates (.xlsx)
 │
 ├── css/
 │   ├── style.css            # Main application styles
@@ -276,7 +282,7 @@ The application is available for public use and demonstration. Source code is pr
 ## 📞 Contact & Support
 
 - **Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
-- **User Guide**: See `user-guide.html` (or `user-guide.pdf`) in this repository
+- **User Guide**: See `user-guide.html` (or `docs/user-guide.pdf`) in this repository
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com
 
