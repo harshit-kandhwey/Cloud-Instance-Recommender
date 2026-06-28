@@ -1,5 +1,6 @@
 // GCP Instance Data - Auto-generated from instances.vantage.sh/gcp
 // Updated: 2026-06-27 | Includes Linux + Windows pricing
+window.GCP_DATA_DATE = "2026-06-27";
 function makeGCPRegionsGlobal(r) {
   Object.keys(r).forEach((n) => {
     window[n] = r[n];

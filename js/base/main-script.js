@@ -150,8 +150,32 @@ function watchForDataThenRun(providers = getPageProviders()) {
   }, 500);
 }
 
+// ─── Sticky floating Generate button ──────────────────────────────────────────
+function setupStickyGenerate() {
+  const originalBtn = document.querySelector(".generate-btn");
+  if (!originalBtn) return;
+
+  const bar = document.createElement("div");
+  bar.id = "_stickyGenerateBar";
+  bar.innerHTML = `<button class="btn btn-primary" onclick="generateRecommendations()" style="padding:10px 32px;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);">🔄 Generate Recommendations</button>`;
+  Object.assign(bar.style, {
+    position: "fixed", bottom: "20px", left: "50%", transform: "translateX(-50%)",
+    zIndex: "999", display: "none", pointerEvents: "auto",
+  });
+  document.body.appendChild(bar);
+
+  const observer = new IntersectionObserver(
+    ([entry]) => { bar.style.display = entry.isIntersecting ? "none" : "block"; },
+    { threshold: 0.1 },
+  );
+  observer.observe(originalBtn);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Initializing Cloud Instance Recommender with Modular Selectors");
+
+  // Sticky floating generate button
+  setupStickyGenerate();
 
   // Start watching for data readiness; auto-fires any queued generate request
   watchForDataThenRun();
@@ -790,6 +814,20 @@ function checkRuleConflicts() {
       }
     }
   }
+
+  // ── Conflict 5: macOS + non-AWS providers selected ───────────────────────
+  if (os === "macos" || os === "mac") {
+    const nonAWS = (typeof selectedProviders !== "undefined" ? selectedProviders : []).filter(
+      (p) => p !== "aws",
+    );
+    if (nonAWS.length > 0) {
+      flagConflict(
+        "ruleGroupOS",
+        "conflictOS",
+        `macOS is AWS-only — ${nonAWS.map((p) => p.toUpperCase()).join(" & ")} will return no results for this OS`,
+      );
+    }
+  }
 }
 
 // Toggle instance family name filter
@@ -1389,18 +1427,87 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-// Show in-browser results preview after generation
+// ─── Generation stats bar ─────────────────────────────────────────────────────
+function _buildStatsHtml(results) {
+  const allKeys = Object.keys(results[0] || {});
+  const noMatchValues = new Set([
+    "No data available",
+    "Missing data",
+    "Error",
+    "No utilization data",
+  ]);
+  const isNoMatch = (v) =>
+    !v || noMatchValues.has(String(v)) || String(v).startsWith("No ");
+
+  let matchedRows = 0;
+  const rulesCounts = {};
+
+  results.forEach((row) => {
+    const instCols = allKeys.filter(
+      (k) =>
+        k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
+    );
+    const hasMatch = instCols.some((c) => !isNoMatch(row[c]));
+    if (hasMatch) matchedRows++;
+
+    allKeys
+      .filter((k) => k.includes("Rules Applied"))
+      .forEach((rc) => {
+        String(row[rc] || "")
+          .split("|")
+          .map((r) => r.trim())
+          .filter(Boolean)
+          .forEach((rule) => {
+            const id =
+              rule.match(/^([0-9]+[a-z]+|OS|MinGen|Workload|⚠)/i)?.[1] ||
+              rule.substring(0, 6);
+            rulesCounts[id] = (rulesCounts[id] || 0) + 1;
+          });
+      });
+  });
+
+  const noMatchRows = results.length - matchedRows;
+  const pct = Math.round((matchedRows / results.length) * 100);
+  const rulesSummary = Object.entries(rulesCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `${escapeHtml(k)}(${v})`)
+    .join(" · ");
+
+  // Data freshness
+  const dates = [
+    window.AWS_DATA_DATE,
+    window.AZURE_DATA_DATE,
+    window.GCP_DATA_DATE,
+  ]
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
+  const freshnessNote = dates.length
+    ? `<span style="color:#9ca3af;font-size:0.8em;">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
+    : "";
+
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:0.875em;">
+      <span style="font-weight:700;color:#15803d;">✅ Generation complete</span>
+      <span style="color:#374151;">📊 <strong>${results.length}</strong> rows</span>
+      <span style="color:#15803d;">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
+      ${noMatchRows > 0 ? `<span style="color:#dc2626;">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
+      ${rulesSummary ? `<span style="color:#6b7280;">Rules fired: ${rulesSummary}</span>` : ""}
+      ${freshnessNote}
+    </div>`;
+}
+
+// ─── Show in-browser results preview ──────────────────────────────────────────
 function showResultsPreview(results) {
   const container = document.getElementById("resultsPreviewSection");
   if (!container || !results || results.length === 0) return;
 
-  // Identify recommendation columns (Instance, vCPUs, Memory, Rules Applied)
   const allKeys = Object.keys(results[0] || {});
   const instanceCols = allKeys.filter(
     (k) =>
       k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
   );
   const rulesCols = allKeys.filter((k) => k.includes("Rules Applied"));
+  const reasonCols = allKeys.filter((k) => k.includes("No Match Reason"));
   const inputCols = [
     "VM Name",
     "CPU Count",
@@ -1411,7 +1518,6 @@ function showResultsPreview(results) {
     "Compliance",
   ].filter((c) => allKeys.includes(c));
 
-  // Build display columns: input context + each instance group (instance, vCPUs, memory), then rules
   const displayCols = [...inputCols];
   instanceCols.forEach((instCol) => {
     displayCols.push(instCol);
@@ -1420,62 +1526,129 @@ function showResultsPreview(results) {
     if (allKeys.includes(vCpuCol)) displayCols.push(vCpuCol);
     if (allKeys.includes(memCol)) displayCols.push(memCol);
   });
-  // Rules Applied is a single shared column — append once at the end
-  rulesCols.forEach((r) => {
-    if (!displayCols.includes(r)) displayCols.push(r);
-  });
+  rulesCols.forEach((r) => { if (!displayCols.includes(r)) displayCols.push(r); });
+  reasonCols.forEach((r) => { if (!displayCols.includes(r)) displayCols.push(r); });
 
-  // Helper: colour-code rules cell
-  function rulesHtml(val) {
-    if (!val) return '<span style="color:#aaa">—</span>';
-    const parts = val
-      .split("|")
-      .map((p) => p.trim())
-      .filter(Boolean);
-    return parts
-      .map((p) => {
-        const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
-        return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
-      })
-      .join(" ");
+  // Store state for sort
+  window._previewState = { results, displayCols, sortCol: null, sortDir: 1 };
+  _renderPreviewTable(container, results, displayCols, null, 1);
+
+  container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function _renderPreviewTable(container, results, displayCols, sortCol, sortDir) {
+  const noMatchValues = new Set([
+    "No data available", "Missing data", "Error", "No utilization data",
+  ]);
+  const isNoMatch = (v) =>
+    !v || noMatchValues.has(String(v)) || String(v).startsWith("No ");
+  const isRulesCol = (c) => c.includes("Rules Applied");
+  const isReasonCol = (c) => c.includes("No Match Reason");
+  const isInstanceCol = (c) => c.includes("Instance") && !c.includes("Rules") && !c.includes("Reason");
+  const isVcpuCol = (c) => c.includes("vCPUs");
+  const isMemCol = (c) => c.includes("Memory (GiB)");
+
+  // Sort
+  let rows = [...results];
+  if (sortCol !== null) {
+    rows.sort((a, b) => {
+      const av = a[displayCols[sortCol]] ?? "";
+      const bv = b[displayCols[sortCol]] ?? "";
+      const an = parseFloat(av);
+      const bn = parseFloat(bv);
+      if (!isNaN(an) && !isNaN(bn)) return (an - bn) * sortDir;
+      return String(av).localeCompare(String(bv)) * sortDir;
+    });
   }
 
-  const previewRows = results.slice(0, 20);
-  const isRulesCol = (col) => col.includes("Rules Applied");
-  const isInstanceCol = (col) =>
-    col.includes("Instance") && !col.includes("Rules");
+  // Build L2L vCPU map per provider for diff view
+  const l2lVcpuColMap = {};
+  displayCols.forEach((c) => {
+    if (c.includes("Like-to-Like vCPUs")) {
+      const provider = c.replace(" Like-to-Like vCPUs", "");
+      l2lVcpuColMap[`${provider} Optimized vCPUs`] = c;
+    }
+  });
 
-  let html = `
+  function rulesHtml(val) {
+    if (!val) return '<span style="color:#aaa">—</span>';
+    return val.split("|").map((p) => p.trim()).filter(Boolean).map((p) => {
+      const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
+      return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
+    }).join(" ");
+  }
+
+  const previewRows = rows.slice(0, 20);
+
+  const sortArrow = (i) => {
+    if (sortCol !== i) return `<span style="opacity:0.35;margin-left:4px;">⇅</span>`;
+    return sortDir === 1
+      ? `<span style="margin-left:4px;">▲</span>`
+      : `<span style="margin-left:4px;">▼</span>`;
+  };
+
+  let html = _buildStatsHtml(results);
+  html += `
     <p style="font-weight:600;margin-bottom:6px;">📋 Results Preview (first ${previewRows.length} of ${results.length} rows)</p>
-    <div style="overflow-x:auto;max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
-      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;">
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
         <thead>
           <tr style="position:sticky;top:0;z-index:1;background:#1a56db;color:#fff;">
-            ${displayCols.map((c) => `<th style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;">${escapeHtml(c)}</th>`).join("")}
+            <th style="padding:6px 8px;white-space:nowrap;cursor:default;"></th>
+            ${displayCols.map((c, i) =>
+              `<th onclick="window._sortPreview(${i})" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`
+            ).join("")}
           </tr>
         </thead>
-        <tbody>
-  `;
+        <tbody>`;
 
-  previewRows.forEach((row, i) => {
-    const bg = i % 2 === 0 ? "#fff" : "#f8fafc";
+  previewRows.forEach((row, ri) => {
+    const instCols = displayCols.filter(isInstanceCol);
+    const allNoMatch = instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
+    const bg = allNoMatch ? "#fff5f5" : ri % 2 === 0 ? "#fff" : "#f8fafc";
+    const rowCsv = displayCols.map((c) => {
+      const v = String(row[c] ?? "");
+      return v.includes(",") ? `"${v.replace(/"/g, '""')}"` : v;
+    }).join(",");
+
     html += `<tr style="background:${bg};">`;
+    // Copy button
+    html += `<td style="padding:4px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap;">
+      <button onclick="navigator.clipboard.writeText(${JSON.stringify(rowCsv)}).catch(()=>{})"
+        title="Copy row as CSV"
+        style="font-size:10px;padding:1px 5px;border:1px solid #cbd5e1;border-radius:3px;background:#f8fafc;cursor:pointer;color:#475569;">⎘</button>
+    </td>`;
+
     displayCols.forEach((col) => {
       const val = row[col] ?? "";
       let cellContent;
+
       if (isRulesCol(col)) {
         cellContent = rulesHtml(String(val));
+      } else if (isReasonCol(col)) {
+        cellContent = val
+          ? `<span style="color:#b45309;font-size:0.85em;">${escapeHtml(String(val))}</span>`
+          : '<span style="color:#aaa">—</span>';
       } else if (isInstanceCol(col)) {
-        const isErr =
-          String(val).startsWith("No ") ||
-          String(val).startsWith("Missing") ||
-          String(val) === "Error";
-        const color = isErr ? "#dc2626" : "#047857";
+        const bad = isNoMatch(val);
+        const color = bad ? "#dc2626" : "#047857";
         cellContent = val
           ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>`
           : '<span style="color:#aaa">—</span>';
+      } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
+        // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
+        const l2lVal = parseFloat(row[l2lVcpuColMap[col]]);
+        const optVal = parseFloat(val);
+        let diffStyle = "";
+        if (!isNaN(l2lVal) && !isNaN(optVal) && l2lVal > 0) {
+          if (optVal < l2lVal) diffStyle = "color:#15803d;font-weight:600;";
+          else if (optVal > l2lVal) diffStyle = "color:#d97706;font-weight:600;";
+        }
+        cellContent = val !== "" && val !== undefined
+          ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
+          : '<span style="color:#aaa">—</span>';
       } else {
-        cellContent = val
+        cellContent = val !== "" && val !== undefined
           ? escapeHtml(String(val))
           : '<span style="color:#aaa">—</span>';
       }
@@ -1488,11 +1661,21 @@ function showResultsPreview(results) {
   if (results.length > 20) {
     html += `<p style="font-size:0.82em;color:#64748b;margin-top:4px;">Showing first 20 rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
   }
+  html += `<p style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Click any column header to sort · <span style="color:#15803d;">Green Optimized vCPUs</span> = rightsized down · <span style="color:#d97706;">Amber</span> = rightsized up · Red rows = no match</p>`;
 
   container.innerHTML = html;
   container.classList.remove("hidden");
-  container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+window._sortPreview = function (colIdx) {
+  const s = window._previewState;
+  if (!s) return;
+  const newDir = s.sortCol === colIdx ? -s.sortDir : 1;
+  s.sortCol = colIdx;
+  s.sortDir = newDir;
+  const container = document.getElementById("resultsPreviewSection");
+  if (container) _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir);
+};
 
 // ─── Update bulk template buttons for AWS when both L2L + Optimized generated ─
 

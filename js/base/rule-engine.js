@@ -33,6 +33,7 @@ const RuleEngine = (() => {
       ai: ["p", "g", "trn", "inf"],
       batch: ["c", "m"],
       hpc: ["hpc", "c"],
+      sap: ["x1", "x2", "r", "u-"],
     },
     azure: {
       general: ["d"],
@@ -45,6 +46,7 @@ const RuleEngine = (() => {
       ai: ["nc", "nd", "nv"],
       batch: ["f", "d"],
       hpc: ["hb", "hc"],
+      sap: ["mv2", "msv2", "m"],
     },
     gcp: {
       general: ["n2", "e2"],
@@ -57,6 +59,7 @@ const RuleEngine = (() => {
       ai: ["a2", "a3", "g2"],
       batch: ["c2", "c2d", "c3", "c3d"],
       hpc: ["h3", "c2"],
+      sap: ["m1", "m2", "m3", "m4"],
     },
   };
 

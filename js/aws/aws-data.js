@@ -1,5 +1,6 @@
 // AWS Instance Data - Auto-generated from instances.vantage.sh
 // Updated: 2026-06-27 | Includes Linux + Windows pricing
+window.AWS_DATA_DATE = "2026-06-27";
 function makeRegionsGlobal(regions) {
   Object.keys(regions).forEach((regionName) => {
     window[regionName] = regions[regionName];

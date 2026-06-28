@@ -1,5 +1,6 @@
 // Azure Instance Data - Auto-generated from instances.vantage.sh/azure
 // Updated: 2026-06-27 | Includes Linux + Windows pricing
+window.AZURE_DATA_DATE = "2026-06-27";
 function makeAzureRegionsGlobal(r) {
   Object.keys(r).forEach((n) => {
     window[n] = r[n];

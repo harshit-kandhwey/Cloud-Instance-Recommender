@@ -152,7 +152,20 @@ window.getInstanceRecommendationWithSelector = async function (
         ""
       ).trim();
 
-      // Merge per-row values into a row-specific options copy
+      const providerUpper = provider.toUpperCase();
+
+      // Always initialize shared columns so schema is consistent across all rows
+      result[`${providerUpper} Rules Applied`] = "";
+      result[`${providerUpper} No Match Reason`] = "";
+
+      // Per-row Exclude: merge CSV "Exclude" column with page-level excludeTypes
+      const rowExcludeRaw = (row["Exclude"] || "").trim();
+      const rowExcludeExtra = rowExcludeRaw
+        ? rowExcludeRaw
+            .split(",")
+            .map((t) => ({ provider, type: t.trim() }))
+            .filter((e) => e.type)
+        : [];
       const rowOptions = {
         ...options,
         rowEnv,
@@ -160,15 +173,21 @@ window.getInstanceRecommendationWithSelector = async function (
         rowWorkload,
         rowCompliance,
         rowMinGen,
+        excludeTypes: rowExcludeExtra.length
+          ? [...(options.excludeTypes || []), ...rowExcludeExtra]
+          : options.excludeTypes,
       };
 
-      const providerUpper = provider.toUpperCase();
-
-      // Always initialize Rules Applied so the column schema is consistent across all rows
-      result[`${providerUpper} Rules Applied`] = "";
-
       if (!region || cpu === 0 || memory === 0) {
-        console.warn(`Missing data for ${provider} in row ${index + 1}`);
+        const noMatchReason = !region
+          ? `No ${providerUpper} region specified in CSV`
+          : cpu === 0
+            ? "CPU Count is 0 or missing"
+            : "Memory (GB) is 0 or missing";
+        console.warn(
+          `Missing data for ${provider} in row ${index + 1}: ${noMatchReason}`,
+        );
+        result[`${providerUpper} No Match Reason`] = noMatchReason;
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Missing data";
@@ -199,6 +218,12 @@ window.getInstanceRecommendationWithSelector = async function (
             likeToLike.memory;
           result[`${providerUpper} Rules Applied`] =
             likeToLike.rulesApplied || "";
+          if (
+            likeToLike.instanceType === "No data available" &&
+            likeToLike.reason
+          ) {
+            result[`${providerUpper} No Match Reason`] = likeToLike.reason;
+          }
         }
 
         if (generateOptimized) {
@@ -216,16 +241,25 @@ window.getInstanceRecommendationWithSelector = async function (
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
             result[`${providerUpper} Optimized Memory (GiB)`] =
               optimized.memory;
-            // When only Optimized is selected, also record rules in the shared column
             if (!generateLikeToLike) {
               result[`${providerUpper} Rules Applied`] =
                 optimized.rulesApplied || "";
+              if (
+                optimized.instanceType === "No data available" &&
+                optimized.reason
+              ) {
+                result[`${providerUpper} No Match Reason`] = optimized.reason;
+              }
             }
           } else {
             result[`${providerUpper} Optimized Instance`] =
               "No utilization data";
             result[`${providerUpper} Optimized vCPUs`] = "N/A";
             result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
+            if (!generateLikeToLike) {
+              result[`${providerUpper} No Match Reason`] =
+                "No CPU/Memory utilization data in CSV";
+            }
           }
         }
       } catch (error) {
@@ -233,6 +267,7 @@ window.getInstanceRecommendationWithSelector = async function (
           `Error processing ${provider} for row ${index + 1}:`,
           error,
         );
+        result[`${providerUpper} No Match Reason`] = `Error: ${error.message}`;
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Error";

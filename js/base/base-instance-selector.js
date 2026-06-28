@@ -251,10 +251,23 @@ class BaseInstanceSelector {
 
     this._lastRulesApplied = [];
 
-    const regionData = this.instanceData[region];
+    let regionData = this.instanceData[region];
+    let usedRegion = region;
+    if (!regionData?.length) {
+      const fuzzy = this._findFuzzyRegion(region);
+      if (fuzzy) {
+        regionData = this.instanceData[fuzzy];
+        usedRegion = fuzzy;
+        console.warn(
+          `[FuzzyRegion] '${region}' not found — using '${fuzzy}' instead`,
+        );
+      }
+    }
     if (!regionData?.length) {
       console.warn(`No data available for ${this.getProviderName()} ${region}`);
-      return this.createEmptyResult("Region data not loaded");
+      return this.createEmptyResult(
+        `Region '${region}' not found — check spelling or use a supported region name`,
+      );
     }
 
     const filteredInstances = this.applyFilters(
@@ -468,6 +481,27 @@ class BaseInstanceSelector {
     result.reason = `N/2, N, N+1 Strategy optimization from ${currentCpu}vCPU/${currentMemory}GB to ${targetCpu}vCPU/${targetMemory}GB based on utilization (CPU:${cpuUtil}%, Mem:${memoryUtil}%)`;
 
     return result;
+  }
+
+  // Fuzzy region match: normalize both sides and try prefix / contains matching
+  _findFuzzyRegion(region) {
+    const normalize = (s) =>
+      String(s)
+        .toLowerCase()
+        .replace(/[\s\-_]/g, "");
+    const target = normalize(region);
+    const candidates = Object.keys(this.instanceData).filter(
+      (k) => this.instanceData[k]?.length,
+    );
+    // Exact normalized match
+    const exact = candidates.find((k) => normalize(k) === target);
+    if (exact) return exact;
+    // Prefix match: input starts with candidate or vice versa
+    const prefix = candidates.find(
+      (k) =>
+        normalize(k).startsWith(target) || target.startsWith(normalize(k)),
+    );
+    return prefix || null;
   }
 
   // Create empty result
