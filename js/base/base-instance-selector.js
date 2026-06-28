@@ -504,9 +504,22 @@ class BaseInstanceSelector {
     // Exact normalized match
     const exact = candidates.find((k) => normalize(k) === target);
     if (exact) return exact;
-    // Prefix match: input starts with candidate or vice versa
-    const prefixMatches = candidates.filter(
-      (k) => normalize(k).startsWith(target) || target.startsWith(normalize(k)),
+
+    // Provider-normalized alias match, e.g. GCP zone "us-central1-a" → region "us-central1"
+    try {
+      const providerTarget = this.normalizeRegionForJS(region);
+      const providerExact = candidates.find(
+        (k) => this.normalizeRegionForJS(k) === providerTarget,
+      );
+      if (providerExact) return providerExact;
+    } catch {
+      // normalizeRegionForJS is abstract; skip if not callable in this context
+    }
+
+    // Prefix match: only allow candidate-starts-with-input (not the reverse)
+    // Prevents "East US" matching when "East US 2" was requested
+    const prefixMatches = candidates.filter((k) =>
+      normalize(k).startsWith(target),
     );
     return prefixMatches.length === 1 ? prefixMatches[0] : null;
   }

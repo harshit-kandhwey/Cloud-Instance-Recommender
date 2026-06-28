@@ -3,7 +3,7 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-3.0-green)
+![Version](https://img.shields.io/badge/Version-3.1-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
@@ -25,17 +25,17 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 - **Optimized** — Smart right-sizing based on actual CPU/memory utilization (N/2, N, N+1 strategy)
 - **Both** — Generate like-to-like and optimized simultaneously; AWS produces two separate bulk template files
 
-### 🧠 Rule Engine (v3.0)
+### 🧠 Rule Engine (v3.1)
 
 Five interactive dropdowns set global defaults for the entire batch without editing your CSV:
 
-| Dropdown       | Purpose                                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                    |
-| **OS**         | Linux / Windows / macOS — affects ARM eligibility                                              |
-| **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC — sorts preferred families first |
-| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)  |
-| **Min Gen**    | Minimum generation number/family — excludes older instance generations                         |
+| Dropdown       | Purpose                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                              |
+| **OS**         | Linux / Windows / macOS — affects ARM eligibility                                                        |
+| **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC / **SAP** — sorts preferred families first |
+| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)            |
+| **Min Gen**    | Minimum generation number/family — excludes older instance generations                                   |
 
 Per-row CSV column values always override these global defaults.
 
@@ -46,14 +46,18 @@ The Rule Engine highlights contradicting filter combinations in red and explains
 - Current-Gen Only + Previous-Gen preference
 - Burstable excluded (Prod ENV) + Burstable family selected
 - Min Gen + Current Gen Only (redundant but not conflicting)
+- macOS selected + Azure/GCP providers active (macOS is AWS-only)
 
 ### 🔧 Advanced Filtering
 
 - **Current Generation Only** — Exclude end-of-life families
 - **Minimum Generation** — Per-row `Min Gen` CSV column or global default dropdown
-- **Processor Types** — Intel, AMD, ARM (unified across providers in multi-cloud)
+- **Processor Types** — Intel / AMD / ARM; Azure and GCP accept full platform names (e.g. "Intel Xeon", "AMD EPYC") and normalize them automatically
 - **Instance Categories** (multi-cloud) — General Purpose, Burstable, Memory Optimized, Compute Optimized, Storage Optimized, GPU, HPC
-- **Exclude Specific Types** — GPU, Burstable, ARM, FPGA, Promo, etc. per provider
+- **AWS Instance Families** — Filter by family prefix (m, r, c, …)
+- **Azure Filters** — VM Series (D-series, E-series, …), Processor Architecture, VM Family prefix (Standard_D, …)
+- **GCP Filters** — Machine Series (N2, E2, C3D, …), Machine Type Category (standard, highmem, highcpu, …), Processor Platform
+- **Exclude Specific Types** — GPU, Burstable, ARM/Graviton, FPGA, Previous Generation, etc. per provider; also settable per row via the `Exclude` CSV column
 
 ### 📦 AWS Pricing Calculator Bulk Template
 
@@ -143,9 +147,10 @@ Download the sample CSV from any provider page and fill in your VM inventory.
 | `Memory Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
 | `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
 | `OS` | Linux / Windows / macOS | Affects ARM/Graviton eligibility |
-| `Workload` | General / Database / Web Server / Cache / ML/AI / Batch / HPC | Sorts preferred families first |
+| `Workload` | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first |
 | `Compliance` | PCI / HIPAA / SOC2 / FIPS | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS) |
 | `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4 | Minimum instance generation to include |
+| `Exclude` | Comma-separated type names (e.g. `Burstable,GPU`) | Exclude specific instance types for this row only |
 
 **Example (multi-cloud):**
 
@@ -171,14 +176,17 @@ worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,
 
 The results CSV contains your original columns plus per-provider recommendation columns:
 
-| Column                                            | Description                                         |
-| ------------------------------------------------- | --------------------------------------------------- |
-| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                |
-| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                  |
-| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                      |
-| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                    |
-| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired |
-| _(Azure and GCP columns follow the same pattern)_ |                                                     |
+| Column                                            | Description                                          |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                 |
+| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                   |
+| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                       |
+| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                     |
+| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired  |
+| `AWS No Match Reason`                             | Explains why no instance was found (when applicable) |
+| _(Azure and GCP columns follow the same pattern)_ |                                                      |
+
+The in-browser **results preview** table includes sortable columns, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), and a stats bar showing match rate, rules fired, and data freshness date.
 
 > **Pricing is intentionally excluded from output.** Cloud pricing depends on region, OS, discounts, Reserved Instances, Savings Plans, and enterprise agreements — a static price in the CSV would be misleading within weeks. Use the provider's pricing calculator with the recommended instance types for authoritative cost figures.
 

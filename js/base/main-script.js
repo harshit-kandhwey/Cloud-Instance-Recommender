@@ -1640,7 +1640,7 @@ function _renderPreviewTable(
     const rowCsv = displayCols
       .map((c) => {
         const v = String(row[c] ?? "");
-        return v.includes(",") ? `"${v.replace(/"/g, '""')}"` : v;
+        return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
       })
       .join(",");
 
