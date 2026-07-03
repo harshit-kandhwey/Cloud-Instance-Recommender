@@ -33,6 +33,76 @@ const COLUMN_MAPPINGS = {
   gcpRegion: "GCP Region",
 };
 
+// Header synonyms for auto-matching uploaded columns to the canonical names
+// above. Keys are canonical names; values are normalized candidates
+// (lowercased, non-alphanumerics stripped). Only these 8 canonicals are
+// mapped — ENV/OS/Workload/Compliance/Min Gen/Exclude are read literally.
+const COLUMN_SYNONYMS = {
+  "CPU Count": [
+    "vcpu",
+    "vcpus",
+    "cpu",
+    "cpus",
+    "cores",
+    "corecount",
+    "cpucores",
+    "numcpu",
+    "numcpus",
+    "processors",
+    "processorcount",
+  ],
+  "Memory (GB)": [
+    "ram",
+    "ramgb",
+    "mem",
+    "memgb",
+    "memory",
+    "memorygb",
+    "memorygib",
+    "memorysize",
+    "memorysizegb",
+    "memorysizegib",
+  ],
+  "CPU Utilization": [
+    "cpuutil",
+    "cpuutilization",
+    "cpupct",
+    "cpupercent",
+    "cpuusage",
+    "avgcpu",
+    "cpuavg",
+    "maxcpu",
+  ],
+  "Memory Utilization": [
+    "memutil",
+    "memoryutil",
+    "memutilization",
+    "memoryutilization",
+    "mempct",
+    "memorypercent",
+    "memusage",
+    "memoryusage",
+    "avgmemory",
+    "memavg",
+    "ramutil",
+    "maxmemory",
+  ],
+  "VM Name": [
+    "vmname",
+    "servername",
+    "hostname",
+    "host",
+    "name",
+    "server",
+    "machinename",
+    "computername",
+    "instancename",
+  ],
+  "AWS Region": ["awsregion", "amazonregion"],
+  "Azure Region": ["azureregion"],
+  "GCP Region": ["gcpregion", "googleregion", "googlecloudregion", "gcpzone"],
+};
+
 // Initialize page
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────
 // Each provider manifest (js/{p}/{p}-data.js) sets window.{PROVIDER}_DATA_READY
@@ -530,14 +600,14 @@ function handleFileUpload(event) {
   reader.readAsText(file);
 }
 
-// Parse CSV
+// Parse CSV text into headers + row objects, then hand off to ingestRows
+// (which owns column mapping and everything downstream — the xlsx path
+// feeds ingestRows directly)
 function parseCSV(csvText) {
   console.log("Parsing CSV data");
   const lines = csvText.trim().split("\n");
   const headers = lines[0].split(",").map((h) => h.trim());
-
-  columnHeaders = headers;
-  csvData = lines.slice(1).map((line) => {
+  const rows = lines.slice(1).map((line) => {
     const values = parseCSVLine(line);
     const row = {};
     headers.forEach((header, index) => {
@@ -545,25 +615,184 @@ function parseCSV(csvText) {
     });
     return row;
   });
+  ingestRows(headers, rows);
+}
 
-  console.log(`Parsed ${csvData.length} rows with ${headers.length} columns`);
+// ─── Column mapping ───────────────────────────────────────────────────────────
+function normalizeHeader(header) {
+  return String(header)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function headerSignature(headers) {
+  return headers
+    .map((h) => String(h).trim().toLowerCase())
+    .sort()
+    .join("|");
+}
+
+// Matches uploaded headers to the 8 canonical COLUMN_MAPPINGS names.
+// Per canonical, candidates come from: exact (case-insensitive) → normalized
+// equality → synonym table. A bare "Region" column counts as the page's
+// provider region on single-provider pages only.
+// Returns { mapping (source→canonical), renames, unmatchedRequired,
+// ambiguous, needsReview }.
+function autoMatchHeaders(headers) {
+  const canonicals = Object.values(COLUMN_MAPPINGS);
+  const required = canonicals.slice(0, 2); // CPU Count, Memory (GB)
+  const providers = getPageProviders();
+  const claimed = new Set();
+  const mapping = {};
+  const ambiguous = [];
+  const unmatchedRequired = [];
+
+  for (const canonical of canonicals) {
+    const canonNorm = normalizeHeader(canonical);
+    const synonyms = COLUMN_SYNONYMS[canonical] || [];
+    const candidates = headers.filter((h) => {
+      if (claimed.has(h)) return false;
+      const norm = normalizeHeader(h);
+      if (h.toLowerCase() === canonical.toLowerCase()) return true;
+      if (norm === canonNorm) return true;
+      if (synonyms.includes(norm)) return true;
+      // Bare "Region": unambiguous only when the page has one provider
+      if (
+        norm === "region" &&
+        providers.length === 1 &&
+        canonical ===
+          InstanceSelectorFactory.getProviderRegionColumn(providers[0])
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    if (candidates.length === 1) {
+      mapping[candidates[0]] = canonical;
+      claimed.add(candidates[0]);
+    } else if (candidates.length > 1) {
+      // Includes the collision case: literal canonical AND a synonym both
+      // present — never guess silently
+      ambiguous.push({ canonical, candidates });
+    } else if (required.includes(canonical)) {
+      unmatchedRequired.push(canonical);
+    }
+  }
+
+  const renames = Object.entries(mapping)
+    .filter(([source, canonical]) => source !== canonical)
+    .map(([source, canonical]) => ({ from: source, to: canonical }));
+
+  return {
+    mapping,
+    renames,
+    unmatchedRequired,
+    ambiguous,
+    needsReview: ambiguous.length > 0 || unmatchedRequired.length > 0,
+  };
+}
+
+function rewriteRowKeys(rows, mapping) {
+  const hasRename = Object.entries(mapping).some(([s, c]) => s !== c);
+  if (!hasRename) return rows;
+  return rows.map((row) => {
+    const out = {};
+    Object.keys(row).forEach((key) => {
+      out[mapping[key] || key] = row[key];
+    });
+    return out;
+  });
+}
+
+// Saved mappings: { headerSignature: { sourceHeader: canonical } }
+function loadColumnMappings() {
+  try {
+    return (
+      JSON.parse(
+        localStorage.getItem("cloudInstanceRecommenderColumnMaps"),
+      ) || {}
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveColumnMapping(signature, mapping) {
+  try {
+    const all = loadColumnMappings();
+    all[signature] = mapping;
+    localStorage.setItem(
+      "cloudInstanceRecommenderColumnMaps",
+      JSON.stringify(all),
+    );
+  } catch (e) {
+    console.warn("Could not persist column mapping:", e);
+  }
+}
+
+// Entry point for parsed uploads (CSV and, later, xlsx). Applies column
+// mapping silently when unambiguous; otherwise defers the whole pipeline
+// (csvData stays empty) until the user confirms in the mapping panel.
+function ingestRows(headers, rows) {
+  console.log(`Parsed ${rows.length} rows with ${headers.length} columns`);
+
+  // A mapping the user previously confirmed for this exact header set wins
+  const saved = loadColumnMappings()[headerSignature(headers)];
+  if (saved && Object.keys(saved).every((s) => headers.includes(s))) {
+    console.log("Applying saved column mapping");
+    applyIngest(headers, rows, saved);
+    return;
+  }
+
+  const match = autoMatchHeaders(headers);
+  if (match.needsReview) {
+    csvData = [];
+    columnHeaders = [];
+    window._pendingIngest = { headers, rows, match };
+    showColumnMappingPanel(headers, match);
+    return;
+  }
+
+  applyIngest(headers, rows, match.mapping);
+}
+
+// Applies a mapping and runs the normal post-upload pipeline
+function applyIngest(headers, rows, mapping) {
+  const finalHeaders = headers.map((h) => mapping[h] || h);
+  columnHeaders = finalHeaders;
+  csvData = rewriteRowKeys(rows, mapping);
+  window._pendingIngest = null;
+
+  const panel = document.getElementById("columnMappingSection");
+  if (panel) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+  }
+
+  const renames = Object.entries(mapping)
+    .filter(([source, canonical]) => source !== canonical)
+    .map(([source, canonical]) => `${source} → ${canonical}`);
 
   // Validate required columns
   const requiredColumns = Object.values(COLUMN_MAPPINGS).slice(0, 2); // CPU and Memory
   const missingColumns = requiredColumns.filter(
-    (col) => !headers.includes(col),
+    (col) => !finalHeaders.includes(col),
   );
 
   const fileStatus = document.getElementById("fileStatus");
+  const renameNote = renames.length
+    ? `<br>📎 Mapped columns: ${renames.map(escapeHtml).join(", ")}`
+    : "";
   if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
       .map(escapeHtml)
-      .join(", ")}. Please check your CSV format.`;
+      .join(", ")}. Please check your CSV format.${renameNote}`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
-    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${headers.length} columns`;
+    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}`;
     console.log("File validation successful");
   }
   fileStatus.classList.remove("hidden");
@@ -575,6 +804,107 @@ function parseCSV(csvText) {
   // data this CSV needs in the background (skipping unknown regions)
   validateCsvRegions();
   prefetchCsvRegions();
+}
+
+// Renders the mapping panel: one dropdown per canonical column, prefilled
+// with the auto-match guesses; the pipeline stays deferred until Confirm
+function showColumnMappingPanel(headers, match) {
+  const panel = document.getElementById("columnMappingSection");
+  if (!panel) {
+    // Page has no panel placeholder — apply best-effort mapping instead
+    applyIngest(headers, window._pendingIngest.rows, match.mapping);
+    return;
+  }
+
+  const canonicals = Object.values(COLUMN_MAPPINGS);
+  const required = canonicals.slice(0, 2);
+  const guessBySource = match.mapping; // source → canonical
+  const guessedSource = {};
+  Object.entries(guessBySource).forEach(([source, canonical]) => {
+    guessedSource[canonical] = source;
+  });
+  // Ambiguous canonicals: preselect nothing, list candidates in the label
+  const ambiguousByCanonical = {};
+  match.ambiguous.forEach((a) => {
+    ambiguousByCanonical[a.canonical] = a.candidates;
+  });
+
+  const selectRows = canonicals
+    .map((canonical, idx) => {
+      const options = [
+        `<option value="">— not present —</option>`,
+        ...headers.map((h, i) => {
+          const selected = guessedSource[canonical] === h ? " selected" : "";
+          return `<option value="${i}"${selected}>${escapeHtml(h)}</option>`;
+        }),
+      ].join("");
+      const reqMark = required.includes(canonical)
+        ? ' <span style="color: #dc3545;">*</span>'
+        : "";
+      const ambiguousNote = ambiguousByCanonical[canonical]
+        ? `<span style="color: #856404; font-size: 12px;"> (several columns could match — please pick one)</span>`
+        : "";
+      return `
+        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0;">
+          <label for="colmap_${idx}" style="min-width: 180px; font-weight: 500;">${escapeHtml(canonical)}${reqMark}${ambiguousNote}</label>
+          <select id="colmap_${idx}" data-canonical="${escapeHtml(canonical)}" class="form-control" style="max-width: 260px;">${options}</select>
+        </div>`;
+    })
+    .join("");
+
+  panel.innerHTML = `
+    <div class="stats-info">
+      <p><strong>🔗 Map Your Columns</strong></p>
+      <p style="font-size: 13px;">Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: #dc3545;">*</span> = required).</p>
+      ${selectRows}
+      <p style="font-size: 12px; margin-top: 8px;">Other columns (ENV, OS, Workload, Compliance, Min Gen, Exclude) are used as-is when present.</p>
+      <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>
+    </div>
+  `;
+  panel.classList.remove("hidden");
+
+  const fileStatus = document.getElementById("fileStatus");
+  if (fileStatus) {
+    fileStatus.className = "alert alert-warning";
+    fileStatus.innerHTML = `⚠️ Please review the column mapping below, then confirm to continue.`;
+    fileStatus.classList.remove("hidden");
+  }
+}
+
+// Confirm button handler for the mapping panel
+function applyColumnMapping() {
+  const pending = window._pendingIngest;
+  if (!pending) return;
+
+  const canonicals = Object.values(COLUMN_MAPPINGS);
+  const required = canonicals.slice(0, 2);
+  const mapping = {};
+  const usedSources = new Set();
+
+  for (let idx = 0; idx < canonicals.length; idx++) {
+    const select = document.getElementById(`colmap_${idx}`);
+    if (!select || select.value === "") continue;
+    const source = pending.headers[parseInt(select.value, 10)];
+    if (usedSources.has(source)) {
+      alert(
+        `Column "${source}" is assigned to more than one field. Each column can map to only one field.`,
+      );
+      return;
+    }
+    usedSources.add(source);
+    mapping[source] = canonicals[idx];
+  }
+
+  const missingRequired = required.filter(
+    (canonical) => !Object.values(mapping).includes(canonical),
+  );
+  if (missingRequired.length) {
+    alert(`Please assign a column for: ${missingRequired.join(", ")}`);
+    return;
+  }
+
+  saveColumnMapping(headerSignature(pending.headers), mapping);
+  applyIngest(pending.headers, pending.rows, mapping);
 }
 
 // Parse CSV line handling quoted values
@@ -1324,7 +1654,11 @@ function generateRecommendations() {
 
   // Validation
   if (csvData.length === 0) {
-    alert("Please upload a CSV file first.");
+    alert(
+      window._pendingIngest
+        ? "Please confirm the column mapping first (see the panel above)."
+        : "Please upload a CSV file first.",
+    );
     return;
   }
 
