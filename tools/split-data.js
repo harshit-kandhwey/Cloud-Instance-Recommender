@@ -122,15 +122,19 @@ function splitProvider({ name, prefix }) {
     return { key, fileContent };
   });
 
-  // Write per-region files, clearing stale .js files from a previous split
-  // first so removed upstream regions don't linger
+  // Write the new region files FIRST, then prune stale ones not in the new
+  // key set — a write-time failure (disk full, interruption) can then never
+  // leave regions/ with deleted-but-unreplaced files
   const regionsDir = path.join(ROOT, "js", name, "regions");
   fs.mkdirSync(regionsDir, { recursive: true });
-  for (const stale of fs.readdirSync(regionsDir)) {
-    if (stale.endsWith(".js")) fs.unlinkSync(path.join(regionsDir, stale));
-  }
+  const newFileNames = new Set(files.map(({ key }) => `${key}.js`));
   for (const { key, fileContent } of files) {
     fs.writeFileSync(path.join(regionsDir, `${key}.js`), fileContent, "utf8");
+  }
+  for (const stale of fs.readdirSync(regionsDir)) {
+    if (stale.endsWith(".js") && !newFileNames.has(stale)) {
+      fs.unlinkSync(path.join(regionsDir, stale));
+    }
   }
 
   // Rewrite the data file as a manifest
