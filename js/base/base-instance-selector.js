@@ -99,11 +99,16 @@ class BaseInstanceSelector {
         );
       } catch {
         try {
-          await this._injectRegionScript(normalizedRegion);
-          regionData = this.getRegionDataFromGlobal(normalizedRegion);
-          console.log(
-            `Lazily loaded ${normalizedRegion} data via region script`,
-          );
+          const manifestKey =
+            this._resolveManifestKey(normalizedRegion) || normalizedRegion;
+          if (manifestKey !== normalizedRegion) {
+            console.warn(
+              `[FuzzyRegion] '${region}' resolved to manifest key '${manifestKey}'`,
+            );
+          }
+          await this._injectRegionScript(manifestKey);
+          regionData = this.getRegionDataFromGlobal(manifestKey);
+          console.log(`Lazily loaded ${manifestKey} data via region script`);
         } catch {
           console.warn(
             `${this.getProviderName()} ${normalizedRegion} not in global scope yet — using fallback`,
@@ -128,6 +133,25 @@ class BaseInstanceSelector {
       );
       this.instanceData[region] = this.getFallbackInstances(region);
     }
+  }
+
+  // Resolves a normalized region against the manifest key list. Exact hit
+  // wins; otherwise a unique prefix match (e.g. AZ-suffixed "us_east_1a" →
+  // "us_east_1"). Ambiguous or absent → null. Input may only ever match a
+  // key it EXTENDS — a shorter input never expands to a longer key, so
+  // "eastus" can never grab "eastus2".
+  _resolveManifestKey(normalizedRegion) {
+    const keys =
+      window[`${this.getProviderName().toUpperCase()}_REGION_KEYS`];
+    if (!Array.isArray(keys)) return null;
+    if (keys.includes(normalizedRegion)) return normalizedRegion;
+    const strip = (s) => String(s).toLowerCase().replace(/[\s\-_]/g, "");
+    const target = strip(normalizedRegion);
+    const matches = keys.filter((k) => {
+      const nk = strip(k);
+      return nk === target || target.startsWith(nk);
+    });
+    return matches.length === 1 ? matches[0] : null;
   }
 
   // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script>

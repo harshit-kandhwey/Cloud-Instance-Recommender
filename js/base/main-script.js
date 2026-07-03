@@ -121,6 +121,7 @@ function preWarmSelectors() {
 // Fire-and-forget prefetch of the region files referenced by the uploaded CSV,
 // so data is usually parsed before the user clicks Generate. Correctness never
 // depends on this — loadRegionData lazy-loads any region still missing.
+// Skips regions that validateCsvRegions() already marked unknown.
 function prefetchCsvRegions() {
   if (!csvData || !csvData.length) return;
   for (const provider of getPageProviders()) {
@@ -133,8 +134,13 @@ function prefetchCsvRegions() {
       const regionColumn =
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const regions = selector.extractUniqueRegions(csvData, regionColumn);
-      if (regions.size) {
-        selector.loadInstanceData(regions).catch((e) => {
+      const validation =
+        window._regionValidation && window._regionValidation[provider];
+      const toLoad = [...regions].filter(
+        (r) => !validation || validation[r]?.status !== "unknown",
+      );
+      if (toLoad.length) {
+        selector.loadInstanceData(toLoad).catch((e) => {
           console.warn(`[Prefetch] ${provider} failed:`, e);
         });
       }
@@ -142,6 +148,131 @@ function prefetchCsvRegions() {
       console.warn(`[Prefetch] ${provider} failed:`, e);
     }
   }
+}
+
+// ─── Region validation (shown after CSV upload) ───────────────────────────────
+// Resolves one raw CSV region string against a provider's manifest key list.
+// exact  → provider-normalized key is in the manifest
+// fuzzy  → unique manifest key found via _resolveManifestKey (e.g. AZ suffix)
+// unknown→ no safe match; generation will fall back to built-in sample data
+function resolveRegion(provider, raw) {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return { status: "unknown", key: null };
+  const keys = window[`${provider.toUpperCase()}_REGION_KEYS`];
+  if (!Array.isArray(keys)) return { status: "unknown", key: null };
+  try {
+    const selector =
+      window._prewarmedSelectors[provider] ||
+      InstanceSelectorFactory.createSelector(provider);
+    window._prewarmedSelectors[provider] = selector;
+    const normalized = selector.normalizeRegionForJS(trimmed);
+    if (keys.includes(normalized)) return { status: "exact", key: normalized };
+    const resolved = selector._resolveManifestKey(normalized);
+    return resolved
+      ? { status: "fuzzy", key: resolved }
+      : { status: "unknown", key: null };
+  } catch {
+    return { status: "unknown", key: null };
+  }
+}
+
+// Manifest keys use underscores (AWS/GCP) or are already compact (Azure)
+function formatRegionKey(provider, key) {
+  return provider === "azure" ? key : String(key).replace(/_/g, "-");
+}
+
+// Validates every region string in the uploaded CSV against ALL page
+// providers (multicloud checkboxes can change after upload) and renders the
+// chip panel. Result is kept on window._regionValidation for later steps.
+function validateCsvRegions() {
+  const section = document.getElementById("regionValidationSection");
+  window._regionValidation = null;
+  if (!csvData || !csvData.length) {
+    if (section) section.classList.add("hidden");
+    return;
+  }
+
+  const validation = {};
+  let hasAny = false;
+  for (const provider of getPageProviders()) {
+    if (window[DATA_READY_FLAGS[provider]] !== true) continue;
+    const regionColumn =
+      InstanceSelectorFactory.getProviderRegionColumn(provider);
+    if (!columnHeaders.includes(regionColumn)) continue;
+    const regions = new Set();
+    csvData.forEach((row) => {
+      const r = (row[regionColumn] || "").trim();
+      if (r) regions.add(r);
+    });
+    if (!regions.size) continue;
+    validation[provider] = {};
+    for (const raw of regions) {
+      validation[provider][raw] = resolveRegion(provider, raw);
+    }
+    hasAny = true;
+  }
+
+  window._regionValidation = hasAny ? validation : null;
+  renderRegionValidation(validation, section);
+}
+
+function renderRegionValidation(validation, section) {
+  if (!section) return;
+  const providers = Object.keys(validation);
+  if (!providers.length) {
+    section.classList.add("hidden");
+    return;
+  }
+
+  const CHIP_STYLES = {
+    exact: "background: #d4edda; color: #155724;",
+    fuzzy: "background: #fff3cd; color: #856404;",
+    unknown: "background: #f8d7da; color: #721c24;",
+  };
+  const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
+  const chipBase =
+    "display: inline-block; padding: 2px 10px; margin: 2px 6px 2px 0; " +
+    "border-radius: 12px; font-size: 12px; font-weight: 500;";
+
+  let unknownCount = 0;
+  const rows = providers
+    .map((provider) => {
+      const chips = Object.entries(validation[provider])
+        .map(([raw, res]) => {
+          let label;
+          if (res.status === "exact") {
+            label = `${escapeHtml(raw)} ✓`;
+          } else if (res.status === "fuzzy") {
+            label = `${escapeHtml(raw)} → ${escapeHtml(formatRegionKey(provider, res.key))}`;
+          } else {
+            unknownCount++;
+            label = `${escapeHtml(raw)} ✗`;
+          }
+          return `<span style="${chipBase} ${CHIP_STYLES[res.status]}" title="${
+            res.status === "unknown"
+              ? "Region not recognized — rows using it will get sample data"
+              : res.status === "fuzzy"
+                ? "Resolved to the closest matching region"
+                : "Region recognized"
+          }">${label}</span>`;
+        })
+        .join("");
+      return `<p style="margin: 4px 0;"><strong>${PROVIDER_LABELS[provider] || provider}:</strong> ${chips}</p>`;
+    })
+    .join("");
+
+  const warning = unknownCount
+    ? `<p style="margin: 6px 0 0; color: #721c24;">❗ ${unknownCount} region name(s) not recognized — rows using them will get built-in sample data, not real instance data.</p>`
+    : "";
+
+  section.innerHTML = `
+    <div class="stats-info">
+      <p><strong>🌍 Region Check:</strong></p>
+      ${rows}
+      ${warning}
+    </div>
+  `;
+  section.classList.remove("hidden");
 }
 
 function startPreWarm() {
@@ -160,7 +291,9 @@ function watchForDataThenRun(providers = getPageProviders()) {
     _watcherStarted = false;
     hideDataToast();
     startPreWarm();
-    prefetchCsvRegions(); // covers a CSV uploaded before the manifests loaded
+    // Covers a CSV uploaded before the manifests finished loading
+    validateCsvRegions();
+    prefetchCsvRegions();
     if (_generateQueued) {
       _generateQueued = false;
       generateRecommendations();
@@ -429,7 +562,9 @@ function parseCSV(csvText) {
   // Show file statistics
   showFileStatistics();
 
-  // Start loading the region data this CSV needs in the background
+  // Check region names against the manifests, then start loading the region
+  // data this CSV needs in the background (skipping unknown regions)
+  validateCsvRegions();
   prefetchCsvRegions();
 }
 
@@ -1187,6 +1322,24 @@ function generateRecommendations() {
   if (selectedProviders.length === 0) {
     alert("Please select at least one cloud provider.");
     return;
+  }
+
+  // Non-blocking heads-up if any selected provider has unrecognized regions
+  if (window._regionValidation) {
+    let unknowns = 0;
+    for (const provider of selectedProviders) {
+      const validation = window._regionValidation[provider];
+      if (!validation) continue;
+      unknowns += Object.values(validation).filter(
+        (r) => r.status === "unknown",
+      ).length;
+    }
+    if (unknowns > 0) {
+      showDataToast(
+        `⚠️ ${unknowns} unrecognized region name(s) — those rows will use sample data`,
+      );
+      setTimeout(hideDataToast, 6000);
+    }
   }
 
   // Check if modular system is available
