@@ -35,9 +35,11 @@ const COLUMN_MAPPINGS = {
 
 // Initialize page
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────
-// Each provider data file sets window.{PROVIDER}_DATA_READY = true as its last line.
-// If the user clicks Generate before the data file finishes parsing, we queue the
-// request and auto-execute it the moment the data is confirmed ready.
+// Each provider manifest (js/{p}/{p}-data.js) sets window.{PROVIDER}_DATA_READY
+// = true as its last line. READY means the region key list is known — instance
+// data itself is lazy-loaded per region on demand (base-instance-selector
+// _injectRegionScript). If the user clicks Generate before the manifest loads,
+// we queue the request and auto-execute it the moment the data is confirmed ready.
 
 const DATA_READY_FLAGS = {
   aws: "AWS_DATA_READY",
@@ -99,19 +101,45 @@ function hideDataToast() {
 let _watcherStarted = false;
 let _preWarmStarted = false;
 
-// Pre-warms all regions for each provider once its data file is ready.
-// Runs entirely in the background — never blocks the readiness watcher.
-async function preWarmSelectors() {
+// Caches a selector instance per provider once its manifest is ready.
+// Region data is no longer preloaded here — it is lazy-loaded on demand;
+// prefetchCsvRegions() warms the regions an uploaded CSV actually uses.
+function preWarmSelectors() {
   for (const provider of getPageProviders()) {
     if (!window[DATA_READY_FLAGS[provider]]) continue;
     if (window._prewarmedSelectors[provider]) continue;
     try {
-      const selector = InstanceSelectorFactory.createSelector(provider);
-      await selector.preloadAllRegions();
-      window._prewarmedSelectors[provider] = selector;
-      console.log(`[PreWarm] ${provider} ready`);
+      window._prewarmedSelectors[provider] =
+        InstanceSelectorFactory.createSelector(provider);
+      console.log(`[PreWarm] ${provider} selector cached`);
     } catch (e) {
       console.warn(`[PreWarm] ${provider} failed:`, e);
+    }
+  }
+}
+
+// Fire-and-forget prefetch of the region files referenced by the uploaded CSV,
+// so data is usually parsed before the user clicks Generate. Correctness never
+// depends on this — loadRegionData lazy-loads any region still missing.
+function prefetchCsvRegions() {
+  if (!csvData || !csvData.length) return;
+  for (const provider of getPageProviders()) {
+    if (window[DATA_READY_FLAGS[provider]] !== true) continue;
+    try {
+      const selector =
+        window._prewarmedSelectors[provider] ||
+        InstanceSelectorFactory.createSelector(provider);
+      window._prewarmedSelectors[provider] = selector;
+      const regionColumn =
+        InstanceSelectorFactory.getProviderRegionColumn(provider);
+      const regions = selector.extractUniqueRegions(csvData, regionColumn);
+      if (regions.size) {
+        selector.loadInstanceData(regions).catch((e) => {
+          console.warn(`[Prefetch] ${provider} failed:`, e);
+        });
+      }
+    } catch (e) {
+      console.warn(`[Prefetch] ${provider} failed:`, e);
     }
   }
 }
@@ -132,6 +160,7 @@ function watchForDataThenRun(providers = getPageProviders()) {
     _watcherStarted = false;
     hideDataToast();
     startPreWarm();
+    prefetchCsvRegions(); // covers a CSV uploaded before the manifests loaded
     if (_generateQueued) {
       _generateQueued = false;
       generateRecommendations();
@@ -399,6 +428,9 @@ function parseCSV(csvText) {
 
   // Show file statistics
   showFileStatistics();
+
+  // Start loading the region data this CSV needs in the background
+  prefetchCsvRegions();
 }
 
 // Parse CSV line handling quoted values
