@@ -8,6 +8,45 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
     <title>Cloud Instance Recommender — User Guide v3.0</title>
+    <script>
+      // Set theme before first paint. A saved choice wins; otherwise follow
+      // the OS setting (and keep following it until the user picks manually).
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("cloudInstanceRecommenderTheme");
+        } catch (e) {}
+        var mql =
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+        document.documentElement.dataset.theme =
+          stored === "dark" || stored === "light"
+            ? stored
+            : mql && mql.matches
+              ? "dark"
+              : "light";
+        window.toggleTheme = function () {
+          var next =
+            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem("cloudInstanceRecommenderTheme", next);
+          } catch (e) {}
+          var btn = document.getElementById("themeToggle");
+          if (btn) btn.setAttribute("aria-pressed", next === "dark");
+        };
+        if (mql && mql.addEventListener) {
+          mql.addEventListener("change", function (e) {
+            var saved = null;
+            try {
+              saved = localStorage.getItem("cloudInstanceRecommenderTheme");
+            } catch (err) {}
+            if (saved !== "dark" && saved !== "light") {
+              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+            }
+          });
+        }
+      })();
+    </script>
     <style>
       /* ── Reset & Base ─────────────────────────────────────────────────────── */
       *,
@@ -515,9 +554,99 @@
       p {
         margin-bottom: 10px;
       }
+
+      /* ── Dark theme (screen only — printing always uses light) ──────────── */
+      .guide-theme-toggle {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 1000;
+        padding: 6px 12px;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        background: var(--gray-50);
+        color: var(--gray-800);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      @media screen {
+        [data-theme="dark"] {
+          --brand: #7da2f5;
+          --brand-lt: #1d2a47;
+          --aws-lt: #33270f;
+          --azure-lt: #122c40;
+          --gcp-lt: #123321;
+          --accent-lt: #281f3d;
+          --warn-lt: #33290f;
+          --gray-50: #1d2432;
+          --gray-100: #242d3f;
+          --gray-200: #38445c;
+          --gray-400: #8b98ad;
+          --gray-600: #aab6c8;
+          --gray-800: #dde4ee;
+        }
+        [data-theme="dark"] body {
+          color: #dde4ee;
+          background: #151a26;
+        }
+        [data-theme="dark"] .callout-danger {
+          background: #351b20;
+        }
+        [data-theme="dark"] code {
+          color: #f286b6;
+        }
+        [data-theme="dark"] .chip-aws {
+          color: #fbbf24;
+        }
+        [data-theme="dark"] .chip-azure {
+          color: #7cb8f7;
+        }
+        [data-theme="dark"] .chip-gcp {
+          color: #6ee7a0;
+        }
+        [data-theme="dark"] .col-pill-new {
+          background: #14301d;
+          border-color: #1f5231;
+          color: #8fdfa8;
+        }
+        [data-theme="dark"] .rule-1a .rule-card-header {
+          background: #3a2c0c;
+          color: #fcd34d;
+        }
+        [data-theme="dark"] .rule-1b .rule-card-header {
+          background: #172a4d;
+          color: #93c5fd;
+        }
+        [data-theme="dark"] .rule-1c .rule-card-header {
+          background: #0e3327;
+          color: #6ee7b7;
+        }
+        [data-theme="dark"] .rule-1d .rule-card-header {
+          background: #2b2350;
+          color: #c4b5fd;
+        }
+        [data-theme="dark"] .rule-os .rule-card-header {
+          background: #3d1a1a;
+          color: #fca5a5;
+        }
+        [data-theme="dark"] .rule-wl .rule-card-header {
+          background: #0e2a3a;
+          color: #7dd3fc;
+        }
+      }
     </style>
   </head>
   <body>
+    <button
+      id="themeToggle"
+      class="guide-theme-toggle no-print"
+      onclick="toggleTheme()"
+      title="Toggle dark mode"
+      aria-label="Toggle dark mode"
+      aria-pressed="false"
+    >
+      🌓
+    </button>
     <!-- ══════════════════════════════════════════════════════════════════════
      COVER PAGE
      ══════════════════════════════════════════════════════════════════════ -->

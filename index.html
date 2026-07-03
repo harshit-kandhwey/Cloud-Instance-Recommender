@@ -8,6 +8,46 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
     <title>Cloud Instance Recommender</title>
+    <script>
+      // Set theme before first paint. A saved choice wins; otherwise follow
+      // the OS setting (and keep following it until the user picks manually).
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("cloudInstanceRecommenderTheme");
+        } catch (e) {}
+        var mql =
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+        document.documentElement.dataset.theme =
+          stored === "dark" || stored === "light"
+            ? stored
+            : mql && mql.matches
+              ? "dark"
+              : "light";
+        window.toggleTheme = function () {
+          var next =
+            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem("cloudInstanceRecommenderTheme", next);
+          } catch (e) {}
+          var btn = document.getElementById("themeToggle");
+          if (btn) btn.setAttribute("aria-pressed", next === "dark");
+        };
+        if (mql && mql.addEventListener) {
+          mql.addEventListener("change", function (e) {
+            var saved = null;
+            try {
+              saved = localStorage.getItem("cloudInstanceRecommenderTheme");
+            } catch (err) {}
+            if (saved !== "dark" && saved !== "light") {
+              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+            }
+          });
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/index_style.css" />
   </head>
 
@@ -25,6 +65,7 @@
           <a href="azure.html">Azure</a>
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html">Multi Cloud</a>
+          <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">🌓</button>
         </nav>
       </header>
 

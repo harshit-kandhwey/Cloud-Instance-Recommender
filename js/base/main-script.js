@@ -313,9 +313,9 @@ function renderRegionValidation(validation, section) {
   }
 
   const CHIP_STYLES = {
-    exact: "background: #d4edda; color: #155724;",
-    fuzzy: "background: #fff3cd; color: #856404;",
-    unknown: "background: #f8d7da; color: #721c24;",
+    exact: "background: var(--success-bg); color: var(--success-text);",
+    fuzzy: "background: var(--warning-bg); color: var(--warning-text);",
+    unknown: "background: var(--danger-bg); color: var(--danger-text);",
   };
   const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
   const chipBase =
@@ -350,7 +350,7 @@ function renderRegionValidation(validation, section) {
     .join("");
 
   const warning = unknownCount
-    ? `<p style="margin: 6px 0 0; color: #721c24;">❗ ${unknownCount} region name(s) not recognized — rows using them will get built-in sample data, not real instance data.</p>`
+    ? `<p style="margin: 6px 0 0; color: var(--danger-text);">❗ ${unknownCount} region name(s) not recognized — rows using them will get built-in sample data, not real instance data.</p>`
     : "";
 
   section.innerHTML = `
@@ -936,10 +936,10 @@ function showColumnMappingPanel(headers, match) {
         }),
       ].join("");
       const reqMark = required.includes(canonical)
-        ? ' <span style="color: #dc3545;">*</span>'
+        ? ' <span style="color: var(--red-badge);">*</span>'
         : "";
       const ambiguousNote = ambiguousByCanonical[canonical]
-        ? `<span style="color: #856404; font-size: 12px;"> (several columns could match — please pick one)</span>`
+        ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
         : "";
       return `
         <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0;">
@@ -952,7 +952,7 @@ function showColumnMappingPanel(headers, match) {
   panel.innerHTML = `
     <div class="stats-info">
       <p><strong>🔗 Map Your Columns</strong></p>
-      <p style="font-size: 13px;">Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: #dc3545;">*</span> = required).</p>
+      <p style="font-size: 13px;">Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: var(--red-badge);">*</span> = required).</p>
       ${selectRows}
       <p style="font-size: 12px; margin-top: 8px;">Other columns (ENV, OS, Workload, Compliance, Min Gen, Exclude) are used as-is when present.</p>
       <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>
@@ -1084,11 +1084,11 @@ function showDataPreview() {
     <div style="overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
         <thead>
-          <tr style="background: #f8f9fa;">
+          <tr style="background: var(--surface-alt);">
             ${headers
               .map(
                 (h) =>
-                  `<th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">${escapeHtml(h)}</th>`,
+                  `<th style="padding: 8px; border: 1px solid var(--border-mid); text-align: left;">${escapeHtml(h)}</th>`,
               )
               .join("")}
           </tr>
@@ -1097,13 +1097,13 @@ function showDataPreview() {
   `;
 
   previewData.forEach((row, i) => {
-    const bgColor = i % 2 === 0 ? "#ffffff" : "#f8f9fa";
+    const bgColor = i % 2 === 0 ? "var(--surface)" : "var(--surface-alt)";
     tableHTML += `<tr style="background: ${bgColor};">`;
     headers.forEach((header) => {
       const value = row[header] || "";
       const displayValue =
         value.length > 20 ? value.substring(0, 20) + "..." : value;
-      tableHTML += `<td style="padding: 8px; border: 1px solid #dee2e6;">${escapeHtml(displayValue)}</td>`;
+      tableHTML += `<td style="padding: 8px; border: 1px solid var(--border-mid);">${escapeHtml(displayValue)}</td>`;
     });
     tableHTML += `</tr>`;
   });
@@ -1315,7 +1315,7 @@ function checkRuleConflicts() {
   ruleGroupIds.forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
-      el.style.border = "1.5px solid #b8d0ff";
+      el.style.border = "1.5px solid var(--border-slate)";
       el.style.background = "white";
     }
   });
@@ -1331,8 +1331,8 @@ function checkRuleConflicts() {
     const g = document.getElementById(groupId);
     const m = document.getElementById(msgId);
     if (g) {
-      g.style.border = "1.5px solid #e53e3e";
-      g.style.background = "#fff5f5";
+      g.style.border = "1.5px solid var(--red-strong)";
+      g.style.background = "var(--danger-bg-soft)";
     }
     if (m) {
       m.style.display = "block";
@@ -1536,7 +1536,7 @@ function updateExcludeControls() {
   if (selectedProviders.length === 0) {
     console.log("No providers selected, showing message");
     excludeControls.innerHTML =
-      "<p style='color: #666; font-style: italic; padding: 15px;'>Please select cloud providers first to see exclusion options.</p>";
+      "<p style='color: var(--text-muted); font-style: italic; padding: 15px;'>Please select cloud providers first to see exclusion options.</p>";
     return;
   }
 
@@ -2264,16 +2264,16 @@ function _buildStatsHtml(results) {
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i);
   const freshnessNote = dates.length
-    ? `<span style="color:#9ca3af;font-size:0.8em;">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
+    ? `<span style="color:var(--text-faint);font-size:0.8em;">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
     : "";
 
   return `
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:0.875em;">
-      <span style="font-weight:700;color:#15803d;">✅ Generation complete</span>
-      <span style="color:#374151;">📊 <strong>${results.length}</strong> rows</span>
-      <span style="color:#15803d;">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
-      ${noMatchRows > 0 ? `<span style="color:#dc2626;">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
-      ${rulesSummary ? `<span style="color:#6b7280;">Rules fired: ${rulesSummary}</span>` : ""}
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:8px;font-size:0.875em;">
+      <span style="font-weight:700;color:var(--good-strong);">✅ Generation complete</span>
+      <span style="color:var(--text-body);">📊 <strong>${results.length}</strong> rows</span>
+      <span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
+      ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
+      ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;
 }
@@ -2378,7 +2378,7 @@ function _renderPreviewTable(
   });
 
   function rulesHtml(val) {
-    if (!val) return '<span style="color:#aaa">—</span>';
+    if (!val) return '<span style="color:var(--text-disabled)">—</span>';
     return val
       .split("|")
       .map((p) => p.trim())
@@ -2410,12 +2410,12 @@ function _renderPreviewTable(
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
       <input id="previewSearch" type="text" placeholder="🔍 Filter rows…"
         oninput="window._previewFilterChanged(this.value)"
-        style="padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;min-width:220px;" />
+        style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
     </div>
-    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid var(--border-slate-light);border-radius:6px;">
       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
         <thead>
-          <tr style="position:sticky;top:0;z-index:1;background:#1a56db;color:#fff;">
+          <tr style="position:sticky;top:0;z-index:1;background:var(--table-head-bg);color:var(--table-head-text);">
             <th style="padding:6px 8px;white-space:nowrap;cursor:default;"></th>
             ${displayCols
               .map(
@@ -2431,7 +2431,7 @@ function _renderPreviewTable(
     const instCols = displayCols.filter(isInstanceCol);
     const allNoMatch =
       instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
-    const bg = allNoMatch ? "#fff5f5" : ri % 2 === 0 ? "#fff" : "#f8fafc";
+    const bg = allNoMatch ? "var(--danger-bg-soft)" : ri % 2 === 0 ? "var(--surface)" : "var(--surface-alt-2)";
     const rowCsv = displayCols
       .map((c) => {
         const v = String(row[c] ?? "");
@@ -2441,10 +2441,10 @@ function _renderPreviewTable(
 
     html += `<tr style="background:${bg};">`;
     // Copy button
-    html += `<td style="padding:4px 6px;border-bottom:1px solid #f1f5f9;white-space:nowrap;">
+    html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
       <button onclick="navigator.clipboard.writeText(${escapeHtml(JSON.stringify(rowCsv))}).catch(()=>{})"
         title="Copy row as CSV"
-        style="font-size:10px;padding:1px 5px;border:1px solid #cbd5e1;border-radius:3px;background:#f8fafc;cursor:pointer;color:#475569;">⎘</button>
+        style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
     </td>`;
 
     displayCols.forEach((col) => {
@@ -2455,48 +2455,48 @@ function _renderPreviewTable(
         cellContent = rulesHtml(String(val));
       } else if (isReasonCol(col)) {
         cellContent = val
-          ? `<span style="color:#b45309;font-size:0.85em;">${escapeHtml(String(val))}</span>`
-          : '<span style="color:#aaa">—</span>';
+          ? `<span style="color:var(--amber-deep);font-size:0.85em;">${escapeHtml(String(val))}</span>`
+          : '<span style="color:var(--text-disabled)">—</span>';
       } else if (isInstanceCol(col)) {
         const bad = isNoMatch(val);
-        const color = bad ? "#dc2626" : "#047857";
+        const color = bad ? "var(--red-strong)" : "var(--ok-strong)";
         cellContent = val
           ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>`
-          : '<span style="color:#aaa">—</span>';
+          : '<span style="color:var(--text-disabled)">—</span>';
       } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
         // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
         const l2lVal = parseFloat(row[l2lVcpuColMap[col]]);
         const optVal = parseFloat(val);
         let diffStyle = "";
         if (!isNaN(l2lVal) && !isNaN(optVal) && l2lVal > 0) {
-          if (optVal < l2lVal) diffStyle = "color:#15803d;font-weight:600;";
+          if (optVal < l2lVal) diffStyle = "color:var(--good-strong);font-weight:600;";
           else if (optVal > l2lVal)
-            diffStyle = "color:#d97706;font-weight:600;";
+            diffStyle = "color:var(--amber-strong);font-weight:600;";
         }
         cellContent =
           val !== "" && val !== undefined
             ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
-            : '<span style="color:#aaa">—</span>';
+            : '<span style="color:var(--text-disabled)">—</span>';
       } else {
         cellContent =
           val !== "" && val !== undefined
             ? escapeHtml(String(val))
-            : '<span style="color:#aaa">—</span>';
+            : '<span style="color:var(--text-disabled)">—</span>';
       }
-      html += `<td style="padding:5px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;">${cellContent}</td>`;
+      html += `<td style="padding:5px 10px;border-bottom:1px solid var(--border-lighter);vertical-align:top;">${cellContent}</td>`;
     });
     html += `</tr>`;
   });
 
   if (previewRows.length === 0 && needle) {
-    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:#64748b;">No rows match "${escapeHtml(needle)}"</td></tr>`;
+    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">No rows match "${escapeHtml(needle)}"</td></tr>`;
   }
 
   html += `</tbody></table></div>`;
   if (rows.length > 20) {
-    html += `<p style="font-size:0.82em;color:#64748b;margin-top:4px;">Showing first 20 ${needle ? "matching " : ""}rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing first 20 ${needle ? "matching " : ""}rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
   }
-  html += `<p style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Click any column header to sort · <span style="color:#15803d;">Green Optimized vCPUs</span> = rightsized down · <span style="color:#d97706;">Amber</span> = rightsized up · Red rows = no match</p>`;
+  html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · Red rows = no match</p>`;
 
   container.innerHTML = html;
   container.classList.remove("hidden");

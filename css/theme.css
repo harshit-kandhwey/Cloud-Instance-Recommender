@@ -1,0 +1,184 @@
+/* Theme tokens — single source of truth for both themes.
+   Load this BEFORE style.css / index_style.css on every page.
+   Provider brand colors (AWS #ff9900, Azure #0078d4, GCP #4285f4) stay
+   literal in the stylesheets on purpose. */
+
+:root {
+  /* Page + surfaces */
+  --bg-page: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --surface: #ffffff;
+  --surface-alt: #f8f9fa; /* secondary buttons, code samples, readonly */
+  --surface-alt-2: #f8fafc; /* table zebra rows */
+  --surface-tint: #f8f9ff; /* primary-tinted panels, hovers */
+  --surface-tint-strong: #e8ebff;
+
+  /* Text */
+  --text: #333333;
+  --text-body: #555555;
+  --text-muted: #666666;
+  --text-soft: #64748b;
+  --text-subtle: #999999;
+  --text-faint: #94a3b8;
+  --text-disabled: #aaaaaa;
+
+  /* Borders */
+  --border: #e1e5e9;
+  --border-light: #f0f0f0;
+  --border-lighter: #f1f5f9;
+  --border-mid: #dee2e6;
+  --border-soft: #e9ecef;
+  --border-slate: #cbd5e1;
+  --border-slate-light: #e2e8f0;
+
+  /* Brand / actions (identical in both themes) */
+  --primary: #667eea;
+  --primary-strong: #4c63d2;
+  --primary-2: #764ba2;
+  --accent: #4ecdc4;
+  --accent-2: #44a08d;
+  --grad-primary: linear-gradient(135deg, #667eea, #764ba2);
+  --grad-progress: linear-gradient(90deg, #667eea, #764ba2);
+  --grad-header: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+  --grad-accent: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  --table-head-bg: #1a56db;
+  --table-head-text: #ffffff;
+
+  /* Alert triads */
+  --success-bg: #d4edda;
+  --success-border: #c3e6cb;
+  --success-text: #155724;
+  --info-bg: #d1ecf1;
+  --info-border: #bee5eb;
+  --info-text: #0c5460;
+  --warning-bg: #fff3cd;
+  --warning-border: #ffeaa7;
+  --warning-text: #856404;
+  --danger-bg: #f8d7da;
+  --danger-border: #f5c6cb;
+  --danger-text: #721c24;
+  --danger-bg-soft: #fff5f5; /* no-match row highlight */
+
+  /* Semantic strong colors (preview verdicts) */
+  --ok-strong: #047857;
+  --good-strong: #15803d;
+  --amber-strong: #d97706;
+  --amber-deep: #b45309;
+  --red-strong: #dc2626;
+  --red-badge: #dc3545;
+
+  /* Step-guide heading accents (details blocks in the pages) */
+  --heading-indigo: #2c3e8c;
+  --heading-green: #1a6b3c;
+  --heading-blue: #0050a0;
+  --heading-purple: #5b2d8c;
+
+  /* Misc */
+  --nav-hover-bg: #e0f0ff;
+  --nav-hover-text: #000000;
+  --nav-active-bg: #ffffff;
+  --nav-active-text: #000000;
+  --tooltip-bg: #333333;
+  --tooltip-text: #ffffff;
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+  --bg-page: linear-gradient(135deg, #1e1b3a 0%, #2c1e45 100%);
+  --surface: #1e2433;
+  --surface-alt: #262e40;
+  --surface-alt-2: #232a3b;
+  --surface-tint: #242c44;
+  --surface-tint-strong: #2c3657;
+
+  --text: #e5e9f0;
+  --text-body: #cdd5e0;
+  --text-muted: #a3adbd;
+  --text-soft: #94a3b8;
+  --text-subtle: #7c8798;
+  --text-faint: #6b7687;
+  --text-disabled: #5d6878;
+
+  --border: #3a4358;
+  --border-light: #2c3446;
+  --border-lighter: #2a3242;
+  --border-mid: #414b61;
+  --border-soft: #364054;
+  --border-slate: #46516b;
+  --border-slate-light: #3a4358;
+
+  --table-head-bg: #1e40af;
+
+  --success-bg: #14301d;
+  --success-border: #1f5231;
+  --success-text: #8fdfa8;
+  --info-bg: #12333c;
+  --info-border: #1d515f;
+  --info-text: #8ed8f0;
+  --warning-bg: #38300f;
+  --warning-border: #5c4d17;
+  --warning-text: #f0d060;
+  --danger-bg: #3b181d;
+  --danger-border: #5c2530;
+  --danger-text: #f2a3ab;
+  --danger-bg-soft: #2e2029;
+
+  --ok-strong: #34d399;
+  --good-strong: #4ade80;
+  --amber-strong: #fbbf24;
+  --amber-deep: #f59e0b;
+  --red-strong: #f87171;
+  --red-badge: #f87171;
+
+  --heading-indigo: #a5b4fc;
+  --heading-green: #6ee7a0;
+  --heading-blue: #7cb8f7;
+  --heading-purple: #c9a3f5;
+
+  --nav-hover-bg: #3a4358;
+  --nav-hover-text: #ffffff;
+  --nav-active-bg: #e5e9f0;
+  --nav-active-text: #1e2433;
+  --tooltip-bg: #e5e9f0;
+  --tooltip-text: #1e2433;
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Smooth theme switching + native form control colors */
+html {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+body,
+.container,
+.section,
+.form-control,
+.checkbox-item,
+.radio-item {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Theme toggle button (lives in the nav) */
+.theme-toggle {
+  margin-left: 6px;
+  padding: 3px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.theme-toggle:hover {
+  background-color: var(--nav-hover-bg);
+  color: var(--nav-hover-text);
+}
