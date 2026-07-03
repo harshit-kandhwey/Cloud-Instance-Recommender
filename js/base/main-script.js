@@ -1982,6 +1982,9 @@ async function processRecommendations() {
     // On AWS page with both types: replace download button with split buttons
     updateDownloadButtons(processedResults);
 
+    // No-match remediation export button (hidden when everything matched)
+    updateNoMatchButton(processedResults);
+
     // Log what was actually generated
     if (processedResults.length > 0) {
       const sampleResult = processedResults[0];
@@ -2195,16 +2198,28 @@ function escapeHtml(value) {
 }
 
 // ─── Generation stats bar ─────────────────────────────────────────────────────
+// Shared no-match predicate — used by stats, the preview table, and the
+// no-match export so they can never disagree on what "no match" means
+const NO_MATCH_VALUES = new Set([
+  "No data available",
+  "Missing data",
+  "Error",
+  "No utilization data",
+]);
+function isNoMatchValue(v) {
+  return !v || NO_MATCH_VALUES.has(String(v)) || String(v).startsWith("No ");
+}
+
+// Shared CSV cell escaping (quotes + formula-injection hardening)
+function escapeCsvCell(val) {
+  const s = String(val == null ? "" : val);
+  const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+
 function _buildStatsHtml(results) {
   const allKeys = Object.keys(results[0] || {});
-  const noMatchValues = new Set([
-    "No data available",
-    "Missing data",
-    "Error",
-    "No utilization data",
-  ]);
-  const isNoMatch = (v) =>
-    !v || noMatchValues.has(String(v)) || String(v).startsWith("No ");
+  const isNoMatch = isNoMatchValue;
 
   let matchedRows = 0;
   const rulesCounts = {};
@@ -2322,14 +2337,7 @@ function _renderPreviewTable(
   filter,
   restoreFocus,
 ) {
-  const noMatchValues = new Set([
-    "No data available",
-    "Missing data",
-    "Error",
-    "No utilization data",
-  ]);
-  const isNoMatch = (v) =>
-    !v || noMatchValues.has(String(v)) || String(v).startsWith("No ");
+  const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
   const isReasonCol = (c) => c.includes("No Match Reason");
   const isInstanceCol = (c) =>
@@ -2617,15 +2625,10 @@ function downloadResults() {
 
   // Fallback to simple CSV export
   const headers = Object.keys(processedResults[0]);
-  const escapeCell = (val) => {
-    const s = String(val == null ? "" : val);
-    const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
-    return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
   const csvContent = [
-    headers.map(escapeCell).join(","),
+    headers.map(escapeCsvCell).join(","),
     ...processedResults.map((row) =>
-      headers.map((header) => escapeCell(row[header] ?? "")).join(","),
+      headers.map((header) => escapeCsvCell(row[header] ?? "")).join(","),
     ),
   ].join("\n");
 
@@ -2644,6 +2647,74 @@ function downloadResults() {
   document.body.removeChild(a);
 
   console.log("CSV download completed");
+}
+
+// ─── No-match remediation export ──────────────────────────────────────────────
+// A row qualifies when EVERY instance column present is a no-match — deriving
+// the columns from the results themselves handles L2L-only, optimized-only,
+// and any provider combination automatically.
+function getNoMatchRows(results) {
+  if (!results || !results.length) return [];
+  const instCols = Object.keys(results[0]).filter(
+    (k) =>
+      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
+  );
+  if (!instCols.length) return [];
+  return results.filter((row) => instCols.every((c) => isNoMatchValue(row[c])));
+}
+
+// Exports the fully-unmatched rows with their original input columns plus
+// the diagnostic columns (No Match Reason / Rules Applied) — a remediation
+// worksheet: fix these rows, re-upload, re-generate.
+function downloadNoMatchRows() {
+  const noMatch = getNoMatchRows(processedResults);
+  if (!noMatch.length) {
+    alert("Every row received at least one recommendation — nothing to export.");
+    return;
+  }
+
+  const resultKeys = Object.keys(processedResults[0]);
+  const inputHeaders = columnHeaders.filter((h) => resultKeys.includes(h));
+  const diagCols = resultKeys.filter(
+    (k) =>
+      (k.includes("No Match Reason") || k.includes("Rules Applied")) &&
+      !inputHeaders.includes(k),
+  );
+  const headers = [...inputHeaders, ...diagCols];
+
+  const csvContent = [
+    headers.map(escapeCsvCell).join(","),
+    ...noMatch.map((row) =>
+      headers.map((h) => escapeCsvCell(row[h] ?? "")).join(","),
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = "no-match-rows.csv";
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+
+  console.log(`No-match export completed: ${noMatch.length} rows`);
+}
+
+// Shows the no-match button with a count badge, or hides it on all-match runs
+function updateNoMatchButton(results) {
+  const btn = document.getElementById("downloadNoMatchBtn");
+  if (!btn) return;
+  const count = getNoMatchRows(results).length;
+  if (count > 0) {
+    btn.textContent = `⚠️ No-Match Rows CSV (${count})`;
+    btn.title = `${count} row(s) got no recommendation from any provider — download them with reasons to fix and re-upload`;
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
 }
 
 // AWS Pricing Calculator Bulk Template download
