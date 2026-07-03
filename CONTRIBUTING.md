@@ -39,29 +39,36 @@ python -m http.server 8080
 │   └── templates/aws/      # AWS Pricing Calculator bulk upload templates
 │
 ├── css/
-│   ├── style.css           # Main styles
+│   ├── theme.css           # Light/dark theme tokens — new colors go here
+│   ├── style.css           # Main styles (uses var(--token) only)
 │   └── index_style.css     # Landing page styles
+│
+├── tools/
+│   └── split-data.js       # Splits monolithic data files into per-region files
 │
 └── js/
     ├── base/               # Shared logic
-    │   ├── base-instance-selector.js
+    │   ├── base-instance-selector.js       # + lazy region loading
     │   ├── instance-selector-factory.js
-    │   ├── optimized_file_handler.js
+    │   ├── rule-engine.js
+    │   ├── recommendation-worker.js        # Web Worker batch processing
+    │   ├── file-handler.js
     │   └── main-script.js
-    ├── aws/                # AWS-specific selector, data, and UI
-    ├── azure/              # Azure-specific selector, data, and UI
-    └── gcp/                # GCP-specific selector, data, and UI
+    ├── vendor/             # Vendored third-party libs (SheetJS) + licenses
+    ├── aws/                # Selector, UI, manifest + regions/ data (35 files)
+    ├── azure/              # Selector, UI, manifest + regions/ data (60 files)
+    └── gcp/                # Selector, UI, manifest + regions/ data (46 files)
 ```
 
 ## Updating Instance Data
 
-Instance data files (`aws-data.js`, `azure-data.js`, `gcp-data.js`) are auto-generated from provider APIs — do not edit them manually.
+Instance data is auto-generated from provider APIs — do not edit it manually. Each provider has a small manifest (`js/{p}/{p}-data.js` with the data date and region key list) plus one file per region under `js/{p}/regions/`.
 
 To refresh the data:
 
-1. Download the latest instance JSON from the relevant provider APIs
-2. Run the PowerShell generation scripts (documented in the internal wiki)
-3. Verify the output with spot-checks on known instance types before submitting a PR
+1. Generate the fresh **monolithic** `{provider}-data.js` as before (PowerShell scripts documented in the internal wiki) and drop it in place of the manifest at `js/{provider}/{provider}-data.js` — the site keeps working in this state, so you can verify it before splitting
+2. Run `node tools/split-data.js` — it rewrites the manifest and regenerates `js/{provider}/regions/`, removing region files that no longer exist upstream. The tool is idempotent (skips providers already in manifest form) and hard-fails rather than writing anything if the input doesn't parse cleanly
+3. Verify with spot-checks on known instance types, then commit the manifest **and** the regenerated `regions/` files together
 
 ## Pull Request Guidelines
 
@@ -80,12 +87,12 @@ To refresh the data:
 - Use descriptive variable names
 - No comments explaining _what_ the code does — only add a comment when the _why_ is non-obvious
 
-## CSV Format (v3.0)
+## Input Format
 
-The accepted input format includes these optional columns added in v3.0:
-`ENV`, `OS`, `Workload`, `Compliance`, `Min Gen`
+The accepted input format includes these optional columns:
+`ENV`, `OS`, `Workload`, `Compliance`, `Min Gen`, `Exclude`
 
-Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns.
+Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads (first sheet) are also accepted, and common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/main-script.js`.
 
 ## Reporting Bugs
 

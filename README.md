@@ -3,7 +3,7 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-3.1-green)
+![Version](https://img.shields.io/badge/Version-3.2-green)
 ![License](https://img.shields.io/badge/License-Proprietary-red)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
@@ -63,9 +63,33 @@ The Rule Engine highlights contradicting filter combinations in red and explains
 
 AWS-only export that generates a CSV matching the EC2 Instances worksheet for the AWS Pricing Calculator Bulk Import. When both recommendation types are generated, **two separate files** are produced (Like-to-Like and Optimized) to prevent double-counting.
 
-### ⚡ Background Data Loading
+### ⚡ Lazy Per-Region Data Loading (v3.2)
 
-Instance data (~5 MB per provider) starts loading the moment the page opens. By the time you configure your CSV and options, data is already in memory. If Generate is clicked before loading completes, the request is queued and fires automatically when ready.
+Instance data is split into one file per region (141 files across the three providers). A page load fetches only a tiny manifest per provider; the region files your CSV actually references are fetched in the background right after upload, and anything still missing is loaded on demand during generation. Initial data download dropped from ~25 MB to a few KB. If Generate is clicked before data is ready, the request is queued and fires automatically.
+
+### 🧵 Web Worker Processing with Real Progress (v3.2)
+
+Recommendation batches run in a Web Worker, so large CSVs never freeze the page — with a progress bar that reports actual rows processed ("Processing row 250 of 1000"). If the worker can't start (e.g. opening the page from `file://`) or stalls, processing falls back automatically to a chunked main-thread run with the same progress reporting and identical output.
+
+### 🌍 Region Validation (v3.2)
+
+After upload, a Region Check panel shows one chip per unique region in your CSV: green = recognized, amber = auto-resolved (e.g. `us-east-1a → us-east-1`), red = unknown (those rows would fall back to built-in sample data). A non-blocking warning also appears at Generate time if unknown regions remain.
+
+### 🔗 Column Auto-Mapping (v3.2)
+
+Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. Confirmed mappings are remembered per header set (localStorage) and replay automatically on re-upload.
+
+### 📗 Excel Upload (v3.2)
+
+Upload `.xlsx` files directly (first sheet is used). Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
+
+### 🧾 No-Match Remediation Export (v3.2)
+
+When some rows get no recommendation from any provider, a "No-Match Rows CSV" button (with count) exports exactly those rows together with their `No Match Reason` and `Rules Applied` diagnostics — fix the rows, re-upload, re-run.
+
+### 🌓 Dark Mode & Accessibility (v3.2)
+
+A theme toggle in the nav switches light/dark instantly (no flash on load); your choice persists across pages and reloads, and with no saved choice the site follows the OS setting. The UI is keyboard-operable end to end — collapsible sections and sortable table headers work with Enter/Space, status updates are announced to screen readers, and every page has a skip-to-content link and visible focus outlines.
 
 ---
 
@@ -78,7 +102,7 @@ Cloud-Instance-Recommender/
 ├── azure.html               # Azure recommendations
 ├── gcp.html                 # GCP recommendations
 ├── multicloud.html          # Multi-cloud comparison
-├── user-guide.html          # Full user guide (v3.1)
+├── user-guide.html          # Full user guide
 │
 ├── docs/
 │   └── user-guide.pdf       # PDF version of the user guide
@@ -88,34 +112,50 @@ Cloud-Instance-Recommender/
 │       └── aws/             # AWS Pricing Calculator bulk upload templates (.xlsx)
 │
 ├── css/
+│   ├── theme.css            # Light/dark theme tokens (CSS custom properties)
 │   ├── style.css            # Main application styles
 │   └── index_style.css      # Landing page styles
 │
 ├── logos/                   # Cloud provider logos
 │
+├── tools/
+│   └── split-data.js        # Node tool: splits monolithic data into per-region files
+│
 └── js/
     ├── base/
-    │   ├── base-instance-selector.js       # Abstract base class
+    │   ├── base-instance-selector.js       # Abstract base class + lazy region loading
     │   ├── instance-selector-factory.js    # Provider factory + recommendation orchestration
     │   ├── rule-engine.js                  # ENV/OS/Workload/Compliance/MinGen rule logic
-    │   ├── optimized_file_handler.js       # CSV parsing and validation
+    │   ├── recommendation-worker.js        # Web Worker running batches off the main thread
+    │   ├── file-handler.js                 # CSV parsing and validation
     │   └── main-script.js                  # Application controller
+    │
+    ├── vendor/
+    │   ├── xlsx.full.min.js                # SheetJS (Excel parsing, lazy-loaded)
+    │   └── XLSX-LICENSE.txt                # Apache-2.0 license for SheetJS
     │
     ├── aws/
     │   ├── aws-instance-selector.js        # AWS-specific logic
     │   ├── aws-specific.js                 # AWS filter UI and sample CSV
-    │   └── aws-data.js                     # EC2 instance pricing data (~5 MB)
+    │   ├── aws-data.js                     # Manifest: data date + region key list
+    │   └── regions/                        # One data file per region (35 files)
     │
     ├── azure/
     │   ├── azure-instance-selector.js      # Azure-specific logic
     │   ├── azure-specific.js               # Azure filter UI and sample CSV
-    │   └── azure-data.js                   # Azure VM pricing data
+    │   ├── azure-data.js                   # Manifest: data date + region key list
+    │   └── regions/                        # One data file per region (60 files)
     │
     └── gcp/
         ├── gcp-instance-selector.js        # GCP-specific logic
         ├── gcp-specific.js                 # GCP filter UI and sample CSV
-        └── gcp-data.js                     # GCP Compute Engine pricing data
+        ├── gcp-data.js                     # Manifest: data date + region key list
+        └── regions/                        # One data file per region (46 files)
 ```
+
+### Instance data layout
+
+Each provider ships a small **manifest** (`js/{provider}/{provider}-data.js`) declaring the data date and the list of available region keys, plus one file per region under `js/{provider}/regions/`. Pages load only the manifest up front; region files are `<script>`-injected on demand (the CSP forbids `fetch`). A monolithic data file dropped in place of the manifest also works — the loader detects it and behaves as before — which keeps the site functional mid-data-refresh.
 
 ---
 
@@ -134,9 +174,9 @@ python -m http.server 8080
 # Open http://localhost:8080
 ```
 
-### 2. Prepare Your CSV
+### 2. Prepare Your CSV (or Excel file)
 
-Download the sample CSV from any provider page and fill in your VM inventory.
+Download the sample CSV from any provider page and fill in your VM inventory. `.xlsx` workbooks are also accepted (the first sheet is used). Column names don't have to match exactly — common variants like `vCPUs`, `RAM`, or `Hostname` are auto-mapped, and anything ambiguous opens a mapping panel.
 
 **Required columns:**
 | Column | Description |
@@ -192,7 +232,7 @@ The results CSV contains your original columns plus per-provider recommendation 
 | `AWS No Match Reason`                             | Explains why no instance was found (when applicable) |
 | _(Azure and GCP columns follow the same pattern)_ |                                                      |
 
-The in-browser **results preview** table includes sortable columns, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), and a stats bar showing match rate, rules fired, and data freshness date.
+The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **No-Match Rows CSV** button for fix-and-re-upload remediation.
 
 > **Pricing is intentionally excluded from output.** Cloud pricing depends on region, OS, discounts, Reserved Instances, Savings Plans, and enterprise agreements — a static price in the CSV would be misleading within weeks. Use the provider's pricing calculator with the recommended instance types for authoritative cost figures.
 

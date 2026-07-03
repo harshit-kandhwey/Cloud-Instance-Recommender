@@ -7,7 +7,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
-    <title>Cloud Instance Recommender — User Guide v3.0</title>
+    <title>Cloud Instance Recommender — User Guide v3.2</title>
     <script>
       // Set theme before first paint. A saved choice wins; otherwise follow
       // the OS setting (and keep following it until the user picks manually).
@@ -667,8 +667,8 @@
         <span class="badge badge-mc">☁ Multi-Cloud</span>
       </div>
       <div class="cover-meta">
-        <span>📄 Version 3.0</span>
-        <span>📅 June 2026</span>
+        <span>📄 Version 3.2</span>
+        <span>📅 July 2026</span>
         <span>👥 IT Professionals · Cloud Architects · DevOps Engineers</span>
       </div>
     </div>
@@ -677,6 +677,21 @@
      TABLE OF CONTENTS
      ══════════════════════════════════════════════════════════════════════ -->
     <div class="content">
+      <div class="section-heading" id="whats-new">
+        <h2>🆕 What's New in v3.2</h2>
+      </div>
+      <ul class="check">
+        <li><strong>Excel upload</strong> — <code>.xlsx</code> workbooks are accepted alongside CSV; the first sheet is used.</li>
+        <li><strong>Column auto-mapping</strong> — headers like <code>vCPUs</code>, <code>RAM</code>, or <code>Hostname</code> map automatically to the expected columns; ambiguous cases open a mapping panel, and confirmed mappings are remembered for repeat uploads.</li>
+        <li><strong>Region Check panel</strong> — after upload, chips show each region as recognized (green), auto-resolved (amber, e.g. <code>us-east-1a → us-east-1</code>), or unknown (red — those rows would use built-in sample data).</li>
+        <li><strong>Faster loading</strong> — instance data loads per region on demand; pages open with a few KB of data instead of ~25 MB.</li>
+        <li><strong>Real progress, no freezing</strong> — generation runs in a background worker with a row-accurate progress bar and automatic fallback.</li>
+        <li><strong>Preview search</strong> — filter the results preview live across all visible columns.</li>
+        <li><strong>No-Match export</strong> — download only the rows that got no recommendation, with reasons, to fix and re-upload.</li>
+        <li><strong>Dark mode</strong> — 🌓 toggle on every page; follows your OS setting until you choose manually.</li>
+        <li><strong>Keyboard &amp; screen-reader support</strong> — collapsible sections, table sorting, and status updates are fully accessible.</li>
+      </ul>
+
       <div class="toc-page page-break">
         <h2>📋 Table of Contents</h2>
 
@@ -2936,7 +2951,7 @@ db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Linux,Database
 
       <div class="doc-footer">
         <span>Cloud Instance Recommender — User Guide</span>
-        <span>Version 3.0 · June 2026</span>
+        <span>Version 3.2 · July 2026</span>
         <span
           >Target: IT Professionals · Cloud Architects · DevOps Engineers</span
         >
