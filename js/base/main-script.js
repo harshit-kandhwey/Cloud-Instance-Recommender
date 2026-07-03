@@ -2283,9 +2283,15 @@ function showResultsPreview(results) {
     if (!displayCols.includes(r)) displayCols.push(r);
   });
 
-  // Store state for sort
-  window._previewState = { results, displayCols, sortCol: null, sortDir: 1 };
-  _renderPreviewTable(container, results, displayCols, null, 1);
+  // Store state for sort + search filter
+  window._previewState = {
+    results,
+    displayCols,
+    sortCol: null,
+    sortDir: 1,
+    filter: "",
+  };
+  _renderPreviewTable(container, results, displayCols, null, 1, "");
 
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -2296,6 +2302,8 @@ function _renderPreviewTable(
   displayCols,
   sortCol,
   sortDir,
+  filter,
+  restoreFocus,
 ) {
   const noMatchValues = new Set([
     "No data available",
@@ -2312,8 +2320,19 @@ function _renderPreviewTable(
   const isVcpuCol = (c) => c.includes("vCPUs");
   const isMemCol = (c) => c.includes("Memory (GiB)");
 
-  // Sort
-  let rows = [...results];
+  // Filter first (case-insensitive substring across visible columns), sort after
+  const needle = String(filter || "")
+    .trim()
+    .toLowerCase();
+  let rows = needle
+    ? results.filter((row) =>
+        displayCols.some((c) =>
+          String(row[c] ?? "")
+            .toLowerCase()
+            .includes(needle),
+        ),
+      )
+    : [...results];
   if (sortCol !== null) {
     rows.sort((a, b) => {
       const av = a[displayCols[sortCol]] ?? "";
@@ -2357,9 +2376,18 @@ function _renderPreviewTable(
       : `<span style="margin-left:4px;">▼</span>`;
   };
 
+  const countLabel = needle
+    ? `first ${previewRows.length} of ${rows.length} matching (${results.length} total)`
+    : `first ${previewRows.length} of ${results.length} rows`;
+
   let html = _buildStatsHtml(results);
   html += `
-    <p style="font-weight:600;margin-bottom:6px;">📋 Results Preview (first ${previewRows.length} of ${results.length} rows)</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+      <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
+      <input id="previewSearch" type="text" placeholder="🔍 Filter rows…"
+        oninput="window._previewFilterChanged(this.value)"
+        style="padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;min-width:220px;" />
+    </div>
     <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">
       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
         <thead>
@@ -2436,14 +2464,34 @@ function _renderPreviewTable(
     html += `</tr>`;
   });
 
+  if (previewRows.length === 0 && needle) {
+    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:#64748b;">No rows match "${escapeHtml(needle)}"</td></tr>`;
+  }
+
   html += `</tbody></table></div>`;
-  if (results.length > 20) {
-    html += `<p style="font-size:0.82em;color:#64748b;margin-top:4px;">Showing first 20 rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
+  if (rows.length > 20) {
+    html += `<p style="font-size:0.82em;color:#64748b;margin-top:4px;">Showing first 20 ${needle ? "matching " : ""}rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
   }
   html += `<p style="font-size:0.8em;color:#94a3b8;margin-top:4px;">Click any column header to sort · <span style="color:#15803d;">Green Optimized vCPUs</span> = rightsized down · <span style="color:#d97706;">Amber</span> = rightsized up · Red rows = no match</p>`;
 
   container.innerHTML = html;
   container.classList.remove("hidden");
+
+  // Repopulate the search input via the DOM (never as an HTML attribute) and
+  // restore focus + cursor so re-rendering doesn't eat keystrokes
+  const searchInput = document.getElementById("previewSearch");
+  if (searchInput) {
+    searchInput.value = filter || "";
+    if (restoreFocus) {
+      searchInput.focus();
+      const pos =
+        window._previewCursorPos != null
+          ? window._previewCursorPos
+          : (filter || "").length;
+      window._previewCursorPos = null;
+      if (searchInput.setSelectionRange) searchInput.setSelectionRange(pos, pos);
+    }
+  }
 }
 
 window._sortPreview = function (colIdx) {
@@ -2454,7 +2502,41 @@ window._sortPreview = function (colIdx) {
   s.sortDir = newDir;
   const container = document.getElementById("resultsPreviewSection");
   if (container)
-    _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir);
+    _renderPreviewTable(
+      container,
+      s.results,
+      s.displayCols,
+      colIdx,
+      newDir,
+      s.filter,
+    );
+};
+
+// Debounced search-filter handler for the preview table
+window._previewFilterChanged = function (value) {
+  const s = window._previewState;
+  if (!s) return;
+  s.filter = value;
+  clearTimeout(window._previewFilterTimer);
+  window._previewFilterTimer = setTimeout(() => {
+    const container = document.getElementById("resultsPreviewSection");
+    const liveInput = document.getElementById("previewSearch");
+    window._previewCursorPos =
+      liveInput && liveInput.selectionStart != null
+        ? liveInput.selectionStart
+        : null;
+    if (container) {
+      _renderPreviewTable(
+        container,
+        s.results,
+        s.displayCols,
+        s.sortCol,
+        s.sortDir,
+        s.filter,
+        true,
+      );
+    }
+  }, 150);
 };
 
 // ─── Update bulk template buttons for AWS when both L2L + Optimized generated ─
