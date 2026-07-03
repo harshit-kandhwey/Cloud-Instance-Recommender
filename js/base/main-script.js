@@ -1374,34 +1374,27 @@ function generateRecommendations() {
     recommendationType.value,
   );
 
-  // Show processing status
+  // Show processing status — progress is now driven by the batch runner
+  // (worker messages, or the chunked main-thread fallback)
   const processingStatus = document.getElementById("processingStatus");
+  processingStatus.classList.remove("hidden");
+  updateProgressBar(0, csvData.length);
+
+  processRecommendations();
+}
+
+// Real progress bar driven by onProgress(done, total) callbacks
+function updateProgressBar(done, total) {
   const progressFill = document.getElementById("progressFill");
   const progressText = document.getElementById("progressText");
-
-  processingStatus.classList.remove("hidden");
-
-  // Simulate processing
-  let progress = 0;
-  const progressInterval = setInterval(() => {
-    progress += Math.random() * 15 + 5;
-    if (progress > 100) progress = 100;
-
-    progressFill.style.width = progress + "%";
-    progressText.textContent = `Processing ${csvData.length} rows for ${
-      selectedProviders.length
-    } providers... ${Math.round(progress)}%`;
-
-    if (progress >= 100) {
-      clearInterval(progressInterval);
-      progressText.textContent = "Complete!";
-
-      setTimeout(() => {
-        processingStatus.classList.add("hidden");
-        processRecommendations();
-      }, 1000);
-    }
-  }, 300);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  if (progressFill) progressFill.style.width = pct + "%";
+  if (progressText) {
+    progressText.textContent =
+      total && done >= total
+        ? "Complete!"
+        : `Processing row ${done} of ${total} for ${selectedProviders.length} provider(s)… ${pct}%`;
+  }
 }
 
 // Enhanced process recommendations with modular system and recommendation type control
@@ -1524,11 +1517,9 @@ async function processRecommendations() {
   });
 
   try {
-    // Use the modular instance selector system
-    console.log(
-      "Calling getInstanceRecommendationWithSelector with modular system",
-    );
-    processedResults = await getInstanceRecommendationWithSelector(
+    // Use the modular instance selector system (worker when possible)
+    console.log("Running recommendation batch (worker with fallback)");
+    processedResults = await runRecommendationBatch(
       csvData,
       selectedProviders,
       options,
@@ -1564,7 +1555,128 @@ async function processRecommendations() {
     alert(
       `An error occurred while processing recommendations: ${error.message}`,
     );
+  } finally {
+    const processingStatus = document.getElementById("processingStatus");
+    if (processingStatus) processingStatus.classList.add("hidden");
   }
+}
+
+// ─── Worker-based batch runner ────────────────────────────────────────────────
+// Snapshots the region data the CSV needs (injecting any region scripts not
+// yet loaded) so it can be posted to the worker, which cannot fetch under CSP.
+async function collectRegionDataForWorker(providers) {
+  const regionData = {};
+  const flags = {};
+
+  for (const provider of providers) {
+    const prefix = provider.toUpperCase();
+    flags[`${prefix}_DATA_READY`] = window[`${prefix}_DATA_READY`] === true;
+    if (window[`${prefix}_REGION_KEYS`]) {
+      flags[`${prefix}_REGION_KEYS`] = window[`${prefix}_REGION_KEYS`];
+    }
+    if (window[`${prefix}_DATA_DATE`]) {
+      flags[`${prefix}_DATA_DATE`] = window[`${prefix}_DATA_DATE`];
+    }
+
+    // Resolved regions for this provider: validation map when present,
+    // otherwise resolve on the fly from the CSV
+    let entries =
+      (window._regionValidation && window._regionValidation[provider]) || null;
+    if (!entries) {
+      entries = {};
+      const regionColumn =
+        InstanceSelectorFactory.getProviderRegionColumn(provider);
+      csvData.forEach((row) => {
+        const raw = (row[regionColumn] || "").trim();
+        if (raw && !entries[raw]) entries[raw] = resolveRegion(provider, raw);
+      });
+    }
+    // No regions in the CSV → the factory will use the provider default
+    if (!Object.keys(entries).length) {
+      const def = InstanceSelectorFactory.getProviderDefaultRegion(provider);
+      entries = { [def]: resolveRegion(provider, def) };
+    }
+
+    const selector =
+      window._prewarmedSelectors[provider] ||
+      InstanceSelectorFactory.createSelector(provider);
+    window._prewarmedSelectors[provider] = selector;
+
+    for (const resolution of Object.values(entries)) {
+      if (!resolution || !resolution.key || resolution.status === "unknown") {
+        continue; // worker will use its sample-data fallback for these rows
+      }
+      if (!window[resolution.key]) {
+        try {
+          await selector._injectRegionScript(resolution.key);
+        } catch (e) {
+          console.warn(
+            `[Worker] could not load region ${resolution.key}:`,
+            e,
+          );
+        }
+      }
+      if (window[resolution.key]) {
+        regionData[resolution.key] = window[resolution.key];
+      }
+    }
+  }
+
+  return { regionData, flags };
+}
+
+// Runs the batch in a Web Worker (real progress, UI stays responsive); on any
+// worker failure — file:// pages, CSP oddities, runtime errors — falls back
+// ONCE to the chunked main-thread path with the same progress reporting.
+async function runRecommendationBatch(rows, providers, options) {
+  let worker = null;
+  try {
+    if (typeof Worker !== "undefined") {
+      worker = new Worker("js/base/recommendation-worker.js");
+    }
+  } catch (e) {
+    console.warn("[Worker] construction failed — using main thread:", e);
+  }
+
+  if (worker) {
+    try {
+      const payload = await collectRegionDataForWorker(providers);
+      const results = await new Promise((resolve, reject) => {
+        worker.onmessage = (event) => {
+          const msg = event.data || {};
+          if (msg.type === "progress") {
+            updateProgressBar(msg.done, msg.total);
+          } else if (msg.type === "result") {
+            resolve(msg.results);
+          } else if (msg.type === "error") {
+            reject(new Error(msg.message));
+          }
+        };
+        worker.onerror = (event) =>
+          reject(new Error(event.message || "Worker error"));
+        worker.postMessage({
+          type: "run",
+          csvData: rows,
+          providers: providers,
+          options: options,
+          regionData: payload.regionData,
+          flags: payload.flags,
+        });
+      });
+      console.log("[Worker] batch completed in worker");
+      return results;
+    } catch (e) {
+      console.warn("[Worker] failed — falling back to main thread:", e);
+      updateProgressBar(0, rows.length);
+    } finally {
+      worker.terminate();
+    }
+  }
+
+  return await getInstanceRecommendationWithSelector(rows, providers, options, {
+    onProgress: updateProgressBar,
+    yieldEvery: 25,
+  });
 }
 
 // Get Graviton exclusion setting from the new exclude types UI

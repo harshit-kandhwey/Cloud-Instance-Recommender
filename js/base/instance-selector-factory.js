@@ -38,11 +38,15 @@ class InstanceSelectorFactory {
   }
 }
 
-// Enhanced integration function with multi-provider support
+// Enhanced integration function with multi-provider support.
+// Optional hooks = { onProgress(done, total), yieldEvery } — when provided,
+// the row loop reports progress and yields to the event loop every
+// `yieldEvery` rows (used by the worker and the main-thread fallback).
 window.getInstanceRecommendationWithSelector = async function (
   csvData,
   selectedProviders,
   options,
+  hooks,
 ) {
   console.log("Starting recommendation generation with multi-provider support");
   console.log("Selected providers:", selectedProviders);
@@ -103,8 +107,14 @@ window.getInstanceRecommendationWithSelector = async function (
 
   console.log("All selectors initialized. Processing CSV data...");
 
+  const onProgress =
+    hooks && typeof hooks.onProgress === "function" ? hooks.onProgress : null;
+  const yieldEvery = (hooks && hooks.yieldEvery) || 25;
+
   // Process each row with all providers
-  const results = csvData.map((row, index) => {
+  const results = [];
+  for (let index = 0; index < csvData.length; index++) {
+    const row = csvData[index];
     const result = { ...row };
 
     selectedProviders.forEach((provider) => {
@@ -283,8 +293,17 @@ window.getInstanceRecommendationWithSelector = async function (
       }
     });
 
-    return result;
-  });
+    results.push(result);
+
+    if (
+      onProgress &&
+      ((index + 1) % yieldEvery === 0 || index + 1 === csvData.length)
+    ) {
+      onProgress(index + 1, csvData.length);
+      // Yield so the environment can paint / deliver messages
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
 
   console.log("Recommendation generation completed successfully");
   return results;
