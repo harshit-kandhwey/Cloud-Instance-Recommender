@@ -362,6 +362,9 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       usgovtexas: "US Gov Texas",
       usgovvirginia: "US Gov Virginia",
     };
+    if (Array.isArray(window.AZURE_REGION_KEYS)) {
+      return window.AZURE_REGION_KEYS.map((k) => reverseMap[k] || k);
+    }
     return Object.keys(reverseMap)
       .filter((k) => typeof window[k] === "object" && window[k] !== null)
       .map((k) => reverseMap[k]);

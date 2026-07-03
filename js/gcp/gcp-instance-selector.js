@@ -349,6 +349,9 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 
   getAllAvailableRegionKeys() {
     if (!window.GCP_DATA_READY) return [];
+    if (Array.isArray(window.GCP_REGION_KEYS)) {
+      return window.GCP_REGION_KEYS.map((k) => k.replace(/_/g, "-"));
+    }
     // GCP globals look like us_central1, europe_west10, africa_south1 — one underscore, ends in digits
     // AWS globals like us_east_1 have two underscores so the pattern below won't match them
     return Object.keys(window)

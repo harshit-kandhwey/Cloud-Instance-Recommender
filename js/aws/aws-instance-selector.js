@@ -677,6 +677,12 @@ class AWSInstanceSelector extends BaseInstanceSelector {
 
   getAllAvailableRegionKeys() {
     if (!window.AWS_DATA_READY) return [];
+    if (Array.isArray(window.AWS_REGION_KEYS)) {
+      const known = new Set(
+        window.AWS_REGION_KEYS.map((k) => k.replace(/_/g, "-")),
+      );
+      return this.awsRegions.filter((region) => known.has(region));
+    }
     return this.awsRegions.filter((region) => {
       const key = this.normalizeRegionForJS(region);
       return typeof window[key] === "object" && window[key] !== null;

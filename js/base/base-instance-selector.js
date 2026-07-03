@@ -98,11 +98,19 @@ class BaseInstanceSelector {
           `Successfully retrieved ${normalizedRegion} data from global object`,
         );
       } catch {
-        console.warn(
-          `${this.getProviderName()} ${normalizedRegion} not in global scope yet — using fallback`,
-        );
-        regionData = this.getFallbackData();
-        usedFallback = true;
+        try {
+          await this._injectRegionScript(normalizedRegion);
+          regionData = this.getRegionDataFromGlobal(normalizedRegion);
+          console.log(
+            `Lazily loaded ${normalizedRegion} data via region script`,
+          );
+        } catch {
+          console.warn(
+            `${this.getProviderName()} ${normalizedRegion} not in global scope yet — using fallback`,
+          );
+          regionData = this.getFallbackData();
+          usedFallback = true;
+        }
       }
 
       const instances = this.parseData(regionData, region);
@@ -120,6 +128,52 @@ class BaseInstanceSelector {
       );
       this.instanceData[region] = this.getFallbackInstances(region);
     }
+  }
+
+  // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script>
+  // tag (CSP forbids fetch/XHR). Only active once the provider's data file
+  // is a manifest ({P}_REGION_KEYS present); with a monolithic data file it
+  // throws immediately so behavior is unchanged.
+  async _injectRegionScript(normalizedRegion) {
+    if (window[normalizedRegion]) return;
+
+    if (typeof document === "undefined") {
+      throw new Error(
+        "Region scripts cannot be injected outside the main thread",
+      );
+    }
+
+    const provider = this.getProviderName().toLowerCase();
+    const manifestKeys =
+      window[`${this.getProviderName().toUpperCase()}_REGION_KEYS`];
+    if (!Array.isArray(manifestKeys)) {
+      throw new Error(
+        `No region manifest for ${this.getProviderName()} — nothing to lazy-load`,
+      );
+    }
+    if (!manifestKeys.includes(normalizedRegion)) {
+      throw new Error(
+        `${normalizedRegion} is not in the ${this.getProviderName()} region manifest`,
+      );
+    }
+
+    window._regionScriptPromises = window._regionScriptPromises || {};
+    const cacheKey = `${provider}:${normalizedRegion}`;
+    if (!window._regionScriptPromises[cacheKey]) {
+      window._regionScriptPromises[cacheKey] = new Promise(
+        (resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = `js/${provider}/regions/${normalizedRegion}.js`;
+          script.onload = () => resolve();
+          script.onerror = () => {
+            delete window._regionScriptPromises[cacheKey];
+            reject(new Error(`Failed to load region script: ${script.src}`));
+          };
+          document.head.appendChild(script);
+        },
+      );
+    }
+    await window._regionScriptPromises[cacheKey];
   }
 
   // Get region data from global window object
