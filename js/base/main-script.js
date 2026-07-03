@@ -600,13 +600,85 @@ function handleFileUpload(event) {
     return;
   }
 
-  // Fallback to simple parsing if integrated handler not available
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const csv = e.target.result;
-    parseCSV(csv);
-  };
-  reader.readAsText(file);
+  ingestFile(file);
+}
+
+// Loads the vendored SheetJS parser on first use only (Excel uploads are
+// rare enough that the ~900KB script shouldn't be part of page load)
+function ensureXlsxLoaded() {
+  if (window.XLSX) return Promise.resolve();
+  if (!window._xlsxLoadPromise) {
+    window._xlsxLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "js/vendor/xlsx.full.min.js";
+      script.onload = () => resolve();
+      script.onerror = () => {
+        window._xlsxLoadPromise = null;
+        reject(
+          new Error("Could not load the Excel parser (js/vendor/xlsx.full.min.js)"),
+        );
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return window._xlsxLoadPromise;
+}
+
+// Routes an uploaded file into the pipeline: .xlsx via SheetJS (first sheet
+// only), everything else as CSV text
+async function ingestFile(file) {
+  if (!/\.xlsx$/i.test(file.name)) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      parseCSV(e.target.result);
+    };
+    reader.readAsText(file);
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    await ensureXlsxLoaded();
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) throw new Error("The workbook has no sheets");
+
+    // raw:false → formatted strings, matching what CSV parsing produces
+    const rows2d = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      raw: false,
+      defval: "",
+    });
+    if (!rows2d.length) throw new Error(`Sheet "${sheetName}" is empty`);
+
+    const headers = rows2d[0].map((h) => String(h).trim());
+    const rows = rows2d
+      .slice(1)
+      .map((values) => {
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = String(values[index] ?? "").trim();
+        });
+        return row;
+      })
+      .filter((row) => Object.values(row).some((v) => v !== ""));
+
+    if (workbook.SheetNames.length > 1) {
+      console.log(
+        `Workbook has ${workbook.SheetNames.length} sheets — using the first ("${sheetName}")`,
+      );
+    }
+    ingestRows(headers, rows);
+  } catch (error) {
+    console.error("Excel parsing failed:", error);
+    const fileStatus = document.getElementById("fileStatus");
+    if (fileStatus) {
+      fileStatus.className = "alert alert-warning";
+      fileStatus.innerHTML = `⚠️ Could not read the Excel file: ${escapeHtml(error.message)}`;
+      fileStatus.classList.remove("hidden");
+    }
+  }
 }
 
 // Parse CSV text into headers + row objects, then hand off to ingestRows

@@ -105,7 +105,11 @@ class FileHandler {
 
   _isValidFileType(file) {
     const extension = file.name.toLowerCase().split(".").pop();
-    return this.config.allowedTypes.includes(file.type) || extension === "csv";
+    return (
+      this.config.allowedTypes.includes(file.type) ||
+      extension === "csv" ||
+      extension === "xlsx"
+    );
   }
 
   // Quote-aware CSV line splitter — keeps quoted multiline cells intact
@@ -507,6 +511,10 @@ class FileHandlerIntegration {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Excel files are binary — owned entirely by main-script's ingestFile
+    // (this class's parser is text/CSV only and must not clobber the status)
+    if (/\.xlsx$/i.test(file.name)) return;
+
     console.log("File change detected:", file.name);
     this.state.isProcessing = true;
     this._showStatus("Processing file...", "info");
@@ -624,8 +632,9 @@ class FileHandlerIntegration {
     if (!files.length) return;
 
     const file = files[0];
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      this._showStatus("Please drop a CSV file.", "error");
+    const name = file.name.toLowerCase();
+    if (!name.endsWith(".csv") && !name.endsWith(".xlsx")) {
+      this._showStatus("Please drop a CSV or Excel (.xlsx) file.", "error");
       return;
     }
 
