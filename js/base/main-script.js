@@ -627,16 +627,31 @@ function ensureXlsxLoaded() {
 // Routes an uploaded file into the pipeline: .xlsx via SheetJS (first sheet
 // only), everything else as CSV text
 async function ingestFile(file) {
+  window._uploadNote = null;
+
   if (!/\.xlsx$/i.test(file.name)) {
     const reader = new FileReader();
     reader.onload = function (e) {
       parseCSV(e.target.result);
+    };
+    reader.onerror = function () {
+      const fileStatus = document.getElementById("fileStatus");
+      if (fileStatus) {
+        fileStatus.className = "alert alert-warning";
+        fileStatus.innerHTML = `⚠️ Could not read the file "${escapeHtml(file.name)}". Please try again.`;
+        fileStatus.classList.remove("hidden");
+      }
     };
     reader.readAsText(file);
     return;
   }
 
   try {
+    const MAX_XLSX_SIZE = 10 * 1024 * 1024; // same limit as the CSV path
+    if (file.size === 0) throw new Error("File is empty");
+    if (file.size > MAX_XLSX_SIZE) {
+      throw new Error("File size too large. Maximum allowed size is 10MB.");
+    }
     const buffer = await file.arrayBuffer();
     await ensureXlsxLoaded();
     const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
@@ -665,9 +680,8 @@ async function ingestFile(file) {
       .filter((row) => Object.values(row).some((v) => v !== ""));
 
     if (workbook.SheetNames.length > 1) {
-      console.log(
-        `Workbook has ${workbook.SheetNames.length} sheets — using the first ("${sheetName}")`,
-      );
+      // Surfaced in the file status by applyIngest — not just the console
+      window._uploadNote = `Workbook has ${workbook.SheetNames.length} sheets — only the first ("${sheetName}") was used`;
     }
     ingestRows(headers, rows);
   } catch (error) {
@@ -864,15 +878,18 @@ function applyIngest(headers, rows, mapping) {
   const renameNote = renames.length
     ? `<br>📎 Mapped columns: ${renames.map(escapeHtml).join(", ")}`
     : "";
+  const uploadNote = window._uploadNote
+    ? `<br>📄 ${escapeHtml(window._uploadNote)}`
+    : "";
   if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
       .map(escapeHtml)
-      .join(", ")}. Please check your CSV format.${renameNote}`;
+      .join(", ")}. Please check your CSV format.${renameNote}${uploadNote}`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
-    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}`;
+    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}`;
     console.log("File validation successful");
   }
   fileStatus.classList.remove("hidden");
@@ -2377,7 +2394,7 @@ function _renderPreviewTable(
   };
 
   const countLabel = needle
-    ? `first ${previewRows.length} of ${rows.length} matching (${results.length} total)`
+    ? `first ${previewRows.length} of ${rows.length} matching rows (${results.length} total)`
     : `first ${previewRows.length} of ${results.length} rows`;
 
   let html = _buildStatsHtml(results);

@@ -105,11 +105,9 @@ class FileHandler {
 
   _isValidFileType(file) {
     const extension = file.name.toLowerCase().split(".").pop();
-    return (
-      this.config.allowedTypes.includes(file.type) ||
-      extension === "csv" ||
-      extension === "xlsx"
-    );
+    // xlsx is routed elsewhere (main-script's ingestFile); this class's
+    // parser only understands text/CSV, so its validator stays CSV-scoped
+    return this.config.allowedTypes.includes(file.type) || extension === "csv";
   }
 
   // Quote-aware CSV line splitter — keeps quoted multiline cells intact
