@@ -100,8 +100,17 @@ const COLUMN_SYNONYMS = {
   ],
   "AWS Region": ["awsregion", "amazonregion"],
   "Azure Region": ["azureregion"],
+  // "gcpzone" is intentional: zones ("us-central1-a") are the expected input
+  // format for the GCP Region column — the factory default region is a zone,
+  // and normalizeRegionForJS strips the zone suffix before region lookup
   "GCP Region": ["gcpregion", "googleregion", "googlecloudregion", "gcpzone"],
 };
+
+// The fields eligible for auto-matching and the mapping panel. Uploaded
+// columns outside this list (ENV, OS, Workload, Compliance, Min Gen,
+// Exclude, anything custom) always pass through literally.
+const MAPPABLE_CANONICALS = Object.values(COLUMN_MAPPINGS);
+const REQUIRED_CANONICALS = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
 
 // Initialize page
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────
@@ -639,8 +648,8 @@ function headerSignature(headers) {
 // Returns { mapping (source→canonical), renames, unmatchedRequired,
 // ambiguous, needsReview }.
 function autoMatchHeaders(headers) {
-  const canonicals = Object.values(COLUMN_MAPPINGS);
-  const required = canonicals.slice(0, 2); // CPU Count, Memory (GB)
+  const canonicals = MAPPABLE_CANONICALS;
+  const required = REQUIRED_CANONICALS;
   const providers = getPageProviders();
   const claimed = new Set();
   const mapping = {};
@@ -775,8 +784,7 @@ function applyIngest(headers, rows, mapping) {
     .map(([source, canonical]) => `${source} → ${canonical}`);
 
   // Validate required columns
-  const requiredColumns = Object.values(COLUMN_MAPPINGS).slice(0, 2); // CPU and Memory
-  const missingColumns = requiredColumns.filter(
+  const missingColumns = REQUIRED_CANONICALS.filter(
     (col) => !finalHeaders.includes(col),
   );
 
@@ -816,8 +824,8 @@ function showColumnMappingPanel(headers, match) {
     return;
   }
 
-  const canonicals = Object.values(COLUMN_MAPPINGS);
-  const required = canonicals.slice(0, 2);
+  const canonicals = MAPPABLE_CANONICALS;
+  const required = REQUIRED_CANONICALS;
   const guessBySource = match.mapping; // source → canonical
   const guessedSource = {};
   Object.entries(guessBySource).forEach(([source, canonical]) => {
@@ -876,8 +884,8 @@ function applyColumnMapping() {
   const pending = window._pendingIngest;
   if (!pending) return;
 
-  const canonicals = Object.values(COLUMN_MAPPINGS);
-  const required = canonicals.slice(0, 2);
+  const canonicals = MAPPABLE_CANONICALS;
+  const required = REQUIRED_CANONICALS;
   const mapping = {};
   const usedSources = new Set();
 
