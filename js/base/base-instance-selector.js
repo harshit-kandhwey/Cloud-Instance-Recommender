@@ -154,6 +154,16 @@ class BaseInstanceSelector {
     return matches.length === 1 ? matches[0] : null;
   }
 
+  // Public wrappers — the stable surface for callers outside the selector
+  // classes (main-script region validation / worker data collection)
+  resolveManifestKey(normalizedRegion) {
+    return this._resolveManifestKey(normalizedRegion);
+  }
+
+  ensureRegionScriptLoaded(normalizedRegion) {
+    return this._injectRegionScript(normalizedRegion);
+  }
+
   // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script>
   // tag (CSP forbids fetch/XHR). Only active once the provider's data file
   // is a manifest ({P}_REGION_KEYS present); with a monolithic data file it

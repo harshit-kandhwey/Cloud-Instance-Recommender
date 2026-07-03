@@ -158,16 +158,25 @@ function prefetchCsvRegions() {
 function resolveRegion(provider, raw) {
   const trimmed = String(raw || "").trim();
   if (!trimmed) return { status: "unknown", key: null };
-  const keys = window[`${provider.toUpperCase()}_REGION_KEYS`];
-  if (!Array.isArray(keys)) return { status: "unknown", key: null };
   try {
     const selector =
       window._prewarmedSelectors[provider] ||
       InstanceSelectorFactory.createSelector(provider);
     window._prewarmedSelectors[provider] = selector;
     const normalized = selector.normalizeRegionForJS(trimmed);
+
+    const keys = window[`${provider.toUpperCase()}_REGION_KEYS`];
+    if (!Array.isArray(keys)) {
+      // Monolithic (pre-split) data file: no manifest, but every region
+      // global is already parsed onto window — validate against those so
+      // real regions aren't falsely flagged during a data-update window.
+      return window[normalized]
+        ? { status: "exact", key: normalized }
+        : { status: "unknown", key: null };
+    }
+
     if (keys.includes(normalized)) return { status: "exact", key: normalized };
-    const resolved = selector._resolveManifestKey(normalized);
+    const resolved = selector.resolveManifestKey(normalized);
     return resolved
       ? { status: "fuzzy", key: resolved }
       : { status: "unknown", key: null };
@@ -1608,7 +1617,7 @@ async function collectRegionDataForWorker(providers) {
       }
       if (!window[resolution.key]) {
         try {
-          await selector._injectRegionScript(resolution.key);
+          await selector.ensureRegionScriptLoaded(resolution.key);
         } catch (e) {
           console.warn(
             `[Worker] could not load region ${resolution.key}:`,
@@ -1641,19 +1650,42 @@ async function runRecommendationBatch(rows, providers, options) {
   if (worker) {
     try {
       const payload = await collectRegionDataForWorker(providers);
+      // Watchdog: any worker message counts as liveness (progress arrives at
+      // least every `yieldEvery` rows). Prolonged silence → reject → the
+      // catch below terminates the worker and runs the main-thread fallback.
+      const watchdogMs = window._workerWatchdogMs || 20000;
       const results = await new Promise((resolve, reject) => {
+        let watchdog = null;
+        const armWatchdog = () => {
+          clearTimeout(watchdog);
+          watchdog = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  `Worker sent no messages for ${watchdogMs}ms — assuming it stalled`,
+                ),
+              ),
+            watchdogMs,
+          );
+        };
+        armWatchdog();
         worker.onmessage = (event) => {
           const msg = event.data || {};
           if (msg.type === "progress") {
+            armWatchdog();
             updateProgressBar(msg.done, msg.total);
           } else if (msg.type === "result") {
+            clearTimeout(watchdog);
             resolve(msg.results);
           } else if (msg.type === "error") {
+            clearTimeout(watchdog);
             reject(new Error(msg.message));
           }
         };
-        worker.onerror = (event) =>
+        worker.onerror = (event) => {
+          clearTimeout(watchdog);
           reject(new Error(event.message || "Worker error"));
+        };
         worker.postMessage({
           type: "run",
           csvData: rows,
