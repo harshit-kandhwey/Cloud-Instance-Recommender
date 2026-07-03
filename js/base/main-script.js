@@ -885,7 +885,7 @@ function applyIngest(headers, rows, mapping) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
       .map(escapeHtml)
-      .join(", ")}. Please check your CSV format.${renameNote}${uploadNote}`;
+      .join(", ")}. Please check your file format.${renameNote}${uploadNote}`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
@@ -2323,7 +2323,7 @@ function showResultsPreview(results) {
     sortDir: 1,
     filter: "",
   };
-  _renderPreviewTable(container, results, displayCols, null, 1, "");
+  _renderPreviewTable(container, results, displayCols, null, 1);
 
   container.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -2334,8 +2334,7 @@ function _renderPreviewTable(
   displayCols,
   sortCol,
   sortDir,
-  filter,
-  restoreFocus,
+  { filter = "", restoreFocus = false } = {},
 ) {
   const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
@@ -2527,14 +2526,9 @@ window._sortPreview = function (colIdx) {
   s.sortDir = newDir;
   const container = document.getElementById("resultsPreviewSection");
   if (container)
-    _renderPreviewTable(
-      container,
-      s.results,
-      s.displayCols,
-      colIdx,
-      newDir,
-      s.filter,
-    );
+    _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir, {
+      filter: s.filter,
+    });
 };
 
 // Debounced search-filter handler for the preview table
@@ -2557,8 +2551,7 @@ window._previewFilterChanged = function (value) {
         s.displayCols,
         s.sortCol,
         s.sortDir,
-        s.filter,
-        true,
+        { filter: s.filter, restoreFocus: true },
       );
     }
   }, 150);
