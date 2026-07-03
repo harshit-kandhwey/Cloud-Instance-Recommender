@@ -148,6 +148,8 @@ function showDataToast(msg) {
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "dataToast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
     toast.style.cssText = [
       "position:fixed",
       "bottom:24px",
@@ -431,6 +433,9 @@ function setupStickyGenerate() {
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Initializing Cloud Instance Recommender with Modular Selectors");
 
+  // Keyboard + screen-reader affordances for interactive elements
+  enhanceAccessibility();
+
   // Sticky floating generate button
   setupStickyGenerate();
 
@@ -561,6 +566,35 @@ function initializeRecommendationTypeHandlers() {
 function toggleSection(header) {
   const section = header.parentElement;
   section.classList.toggle("collapsed");
+  header.setAttribute(
+    "aria-expanded",
+    section.classList.contains("collapsed") ? "false" : "true",
+  );
+}
+
+// Makes the clickable-div section headers keyboard-operable and wires the
+// dynamic status areas as live regions. Runs once on DOMContentLoaded.
+function enhanceAccessibility() {
+  document.querySelectorAll(".section-header[onclick]").forEach((header) => {
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    const section = header.parentElement;
+    header.setAttribute(
+      "aria-expanded",
+      section && section.classList.contains("collapsed") ? "false" : "true",
+    );
+    header.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        header.click();
+      }
+    });
+  });
+
+  const fileStatus = document.getElementById("fileStatus");
+  if (fileStatus) fileStatus.setAttribute("aria-live", "polite");
+  const progressText = document.getElementById("progressText");
+  if (progressText) progressText.setAttribute("aria-live", "polite");
 }
 
 // Download sample CSV
@@ -2408,7 +2442,7 @@ function _renderPreviewTable(
   html += `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
-      <input id="previewSearch" type="text" placeholder="🔍 Filter rows…"
+      <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
         oninput="window._previewFilterChanged(this.value)"
         style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
     </div>
@@ -2420,7 +2454,7 @@ function _renderPreviewTable(
             ${displayCols
               .map(
                 (c, i) =>
-                  `<th onclick="window._sortPreview(${i})" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+                  `<th scope="col" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
               )
               .join("")}
           </tr>
@@ -2443,7 +2477,7 @@ function _renderPreviewTable(
     // Copy button
     html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
       <button onclick="navigator.clipboard.writeText(${escapeHtml(JSON.stringify(rowCsv))}).catch(()=>{})"
-        title="Copy row as CSV"
+        title="Copy row as CSV" aria-label="Copy row ${ri + 1} as CSV"
         style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
     </td>`;
 
