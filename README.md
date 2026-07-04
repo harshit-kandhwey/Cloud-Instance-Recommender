@@ -77,11 +77,15 @@ After upload, a Region Check panel shows one chip per unique region in your CSV:
 
 ### 🔗 Column Auto-Mapping (v3.2)
 
-Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. Confirmed mappings are remembered per header set (localStorage) and replay automatically on re-upload.
+Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. The applied mapping can be reviewed and changed anytime via the **✏️ Edit mapping** button. Memory columns in **MB/MiB** (common in RVTools-style exports) are converted to GB automatically — detected from the header name, or selectable in the mapping panel. Confirmed mappings (including the unit) are remembered per header set (localStorage) and replay automatically on re-upload.
 
 ### 📗 Excel Upload (v3.2)
 
 Upload `.xlsx` files directly (first sheet is used). Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
+
+### ✍️ Manual VM Entry (v3.2)
+
+For small inventories, skip the file entirely: "Or enter VMs manually" opens a form (name, CPU, memory, utilization, region with autocomplete) where you add and remove VMs one by one. The list persists across reloads and feeds the exact same pipeline as uploads — region validation, worker processing, preview, and exports all behave identically. Enterprise-scale bulk upload via CSV/xlsx remains the primary path.
 
 ### 🧾 No-Match Remediation Export (v3.2)
 

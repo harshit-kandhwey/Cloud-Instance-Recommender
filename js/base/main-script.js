@@ -62,6 +62,15 @@ const COLUMN_SYNONYMS = {
     "memorysize",
     "memorysizegb",
     "memorysizegib",
+    // MB/MiB variants (common in RVTools-style exports) — values are
+    // auto-converted to GB on ingest, see detectMemoryUnit()
+    "memorymb",
+    "memorymib",
+    "memmb",
+    "memmib",
+    "rammb",
+    "memorysizemb",
+    "memorysizemib",
   ],
   "CPU Utilization": [
     "cpuutil",
@@ -649,7 +658,9 @@ function ensureXlsxLoaded() {
       script.onerror = () => {
         window._xlsxLoadPromise = null;
         reject(
-          new Error("Could not load the Excel parser (js/vendor/xlsx.full.min.js)"),
+          new Error(
+            "Could not load the Excel parser (js/vendor/xlsx.full.min.js)",
+          ),
         );
       };
       document.head.appendChild(script);
@@ -662,6 +673,7 @@ function ensureXlsxLoaded() {
 // only), everything else as CSV text
 async function ingestFile(file) {
   window._uploadNote = null;
+  window._ingestLabel = null;
 
   if (!/\.xlsx$/i.test(file.name)) {
     const reader = new FileReader();
@@ -834,23 +846,41 @@ function rewriteRowKeys(rows, mapping) {
   });
 }
 
-// Saved mappings: { headerSignature: { sourceHeader: canonical } }
+// Memory unit detection: a source header whose normalized name ends in
+// mb/mib (RVTools-style exports) holds megabytes — convert to GB on ingest
+function detectMemoryUnit(mapping) {
+  const source = Object.keys(mapping).find(
+    (s) => mapping[s] === COLUMN_MAPPINGS.memory,
+  );
+  if (!source) return {};
+  return /(mb|mib)$/.test(normalizeHeader(source))
+    ? { [COLUMN_MAPPINGS.memory]: "MB" }
+    : {};
+}
+
+// Saved mappings: { headerSignature: { mapping: {source: canonical},
+// units: {canonical: "MB"} } }. Older entries were the flat mapping object.
 function loadColumnMappings() {
   try {
     return (
-      JSON.parse(
-        localStorage.getItem("cloudInstanceRecommenderColumnMaps"),
-      ) || {}
+      JSON.parse(localStorage.getItem("cloudInstanceRecommenderColumnMaps")) ||
+      {}
     );
   } catch {
     return {};
   }
 }
 
-function saveColumnMapping(signature, mapping) {
+function readSavedMapping(entry) {
+  if (!entry) return null;
+  if (entry.mapping) return { mapping: entry.mapping, units: entry.units || {} };
+  return { mapping: entry, units: detectMemoryUnit(entry) }; // legacy format
+}
+
+function saveColumnMapping(signature, mapping, units) {
   try {
     const all = loadColumnMappings();
-    all[signature] = mapping;
+    all[signature] = { mapping, units: units || {} };
     localStorage.setItem(
       "cloudInstanceRecommenderColumnMaps",
       JSON.stringify(all),
@@ -867,10 +897,12 @@ function ingestRows(headers, rows) {
   console.log(`Parsed ${rows.length} rows with ${headers.length} columns`);
 
   // A mapping the user previously confirmed for this exact header set wins
-  const saved = loadColumnMappings()[headerSignature(headers)];
-  if (saved && Object.keys(saved).every((s) => headers.includes(s))) {
+  const saved = readSavedMapping(
+    loadColumnMappings()[headerSignature(headers)],
+  );
+  if (saved && Object.keys(saved.mapping).every((s) => headers.includes(s))) {
     console.log("Applying saved column mapping");
-    applyIngest(headers, rows, saved);
+    applyIngest(headers, rows, saved.mapping, saved.units);
     return;
   }
 
@@ -883,15 +915,29 @@ function ingestRows(headers, rows) {
     return;
   }
 
-  applyIngest(headers, rows, match.mapping);
+  applyIngest(headers, rows, match.mapping, detectMemoryUnit(match.mapping));
 }
 
 // Applies a mapping and runs the normal post-upload pipeline
-function applyIngest(headers, rows, mapping) {
+function applyIngest(headers, rows, mapping, units = {}) {
   const finalHeaders = headers.map((h) => mapping[h] || h);
   columnHeaders = finalHeaders;
   csvData = rewriteRowKeys(rows, mapping);
+
+  // Unit conversion: memory supplied in MB (RVTools-style) → GB
+  const memCol = COLUMN_MAPPINGS.memory;
+  const memConverted = units && units[memCol] === "MB";
+  if (memConverted) {
+    csvData = csvData.map((row) => {
+      const v = parseFloat(row[memCol]);
+      if (isNaN(v)) return row;
+      return { ...row, [memCol]: String(Math.round((v / 1024) * 100) / 100) };
+    });
+  }
+
   window._pendingIngest = null;
+  // Keep the pre-rewrite originals so the mapping stays editable afterwards
+  window._lastIngest = { headers, rows, mapping, units: units || {} };
 
   const panel = document.getElementById("columnMappingSection");
   if (panel) {
@@ -915,15 +961,22 @@ function applyIngest(headers, rows, mapping) {
   const uploadNote = window._uploadNote
     ? `<br>📄 ${escapeHtml(window._uploadNote)}`
     : "";
+  const memNote = memConverted
+    ? `<br>📐 Memory values converted from MB to GB`
+    : "";
+  const editBtn = ` <button onclick="editColumnMapping()" title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
+  const okLabel = window._ingestLabel || "File loaded successfully";
   if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
       .map(escapeHtml)
-      .join(", ")}. Please check your file format.${renameNote}${uploadNote}`;
+      .join(
+        ", ",
+      )}. Please check your file format.${renameNote}${uploadNote}${memNote}${editBtn}`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
-    fileStatus.innerHTML = `✅ File loaded successfully: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}`;
+    fileStatus.innerHTML = `✅ ${okLabel}: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}${memNote}${editBtn}`;
     console.log("File validation successful");
   }
   fileStatus.classList.remove("hidden");
@@ -938,12 +991,16 @@ function applyIngest(headers, rows, mapping) {
 }
 
 // Renders the mapping panel: one dropdown per canonical column, prefilled
-// with the auto-match guesses; the pipeline stays deferred until Confirm
-function showColumnMappingPanel(headers, match) {
+// with the auto-match guesses; the pipeline stays deferred until Confirm.
+// opts.isEdit reopens the panel over already-applied data: nothing changes
+// unless the user confirms, and Cancel simply closes the panel.
+function showColumnMappingPanel(headers, match, opts = {}) {
   const panel = document.getElementById("columnMappingSection");
   if (!panel) {
     // Page has no panel placeholder — apply best-effort mapping instead
-    applyIngest(headers, window._pendingIngest.rows, match.mapping);
+    if (!opts.isEdit) {
+      applyIngest(headers, window._pendingIngest.rows, match.mapping);
+    }
     return;
   }
 
@@ -960,8 +1017,18 @@ function showColumnMappingPanel(headers, match) {
     ambiguousByCanonical[a.canonical] = a.candidates;
   });
 
+  // Memory unit prefill: saved/applied units win (edit mode), else detect
+  // from the guessed source header
+  const memUnit =
+    ((match.units || detectMemoryUnit(match.mapping))[
+      COLUMN_MAPPINGS.memory
+    ] === "MB")
+      ? "MB"
+      : "GB";
+
   const selectRows = canonicals
     .map((canonical, idx) => {
+      const isMemory = canonical === COLUMN_MAPPINGS.memory;
       const options = [
         `<option value="">— not present —</option>`,
         ...headers.map((h, i) => {
@@ -975,30 +1042,93 @@ function showColumnMappingPanel(headers, match) {
       const ambiguousNote = ambiguousByCanonical[canonical]
         ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
         : "";
+      const syncAttr = isMemory
+        ? ` onchange="window._syncMemUnit(this)"`
+        : "";
+      const unitSelect = isMemory
+        ? ` <select id="colmap_unit_mem" class="form-control" style="max-width: 190px;" aria-label="Unit of the memory values in your file" title="RVTools-style exports list memory in MB — pick MB to convert to GB automatically">
+            <option value="GB"${memUnit === "GB" ? " selected" : ""}>values are GB</option>
+            <option value="MB"${memUnit === "MB" ? " selected" : ""}>values are MB → ÷1024</option>
+          </select>`
+        : "";
       return `
-        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0;">
+        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap;">
           <label for="colmap_${idx}" style="min-width: 180px; font-weight: 500;">${escapeHtml(canonical)}${reqMark}${ambiguousNote}</label>
-          <select id="colmap_${idx}" data-canonical="${escapeHtml(canonical)}" class="form-control" style="max-width: 260px;">${options}</select>
+          <select id="colmap_${idx}" data-canonical="${escapeHtml(canonical)}"${syncAttr} class="form-control" style="max-width: 260px;">${options}</select>${unitSelect}
         </div>`;
     })
     .join("");
 
+  const intro = opts.isEdit
+    ? `Adjust which of your columns maps to each field, then confirm to re-apply (<span style="color: var(--red-badge);">*</span> = required). Nothing changes until you confirm.`
+    : `Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: var(--red-badge);">*</span> = required).`;
+  const cancelBtn = opts.isEdit
+    ? ` <button class="btn btn-secondary" onclick="cancelColumnMapping()" style="margin-top: 8px;">Cancel</button>`
+    : "";
+
   panel.innerHTML = `
     <div class="stats-info">
       <p><strong>🔗 Map Your Columns</strong></p>
-      <p style="font-size: 13px;">Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: var(--red-badge);">*</span> = required).</p>
+      <p style="font-size: 13px;">${intro}</p>
       ${selectRows}
       <p style="font-size: 12px; margin-top: 8px;">Other columns (ENV, OS, Workload, Compliance, Min Gen, Exclude) are used as-is when present.</p>
-      <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>
+      <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>${cancelBtn}
     </div>
   `;
   panel.classList.remove("hidden");
 
-  const fileStatus = document.getElementById("fileStatus");
-  if (fileStatus) {
-    fileStatus.className = "alert alert-warning";
-    fileStatus.innerHTML = `⚠️ Please review the column mapping below, then confirm to continue.`;
-    fileStatus.classList.remove("hidden");
+  if (!opts.isEdit) {
+    const fileStatus = document.getElementById("fileStatus");
+    if (fileStatus) {
+      fileStatus.className = "alert alert-warning";
+      fileStatus.innerHTML = `⚠️ Please review the column mapping below, then confirm to continue.`;
+      fileStatus.classList.remove("hidden");
+    }
+  }
+}
+
+// Keeps the memory-unit dropdown in step with the chosen source column:
+// picking a column whose name ends in MB/MiB flips the unit to MB
+window._syncMemUnit = function (select) {
+  const unitSelect = document.getElementById("colmap_unit_mem");
+  if (!unitSelect || !select || !select.options) return;
+  const label = select.options[select.selectedIndex]
+    ? select.options[select.selectedIndex].text || ""
+    : "";
+  unitSelect.value = /(mb|mib)$/.test(normalizeHeader(label)) ? "MB" : "GB";
+};
+
+// "Edit mapping" button: reopens the panel prefilled with the mapping that
+// is currently applied, using the original (pre-rewrite) headers and rows
+function editColumnMapping() {
+  const last = window._lastIngest;
+  if (!last) return;
+  window._pendingIngest = {
+    headers: last.headers,
+    rows: last.rows,
+    match: {
+      mapping: last.mapping,
+      ambiguous: [],
+      unmatchedRequired: [],
+      units: last.units || {},
+    },
+  };
+  showColumnMappingPanel(last.headers, window._pendingIngest.match, {
+    isEdit: true,
+  });
+  const panel = document.getElementById("columnMappingSection");
+  if (panel && panel.scrollIntoView) {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+// Cancel button (edit mode only): close the panel, keep the applied mapping
+function cancelColumnMapping() {
+  window._pendingIngest = null;
+  const panel = document.getElementById("columnMappingSection");
+  if (panel) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
   }
 }
 
@@ -1034,8 +1164,232 @@ function applyColumnMapping() {
     return;
   }
 
-  saveColumnMapping(headerSignature(pending.headers), mapping);
-  applyIngest(pending.headers, pending.rows, mapping);
+  // Memory unit: explicit dropdown choice wins; auto-detect otherwise
+  const units = {};
+  if (Object.values(mapping).includes(COLUMN_MAPPINGS.memory)) {
+    const unitSelect = document.getElementById("colmap_unit_mem");
+    if (unitSelect && unitSelect.value === "MB") {
+      units[COLUMN_MAPPINGS.memory] = "MB";
+    } else if (!unitSelect || !unitSelect.value) {
+      Object.assign(units, detectMemoryUnit(mapping));
+    }
+  }
+
+  saveColumnMapping(headerSignature(pending.headers), mapping, units);
+  applyIngest(pending.headers, pending.rows, mapping, units);
+}
+
+// ─── Manual VM entry ──────────────────────────────────────────────────────────
+// Alternative to file upload for small inventories: a form that builds rows
+// with canonical headers and feeds the exact same ingestRows() pipeline, so
+// region validation, workers, preview, and exports all behave identically.
+let manualVMs = [];
+
+function loadManualVMs() {
+  try {
+    const stored = localStorage.getItem("cloudInstanceRecommenderManualVMs");
+    if (stored) manualVMs = JSON.parse(stored) || [];
+  } catch {
+    manualVMs = [];
+  }
+}
+
+function saveManualVMs() {
+  try {
+    localStorage.setItem(
+      "cloudInstanceRecommenderManualVMs",
+      JSON.stringify(manualVMs),
+    );
+  } catch (e) {
+    console.warn("Could not persist manual VM list:", e);
+  }
+}
+
+// Field definitions for the current page's providers. Region inputs are
+// sticky: they keep the last-entered value across adds.
+function manualFieldDefs() {
+  const defs = [
+    { key: "VM Name", label: "VM Name", type: "text", placeholder: "web-server-01" },
+    { key: "CPU Count", label: "CPU Count *", type: "number", placeholder: "4" },
+    { key: "Memory (GB)", label: "Memory (GB) *", type: "number", placeholder: "16" },
+    { key: "CPU Utilization", label: "CPU Util %", type: "number", placeholder: "45" },
+    { key: "Memory Utilization", label: "Mem Util %", type: "number", placeholder: "60" },
+  ];
+  window._manualRegionDefaults = window._manualRegionDefaults || {};
+  for (const provider of getPageProviders()) {
+    const key = InstanceSelectorFactory.getProviderRegionColumn(provider);
+    defs.push({
+      key,
+      label: key,
+      type: "text",
+      list: `manualRegions_${provider}`,
+      provider,
+      value:
+        window._manualRegionDefaults[key] ||
+        InstanceSelectorFactory.getProviderDefaultRegion(provider),
+    });
+  }
+  return defs;
+}
+
+function toggleManualEntry() {
+  const section = document.getElementById("manualEntrySection");
+  if (!section) return;
+  if (section.classList.contains("hidden")) {
+    loadManualVMs();
+    renderManualEntry();
+    section.classList.remove("hidden");
+  } else {
+    section.classList.add("hidden");
+  }
+}
+
+function renderManualEntry() {
+  const section = document.getElementById("manualEntrySection");
+  if (!section) return;
+  const defs = manualFieldDefs();
+
+  const inputs = defs
+    .map((d, i) => {
+      const listAttr = d.list ? ` list="${d.list}"` : "";
+      const valueAttr = d.value ? ` value="${escapeHtml(d.value)}"` : "";
+      return `
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <label for="manual_${i}" style="font-size: 11px; font-weight: 600; color: var(--text-body);">${escapeHtml(d.label)}</label>
+        <input id="manual_${i}" type="${d.type}"${listAttr}${valueAttr} placeholder="${escapeHtml(d.placeholder || "")}" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 140px;" />
+      </div>`;
+    })
+    .join("");
+
+  // Region autocomplete from the loaded manifests (best effort)
+  const datalists = getPageProviders()
+    .map((provider) => {
+      let regions = [];
+      try {
+        const selector =
+          window._prewarmedSelectors[provider] ||
+          InstanceSelectorFactory.createSelector(provider);
+        window._prewarmedSelectors[provider] = selector;
+        regions = selector.getAllAvailableRegionKeys();
+      } catch {
+        regions = [];
+      }
+      return `<datalist id="manualRegions_${provider}">${regions
+        .map((r) => `<option value="${escapeHtml(r)}"></option>`)
+        .join("")}</datalist>`;
+    })
+    .join("");
+
+  const regionCols = getPageProviders().map((p) =>
+    InstanceSelectorFactory.getProviderRegionColumn(p),
+  );
+  const listCols = ["VM Name", "CPU Count", "Memory (GB)", ...regionCols];
+  const listHtml = manualVMs.length
+    ? `<div style="overflow-x: auto; margin-top: 10px;">
+        <table style="border-collapse: collapse; font-size: 12px;">
+          <thead><tr>${listCols
+            .map(
+              (c) =>
+                `<th style="padding: 4px 10px; text-align: left; border-bottom: 1px solid var(--border-slate);">${escapeHtml(c)}</th>`,
+            )
+            .join("")}<th></th></tr></thead>
+          <tbody>${manualVMs
+            .map(
+              (vm, i) =>
+                `<tr>${listCols
+                  .map(
+                    (c) =>
+                      `<td style="padding: 3px 10px; border-bottom: 1px solid var(--border-lighter);">${escapeHtml(vm[c] || "")}</td>`,
+                  )
+                  .join(
+                    "",
+                  )}<td style="padding: 3px 6px; border-bottom: 1px solid var(--border-lighter);"><button onclick="manualRemoveVM(${i})" aria-label="Remove VM ${i + 1}" title="Remove" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--red-strong); cursor: pointer;">✕</button></td></tr>`,
+            )
+            .join("")}</tbody>
+        </table>
+      </div>`
+    : `<p style="font-size: 12px; color: var(--text-soft); margin-top: 10px;">No VMs added yet — fill the fields and click Add VM.</p>`;
+
+  const applyButtons = manualVMs.length
+    ? `<button class="btn btn-primary" onclick="manualApplyVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
+       <button class="btn btn-secondary" onclick="manualClearVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`
+    : "";
+
+  section.innerHTML = `
+    <div class="stats-info">
+      <p><strong>✍️ Manual VM Entry</strong></p>
+      <p style="font-size: 12px; color: var(--text-soft);">Handy for a few VMs — for large inventories use the file upload above. ENV/OS/Workload/Compliance defaults from Advanced Filtering apply to all rows.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+        ${inputs}
+        <button class="btn btn-secondary" onclick="manualAddVM()" style="padding: 8px 16px; font-size: 13px;">➕ Add VM</button>
+      </div>
+      ${listHtml}
+      ${applyButtons}
+    </div>
+    ${datalists}
+  `;
+}
+
+function manualAddVM() {
+  const defs = manualFieldDefs();
+  const row = {};
+  defs.forEach((d, i) => {
+    const input = document.getElementById(`manual_${i}`);
+    row[d.key] = input ? String(input.value || "").trim() : "";
+  });
+
+  const cpu = parseFloat(row["CPU Count"]);
+  const memory = parseFloat(row["Memory (GB)"]);
+  if (isNaN(cpu) || cpu <= 0 || isNaN(memory) || memory <= 0) {
+    alert("Please enter a CPU Count and Memory (GB) greater than 0.");
+    return;
+  }
+  if (!row["VM Name"]) row["VM Name"] = `vm-${manualVMs.length + 1}`;
+
+  manualVMs.push(row);
+  saveManualVMs();
+
+  // Region values stay sticky for the next add; the rest reset
+  defs.forEach((d, i) => {
+    if (d.provider) {
+      window._manualRegionDefaults[d.key] = row[d.key];
+    }
+  });
+  renderManualEntry();
+  const firstInput = document.getElementById("manual_0");
+  if (firstInput && firstInput.focus) firstInput.focus();
+}
+
+function manualRemoveVM(index) {
+  manualVMs.splice(index, 1);
+  saveManualVMs();
+  renderManualEntry();
+}
+
+function manualClearVMs() {
+  if (!manualVMs.length) return;
+  if (!confirm(`Remove all ${manualVMs.length} manually entered VM(s)?`)) {
+    return;
+  }
+  manualVMs = [];
+  saveManualVMs();
+  renderManualEntry();
+}
+
+// Feeds the manual list into the shared pipeline (canonical headers, so
+// mapping is a no-op and everything downstream behaves like an upload)
+function manualApplyVMs() {
+  if (!manualVMs.length) {
+    alert("Add at least one VM first.");
+    return;
+  }
+  window._uploadNote = null;
+  window._ingestLabel = "Manual entry applied";
+  const headers = manualFieldDefs().map((d) => d.key);
+  ingestRows(
+    headers,
+    manualVMs.map((vm) => ({ ...vm })),
+  );
 }
 
 // Parse CSV line handling quoted values
@@ -2087,10 +2441,7 @@ async function collectRegionDataForWorker(providers) {
         try {
           await selector.ensureRegionScriptLoaded(resolution.key);
         } catch (e) {
-          console.warn(
-            `[Worker] could not load region ${resolution.key}:`,
-            e,
-          );
+          console.warn(`[Worker] could not load region ${resolution.key}:`, e);
         }
       }
       if (window[resolution.key]) {
@@ -2465,7 +2816,11 @@ function _renderPreviewTable(
     const instCols = displayCols.filter(isInstanceCol);
     const allNoMatch =
       instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
-    const bg = allNoMatch ? "var(--danger-bg-soft)" : ri % 2 === 0 ? "var(--surface)" : "var(--surface-alt-2)";
+    const bg = allNoMatch
+      ? "var(--danger-bg-soft)"
+      : ri % 2 === 0
+        ? "var(--surface)"
+        : "var(--surface-alt-2)";
     const rowCsv = displayCols
       .map((c) => {
         const v = String(row[c] ?? "");
@@ -2503,7 +2858,8 @@ function _renderPreviewTable(
         const optVal = parseFloat(val);
         let diffStyle = "";
         if (!isNaN(l2lVal) && !isNaN(optVal) && l2lVal > 0) {
-          if (optVal < l2lVal) diffStyle = "color:var(--good-strong);font-weight:600;";
+          if (optVal < l2lVal)
+            diffStyle = "color:var(--good-strong);font-weight:600;";
           else if (optVal > l2lVal)
             diffStyle = "color:var(--amber-strong);font-weight:600;";
         }
@@ -2547,7 +2903,8 @@ function _renderPreviewTable(
           ? window._previewCursorPos
           : (filter || "").length;
       window._previewCursorPos = null;
-      if (searchInput.setSelectionRange) searchInput.setSelectionRange(pos, pos);
+      if (searchInput.setSelectionRange)
+        searchInput.setSelectionRange(pos, pos);
     }
   }
 }
@@ -2696,7 +3053,9 @@ function getNoMatchRows(results) {
 function downloadNoMatchRows() {
   const noMatch = getNoMatchRows(processedResults);
   if (!noMatch.length) {
-    alert("Every row received at least one recommendation — nothing to export.");
+    alert(
+      "Every row received at least one recommendation — nothing to export.",
+    );
     return;
   }
 

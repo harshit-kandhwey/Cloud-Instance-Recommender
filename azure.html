@@ -17,7 +17,8 @@
           stored = localStorage.getItem("cloudInstanceRecommenderTheme");
         } catch (e) {}
         var mql =
-          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
         document.documentElement.dataset.theme =
           stored === "dark" || stored === "light"
             ? stored
@@ -26,7 +27,9 @@
               : "light";
         window.toggleTheme = function () {
           var next =
-            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark";
           document.documentElement.dataset.theme = next;
           try {
             localStorage.setItem("cloudInstanceRecommenderTheme", next);
@@ -41,7 +44,9 @@
               saved = localStorage.getItem("cloudInstanceRecommenderTheme");
             } catch (err) {}
             if (saved !== "dark" && saved !== "light") {
-              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+              document.documentElement.dataset.theme = e.matches
+                ? "dark"
+                : "light";
             }
           });
         }
@@ -64,7 +69,9 @@
     <a class="skip-link" href="#main">Skip to main content</a>
     <div class="container">
       <header class="header">
-        <h1><span aria-hidden="true">🌐</span> Cloud Instance Recommender - Azure</h1>
+        <h1>
+          <span aria-hidden="true">🌐</span> Cloud Instance Recommender - Azure
+        </h1>
         <p>
           Generate optimal instance recommendations for Azure based on your
           current usage data
@@ -75,7 +82,16 @@
           <a href="azure.html" class="active">Azure</a>
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html">Multi Cloud</a>
-          <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">🌓</button>
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            onclick="toggleTheme()"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            aria-pressed="false"
+          >
+            🌓
+          </button>
         </nav>
       </header>
 
@@ -103,7 +119,13 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
             </div>
 
             <details style="margin-top: 10px">
-              <summary style="cursor: pointer; font-weight: 600; color: var(--text-body)">
+              <summary
+                style="
+                  cursor: pointer;
+                  font-weight: 600;
+                  color: var(--text-body);
+                "
+              >
                 Optional columns — click to see rule descriptions
               </summary>
               <div
@@ -148,13 +170,28 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                   </thead>
                   <tbody>
                     <tr>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>ENV</strong>
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         Production / Staging / Dev / Test
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>1a</strong> B-series burstable excluded
                         (Prod/Staging) · <strong>1b</strong> Current-gen only
                         (Prod) · <strong>1c</strong> ≥2 vCPUs (Prod) ·
@@ -162,49 +199,109 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>OS</strong>
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         Linux (default) / Windows
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         Windows → ARM (Dpdsv5, Bpsv2, etc.) excluded
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>Workload</strong>
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         General · Database · Web Server · Cache · ML/AI · Batch
                         · HPC · SAP
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         Preferred families sorted first: Database→E/M series ·
                         Web→D/F series · Cache→E/M · ML/AI→NC/ND/NV · Batch→F ·
                         HPC→HB/HC
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>Compliance</strong>
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         PCI / HIPAA / SOC2 / FIPS
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>1b</strong> Current-gen only · No burstable
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         <strong>Min Gen</strong>
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         3 / 4 / 5 (v-number)
                       </td>
-                      <td style="padding: 4px 8px; border: 1px solid var(--border-mid)">
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
                         Excludes VM series older than the specified v-generation
                         (e.g. 5 → only v5 series)
                       </td>
@@ -238,13 +335,26 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                 <input type="file" id="csvFile" accept=".csv,.xlsx" />
                 <label for="csvFile" class="file-upload-label">
                   <div class="upload-icon">📤</div>
-                  <div><strong>Click to upload CSV or Excel (.xlsx) file</strong></div>
+                  <div>
+                    <strong>Click to upload CSV or Excel (.xlsx) file</strong>
+                  </div>
                   <div style="color: var(--text-muted); margin-top: 5px">
                     or drag and drop your file here
                   </div>
                 </label>
               </div>
             </div>
+            <div style="margin: 10px 0">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="toggleManualEntry()"
+                style="font-size: 13px; padding: 8px 16px"
+              >
+                ✍️ Or enter VMs manually
+              </button>
+            </div>
+            <div id="manualEntrySection" class="hidden"></div>
             <div id="fileStatus" class="hidden"></div>
             <div id="columnMappingSection" class="hidden"></div>
             <!-- Placeholders for stats and preview -->
@@ -628,7 +738,13 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
               >
                 🧠 Rule Engine Defaults
               </p>
-              <p style="margin: 0 0 12px; font-size: 0.81em; color: var(--text-body)">
+              <p
+                style="
+                  margin: 0 0 12px;
+                  font-size: 0.81em;
+                  color: var(--text-body);
+                "
+              >
                 Set page-level defaults for all rows. Per-row CSV columns
                 override these. Rules merge with the filters above — conflicts
                 are flagged in red.
@@ -933,7 +1049,12 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       >
                         ENV=Production
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes B-series (burstable), enforces current-gen, min
                         4 vCPU for web/DB
                       </td>
@@ -949,7 +1070,12 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       >
                         OS=Windows
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         De-prioritises ARM (Dpds/Dplsv5) families; prefers Intel
                         or AMD
                       </td>
@@ -965,7 +1091,12 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       >
                         Workload=Web Server
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         D/F families first; Database → E/M families first; ML/AI
                         → NC/ND families first
                       </td>
@@ -981,7 +1112,12 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       >
                         Compliance=HIPAA/PCI
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes B-series; enforces current-gen
                       </td>
                     </tr>
@@ -996,7 +1132,12 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                       >
                         Min Gen=v5+
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes v3/v4 series; keeps Dsv5, Esv5 and newer only
                       </td>
                     </tr>
@@ -1058,7 +1199,11 @@ app-server-03,2,8,35,45,North Europe,Dev,Linux,General,,</pre
                 "
               >
                 <div
-                  style="font-weight: 700; color: var(--heading-blue); margin-bottom: 6px"
+                  style="
+                    font-weight: 700;
+                    color: var(--heading-blue);
+                    margin-bottom: 6px;
+                  "
                 >
                   🔵
                   <a

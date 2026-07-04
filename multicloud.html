@@ -17,7 +17,8 @@
           stored = localStorage.getItem("cloudInstanceRecommenderTheme");
         } catch (e) {}
         var mql =
-          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
         document.documentElement.dataset.theme =
           stored === "dark" || stored === "light"
             ? stored
@@ -26,7 +27,9 @@
               : "light";
         window.toggleTheme = function () {
           var next =
-            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark";
           document.documentElement.dataset.theme = next;
           try {
             localStorage.setItem("cloudInstanceRecommenderTheme", next);
@@ -41,7 +44,9 @@
               saved = localStorage.getItem("cloudInstanceRecommenderTheme");
             } catch (err) {}
             if (saved !== "dark" && saved !== "light") {
-              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+              document.documentElement.dataset.theme = e.matches
+                ? "dark"
+                : "light";
             }
           });
         }
@@ -79,7 +84,10 @@
     <a class="skip-link" href="#main">Skip to main content</a>
     <div class="container">
       <header class="header">
-        <h1><span aria-hidden="true">🌐</span> Cloud Instance Recommender - Multi-Cloud</h1>
+        <h1>
+          <span aria-hidden="true">🌐</span> Cloud Instance Recommender -
+          Multi-Cloud
+        </h1>
         <p>
           Generate optimal instance recommendations for AWS, Azure, and GCP
           based on your current usage data
@@ -90,7 +98,16 @@
           <a href="azure.html">Azure</a>
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html" class="active">Multi Cloud</a>
-          <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">🌓</button>
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            onclick="toggleTheme()"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            aria-pressed="false"
+          >
+            🌓
+          </button>
         </nav>
       </header>
 
@@ -135,13 +152,26 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                 <input type="file" id="csvFile" accept=".csv,.xlsx" />
                 <label for="csvFile" class="file-upload-label">
                   <div class="upload-icon">📤</div>
-                  <div><strong>Click to upload CSV or Excel (.xlsx) file</strong></div>
+                  <div>
+                    <strong>Click to upload CSV or Excel (.xlsx) file</strong>
+                  </div>
                   <div style="color: var(--text-muted); margin-top: 5px">
                     or drag and drop your file here
                   </div>
                 </label>
               </div>
             </div>
+            <div style="margin: 10px 0">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="toggleManualEntry()"
+                style="font-size: 13px; padding: 8px 16px"
+              >
+                ✍️ Or enter VMs manually
+              </button>
+            </div>
+            <div id="manualEntrySection" class="hidden"></div>
             <div id="fileStatus" class="hidden"></div>
             <div id="columnMappingSection" class="hidden"></div>
             <!-- Placeholders for stats and preview -->
@@ -653,7 +683,13 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
               >
                 🧠 Rule Engine Defaults
               </p>
-              <p style="margin: 0 0 12px; font-size: 0.81em; color: var(--text-body)">
+              <p
+                style="
+                  margin: 0 0 12px;
+                  font-size: 0.81em;
+                  color: var(--text-body);
+                "
+              >
                 Set page-level defaults applied to all rows across all selected
                 providers. Per-row CSV columns override these. Conflicts with
                 filters above are flagged in red.
@@ -958,7 +994,12 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                       >
                         ENV=Production
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes burstable (t-family / B-series / e2-shared),
                         enforces current-gen, min 4 vCPU for web/DB. AWS also
                         requires Nitro under Compliance.
@@ -975,7 +1016,12 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                       >
                         OS=Windows
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         De-prioritises ARM/Graviton families across all
                         providers; prefers Intel or AMD
                       </td>
@@ -991,7 +1037,12 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                       >
                         Workload=Database
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         AWS r-family first · Azure E/M-series first · GCP
                         n2-highmem/m1 first
                       </td>
@@ -1007,7 +1058,12 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                       >
                         Compliance=HIPAA/PCI
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes burstable; enforces current-gen. AWS: requires
                         Nitro-capable.
                       </td>
@@ -1023,7 +1079,12 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                       >
                         Min Gen=m6/v4/N4
                       </td>
-                      <td style="padding: 5px 8px; border: 1px solid var(--border-slate)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
                         Excludes older generations: m5/r5 (AWS), Dsv3/Esv3
                         (Azure), N1 (GCP). Useful as m5 approaches EOL.
                       </td>
@@ -1093,7 +1154,11 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                   "
                 >
                   <div
-                    style="font-weight: 700; color: var(--heading-indigo); margin-bottom: 5px"
+                    style="
+                      font-weight: 700;
+                      color: var(--heading-indigo);
+                      margin-bottom: 5px;
+                    "
                   >
                     🟠
                     <a
@@ -1131,7 +1196,11 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                   "
                 >
                   <div
-                    style="font-weight: 700; color: var(--heading-blue); margin-bottom: 5px"
+                    style="
+                      font-weight: 700;
+                      color: var(--heading-blue);
+                      margin-bottom: 5px;
+                    "
                   >
                     🔵
                     <a
@@ -1167,7 +1236,11 @@ app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,
                   "
                 >
                   <div
-                    style="font-weight: 700; color: var(--heading-green); margin-bottom: 5px"
+                    style="
+                      font-weight: 700;
+                      color: var(--heading-green);
+                      margin-bottom: 5px;
+                    "
                   >
                     🟢
                     <a
