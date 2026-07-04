@@ -4,7 +4,7 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
 ![Version](https://img.shields.io/badge/Version-3.2-green)
-![License](https://img.shields.io/badge/License-Proprietary-red)
+![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 
@@ -319,9 +319,13 @@ The application uses a modular, class-based architecture:
 
 ## 📄 License
 
-Proprietary software — all rights reserved by Harshit Kandhwey.
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE):
 
-The application is available for public use and demonstration. Source code is provided for transparency. Copying, modification, or redistribution without explicit permission is not permitted.
+- **Free for noncommercial use** — personal, educational, research, and hobby use, including modifying the code, self-hosting, and sharing forks (with the license and [NOTICE](NOTICE) preserved).
+- **The hosted application is free for everyone**, including commercial users — the license governs the source code, not visiting the site.
+- **Commercial use of the code** (using it in or for a business, commercial self-hosting or redistribution) requires written permission — reach out at harshitkandhwey@gmail.com.
+
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📞 Contact & Support
 

@@ -103,6 +103,13 @@ Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml). Inc
 - What you expected vs. what happened
 - A sample CSV if relevant (anonymize sensitive data)
 
+## License of Contributions
+
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). By submitting a pull request, you agree that:
+
+1. Your contribution is provided under the project's license, and
+2. You grant the maintainer a perpetual, worldwide, royalty-free right to use, modify, and **relicense** your contribution as part of this project (this keeps a future move to a more permissive license possible without tracking down every past contributor).
+
 ## Questions?
 
 Open a [Discussion](../../discussions) or reach out at harshitkandhwey@gmail.com.
