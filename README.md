@@ -321,9 +321,10 @@ The application uses a modular, class-based architecture:
 
 Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE):
 
-- **Free for noncommercial use** — personal, educational, research, and hobby use, including modifying the code, self-hosting, and sharing forks (with the license and [NOTICE](NOTICE) preserved).
+- **Free for any noncommercial purpose** — personal use, education, research, and hobby projects, including modifying the code, self-hosting, and sharing forks (with the license and [NOTICE](NOTICE) preserved).
+- **Charitable organizations, educational institutions, government institutions, and public research organizations** may use the code for permitted purposes regardless of their source of funding, per the license's noncommercial-organization provision.
 - **The hosted application is free for everyone**, including commercial users — the license governs the source code, not visiting the site.
-- **Commercial use of the code** (using it in or for a business, commercial self-hosting or redistribution) requires written permission — reach out at harshitkandhwey@gmail.com.
+- **Other commercial use of the code** (for-profit self-hosting, embedding in commercial products or services, commercial redistribution) requires written permission — reach out at harshitkandhwey@gmail.com.
 
 Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
