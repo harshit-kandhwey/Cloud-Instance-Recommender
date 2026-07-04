@@ -70,11 +70,20 @@ To refresh the data:
 2. Run `node tools/split-data.js` — it rewrites the manifest and regenerates `js/{provider}/regions/`, removing region files that no longer exist upstream. The tool is idempotent (skips providers already in manifest form) and hard-fails rather than writing anything if the input doesn't parse cleanly
 3. Verify with spot-checks on known instance types, then commit the manifest **and** the regenerated `regions/` files together
 
+## Running Tests
+
+```bash
+node tests/run-all.js       # all suites + golden byte-compare
+node tests/syntax-check.js  # syntax check over first-party JS
+```
+
+No framework or npm install needed — see [tests/README.md](tests/README.md) for how the harness works and when to regenerate goldens.
+
 ## Pull Request Guidelines
 
 1. **Fork** the repository and create a branch from `main`
 2. **Describe** what you changed and why in the PR description
-3. **Test** your changes in Chrome, Firefox, and Edge (no unit test suite — test the full flow with a sample CSV)
+3. **Test** your changes: run `node tests/run-all.js` (all suites + golden compare must pass — CI enforces this on every PR), and check the full flow in a browser with a sample CSV
 4. **Keep PRs focused** — one logical change per PR
 5. **Do not** commit generated data files unless you are refreshing instance data
 
