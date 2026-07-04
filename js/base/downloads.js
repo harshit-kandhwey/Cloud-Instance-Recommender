@@ -304,14 +304,22 @@ function openAppPortfolio() {
   // Deliver the payload as soon as the child announces it's ready. postMessage
   // is same-origin (CSP-safe) and uncapped, so it carries large estates the
   // localStorage copy couldn't.
+  let readyTimeout = null;
   const onReady = (event) => {
     if (event.origin !== location.origin) return;
     if (event.source !== child) return;
     if (!event.data || event.data.type !== "portfolio-ready") return;
     child.postMessage({ type: "portfolio-data", payload }, location.origin);
     window.removeEventListener("message", onReady);
+    clearTimeout(readyTimeout);
   };
   window.addEventListener("message", onReady);
+  // Don't leak the listener if the child never announces readiness (popup
+  // blocked mid-load, tab closed, page error). The localStorage copy still
+  // lets the opened page load its data on its own.
+  readyTimeout = setTimeout(() => {
+    window.removeEventListener("message", onReady);
+  }, 15000);
 }
 
 // Shows the "Open App Portfolio" button (with app count) only when results

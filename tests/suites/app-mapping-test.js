@@ -274,20 +274,24 @@ const realSetItem = sandbox.localStorage.setItem;
 sandbox.localStorage.setItem = () => {
   throw new Error("storage unavailable");
 };
-check(
-  "saveAppWorkloadMap returns false when storage throws",
-  run('saveAppWorkloadMap({ x: "Cache" })') === false,
-);
-elements.appMappingSection._qsa = [
-  { getAttribute: () => "Billing", value: "Database" },
-];
-run("applyAppMapping()");
-check(
-  "applyAppMapping shows a failure notice, not '✓ Saved'",
-  /could not save/i.test(elements.appMappingStatus.textContent) &&
-    !elements.appMappingStatus.textContent.includes("✓"),
-  elements.appMappingStatus.textContent,
-);
-sandbox.localStorage.setItem = realSetItem;
+try {
+  check(
+    "saveAppWorkloadMap returns false when storage throws",
+    run('saveAppWorkloadMap({ x: "Cache" })') === false,
+  );
+  elements.appMappingSection._qsa = [
+    { getAttribute: () => "Billing", value: "Database" },
+  ];
+  run("applyAppMapping()");
+  check(
+    "applyAppMapping shows a failure notice, not '✓ Saved'",
+    /could not save/i.test(elements.appMappingStatus.textContent) &&
+      !elements.appMappingStatus.textContent.includes("✓"),
+    elements.appMappingStatus.textContent,
+  );
+} finally {
+  // Restore even if a check throws, so later suites see a working setItem.
+  sandbox.localStorage.setItem = realSetItem;
+}
 
 process.exit(failures ? 1 : 0);

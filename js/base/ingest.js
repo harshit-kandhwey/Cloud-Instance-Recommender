@@ -697,6 +697,9 @@ function applyAppMapping() {
     status.textContent = ok
       ? "✓ Saved — applied on the next Generate"
       : "⚠️ Could not save — browser storage is unavailable";
+    // The span's base color is the success green; recolor on failure so the
+    // warning doesn't read as a success.
+    status.style.color = ok ? "var(--good-strong)" : "var(--red-strong)";
   }
 }
 
