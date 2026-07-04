@@ -129,7 +129,11 @@ function showResultsPreview(results) {
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
-  container.scrollIntoView({ behavior: "smooth", block: "start" });
+  // Scroll so the download button stays visible at the top of the viewport;
+  // the preview flows below and the user scrolls down for rows that don't fit.
+  // (Anchoring on the preview itself pushed the download button off-screen.)
+  const scrollAnchor = document.getElementById("downloadSection") || container;
+  scrollAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function _renderPreviewTable(
