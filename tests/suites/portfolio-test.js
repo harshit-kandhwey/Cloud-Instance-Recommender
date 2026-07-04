@@ -5,9 +5,9 @@
 //   - match health + top no-match reasons
 //   - right-sizing counts (Optimized runs, vCPU-based)
 //   - estate totals, rankings, workload totals
-// portfolio.js is self-contained (its own isNoMatchValue/getInstanceColumns),
-// so this loads only app-core.js + portfolio.js — NOT downloads.js/preview.js
-// (which would collide on PORTFOLIO_STORAGE_KEY).
+// portfolio.js gets isNoMatchValue/getInstanceColumns/PORTFOLIO_STORAGE_KEY
+// from app-core.js (shared), so this loads only app-core.js + portfolio.js —
+// the tool-page modules (preview.js/downloads.js) aren't needed here.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

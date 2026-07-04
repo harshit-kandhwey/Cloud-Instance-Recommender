@@ -2,17 +2,9 @@
 // download button arrangement.
 
 // ─── Generation stats bar ─────────────────────────────────────────────────────
-// Shared no-match predicate — used by stats, the preview table, and the
-// no-match export so they can never disagree on what "no match" means
-const NO_MATCH_VALUES = new Set([
-  "No data available",
-  "Missing data",
-  "Error",
-  "No utilization data",
-]);
-function isNoMatchValue(v) {
-  return !v || NO_MATCH_VALUES.has(String(v)) || String(v).startsWith("No ");
-}
+// isNoMatchValue / getInstanceColumns live in app-core.js (loaded first on
+// every page) so the stats bar, exports, and the App Portfolio page share one
+// definition.
 
 // Shared CSV cell escaping (quotes + formula-injection hardening)
 function escapeCsvCell(val) {

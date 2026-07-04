@@ -44,17 +44,8 @@ function downloadResults() {
   console.log("CSV download completed");
 }
 
-// The recommendation ("instance") columns present in a result set — derived
-// from the results so it handles L2L-only, optimized-only, and any provider
-// combination. Shared by no-match detection and the app summary so they can't
-// drift apart.
-function getInstanceColumns(results) {
-  if (!results || !results.length) return [];
-  return Object.keys(results[0]).filter(
-    (k) =>
-      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
-  );
-}
+// getInstanceColumns / isNoMatchValue are defined in app-core.js (shared with
+// the preview and the App Portfolio page).
 
 // ─── No-match remediation export ──────────────────────────────────────────────
 // A row qualifies when EVERY instance column present is a no-match.
@@ -233,7 +224,7 @@ function updateAppSummaryButton(results) {
 // set. There is no backend: the data is handed over in-browser via postMessage
 // (primary, same-origin, no size cap) with a localStorage copy as a cold-open
 // fallback. Shown only when the results carry at least one named app.
-const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";
+// PORTFOLIO_STORAGE_KEY is defined in app-core.js (shared with portfolio.js).
 
 // Which tool page this run originated on — drives the portfolio's About sheet
 // and provider inference. Derived from the filename, falling back to the

@@ -8,9 +8,9 @@
 // This commit wires up the handoff and the page shell. The analytics engine,
 // the tabbed UI, and the workbook export are added in subsequent commits.
 
-// Shared with the tool-page handoff writer (downloads.js). Separate global
-// scopes (this file only loads on app-portfolio.html), so no collision.
-const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";
+// PORTFOLIO_STORAGE_KEY, isNoMatchValue, and getInstanceColumns are defined in
+// app-core.js (loaded before this file on app-portfolio.html) and shared with
+// the tool-page exports, so there's a single source of truth.
 
 // The most recently received handoff payload, or null until data arrives.
 let portfolioData = null;
@@ -49,6 +49,9 @@ function initPortfolioHandoff() {
 
 function onPortfolioMessage(event) {
   if (event.origin !== location.origin) return;
+  // The handoff always comes from the opener (the tool page). Reject anything
+  // else even on the same origin (defense in depth).
+  if (event.source !== window.opener) return;
   const msg = event.data || {};
   if (msg.type === "portfolio-data" && msg.payload) {
     receivePortfolio(msg.payload);
@@ -83,27 +86,7 @@ function receivePortfolio(payload) {
 // buildPortfolioModel(payload) turns a handoff payload into an
 // application-centric model that the UI and the Excel export both consume.
 // Everything here is side-effect-free and unit-tested (portfolio-test.js).
-//
-// The portfolio page does not load preview.js / downloads.js (they carry
-// tool-page DOM and a colliding PORTFOLIO_STORAGE_KEY), so it keeps its own
-// copies of these two tiny predicates. Semantics must stay in step with
-// preview.js#isNoMatchValue and downloads.js#getInstanceColumns.
-const PORTFOLIO_NO_MATCH = new Set([
-  "No data available",
-  "Missing data",
-  "Error",
-  "No utilization data",
-]);
-function isNoMatchValue(v) {
-  return !v || PORTFOLIO_NO_MATCH.has(String(v)) || String(v).startsWith("No ");
-}
-function getInstanceColumns(results) {
-  if (!results || !results.length) return [];
-  return Object.keys(results[0]).filter(
-    (k) =>
-      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
-  );
-}
+// isNoMatchValue / getInstanceColumns come from app-core.js (shared).
 
 // Result columns prefix each provider's recommendations in upper case.
 const PORTFOLIO_PROVIDER_LABELS = { aws: "AWS", azure: "AZURE", gcp: "GCP" };
@@ -384,7 +367,24 @@ function buildPortfolioModel(payload) {
 // per app (and an Unassigned tab). Pure CSS/DOM, theme-aware via portfolio.css.
 // Interactions use inline onclick/oninput handlers (CSP allows 'unsafe-inline').
 
-const esc = (v) => (typeof escapeHtml === "function" ? escapeHtml(String(v)) : String(v));
+// Guaranteed-safe HTML escaping. Prefers app-core.js#escapeHtml, but never
+// degrades to raw output if that global is somehow absent — every rendered
+// field originates from an uploaded CSV and is injected via innerHTML.
+function pfEscapeHtml(str) {
+  return String(str).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
+}
+const esc = (v) =>
+  typeof escapeHtml === "function" ? escapeHtml(String(v)) : pfEscapeHtml(v);
 
 // Overview table sort/filter/expand state (persists across re-renders).
 const overviewState = {

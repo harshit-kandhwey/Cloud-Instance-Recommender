@@ -478,3 +478,34 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+// ─── Shared result-set primitives ─────────────────────────────────────────────
+// Defined here (every page loads app-core.js first) so the stats bar, the
+// preview table, the CSV/no-match/app exports, and the App Portfolio page all
+// agree on what "no match" means and which columns are recommendations.
+
+// Sentinel values a recommendation cell holds when nothing matched.
+const NO_MATCH_VALUES = new Set([
+  "No data available",
+  "Missing data",
+  "Error",
+  "No utilization data",
+]);
+function isNoMatchValue(v) {
+  return !v || NO_MATCH_VALUES.has(String(v)) || String(v).startsWith("No ");
+}
+
+// The recommendation ("instance") columns present in a result set — derived
+// from the results so it handles L2L-only, optimized-only, and any provider
+// combination.
+function getInstanceColumns(results) {
+  if (!results || !results.length) return [];
+  return Object.keys(results[0]).filter(
+    (k) =>
+      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
+  );
+}
+
+// localStorage key for the App Portfolio handoff copy (written by
+// downloads.js#openAppPortfolio, read by portfolio.js).
+const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";

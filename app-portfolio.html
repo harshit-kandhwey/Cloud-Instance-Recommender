@@ -50,6 +50,17 @@
             }
           });
         }
+        // Sync the toggle's aria-pressed with the resolved initial theme (the
+        // button doesn't exist yet while this runs in <head>).
+        document.addEventListener("DOMContentLoaded", function () {
+          var btn = document.getElementById("themeToggle");
+          if (btn) {
+            btn.setAttribute(
+              "aria-pressed",
+              document.documentElement.dataset.theme === "dark",
+            );
+          }
+        });
       })();
     </script>
     <link rel="stylesheet" href="css/theme.css" />
@@ -82,7 +93,9 @@
           <a href="azure.html">Azure</a>
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html">Multi Cloud</a>
-          <a href="app-portfolio.html" class="active">App Portfolio</a>
+          <a href="app-portfolio.html" class="active" aria-current="page"
+            >App Portfolio</a
+          >
           <button
             id="themeToggle"
             class="theme-toggle"
@@ -105,27 +118,20 @@
             <h2 class="section-title">No portfolio data yet</h2>
           </div>
           <div class="section-content">
-            <p style="color: var(--text-body); line-height: 1.7">
+            <p class="pf-empty-lead">
               This page visualises your recommendations
               <strong>grouped by application</strong>. To fill it, generate
               recommendations on a tool page from a file that includes an
               <strong>App Name</strong> column, then click
               <strong>📊 Open App Portfolio</strong> in the download section.
             </p>
-            <div
-              style="
-                display: flex;
-                gap: 12px;
-                flex-wrap: wrap;
-                margin-top: 14px;
-              "
-            >
+            <div class="pf-empty-actions">
               <a class="btn btn-primary" href="multicloud.html">Multi Cloud</a>
               <a class="btn btn-secondary" href="aws.html">AWS</a>
               <a class="btn btn-secondary" href="azure.html">Azure</a>
               <a class="btn btn-secondary" href="gcp.html">GCP</a>
             </div>
-            <p style="color: var(--text-muted); margin-top: 14px; font-size: 0.9em">
+            <p class="pf-empty-note">
               Nothing is uploaded anywhere — the data is passed to this page
               in-browser and stays on your machine.
             </p>

@@ -1,6 +1,23 @@
 /* App Portfolio page — tabbed dashboard, mini stacked bars, chips, tables.
    Theme-aware via the tokens in theme.css. Load AFTER theme.css + style.css. */
 
+/* Empty state (before any data is handed off) */
+.pf-empty-lead {
+  color: var(--text-body);
+  line-height: 1.7;
+}
+.pf-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+.pf-empty-note {
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 /* Toolbar (source meta + export) */
 .pf-toolbar {
   display: flex;
