@@ -121,6 +121,26 @@ const COLUMN_SYNONYMS = {
 const MAPPABLE_CANONICALS = Object.values(COLUMN_MAPPINGS);
 const REQUIRED_CANONICALS = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
 
+// The canonicals relevant on the current page: all provider-agnostic fields
+// plus only the region columns of providers this page loads (no Azure/GCP
+// Region rows in the mapping panel on the AWS page, etc.). Region columns of
+// other providers pass through untouched — they're unused here anyway.
+function pageCanonicals() {
+  const allRegionCols = new Set(
+    ["aws", "azure", "gcp"].map((p) =>
+      InstanceSelectorFactory.getProviderRegionColumn(p),
+    ),
+  );
+  const pageRegionCols = new Set(
+    getPageProviders().map((p) =>
+      InstanceSelectorFactory.getProviderRegionColumn(p),
+    ),
+  );
+  return MAPPABLE_CANONICALS.filter(
+    (c) => !allRegionCols.has(c) || pageRegionCols.has(c),
+  );
+}
+
 // Initialize page
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────
 // Each provider manifest (js/{p}/{p}-data.js) sets window.{PROVIDER}_DATA_READY
@@ -780,7 +800,7 @@ function headerSignature(headers) {
 // Returns { mapping (source→canonical), renames, unmatchedRequired,
 // ambiguous, needsReview }.
 function autoMatchHeaders(headers) {
-  const canonicals = MAPPABLE_CANONICALS;
+  const canonicals = pageCanonicals();
   const required = REQUIRED_CANONICALS;
   const providers = getPageProviders();
   const claimed = new Set();
@@ -1012,7 +1032,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
     return;
   }
 
-  const canonicals = MAPPABLE_CANONICALS;
+  const canonicals = pageCanonicals();
   const required = REQUIRED_CANONICALS;
   const guessBySource = match.mapping; // source → canonical
   const guessedSource = {};
@@ -1145,7 +1165,7 @@ function applyColumnMapping() {
   const pending = window._pendingIngest;
   if (!pending) return;
 
-  const canonicals = MAPPABLE_CANONICALS;
+  const canonicals = pageCanonicals();
   const required = REQUIRED_CANONICALS;
   const mapping = {};
   const usedSources = new Set();
