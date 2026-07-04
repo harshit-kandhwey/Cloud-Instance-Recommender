@@ -846,16 +846,19 @@ function rewriteRowKeys(rows, mapping) {
   });
 }
 
-// Memory unit detection: a source header whose normalized name ends in
-// mb/mib (RVTools-style exports) holds megabytes — convert to GB on ingest
+// A header whose normalized name ends in mb/mib (RVTools-style exports)
+// holds megabytes
+function isMbHeader(header) {
+  return /(mb|mib)$/.test(normalizeHeader(header));
+}
+
+// Memory unit detection for a mapping: MB source → convert to GB on ingest
 function detectMemoryUnit(mapping) {
   const source = Object.keys(mapping).find(
     (s) => mapping[s] === COLUMN_MAPPINGS.memory,
   );
   if (!source) return {};
-  return /(mb|mib)$/.test(normalizeHeader(source))
-    ? { [COLUMN_MAPPINGS.memory]: "MB" }
-    : {};
+  return isMbHeader(source) ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
 }
 
 // Saved mappings: { headerSignature: { mapping: {source: canonical},
@@ -999,7 +1002,12 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   if (!panel) {
     // Page has no panel placeholder — apply best-effort mapping instead
     if (!opts.isEdit) {
-      applyIngest(headers, window._pendingIngest.rows, match.mapping);
+      applyIngest(
+        headers,
+        window._pendingIngest.rows,
+        match.mapping,
+        match.units || detectMemoryUnit(match.mapping),
+      );
     }
     return;
   }
@@ -1095,7 +1103,7 @@ window._syncMemUnit = function (select) {
   const label = select.options[select.selectedIndex]
     ? select.options[select.selectedIndex].text || ""
     : "";
-  unitSelect.value = /(mb|mib)$/.test(normalizeHeader(label)) ? "MB" : "GB";
+  unitSelect.value = isMbHeader(label) ? "MB" : "GB";
 };
 
 // "Edit mapping" button: reopens the panel prefilled with the mapping that
