@@ -17,7 +17,8 @@
           stored = localStorage.getItem("cloudInstanceRecommenderTheme");
         } catch (e) {}
         var mql =
-          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
         document.documentElement.dataset.theme =
           stored === "dark" || stored === "light"
             ? stored
@@ -26,7 +27,9 @@
               : "light";
         window.toggleTheme = function () {
           var next =
-            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark";
           document.documentElement.dataset.theme = next;
           try {
             localStorage.setItem("cloudInstanceRecommenderTheme", next);
@@ -41,7 +44,9 @@
               saved = localStorage.getItem("cloudInstanceRecommenderTheme");
             } catch (err) {}
             if (saved !== "dark" && saved !== "light") {
-              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+              document.documentElement.dataset.theme = e.matches
+                ? "dark"
+                : "light";
             }
           });
         }
@@ -681,15 +686,47 @@
         <h2>🆕 What's New in v3.2</h2>
       </div>
       <ul class="check">
-        <li><strong>Excel upload</strong> — <code>.xlsx</code> workbooks are accepted alongside CSV; the first sheet is used.</li>
-        <li><strong>Column auto-mapping</strong> — headers like <code>vCPUs</code>, <code>RAM</code>, or <code>Hostname</code> map automatically to the expected columns; ambiguous cases open a mapping panel, and confirmed mappings are remembered for repeat uploads.</li>
-        <li><strong>Region Check panel</strong> — after upload, chips show each region as recognized (green), auto-resolved (amber, e.g. <code>us-east-1a → us-east-1</code>), or unknown (red — those rows would use built-in sample data).</li>
-        <li><strong>Faster loading</strong> — instance data loads per region on demand; pages open with a few KB of data instead of ~25 MB.</li>
-        <li><strong>Real progress, no freezing</strong> — generation runs in a background worker with a row-accurate progress bar and automatic fallback.</li>
-        <li><strong>Preview search</strong> — filter the results preview live across all visible columns.</li>
-        <li><strong>No-Match export</strong> — download only the rows that got no recommendation, with reasons, to fix and re-upload.</li>
-        <li><strong>Dark mode</strong> — 🌓 toggle on every page; follows your OS setting until you choose manually.</li>
-        <li><strong>Keyboard &amp; screen-reader support</strong> — collapsible sections, table sorting, and status updates are fully accessible.</li>
+        <li>
+          <strong>Excel upload</strong> — <code>.xlsx</code> workbooks are
+          accepted alongside CSV; the first sheet is used.
+        </li>
+        <li>
+          <strong>Column auto-mapping</strong> — headers like
+          <code>vCPUs</code>, <code>RAM</code>, or <code>Hostname</code> map
+          automatically to the expected columns; ambiguous cases open a mapping
+          panel, and confirmed mappings are remembered for repeat uploads.
+        </li>
+        <li>
+          <strong>Region Check panel</strong> — after upload, chips show each
+          region as recognized (green), auto-resolved (amber, e.g.
+          <code>us-east-1a → us-east-1</code>), or unknown (red — those rows
+          would use built-in sample data).
+        </li>
+        <li>
+          <strong>Faster loading</strong> — instance data loads per region on
+          demand; pages open with a few KB of data instead of ~25 MB.
+        </li>
+        <li>
+          <strong>Real progress, no freezing</strong> — generation runs in a
+          background worker with a row-accurate progress bar and automatic
+          fallback.
+        </li>
+        <li>
+          <strong>Preview search</strong> — filter the results preview live
+          across all visible columns.
+        </li>
+        <li>
+          <strong>No-Match export</strong> — download only the rows that got no
+          recommendation, with reasons, to fix and re-upload.
+        </li>
+        <li>
+          <strong>Dark mode</strong> — 🌓 toggle on every page; follows your OS
+          setting until you choose manually.
+        </li>
+        <li>
+          <strong>Keyboard &amp; screen-reader support</strong> — collapsible
+          sections, table sorting, and status updates are fully accessible.
+        </li>
       </ul>
 
       <div class="toc-page page-break">

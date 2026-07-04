@@ -17,7 +17,8 @@
           stored = localStorage.getItem("cloudInstanceRecommenderTheme");
         } catch (e) {}
         var mql =
-          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
         document.documentElement.dataset.theme =
           stored === "dark" || stored === "light"
             ? stored
@@ -26,7 +27,9 @@
               : "light";
         window.toggleTheme = function () {
           var next =
-            document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark";
           document.documentElement.dataset.theme = next;
           try {
             localStorage.setItem("cloudInstanceRecommenderTheme", next);
@@ -41,7 +44,9 @@
               saved = localStorage.getItem("cloudInstanceRecommenderTheme");
             } catch (err) {}
             if (saved !== "dark" && saved !== "light") {
-              document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+              document.documentElement.dataset.theme = e.matches
+                ? "dark"
+                : "light";
             }
           });
         }
@@ -66,7 +71,16 @@
           <a href="azure.html">Azure</a>
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html">Multi Cloud</a>
-          <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">🌓</button>
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            onclick="toggleTheme()"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            aria-pressed="false"
+          >
+            🌓
+          </button>
         </nav>
       </header>
 

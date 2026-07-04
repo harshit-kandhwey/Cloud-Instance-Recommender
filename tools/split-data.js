@@ -100,7 +100,9 @@ function splitProvider({ name, prefix }) {
   const extractedSet = new Set(extractedKeys);
   const missing = declaredKeys.filter((k) => !extractedSet.has(k));
   if (missing.length) {
-    throw new Error(`[${name}] declared but not extracted: ${missing.join(", ")}`);
+    throw new Error(
+      `[${name}] declared but not extracted: ${missing.join(", ")}`,
+    );
   }
 
   // Build per-region files and syntax-validate each BEFORE any disk write.

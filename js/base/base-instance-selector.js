@@ -141,11 +141,13 @@ class BaseInstanceSelector {
   // key it EXTENDS — a shorter input never expands to a longer key, so
   // "eastus" can never grab "eastus2".
   _resolveManifestKey(normalizedRegion) {
-    const keys =
-      window[`${this.getProviderName().toUpperCase()}_REGION_KEYS`];
+    const keys = window[`${this.getProviderName().toUpperCase()}_REGION_KEYS`];
     if (!Array.isArray(keys)) return null;
     if (keys.includes(normalizedRegion)) return normalizedRegion;
-    const strip = (s) => String(s).toLowerCase().replace(/[\s\-_]/g, "");
+    const strip = (s) =>
+      String(s)
+        .toLowerCase()
+        .replace(/[\s\-_]/g, "");
     const target = strip(normalizedRegion);
     const matches = keys.filter((k) => {
       const nk = strip(k);
