@@ -645,10 +645,9 @@ function maybeShowAppMappingPanel() {
   const saved = loadAppWorkloadMap();
   const rows = apps
     .map((app, idx) => {
-      const key = app.toLowerCase();
-      const cur = Object.prototype.hasOwnProperty.call(saved, key)
-        ? saved[key]
-        : "";
+      // safeMapGet (defined in instance-selector-factory.js) guards against
+      // inherited Object.prototype keys like an app literally named "constructor"
+      const cur = safeMapGet(saved, app.toLowerCase());
       const opts = [
         `<option value="">— use page default —</option>`,
         ...APP_WORKLOAD_OPTIONS.map(

@@ -109,20 +109,29 @@ function check(name, cond, detail) {
   }
 }
 
-// Storefront (2 VMs, both matched), Billing (1 VM, no match), one blank-app VM
-// (skipped), and one app name starting with "=" (formula-injection check).
+// Storefront (2 VMs, both matched), Billing (1 VM, no match), a blank-app and a
+// whitespace-only-app VM (both skipped), and four app names starting with the
+// OWASP formula-injection triggers = + - @ (must all be escaped in the CSV).
 const results = [
   { "VM Name": "a1", "App Name": "Storefront", "CPU Count": "4", "Memory (GB)": "16", "AWS Like-to-Like Instance": "m5.xlarge" },
   { "VM Name": "a2", "App Name": "Storefront", "CPU Count": "2", "Memory (GB)": "8", "AWS Like-to-Like Instance": "m5.large" },
   { "VM Name": "b1", "App Name": "Billing", "CPU Count": "8", "Memory (GB)": "32", "AWS Like-to-Like Instance": "No data available" },
   { "VM Name": "u1", "App Name": "", "CPU Count": "1", "Memory (GB)": "2", "AWS Like-to-Like Instance": "t3.micro" },
+  { "VM Name": "w1", "App Name": "   ", "CPU Count": "1", "Memory (GB)": "2", "AWS Like-to-Like Instance": "t3.micro" },
   { "VM Name": "e1", "App Name": "=Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
+  { "VM Name": "e2", "App Name": "+Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
+  { "VM Name": "e3", "App Name": "-Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
+  { "VM Name": "e4", "App Name": "@Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
 ];
 vm.runInContext(`processedResults = ${JSON.stringify(results)};`, ctx);
 
 console.log("[getAppSummary]");
 const summary = vm.runInContext("getAppSummary(processedResults)", ctx);
-check("3 named apps (blank skipped)", summary.length === 3, JSON.stringify(summary.map((s) => s.app)));
+check(
+  "6 named apps (blank + whitespace-only skipped)",
+  summary.length === 6,
+  JSON.stringify(summary.map((s) => s.app)),
+);
 const byApp = Object.fromEntries(summary.map((s) => [s.app, s]));
 check(
   "Storefront rolls up 2 VMs / 6 vCPUs / 24 GB / 2 matched",
@@ -139,7 +148,11 @@ check(
   byApp.Billing && byApp.Billing.matched === 0 && byApp.Billing.noMatch === 1,
   JSON.stringify(byApp.Billing),
 );
-check("blank-app VM not in any app", !summary.some((s) => s.app === ""));
+check(
+  "blank + whitespace-only app VMs not in any app",
+  !summary.some((s) => !s.app.trim()),
+  JSON.stringify(summary.map((s) => s.app)),
+);
 
 console.log("[no App Name column → empty]");
 check(
@@ -155,7 +168,7 @@ vm.runInContext("updateAppSummaryButton(processedResults)", ctx);
 check(
   "button visible with app count",
   !elements.downloadAppSummaryBtn.classes.has("hidden") &&
-    elements.downloadAppSummaryBtn.textContent.includes("(3)"),
+    elements.downloadAppSummaryBtn.textContent.includes("(6)"),
   elements.downloadAppSummaryBtn.textContent,
 );
 vm.runInContext(
@@ -181,10 +194,12 @@ check(
     "App Name,VMs,Total vCPUs,Total Memory (GB),Matched VMs,No-Match VMs",
   lines[0],
 );
-check("3 data rows", lines.length === 4, String(lines.length));
+check("6 data rows", lines.length === 7, String(lines.length));
 check(
-  "formula-injection hardened (=Evil → '=Evil)",
-  lines.some((l) => l.startsWith("'=Evil")),
+  "formula-injection hardened for = + - @ prefixes",
+  ["'=Evil", "'+Evil", "'-Evil", "'@Evil"].every((needle) =>
+    lines.some((l) => l.startsWith(needle)),
+  ),
   downloads[0].blob.content,
 );
 check(
@@ -196,8 +211,8 @@ check(
 console.log("[stats bar chip]");
 const statsHtml = vm.runInContext("_buildStatsHtml(processedResults)", ctx);
 check(
-  '"3 apps" chip rendered',
-  statsHtml.includes("<strong>3</strong> apps"),
+  '"6 apps" chip rendered',
+  statsHtml.includes("<strong>6</strong> apps"),
   statsHtml,
 );
 const noAppStats = vm.runInContext(

@@ -58,7 +58,7 @@ function _buildStatsHtml(results) {
   // Distinct applications, when the results carry an App Name column
   const appCount = allKeys.includes("App Name")
     ? new Set(
-        results.map((r) => (r["App Name"] || "").trim()).filter(Boolean),
+        results.map((r) => String(r["App Name"] || "").trim()).filter(Boolean),
       ).size
     : 0;
 

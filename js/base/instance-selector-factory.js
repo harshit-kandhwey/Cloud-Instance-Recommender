@@ -305,21 +305,23 @@ window.getInstanceRecommendationWithSelector = async function (
   return results;
 };
 
+// Own-property-only map lookup. Keys here come from untrusted CSV data; a plain
+// object literal / JSON.parse result inherits Object.prototype, so a key like
+// "constructor" or "toString" would otherwise resolve to an inherited function
+// (truthy → wins the || chains → .trim() throws). Defined here because it's the
+// one shared-scope module loaded in BOTH the worker and the main thread, so
+// ingest.js can reuse the same guard.
+function safeMapGet(map, key) {
+  return map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : "";
+}
+
 // Effective workload for a row, in precedence order: the row's own Workload
 // cell → an app→workload map entry (matched on the App Name column) → the page
 // default → the built-in "General". options.appWorkloadMap is a plain object
 // keyed by lowercased app name, so it survives the postMessage into the worker.
 function resolveRowWorkload(row, options) {
   const appName = (row["App Name"] || "").trim().toLowerCase();
-  // hasOwnProperty guard: appName is untrusted CSV data. Without it, an app
-  // named "constructor"/"toString"/etc. resolves to an inherited Object.prototype
-  // function — truthy, so it wins the || chain, and .trim() then throws.
-  const fromApp =
-    appName &&
-    options.appWorkloadMap &&
-    Object.prototype.hasOwnProperty.call(options.appWorkloadMap, appName)
-      ? options.appWorkloadMap[appName]
-      : "";
+  const fromApp = appName ? safeMapGet(options.appWorkloadMap, appName) : "";
   return (
     row["Workload"] ||
     fromApp ||

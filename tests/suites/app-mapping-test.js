@@ -172,6 +172,14 @@ check(
     'resolveRowWorkload({ "App Name": "hasOwnProperty" }, { appWorkloadMap: {} })',
   ) === "General",
 );
+// The guard must not over-block: an app genuinely named "constructor" with its
+// own mapping entry should still resolve to that workload.
+check(
+  'app name "constructor" resolves its own mapped workload',
+  run(
+    'resolveRowWorkload({ "App Name": "constructor" }, { appWorkloadMap: { constructor: "Database" } })',
+  ) === "Database",
+);
 
 console.log("[map persistence round-trip]");
 run('saveAppWorkloadMap({ billing: "Database", web: "Web Server" })');

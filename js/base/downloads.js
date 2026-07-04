@@ -44,16 +44,23 @@ function downloadResults() {
   console.log("CSV download completed");
 }
 
-// ─── No-match remediation export ──────────────────────────────────────────────
-// A row qualifies when EVERY instance column present is a no-match — deriving
-// the columns from the results themselves handles L2L-only, optimized-only,
-// and any provider combination automatically.
-function getNoMatchRows(results) {
+// The recommendation ("instance") columns present in a result set — derived
+// from the results so it handles L2L-only, optimized-only, and any provider
+// combination. Shared by no-match detection and the app summary so they can't
+// drift apart.
+function getInstanceColumns(results) {
   if (!results || !results.length) return [];
-  const instCols = Object.keys(results[0]).filter(
+  return Object.keys(results[0]).filter(
     (k) =>
       k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
   );
+}
+
+// ─── No-match remediation export ──────────────────────────────────────────────
+// A row qualifies when EVERY instance column present is a no-match.
+function getNoMatchRows(results) {
+  if (!results || !results.length) return [];
+  const instCols = getInstanceColumns(results);
   if (!instCols.length) return [];
   return results.filter((row) => instCols.every((c) => isNoMatchValue(row[c])));
 }
@@ -124,13 +131,10 @@ function getAppSummary(results) {
   if (!results || !results.length) return [];
   const keys = Object.keys(results[0]);
   if (!keys.includes("App Name")) return [];
-  const instCols = keys.filter(
-    (k) =>
-      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
-  );
+  const instCols = getInstanceColumns(results);
   const byApp = new Map();
   results.forEach((row) => {
-    const app = (row["App Name"] || "").trim();
+    const app = String(row["App Name"] || "").trim();
     if (!app) return; // VMs with no app aren't part of any app rollup
     if (!byApp.has(app)) {
       byApp.set(app, {
@@ -158,8 +162,14 @@ function getAppSummary(results) {
 function downloadAppSummary() {
   const summary = getAppSummary(processedResults);
   if (!summary.length) {
+    const hasAppNameCol =
+      processedResults &&
+      processedResults.length &&
+      Object.keys(processedResults[0]).includes("App Name");
     alert(
-      "No App Name column in the results — add one to your file to get an app summary.",
+      hasAppNameCol
+        ? "The App Name column is empty for every row — fill it in to get an app summary."
+        : "No App Name column in the results — add one to your file to get an app summary.",
     );
     return;
   }
