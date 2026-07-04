@@ -617,14 +617,21 @@ function maybeShowAppMappingPanel() {
 
   const hasApp = columnHeaders.includes(APP_NAME_CANONICAL);
   const hasWorkload = columnHeaders.includes("Workload");
+  // Dedupe case-insensitively (the persisted map keys on the lowercased name),
+  // keeping the first-seen casing for the label — otherwise "Billing" and
+  // "billing" would render as two rows that silently save to the same key.
   const apps = hasApp
-    ? [
-        ...new Set(
-          csvData
-            .map((r) => (r[APP_NAME_CANONICAL] || "").trim())
-            .filter(Boolean),
-        ),
-      ].sort((a, b) => a.localeCompare(b))
+    ? Array.from(
+        csvData
+          .reduce((seen, r) => {
+            const raw = (r[APP_NAME_CANONICAL] || "").trim();
+            if (raw && !seen.has(raw.toLowerCase())) {
+              seen.set(raw.toLowerCase(), raw);
+            }
+            return seen;
+          }, new Map())
+          .values(),
+      ).sort((a, b) => a.localeCompare(b))
     : [];
 
   // Nothing to map: no App Name column, an explicit Workload column already
@@ -638,7 +645,10 @@ function maybeShowAppMappingPanel() {
   const saved = loadAppWorkloadMap();
   const rows = apps
     .map((app, idx) => {
-      const cur = saved[app.toLowerCase()] || "";
+      const key = app.toLowerCase();
+      const cur = Object.prototype.hasOwnProperty.call(saved, key)
+        ? saved[key]
+        : "";
       const opts = [
         `<option value="">— use page default —</option>`,
         ...APP_WORKLOAD_OPTIONS.map(

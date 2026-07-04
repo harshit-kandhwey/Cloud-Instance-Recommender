@@ -128,6 +128,9 @@ async function processRecommendations() {
     generateOptimized,
   });
 
+  // Read the persisted app→workload map once (used in the options spread below)
+  const appWorkloadMap = loadAppWorkloadMap();
+
   // Prepare options with comprehensive filtering and recommendation type control
   const options = {
     // **NEW: Recommendation type control**
@@ -203,9 +206,7 @@ async function processRecommendations() {
     // App→workload inheritance: VMs with an App Name but no Workload cell take
     // the workload assigned to their app in the mapping panel (plain object,
     // safe to postMessage into the worker). Omitted when the map is empty.
-    ...(Object.keys(loadAppWorkloadMap()).length
-      ? { appWorkloadMap: loadAppWorkloadMap() }
-      : {}),
+    ...(Object.keys(appWorkloadMap).length ? { appWorkloadMap } : {}),
   };
 
   console.log("Processing options:", {

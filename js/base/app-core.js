@@ -120,7 +120,6 @@ const COLUMN_SYNONYMS = {
     "application",
     "applicationname",
     "app",
-    "apptier",
     "appid",
     "service",
     "servicename",

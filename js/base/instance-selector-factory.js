@@ -311,8 +311,15 @@ window.getInstanceRecommendationWithSelector = async function (
 // keyed by lowercased app name, so it survives the postMessage into the worker.
 function resolveRowWorkload(row, options) {
   const appName = (row["App Name"] || "").trim().toLowerCase();
+  // hasOwnProperty guard: appName is untrusted CSV data. Without it, an app
+  // named "constructor"/"toString"/etc. resolves to an inherited Object.prototype
+  // function — truthy, so it wins the || chain, and .trim() then throws.
   const fromApp =
-    appName && options.appWorkloadMap ? options.appWorkloadMap[appName] : "";
+    appName &&
+    options.appWorkloadMap &&
+    Object.prototype.hasOwnProperty.call(options.appWorkloadMap, appName)
+      ? options.appWorkloadMap[appName]
+      : "";
   return (
     row["Workload"] ||
     fromApp ||

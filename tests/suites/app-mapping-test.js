@@ -105,8 +105,9 @@ check(
 );
 check(
   '"Application" auto-maps to App Name',
-  run('autoMatchHeaders(["VM Name","Application","CPU Count"]).mapping["Application"]') ===
-    "App Name",
+  run(
+    'autoMatchHeaders(["VM Name","Application","CPU Count"]).mapping["Application"]',
+  ) === "App Name",
 );
 check(
   '"service name" auto-maps to App Name',
@@ -157,6 +158,20 @@ check(
   'built-in "General" fallback',
   run("resolveRowWorkload({}, {})") === "General",
 );
+// App Name is untrusted CSV data — inherited Object.prototype keys must not
+// leak through the map lookup (would be a truthy function → .trim() throws).
+check(
+  'app name "constructor" does not crash the lookup',
+  run(
+    'resolveRowWorkload({ "App Name": "constructor" }, { appWorkloadMap: {} })',
+  ) === "General",
+);
+check(
+  'app name "hasOwnProperty" does not crash the lookup',
+  run(
+    'resolveRowWorkload({ "App Name": "hasOwnProperty" }, { appWorkloadMap: {} })',
+  ) === "General",
+);
 
 console.log("[map persistence round-trip]");
 run('saveAppWorkloadMap({ billing: "Database", web: "Web Server" })');
@@ -192,6 +207,20 @@ check(
   elements.appMappingSection.innerHTML.includes("applyAppMapping()") &&
     (elements.appMappingSection.innerHTML.match(/data-app=/g) || []).length ===
       2,
+);
+
+run(`
+  columnHeaders = ["VM Name", "App Name", "CPU Count"];
+  csvData = [
+    { "VM Name": "a", "App Name": "Billing", "CPU Count": "2" },
+    { "VM Name": "b", "App Name": "billing", "CPU Count": "4" },
+  ];
+  maybeShowAppMappingPanel();
+`);
+check(
+  "case-variant app names dedupe to one row",
+  (elements.appMappingSection.innerHTML.match(/data-app=/g) || []).length === 1,
+  elements.appMappingSection.innerHTML,
 );
 
 run(`
