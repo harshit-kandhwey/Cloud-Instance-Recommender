@@ -181,11 +181,16 @@ function loadAppWorkloadMap() {
   }
 }
 
+// Returns true on success, false if storage is unavailable (quota exceeded,
+// private-browsing, etc.) so callers can tell the user honestly rather than
+// claiming a save that was actually discarded.
 function saveAppWorkloadMap(map) {
   try {
     localStorage.setItem("cloudInstanceRecommenderAppMap", JSON.stringify(map));
+    return true;
   } catch (e) {
     console.warn("Could not persist app→workload map:", e);
+    return false;
   }
 }
 
@@ -686,9 +691,13 @@ function applyAppMapping() {
     if (sel.value) map[app] = sel.value;
     else delete map[app];
   });
-  saveAppWorkloadMap(map);
+  const ok = saveAppWorkloadMap(map);
   const status = document.getElementById("appMappingStatus");
-  if (status) status.textContent = "✓ Saved — applied on the next Generate";
+  if (status) {
+    status.textContent = ok
+      ? "✓ Saved — applied on the next Generate"
+      : "⚠️ Could not save — browser storage is unavailable";
+  }
 }
 
 // Parse CSV line handling quoted values

@@ -267,4 +267,27 @@ check(
   run("localStorage.getItem('cloudInstanceRecommenderAppMap')"),
 );
 
+console.log("[persistence failure is surfaced, not reported as saved]");
+// Simulate storage being unavailable (quota exceeded / private browsing):
+// saveAppWorkloadMap must report failure and applyAppMapping must say so.
+const realSetItem = sandbox.localStorage.setItem;
+sandbox.localStorage.setItem = () => {
+  throw new Error("storage unavailable");
+};
+check(
+  "saveAppWorkloadMap returns false when storage throws",
+  run('saveAppWorkloadMap({ x: "Cache" })') === false,
+);
+elements.appMappingSection._qsa = [
+  { getAttribute: () => "Billing", value: "Database" },
+];
+run("applyAppMapping()");
+check(
+  "applyAppMapping shows a failure notice, not '✓ Saved'",
+  /could not save/i.test(elements.appMappingStatus.textContent) &&
+    !elements.appMappingStatus.textContent.includes("✓"),
+  elements.appMappingStatus.textContent,
+);
+sandbox.localStorage.setItem = realSetItem;
+
 process.exit(failures ? 1 : 0);
