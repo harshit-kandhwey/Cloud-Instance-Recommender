@@ -71,7 +71,14 @@ function buildContext(seedStorage) {
     "js/azure/azure-instance-selector.js",
     "js/gcp/gcp-instance-selector.js",
     "js/base/instance-selector-factory.js",
-    "js/base/main-script.js",
+    "js/base/app-core.js",
+  "js/base/ui-shell.js",
+  "js/base/ingest.js",
+  "js/base/manual-entry.js",
+  "js/base/form-controls.js",
+  "js/base/generate.js",
+  "js/base/preview.js",
+  "js/base/downloads.js",
   ]) load(f);
   return { ctx, elements, storage };
 }

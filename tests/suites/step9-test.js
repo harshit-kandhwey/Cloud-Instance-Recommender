@@ -83,7 +83,14 @@ for (const f of [
   "js/azure/azure-instance-selector.js",
   "js/gcp/gcp-instance-selector.js",
   "js/base/instance-selector-factory.js",
-  "js/base/main-script.js",
+  "js/base/app-core.js",
+  "js/base/ui-shell.js",
+  "js/base/ingest.js",
+  "js/base/manual-entry.js",
+  "js/base/form-controls.js",
+  "js/base/generate.js",
+  "js/base/preview.js",
+  "js/base/downloads.js",
 ]) load(f);
 
 console.log("[section headers]");
@@ -109,7 +116,7 @@ check("fileStatus aria-live", elements.fileStatus.attrs["aria-live"] === "polite
 check("progressText aria-live", elements.progressText.attrs["aria-live"] === "polite");
 // Stub's getElementById auto-creates, so the creation branch can't run here —
 // verify the toast attributes at source level instead
-const src = read("js/base/main-script.js");
+const src = read("js/base/app-core.js");
 check(
   "toast sets role=status + aria-live in source",
   /toast\.setAttribute\("role", "status"\)/.test(src) &&

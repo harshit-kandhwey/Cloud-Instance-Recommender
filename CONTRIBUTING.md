@@ -47,13 +47,21 @@ python -m http.server 8080
 │   └── split-data.js       # Splits monolithic data files into per-region files
 │
 └── js/
-    ├── base/               # Shared logic
+    ├── base/               # Shared logic (modules load in the order listed
+    │   │                     in the HTML pages; they share the global scope)
     │   ├── base-instance-selector.js       # + lazy region loading
     │   ├── instance-selector-factory.js
     │   ├── rule-engine.js
     │   ├── recommendation-worker.js        # Web Worker batch processing
     │   ├── file-handler.js
-    │   └── main-script.js
+    │   ├── app-core.js                     # State, mapping tables, readiness, regions
+    │   ├── ui-shell.js                     # Page init + accessibility
+    │   ├── ingest.js                       # Upload, parsing, column mapping
+    │   ├── manual-entry.js
+    │   ├── form-controls.js                # Filters + option readers
+    │   ├── generate.js                     # Worker batch runner
+    │   ├── preview.js
+    │   └── downloads.js
     ├── vendor/             # Vendored third-party libs (SheetJS) + licenses
     ├── aws/                # Selector, UI, manifest + regions/ data (35 files)
     ├── azure/              # Selector, UI, manifest + regions/ data (60 files)
