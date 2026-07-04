@@ -32,6 +32,7 @@ const COLUMN_MAPPINGS = {
   cpuUtilization: "CPU Utilization",
   memoryUtilization: "Memory Utilization",
   vmName: "VM Name",
+  appName: "App Name",
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",
   gcpRegion: "GCP Region",
@@ -39,7 +40,7 @@ const COLUMN_MAPPINGS = {
 
 // Header synonyms for auto-matching uploaded columns to the canonical names
 // above. Keys are canonical names; values are normalized candidates
-// (lowercased, non-alphanumerics stripped). Only these 8 canonicals are
+// (lowercased, non-alphanumerics stripped). Only these canonicals are
 // mapped — ENV/OS/Workload/Compliance/Min Gen/Exclude are read literally.
 const COLUMN_SYNONYMS = {
   "CPU Count": [
@@ -111,6 +112,19 @@ const COLUMN_SYNONYMS = {
     "computername",
     "instancename",
   ],
+  // Optional grouping column — VMs sharing an app can inherit a workload from
+  // the app→workload map. Unusual headers (Business Unit, Portfolio, …) won't
+  // auto-match, but can be mapped to "App Name" by hand in the mapping panel.
+  "App Name": [
+    "appname",
+    "application",
+    "applicationname",
+    "app",
+    "apptier",
+    "appid",
+    "service",
+    "servicename",
+  ],
   "AWS Region": ["awsregion", "amazonregion"],
   "Azure Region": ["azureregion"],
   // "gcpzone" is intentional: zones ("us-central1-a") are the expected input
@@ -124,6 +138,28 @@ const COLUMN_SYNONYMS = {
 // Exclude, anything custom) always pass through literally.
 const MAPPABLE_CANONICALS = Object.values(COLUMN_MAPPINGS);
 const REQUIRED_CANONICALS = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
+
+// "App Name" is an optional mappable canonical (see COLUMN_MAPPINGS): it groups
+// VMs by application. It is never required, and its synonyms auto-match like any
+// other column; an unusually named column can be mapped to it by hand in the
+// mapping panel. When present, VMs inherit a workload from the app→workload map
+// (see the app mapping panel and resolveRowWorkload in the factory). Precedence
+// for a row's workload: its own Workload cell > app→workload map > page default
+// > built-in "General".
+const APP_NAME_CANONICAL = COLUMN_MAPPINGS.appName;
+
+// Workload vocabulary offered in the app→workload panel (matches the sample
+// CSV's Workload values and the rule engine's WORKLOAD_FAMILIES keys).
+const APP_WORKLOAD_OPTIONS = [
+  "General",
+  "Database",
+  "Web Server",
+  "Cache",
+  "ML/AI",
+  "Batch",
+  "HPC",
+  "SAP",
+];
 
 // The canonicals relevant on the current page: all provider-agnostic fields
 // plus only the region columns of providers this page loads (no Azure/GCP

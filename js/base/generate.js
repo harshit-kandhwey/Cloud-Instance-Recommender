@@ -199,6 +199,13 @@ async function processRecommendations() {
     ...(getRuleDefaults().minGen
       ? { ruleDefaultMinGen: getRuleDefaults().minGen }
       : {}),
+
+    // App→workload inheritance: VMs with an App Name but no Workload cell take
+    // the workload assigned to their app in the mapping panel (plain object,
+    // safe to postMessage into the worker). Omitted when the map is empty.
+    ...(Object.keys(loadAppWorkloadMap()).length
+      ? { appWorkloadMap: loadAppWorkloadMap() }
+      : {}),
   };
 
   console.log("Processing options:", {

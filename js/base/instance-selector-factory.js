@@ -145,11 +145,7 @@ window.getInstanceRecommendationWithSelector = async function (
         options.ruleDefaultOS ||
         ""
       ).trim();
-      const rowWorkload = (
-        row["Workload"] ||
-        options.ruleDefaultWorkload ||
-        "General"
-      ).trim();
+      const rowWorkload = resolveRowWorkload(row, options);
       const rowCompliance = (
         row["Compliance"] ||
         options.ruleDefaultCompliance ||
@@ -308,6 +304,22 @@ window.getInstanceRecommendationWithSelector = async function (
   console.log("Recommendation generation completed successfully");
   return results;
 };
+
+// Effective workload for a row, in precedence order: the row's own Workload
+// cell → an app→workload map entry (matched on the App Name column) → the page
+// default → the built-in "General". options.appWorkloadMap is a plain object
+// keyed by lowercased app name, so it survives the postMessage into the worker.
+function resolveRowWorkload(row, options) {
+  const appName = (row["App Name"] || "").trim().toLowerCase();
+  const fromApp =
+    appName && options.appWorkloadMap ? options.appWorkloadMap[appName] : "";
+  return (
+    row["Workload"] ||
+    fromApp ||
+    options.ruleDefaultWorkload ||
+    "General"
+  ).trim();
+}
 
 // Helper function to extract unique regions for a provider
 function extractUniqueRegions(csvData, regionColumn, provider) {

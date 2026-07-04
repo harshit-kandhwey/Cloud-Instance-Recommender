@@ -3,15 +3,15 @@
 
 // Download sample CSV
 function downloadSampleCSV() {
-  const csvContent = `VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
-app-server-03,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,
-cache-server-04,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,
-api-server-05,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6
-microservice-06,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,
-worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
-frontend-08,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
+app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,
+cache-server-04,Storefront,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,
+api-server-05,Storefront,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6
+microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,
+worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
+frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,`;
 
   const blob = new Blob([csvContent], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
@@ -168,10 +168,32 @@ function headerSignature(headers) {
     .join("|");
 }
 
-// Matches uploaded headers to the 8 canonical COLUMN_MAPPINGS names.
+// App→workload map: { "<app name lowercased>": "<Workload>" }. Persisted
+// globally (not per-file) so the same app prefills its workload on later
+// uploads. Consumed at generation time via options.appWorkloadMap.
+function loadAppWorkloadMap() {
+  try {
+    return (
+      JSON.parse(localStorage.getItem("cloudInstanceRecommenderAppMap")) || {}
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveAppWorkloadMap(map) {
+  try {
+    localStorage.setItem("cloudInstanceRecommenderAppMap", JSON.stringify(map));
+  } catch (e) {
+    console.warn("Could not persist app→workload map:", e);
+  }
+}
+
+// Matches uploaded headers to the canonical COLUMN_MAPPINGS names.
 // Per canonical, candidates come from: exact (case-insensitive) → normalized
 // equality → synonym table. A bare "Region" column counts as the page's
-// provider region on single-provider pages only.
+// provider region on single-provider pages only. Only CPU Count and Memory
+// (GB) are required; the rest (VM Name, App Name, region cols) are optional.
 // Returns { mapping (source→canonical), renames, unmatchedRequired,
 // ambiguous, needsReview }.
 function autoMatchHeaders(headers) {
@@ -387,6 +409,10 @@ function applyIngest(headers, rows, mapping, units = {}) {
   // data this CSV needs in the background (skipping unknown regions)
   validateCsvRegions();
   prefetchCsvRegions();
+
+  // If the file groups VMs by application but has no per-row Workload, offer
+  // the app→workload mapping panel so those VMs can inherit a workload.
+  maybeShowAppMappingPanel();
 }
 
 // Renders the mapping panel: one dropdown per canonical column, prefilled
@@ -578,6 +604,82 @@ function applyColumnMapping() {
 
   saveColumnMapping(headerSignature(pending.headers), mapping, units);
   applyIngest(pending.headers, pending.rows, mapping, units);
+}
+
+// ─── App → workload mapping panel ─────────────────────────────────────────────
+// Appears after ingest when the file has an "App Name" column but no per-row
+// "Workload" column: assigning a workload per application lets every VM in that
+// app inherit it at generation time. Purely optional — the panel only persists
+// the map; generation reads it (see resolveRowWorkload in the factory).
+function maybeShowAppMappingPanel() {
+  const panel = document.getElementById("appMappingSection");
+  if (!panel) return;
+
+  const hasApp = columnHeaders.includes(APP_NAME_CANONICAL);
+  const hasWorkload = columnHeaders.includes("Workload");
+  const apps = hasApp
+    ? [
+        ...new Set(
+          csvData
+            .map((r) => (r[APP_NAME_CANONICAL] || "").trim())
+            .filter(Boolean),
+        ),
+      ].sort((a, b) => a.localeCompare(b))
+    : [];
+
+  // Nothing to map: no App Name column, an explicit Workload column already
+  // wins, or the App Name column is empty on every row.
+  if (!hasApp || hasWorkload || !apps.length) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+    return;
+  }
+
+  const saved = loadAppWorkloadMap();
+  const rows = apps
+    .map((app, idx) => {
+      const cur = saved[app.toLowerCase()] || "";
+      const opts = [
+        `<option value="">— use page default —</option>`,
+        ...APP_WORKLOAD_OPTIONS.map(
+          (w) =>
+            `<option value="${escapeHtml(w)}"${cur === w ? " selected" : ""}>${escapeHtml(w)}</option>`,
+        ),
+      ].join("");
+      return `
+        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap;">
+          <label for="appmap_${idx}" style="min-width: 200px; font-weight: 500;">${escapeHtml(app)}</label>
+          <select id="appmap_${idx}" data-app="${escapeHtml(app)}" class="form-control" style="max-width: 220px;">${opts}</select>
+        </div>`;
+    })
+    .join("");
+
+  panel.innerHTML = `
+    <div class="stats-info">
+      <p><strong>🧩 Map Applications to Workloads</strong> <span style="font-size: 12px; color: var(--text-soft);">(optional)</span></p>
+      <p style="font-size: 13px;">Your file has an <strong>App Name</strong> column but no <strong>Workload</strong> column. Assign a workload per application and every VM in it inherits that workload when you generate. Precedence: a row's own Workload cell → this map → page default → General.</p>
+      ${rows}
+      <button class="btn btn-primary" onclick="applyAppMapping()" style="margin-top: 8px;">💾 Save App Workloads</button>
+      <span id="appMappingStatus" role="status" style="margin-left: 10px; font-size: 13px; color: var(--good-strong);"></span>
+    </div>`;
+  panel.classList.remove("hidden");
+}
+
+// Save button: merge the panel's selections into the persisted app→workload
+// map (blank = clear that app so it falls back to the page default).
+function applyAppMapping() {
+  const panel = document.getElementById("appMappingSection");
+  if (!panel) return;
+  const map = loadAppWorkloadMap();
+  panel.querySelectorAll("select[data-app]").forEach((sel) => {
+    const app = (sel.getAttribute("data-app") || "").toLowerCase();
+    if (!app) return;
+    if (sel.value) map[app] = sel.value;
+    else delete map[app];
+  });
+  saveAppWorkloadMap(map);
+  const status = document.getElementById("appMappingStatus");
+  if (status) status.textContent = "✓ Saved — applied on the next Generate";
 }
 
 // Parse CSV line handling quoted values
