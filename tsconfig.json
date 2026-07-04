@@ -14,7 +14,11 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    // No "WebWorker" lib: nothing type-checked here uses worker globals yet, and
+    // adding it globally would mistype `self` as WorkerGlobalScope in DOM files.
+    // Scope it per-file (triple-slash /// <reference lib="webworker" />) or via a
+    // separate tsconfig when the worker itself comes under // @ts-check.
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": [],
     "skipLibCheck": true,
     "noImplicitAny": false,
