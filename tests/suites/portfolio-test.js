@@ -45,8 +45,7 @@ sandbox.window.removeEventListener = () => {};
 sandbox.document = {
   readyState: "complete",
   documentElement: { dataset: {} },
-  getElementById: (id) =>
-    ["portfolioEmpty", "portfolioContent"].includes(id) ? fakeEl(id) : null,
+  getElementById: (id) => fakeEl(id),
   addEventListener: () => {},
   querySelectorAll: () => [],
   head: { appendChild() {} },
@@ -229,6 +228,46 @@ check("empty payload → zeroed model, no throw", run("__e = buildPortfolioModel
 check(
   "no App Name column → everything Unassigned, 0 named apps",
   run('__n = buildPortfolioModel({ providers: ["aws"], results: [{ "CPU Count": "2", "Memory (GB)": "4", "AWS Optimized Instance": "t3.small" }] }); __n.apps.length === 0 && __n.unassigned.vms === 1'),
+);
+
+console.log("[UI render]");
+run("receivePortfolio(__payload)");
+const cHtml = els.portfolioContent.innerHTML;
+check("empty state hidden once data renders", els.portfolioEmpty.classes.has("hidden"));
+check(
+  "Overview + per-app + Unassigned tabs rendered",
+  /📊 Overview/.test(cHtml) &&
+    /data-tab="app-0"/.test(cHtml) &&
+    />Billing</.test(cHtml) &&
+    />Analytics</.test(cHtml) &&
+    /data-tab="unassigned"/.test(cHtml),
+);
+check("overview KPI shows 4 VMs", /counter-number">4</.test(cHtml));
+check(
+  "app table body lists apps",
+  els["pf-app-tbody"] &&
+    /Billing/.test(els["pf-app-tbody"].innerHTML) &&
+    /Analytics/.test(els["pf-app-tbody"].innerHTML),
+  els["pf-app-tbody"] && els["pf-app-tbody"].innerHTML,
+);
+check(
+  "per-app panels render VM detail + recommended families",
+  /VM detail/.test(cHtml) && /Recommended families/.test(cHtml),
+);
+check("right-sizing block present (Optimized run)", /Right-sizing/.test(cHtml));
+
+console.log("[UI interactions]");
+run('filterPortfolioApps("bill")');
+check(
+  "filter narrows the app table to Billing",
+  /Billing/.test(els["pf-app-tbody"].innerHTML) &&
+    !/Analytics/.test(els["pf-app-tbody"].innerHTML),
+);
+run('filterPortfolioApps("")');
+run("togglePortfolioAppRow(portfolioModel.apps.findIndex(a=>a.app==='Billing'))");
+check(
+  "expanding a row reveals its VM table",
+  /pf-detail-row/.test(els["pf-app-tbody"].innerHTML),
 );
 
 process.exit(failures ? 1 : 0);

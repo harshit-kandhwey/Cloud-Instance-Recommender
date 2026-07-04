@@ -1,0 +1,285 @@
+/* App Portfolio page — tabbed dashboard, mini stacked bars, chips, tables.
+   Theme-aware via the tokens in theme.css. Load AFTER theme.css + style.css. */
+
+/* Toolbar (source meta + export) */
+.pf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: var(--surface-tint);
+  border: 1px solid var(--border-slate);
+  border-radius: 10px;
+}
+.pf-toolbar .pf-meta {
+  font-size: 0.85rem;
+  color: var(--text-body);
+}
+
+/* Tab strip */
+.pf-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border-mid);
+  margin-bottom: 16px;
+}
+.pf-tab {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid var(--border-mid);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: var(--surface-alt);
+  color: var(--text-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+.pf-tab:hover {
+  background: var(--surface-tint-strong);
+}
+.pf-tab.active {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Panels */
+.pf-panel {
+  display: none;
+}
+.pf-panel.active {
+  display: block;
+}
+
+/* KPI tiles reuse .counter-card / .stats-grid from style.css */
+.pf-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+/* Section blocks */
+.pf-section {
+  margin: 18px 0;
+}
+.pf-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.pf-section-head h3,
+.pf-block h4,
+.pf-mix h4,
+.pf-card h4 {
+  margin: 0;
+  color: var(--heading-indigo);
+}
+.pf-search {
+  max-width: 260px;
+}
+.pf-count {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.pf-muted {
+  color: var(--text-muted);
+}
+.pf-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* Mini stacked bars */
+.pf-bar {
+  display: flex;
+  height: 12px;
+  min-width: 90px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-alt);
+}
+.pf-bar-seg {
+  height: 100%;
+}
+.pf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 5px;
+  font-size: 0.74rem;
+  color: var(--text-body);
+}
+.pf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pf-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* Chips */
+.pf-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  margin: 2px 2px 2px 0;
+  border-radius: 11px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: var(--surface-alt);
+  color: var(--text-body);
+  border: 1px solid var(--border-mid);
+}
+.pf-chip-ok {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+.pf-chip-warn {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+.pf-chip-danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+.pf-chip-info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+
+/* Per-app blocks */
+.pf-mixes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 6px;
+}
+.pf-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+.pf-block,
+.pf-card {
+  padding: 12px 14px;
+  background: var(--surface-tint);
+  border: 1px solid var(--border-slate);
+  border-radius: 10px;
+}
+.pf-block h4,
+.pf-card h4 {
+  margin-bottom: 8px;
+  font-size: 0.92rem;
+}
+.pf-fam {
+  margin: 4px 0;
+  line-height: 1.9;
+}
+.pf-fam-prov {
+  display: inline-block;
+  min-width: 52px;
+  font-weight: 700;
+  color: var(--heading-purple);
+  font-size: 0.78rem;
+}
+.pf-list {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.7;
+  font-size: 0.85rem;
+  color: var(--text-body);
+}
+
+/* Callouts grid */
+.pf-callouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* Tables */
+.pf-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.pf-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+.pf-table th,
+.pf-table td {
+  padding: 7px 10px;
+  border: 1px solid var(--border-mid);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.pf-table thead th {
+  background: var(--surface-alt);
+  color: var(--text);
+  position: sticky;
+  top: 0;
+}
+.pf-table tbody tr:nth-child(even) {
+  background: var(--surface-alt-2);
+}
+.pf-table-sm {
+  font-size: 0.8rem;
+}
+.pf-th-sort {
+  cursor: pointer;
+  user-select: none;
+}
+.pf-th-sort:hover {
+  background: var(--surface-tint-strong);
+}
+.pf-app-row {
+  cursor: pointer;
+}
+.pf-app-row:hover {
+  background: var(--surface-tint) !important;
+}
+.pf-caret {
+  display: inline-block;
+  width: 12px;
+  color: var(--text-muted);
+}
+.pf-detail-row > td {
+  background: var(--surface-tint);
+}
+.pf-expand {
+  padding: 8px 2px;
+}
+.pf-mini-btn {
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+}
