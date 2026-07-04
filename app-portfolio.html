@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
+    />
+    <title>Cloud Instance Recommender - App Portfolio</title>
+    <script>
+      // Set theme before first paint. A saved choice wins; otherwise follow
+      // the OS setting (and keep following it until the user picks manually).
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("cloudInstanceRecommenderTheme");
+        } catch (e) {}
+        var mql =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)");
+        document.documentElement.dataset.theme =
+          stored === "dark" || stored === "light"
+            ? stored
+            : mql && mql.matches
+              ? "dark"
+              : "light";
+        window.toggleTheme = function () {
+          var next =
+            document.documentElement.dataset.theme === "dark"
+              ? "light"
+              : "dark";
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem("cloudInstanceRecommenderTheme", next);
+          } catch (e) {}
+          var btn = document.getElementById("themeToggle");
+          if (btn) btn.setAttribute("aria-pressed", next === "dark");
+        };
+        if (mql && mql.addEventListener) {
+          mql.addEventListener("change", function (e) {
+            var saved = null;
+            try {
+              saved = localStorage.getItem("cloudInstanceRecommenderTheme");
+            } catch (err) {}
+            if (saved !== "dark" && saved !== "light") {
+              document.documentElement.dataset.theme = e.matches
+                ? "dark"
+                : "light";
+            }
+          });
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- App Portfolio is self-contained: it receives a generated result set
+         handed off from a tool page (postMessage, localStorage fallback),
+         renders per-app analytics, and builds an executive Excel on demand.
+         app-core.js is loaded only for shared helpers (escapeHtml). -->
+    <script defer src="js/base/app-core.js"></script>
+    <script defer src="js/base/portfolio.js"></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="container">
+      <header class="header">
+        <h1>
+          <span aria-hidden="true">📊</span> Cloud Instance Recommender - App
+          Portfolio
+        </h1>
+        <p>
+          An application-centric view of your generated recommendations — per-app
+          dashboards and an executive Excel export.
+        </p>
+
+        <nav>
+          <a href="index.html">Home</a>
+          <a href="aws.html">AWS</a>
+          <a href="azure.html">Azure</a>
+          <a href="gcp.html">GCP</a>
+          <a href="multicloud.html">Multi Cloud</a>
+          <a href="app-portfolio.html" class="active">App Portfolio</a>
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            onclick="toggleTheme()"
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+            aria-pressed="false"
+          >
+            🌓
+          </button>
+        </nav>
+      </header>
+
+      <main class="main-content" id="main">
+        <!-- Empty state: shown until a generated result set is handed off from
+             a tool page. Links back to where the data comes from. -->
+        <section id="portfolioEmpty" class="section">
+          <div class="section-header">
+            <span class="section-icon">📊</span>
+            <h2 class="section-title">No portfolio data yet</h2>
+          </div>
+          <div class="section-content">
+            <p style="color: var(--text-body); line-height: 1.7">
+              This page visualises your recommendations
+              <strong>grouped by application</strong>. To fill it, generate
+              recommendations on a tool page from a file that includes an
+              <strong>App Name</strong> column, then click
+              <strong>📊 Open App Portfolio</strong> in the download section.
+            </p>
+            <div
+              style="
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-top: 14px;
+              "
+            >
+              <a class="btn btn-primary" href="multicloud.html">Multi Cloud</a>
+              <a class="btn btn-secondary" href="aws.html">AWS</a>
+              <a class="btn btn-secondary" href="azure.html">Azure</a>
+              <a class="btn btn-secondary" href="gcp.html">GCP</a>
+            </div>
+            <p style="color: var(--text-muted); margin-top: 14px; font-size: 0.9em">
+              Nothing is uploaded anywhere — the data is passed to this page
+              in-browser and stays on your machine.
+            </p>
+          </div>
+        </section>
+
+        <!-- Portfolio content: populated once a result set arrives. The tabbed
+             dashboard and the Excel export button are added in later commits. -->
+        <div id="portfolioContent" class="hidden"></div>
+      </main>
+    </div>
+  </body>
+</html>

@@ -227,6 +227,108 @@ function updateAppSummaryButton(results) {
   }
 }
 
+// ─── App Portfolio handoff ────────────────────────────────────────────────────
+// The dedicated App Portfolio page (app-portfolio.html) renders an
+// application-centric dashboard and an executive Excel from a generated result
+// set. There is no backend: the data is handed over in-browser via postMessage
+// (primary, same-origin, no size cap) with a localStorage copy as a cold-open
+// fallback. Shown only when the results carry at least one named app.
+const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";
+
+// Which tool page this run originated on — drives the portfolio's About sheet
+// and provider inference. Derived from the filename, falling back to the
+// selected providers.
+function currentSourcePage() {
+  const file = (location.pathname.split("/").pop() || "").toLowerCase();
+  if (file.includes("multicloud")) return "multicloud";
+  if (file.includes("aws")) return "aws";
+  if (file.includes("azure")) return "azure";
+  if (file.includes("gcp")) return "gcp";
+  return selectedProviders.length > 1
+    ? "multicloud"
+    : selectedProviders[0] || "aws";
+}
+
+// Assembles the handoff payload (see the portfolio page's data contract).
+// Everything is plain, structured-cloneable data so it survives postMessage.
+function buildPortfolioPayload() {
+  if (!processedResults || !processedResults.length) return null;
+  const keys = Object.keys(processedResults[0]);
+  const dataDates = {};
+  ["AWS", "AZURE", "GCP"].forEach((p) => {
+    if (window[`${p}_DATA_DATE`]) dataDates[p] = window[`${p}_DATA_DATE`];
+  });
+  return {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    sourcePage: currentSourcePage(),
+    providers: selectedProviders.slice(),
+    columnHeaders: columnHeaders.slice(),
+    dataDates,
+    hasOptimized: keys.some((k) => k.includes("Optimized Instance")),
+    hasLikeToLike: keys.some((k) => k.includes("Like-to-Like Instance")),
+    results: processedResults,
+  };
+}
+
+// Opens the App Portfolio page and hands it the current results.
+function openAppPortfolio() {
+  const payload = buildPortfolioPayload();
+  if (!payload) {
+    alert("Generate recommendations first, then open the App Portfolio.");
+    return;
+  }
+
+  // Best-effort localStorage copy for cold opens / reloads. postMessage is the
+  // primary channel and has no practical cap, so very large estates skip the
+  // copy (localStorage is ~5 MB) rather than throwing.
+  try {
+    const serialized = JSON.stringify(payload);
+    if (serialized.length <= 4 * 1024 * 1024) {
+      localStorage.setItem(PORTFOLIO_STORAGE_KEY, serialized);
+    } else {
+      localStorage.removeItem(PORTFOLIO_STORAGE_KEY);
+    }
+  } catch (e) {
+    console.warn("Portfolio localStorage copy skipped:", e);
+  }
+
+  const child = window.open("app-portfolio.html");
+  if (!child) {
+    alert(
+      "The App Portfolio page was blocked by a popup blocker. Allow popups for this site and try again.",
+    );
+    return;
+  }
+
+  // Deliver the payload as soon as the child announces it's ready. postMessage
+  // is same-origin (CSP-safe) and uncapped, so it carries large estates the
+  // localStorage copy couldn't.
+  const onReady = (event) => {
+    if (event.origin !== location.origin) return;
+    if (event.source !== child) return;
+    if (!event.data || event.data.type !== "portfolio-ready") return;
+    child.postMessage({ type: "portfolio-data", payload }, location.origin);
+    window.removeEventListener("message", onReady);
+  };
+  window.addEventListener("message", onReady);
+}
+
+// Shows the "Open App Portfolio" button (with app count) only when results
+// carry at least one named app; hidden otherwise.
+function updateAppPortfolioButton(results) {
+  const btn = document.getElementById("openAppPortfolioBtn");
+  if (!btn) return;
+  const named = getAppSummary(results).length;
+  if (named > 0) {
+    btn.textContent = `📊 Open App Portfolio (${named})`;
+    btn.title = `Open an interactive, per-application dashboard for ${named} app(s) — with an executive Excel export`;
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
 // AWS Pricing Calculator Bulk Template download
 // Generates a CSV matching the EC2 Instances BulkUpload Template format.
 // type = 'l2l' | 'optimized' — always one type per file to avoid double-counting.

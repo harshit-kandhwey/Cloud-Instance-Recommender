@@ -265,6 +265,9 @@ async function processRecommendations() {
     // Per-app summary export button (hidden when there's no App Name column)
     updateAppSummaryButton(processedResults);
 
+    // "Open App Portfolio" handoff button (hidden when there's no named app)
+    updateAppPortfolioButton(processedResults);
+
     // Log what was actually generated
     if (processedResults.length > 0) {
       const sampleResult = processedResults[0];
