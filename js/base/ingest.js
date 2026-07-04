@@ -271,7 +271,8 @@ function loadColumnMappings() {
 
 function readSavedMapping(entry) {
   if (!entry) return null;
-  if (entry.mapping) return { mapping: entry.mapping, units: entry.units || {} };
+  if (entry.mapping)
+    return { mapping: entry.mapping, units: entry.units || {} };
   return { mapping: entry, units: detectMemoryUnit(entry) }; // legacy format
 }
 
@@ -423,9 +424,8 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   // Memory unit prefill: saved/applied units win (edit mode), else detect
   // from the guessed source header
   const memUnit =
-    ((match.units || detectMemoryUnit(match.mapping))[
-      COLUMN_MAPPINGS.memory
-    ] === "MB")
+    (match.units || detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] ===
+    "MB"
       ? "MB"
       : "GB";
 
@@ -445,9 +445,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
       const ambiguousNote = ambiguousByCanonical[canonical]
         ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
         : "";
-      const syncAttr = isMemory
-        ? ` onchange="window._syncMemUnit(this)"`
-        : "";
+      const syncAttr = isMemory ? ` onchange="window._syncMemUnit(this)"` : "";
       const unitSelect = isMemory
         ? ` <select id="colmap_unit_mem" class="form-control" style="max-width: 190px;" aria-label="Unit of the memory values in your file" title="RVTools-style exports list memory in MB — pick MB to convert to GB automatically">
             <option value="GB"${memUnit === "GB" ? " selected" : ""}>values are GB</option>
@@ -581,8 +579,6 @@ function applyColumnMapping() {
   saveColumnMapping(headerSignature(pending.headers), mapping, units);
   applyIngest(pending.headers, pending.rows, mapping, units);
 }
-
-
 
 // Parse CSV line handling quoted values
 function parseCSVLine(line) {

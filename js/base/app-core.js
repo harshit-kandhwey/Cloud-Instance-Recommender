@@ -435,7 +435,6 @@ function watchForDataThenRun(providers = getPageProviders()) {
   }, 500);
 }
 
-
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")

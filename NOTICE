@@ -8,5 +8,6 @@ Required Notice: Copyright Harshit Kandhwey
 (https://github.com/harshit-kandhwey/Cloud-Instance-Recommender)
 
 Bundled third-party software:
+
 - SheetJS Community Edition (js/vendor/xlsx.full.min.js), Apache-2.0,
   (C) 2013-present SheetJS LLC — see js/vendor/XLSX-LICENSE.txt

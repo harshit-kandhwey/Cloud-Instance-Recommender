@@ -31,11 +31,36 @@ function saveManualVMs() {
 // sticky: they keep the last-entered value across adds.
 function manualFieldDefs() {
   const defs = [
-    { key: "VM Name", label: "VM Name", type: "text", placeholder: "web-server-01" },
-    { key: "CPU Count", label: "CPU Count *", type: "number", placeholder: "4" },
-    { key: "Memory (GB)", label: "Memory (GB) *", type: "number", placeholder: "16" },
-    { key: "CPU Utilization", label: "CPU Util %", type: "number", placeholder: "45" },
-    { key: "Memory Utilization", label: "Mem Util %", type: "number", placeholder: "60" },
+    {
+      key: "VM Name",
+      label: "VM Name",
+      type: "text",
+      placeholder: "web-server-01",
+    },
+    {
+      key: "CPU Count",
+      label: "CPU Count *",
+      type: "number",
+      placeholder: "4",
+    },
+    {
+      key: "Memory (GB)",
+      label: "Memory (GB) *",
+      type: "number",
+      placeholder: "16",
+    },
+    {
+      key: "CPU Utilization",
+      label: "CPU Util %",
+      type: "number",
+      placeholder: "45",
+    },
+    {
+      key: "Memory Utilization",
+      label: "Mem Util %",
+      type: "number",
+      placeholder: "60",
+    },
   ];
   window._manualRegionDefaults = window._manualRegionDefaults || {};
   for (const provider of getPageProviders()) {
