@@ -20,3 +20,18 @@ jobs:
 
       - name: Test suites + golden compare
         run: node tests/run-all.js
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dev dependencies (TypeScript)
+        run: npm ci
+
+      - name: Type-check JSDoc-annotated modules
+        run: npm run typecheck

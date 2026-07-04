@@ -1,0 +1,28 @@
+{
+  // Type-checking only — this project ships raw JS with no build step.
+  // `tsc --noEmit` never writes output; it just reports type errors.
+  //
+  // Opt-in model: `checkJs` is false, so a file is only type-checked when it
+  // starts with a `// @ts-check` comment. This lets us harden modules one at a
+  // time instead of drowning in errors from the whole legacy codebase at once.
+  // To bring a new module under type checking, add `// @ts-check` at its top
+  // and run `npm run typecheck`.
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": [],
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["types/**/*.d.ts", "js/base/**/*.js", "tools/**/*.js", "tests/**/*.js"],
+  "exclude": ["node_modules", "js/aws", "js/azure", "js/gcp", "js/vendor"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "cloud-instance-recommender",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Static GitHub Pages tool that recommends AWS/Azure/GCP instances from a VM inventory CSV/XLSX. Ships as raw JS — the only tooling here is dev-time type checking and the Node test harness; there is no build/bundle step.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/run-all.js",
+    "syntax-check": "node tests/syntax-check.js"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3"
+  }
+}

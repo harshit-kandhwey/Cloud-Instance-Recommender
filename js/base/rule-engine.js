@@ -15,6 +15,32 @@
 //   OS  Windows: exclude ARM/Graviton; macOS (AWS): mac1/mac2 families only
 //   MG  MinGen: exclude instances older than the specified generation (m5<m6<m7 / Dsv3<Dsv4<Dsv5 / N1<N2<N4)
 //   WL  Workload preference: sort results so workload-appropriate families appear first
+// @ts-check
+
+/**
+ * A candidate instance as produced by the provider selectors.
+ * @typedef {Object} Instance
+ * @property {string} instanceType
+ * @property {number} vCpus
+ * @property {number} price
+ * @property {string} [family]
+ * @property {number|string} [generation]
+ * @property {number|string} [isGraviton]
+ * @property {string} [processor]
+ * @property {{ nitroEnclavesSupport?: number|string }} [originalData]
+ */
+
+/**
+ * Per-row rule inputs (resolved from CSV columns / UI defaults upstream).
+ * @typedef {Object} RuleOptions
+ * @property {string} [rowEnv]
+ * @property {string} [rowOS]
+ * @property {string} [rowWorkload]
+ * @property {string} [rowCompliance]
+ * @property {string} [rowMinGen]
+ */
+
+/** @typedef {"aws"|"azure"|"gcp"} Provider */
 
 const RuleEngine = (() => {
   const AWS_BURSTABLE_FAMILIES = ["t1", "t2", "t3", "t3a", "t4g"];
@@ -66,11 +92,16 @@ const RuleEngine = (() => {
   // AWS instance type size rank — used for size floor (Rule 1c)
   const AWS_SIZE_RANK = { nano: 0, micro: 1, small: 2, medium: 3, large: 4 };
 
+  /** @param {string} instanceType */
   function awsSizeRank(instanceType) {
     const size = (instanceType.split(".")[1] || "").toLowerCase();
     return size in AWS_SIZE_RANK ? AWS_SIZE_RANK[size] : 99;
   }
 
+  /**
+   * @param {Instance} inst
+   * @param {Provider} provider
+   */
   function isBurstable(inst, provider) {
     const fam = (inst.family || "").toLowerCase();
     if (provider === "aws") return AWS_BURSTABLE_FAMILIES.includes(fam);
@@ -86,11 +117,13 @@ const RuleEngine = (() => {
     return false;
   }
 
+  /** @param {Instance} inst */
   function isCurrentGen(inst) {
     const g = inst.generation;
     return g === 1 || g === 1.0 || g === "1" || g === "1.0";
   }
 
+  /** @param {Instance} inst */
   function isARM(inst) {
     const g = inst.isGraviton;
     if (g === 1 || g === 1.0 || g === "1" || g === "1.0") return true;
@@ -106,6 +139,7 @@ const RuleEngine = (() => {
     );
   }
 
+  /** @param {Instance} inst */
   function isNitroCapable(inst) {
     const raw = inst.originalData || {};
     const v = raw.nitroEnclavesSupport;
@@ -132,6 +166,11 @@ const RuleEngine = (() => {
     c4: 4,
   };
 
+  /**
+   * @param {Instance} inst
+   * @param {string} minGen
+   * @param {Provider} provider
+   */
   function meetsMinGeneration(inst, minGen, provider) {
     if (!minGen) return true;
     const type = (inst.instanceType || "").toLowerCase();
@@ -173,6 +212,11 @@ const RuleEngine = (() => {
     return true;
   }
 
+  /**
+   * @param {string} workload
+   * @param {Provider} provider
+   * @returns {string[]}
+   */
   function getPreferredFamilies(workload, provider) {
     const wl = (workload || "general").toLowerCase().trim();
     return (
@@ -183,6 +227,11 @@ const RuleEngine = (() => {
   }
 
   // Sort preferred workload families first, cheapest within each tier
+  /**
+   * @param {Instance[]} instances
+   * @param {string} workload
+   * @param {Provider} provider
+   */
   function sortByWorkload(instances, workload, provider) {
     const preferred = getPreferredFamilies(workload, provider);
     if (!preferred.length) return instances;
@@ -200,6 +249,12 @@ const RuleEngine = (() => {
   // options keys used:  rowEnv, rowOS, rowWorkload, rowCompliance, rowMinGen
   // provider:           "aws" | "azure" | "gcp"
   // Returns:            { instances: [...], rules: [string, ...] }
+  /**
+   * @param {Instance[]} instances
+   * @param {RuleOptions} options
+   * @param {Provider} provider
+   * @returns {{ instances: Instance[], rules: string[] }}
+   */
   function apply(instances, options, provider) {
     const env = (options.rowEnv || "").toLowerCase().trim();
     const os = (options.rowOS || "linux").toLowerCase().trim();
