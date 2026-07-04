@@ -315,8 +315,7 @@ function buildPortfolioModel(payload) {
     apps: apps.length,
     vms: results.length,
     vcpus: allStats.reduce((s, a) => s + a.vcpus, 0),
-    memory:
-      Math.round(allStats.reduce((s, a) => s + a.memory, 0) * 100) / 100,
+    memory: Math.round(allStats.reduce((s, a) => s + a.memory, 0) * 100) / 100,
     matched: allStats.reduce((s, a) => s + a.matched, 0),
     noMatch: 0,
     matchRate: 0,
@@ -410,13 +409,22 @@ const PF_OS_COLORS = {
   Unspecified: "#94a3b8",
 };
 const PF_PALETTE = [
-  "#667eea", "#4ecdc4", "#f59e0b", "#dc2626", "#7c3aed",
-  "#0ea5e9", "#15803d", "#db2777", "#64748b", "#b45309",
+  "#667eea",
+  "#4ecdc4",
+  "#f59e0b",
+  "#dc2626",
+  "#7c3aed",
+  "#0ea5e9",
+  "#15803d",
+  "#db2777",
+  "#64748b",
+  "#b45309",
 ];
 const _pfKeyColors = {};
 function pfKeyColor(key) {
   if (!(key in _pfKeyColors)) {
-    _pfKeyColors[key] = PF_PALETTE[Object.keys(_pfKeyColors).length % PF_PALETTE.length];
+    _pfKeyColors[key] =
+      PF_PALETTE[Object.keys(_pfKeyColors).length % PF_PALETTE.length];
   }
   return _pfKeyColors[key];
 }
@@ -452,16 +460,21 @@ function pfBar(counts, colorFn) {
 }
 
 function pfChips(items, cls) {
-  return items.map((t) => `<span class="pf-chip ${cls || ""}">${esc(t)}</span>`).join(" ");
+  return items
+    .map((t) => `<span class="pf-chip ${cls || ""}">${esc(t)}</span>`)
+    .join(" ");
 }
 
 function matchBadge(rate) {
-  const cls = rate >= 90 ? "pf-chip-ok" : rate >= 50 ? "pf-chip-warn" : "pf-chip-danger";
+  const cls =
+    rate >= 90 ? "pf-chip-ok" : rate >= 50 ? "pf-chip-warn" : "pf-chip-danger";
   return `<span class="pf-chip ${cls}">${rate}%</span>`;
 }
 
 function vmMatchCell(row) {
-  const matched = portfolioModel.meta.instCols.some((c) => !isNoMatchValue(row[c]));
+  const matched = portfolioModel.meta.instCols.some(
+    (c) => !isNoMatchValue(row[c]),
+  );
   return matched
     ? '<span class="pf-chip pf-chip-ok">✓ matched</span>'
     : '<span class="pf-chip pf-chip-danger">✗ no match</span>';
@@ -502,7 +515,8 @@ function renderPortfolio() {
   const panels = [
     `<div class="pf-panel active" id="pf-panel-overview">${renderOverview(m)}</div>`,
     ...m.apps.map(
-      (a, i) => `<div class="pf-panel" id="pf-panel-app-${i}">${renderAppPanel(a, m, i)}</div>`,
+      (a, i) =>
+        `<div class="pf-panel" id="pf-panel-app-${i}">${renderAppPanel(a, m, i)}</div>`,
     ),
   ];
   if (m.unassigned) {
@@ -515,7 +529,9 @@ function renderPortfolio() {
     <div class="pf-toolbar">
       <div class="pf-meta">
         Generated from <strong>${esc(m.meta.sourcePage || "a tool page")}</strong>${
-          providers.length ? ` · <strong>${esc(providers.join(", "))}</strong>` : ""
+          providers.length
+            ? ` · <strong>${esc(providers.join(", "))}</strong>`
+            : ""
         }${generatedAt ? ` · ${esc(generatedAt)}` : ""}
       </div>
       <div id="pfExportSlot"></div>
@@ -668,7 +684,9 @@ function renderAppExpand(a, i) {
 
 function renderCallouts(m) {
   const list = (arr, fmt) =>
-    arr.length ? `<ul class="pf-list">${arr.map(fmt).join("")}</ul>` : '<div class="pf-muted">None</div>';
+    arr.length
+      ? `<ul class="pf-list">${arr.map(fmt).join("")}</ul>`
+      : '<div class="pf-muted">None</div>';
   return `<div class="pf-callouts">
     <div class="pf-card">
       <h4>🏔️ Biggest applications</h4>
@@ -717,7 +735,11 @@ function updateSortIndicators() {
   document.querySelectorAll(".pf-sort-ind").forEach((s) => {
     const key = s.getAttribute("data-ind");
     s.textContent =
-      key === overviewState.sort ? (overviewState.dir === "asc" ? " ▲" : " ▼") : "";
+      key === overviewState.sort
+        ? overviewState.dir === "asc"
+          ? " ▲"
+          : " ▼"
+        : "";
   });
 }
 
@@ -740,10 +762,15 @@ function renderAppPanel(a, m, idx) {
   </div>`;
 
   const compliance = a.hasCompliance
-    ? `<div class="pf-block"><h4>🔒 Compliance</h4>${pfChips(Object.entries(a.compliance).map(([k, n]) => `${k} ×${n}`), "pf-chip-danger")}</div>`
+    ? `<div class="pf-block"><h4>🔒 Compliance</h4>${pfChips(
+        Object.entries(a.compliance).map(([k, n]) => `${k} ×${n}`),
+        "pf-chip-danger",
+      )}</div>`
     : "";
   const regions = `<div class="pf-block"><h4>🌍 Regions ${
-    a.multiRegion ? '<span class="pf-chip pf-chip-warn">multi-region</span>' : ""
+    a.multiRegion
+      ? '<span class="pf-chip pf-chip-warn">multi-region</span>'
+      : ""
   }</h4>${a.regions.length ? pfChips(a.regions, "pf-chip-info") : '<span class="pf-muted">—</span>'}</div>`;
 
   const blocks =
@@ -809,7 +836,10 @@ function renderVmTable(a, m) {
   const cols = vmDetailColumns(m);
   const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
   const body = a.rows
-    .map((r) => `<tr>${cols.map((c) => `<td>${esc(r[c] ?? "")}</td>`).join("")}</tr>`)
+    .map(
+      (r) =>
+        `<tr>${cols.map((c) => `<td>${esc(r[c] ?? "")}</td>`).join("")}</tr>`,
+    )
     .join("");
   return `<div class="pf-block"><h4>📋 VM detail (${a.vms})</h4><div class="pf-scroll"><table class="pf-table pf-table-sm"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 }

@@ -34,7 +34,11 @@ const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   setTimeout,
   clearTimeout,
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   location: { origin: "https://x.test", pathname: "/app-portfolio.html" },
   matchMedia: () => ({ matches: false, addEventListener() {} }),
 };
@@ -168,7 +172,10 @@ check(
   run('__m.apps.map(a => a.app).join(",")') === "Analytics,Billing",
 );
 check("Unassigned bucket present (1 VM)", run("__m.unassigned.vms") === 1);
-check("estate apps=2 vms=4", run("__m.estate.apps") === 2 && run("__m.estate.vms") === 4);
+check(
+  "estate apps=2 vms=4",
+  run("__m.estate.apps") === 2 && run("__m.estate.vms") === 4,
+);
 check("estate vcpus = 30", run("__m.estate.vcpus") === 30);
 check("estate memory = 120", run("__m.estate.memory") === 120);
 check(
@@ -179,40 +186,103 @@ check(
 );
 
 console.log("[per-app: Billing]");
-check("Billing 2 VMs / 12 vCPUs / 48 GB", run('__b = __m.apps.find(a=>a.app==="Billing"); [__b.vms,__b.vcpus,__b.memory].join(",")') === "2,12,48");
-check("Billing fully matched (100%)", run("__b.matched") === 2 && run("__b.matchRate") === 100);
+check(
+  "Billing 2 VMs / 12 vCPUs / 48 GB",
+  run(
+    '__b = __m.apps.find(a=>a.app==="Billing"); [__b.vms,__b.vcpus,__b.memory].join(",")',
+  ) === "2,12,48",
+);
+check(
+  "Billing fully matched (100%)",
+  run("__b.matched") === 2 && run("__b.matchRate") === 100,
+);
 check("Billing ENV mix {Production:2}", run("__b.envMix.Production") === 2);
-check("Billing OS mix Linux+Windows", run("__b.osMix.Linux") === 1 && run("__b.osMix.Windows") === 1);
-check("Billing workload mix Web Server + Database", run('__b.workloadMix["Web Server"]') === 1 && run("__b.workloadMix.Database") === 1);
-check("Billing compliance {PCI:1}, flagged", run("__b.compliance.PCI") === 1 && run("__b.hasCompliance") === true);
-check("Billing multi-region (4 distinct)", run("__b.regions.length") === 4 && run("__b.multiRegion") === true);
+check(
+  "Billing OS mix Linux+Windows",
+  run("__b.osMix.Linux") === 1 && run("__b.osMix.Windows") === 1,
+);
+check(
+  "Billing workload mix Web Server + Database",
+  run('__b.workloadMix["Web Server"]') === 1 &&
+    run("__b.workloadMix.Database") === 1,
+);
+check(
+  "Billing compliance {PCI:1}, flagged",
+  run("__b.compliance.PCI") === 1 && run("__b.hasCompliance") === true,
+);
+check(
+  "Billing multi-region (4 distinct)",
+  run("__b.regions.length") === 4 && run("__b.multiRegion") === true,
+);
 
 console.log("[family extraction]");
-check("Billing AWS families m5 + r5a", run("__b.families.aws.m5") === 1 && run("__b.families.aws.r5a") === 1);
-check("Billing AZURE families D + E", run("__b.families.azure.D") === 1 && run("__b.families.azure.E") === 1);
-check('extractFamily aws "m6g.xlarge" → m6g', run('extractFamily("aws","m6g.xlarge")') === "m6g");
-check('extractFamily azure "d4psv6" → D', run('extractFamily("azure","d4psv6")') === "D");
-check('extractFamily gcp "e2-standard-4" → e2', run('extractFamily("gcp","e2-standard-4")') === "e2");
-check("extractFamily ignores no-match sentinel", run('extractFamily("aws","No data available")') === null);
+check(
+  "Billing AWS families m5 + r5a",
+  run("__b.families.aws.m5") === 1 && run("__b.families.aws.r5a") === 1,
+);
+check(
+  "Billing AZURE families D + E",
+  run("__b.families.azure.D") === 1 && run("__b.families.azure.E") === 1,
+);
+check(
+  'extractFamily aws "m6g.xlarge" → m6g',
+  run('extractFamily("aws","m6g.xlarge")') === "m6g",
+);
+check(
+  'extractFamily azure "d4psv6" → D',
+  run('extractFamily("azure","d4psv6")') === "D",
+);
+check(
+  'extractFamily gcp "e2-standard-4" → e2',
+  run('extractFamily("gcp","e2-standard-4")') === "e2",
+);
+check(
+  "extractFamily ignores no-match sentinel",
+  run('extractFamily("aws","No data available")') === null,
+);
 
 console.log("[right-sizing (vCPU-based, Optimized)]");
-check("Billing AWS right-sizing: 1 downsize, 1 same", run("__b.rightSizing.aws.downsize") === 1 && run("__b.rightSizing.aws.same") === 1 && run("__b.rightSizing.aws.upsize") === 0);
-check("Billing AZURE right-sizing: 2 same", run("__b.rightSizing.azure.same") === 2 && run("__b.rightSizing.azure.downsize") === 0);
+check(
+  "Billing AWS right-sizing: 1 downsize, 1 same",
+  run("__b.rightSizing.aws.downsize") === 1 &&
+    run("__b.rightSizing.aws.same") === 1 &&
+    run("__b.rightSizing.aws.upsize") === 0,
+);
+check(
+  "Billing AZURE right-sizing: 2 same",
+  run("__b.rightSizing.azure.same") === 2 &&
+    run("__b.rightSizing.azure.downsize") === 0,
+);
 
 console.log("[match health: Analytics]");
-check("Analytics 0 matched / 1 no-match / 0%", run('__a = __m.apps.find(a=>a.app==="Analytics"); [__a.matched,__a.noMatch,__a.matchRate].join(",")') === "0,1,0");
+check(
+  "Analytics 0 matched / 1 no-match / 0%",
+  run(
+    '__a = __m.apps.find(a=>a.app==="Analytics"); [__a.matched,__a.noMatch,__a.matchRate].join(",")',
+  ) === "0,1,0",
+);
 check(
   "Analytics top no-match reason counted per provider (x2)",
   run("__a.noMatchReasons.length") === 1 &&
-    run('__a.noMatchReasons[0].reason') === "No instances in region" &&
+    run("__a.noMatchReasons[0].reason") === "No instances in region" &&
     run("__a.noMatchReasons[0].count") === 2,
   run("JSON.stringify(__a.noMatchReasons)"),
 );
 
 console.log("[rankings + workload totals]");
-check("bySize ranks Billing first", run('__m.rankings.bySize[0].app') === "Billing");
-check("worstMatchRate surfaces Analytics", run('__m.rankings.worstMatchRate[0].app') === "Analytics");
-check("complianceSensitive = [Billing]", run("__m.rankings.complianceSensitive.length") === 1 && run('__m.rankings.complianceSensitive[0].app') === "Billing");
+check(
+  "bySize ranks Billing first",
+  run("__m.rankings.bySize[0].app") === "Billing",
+);
+check(
+  "worstMatchRate surfaces Analytics",
+  run("__m.rankings.worstMatchRate[0].app") === "Analytics",
+);
+check(
+  "complianceSensitive = [Billing]",
+  run("__m.rankings.complianceSensitive.length") === 1 &&
+    run("__m.rankings.complianceSensitive[0].app") === "Billing",
+);
 check(
   "workload totals across estate (incl. Unassigned 'Unspecified')",
   run('__m.workloadTotals["Web Server"]') === 1 &&
@@ -223,17 +293,32 @@ check(
 );
 
 console.log("[predicate parity + edge cases]");
-check("isNoMatchValue parity", run('isNoMatchValue("No data available")') === true && run('isNoMatchValue("m5.large")') === false && run('isNoMatchValue("")') === true);
-check("empty payload → zeroed model, no throw", run("__e = buildPortfolioModel({ results: [], providers: [] }); __e.estate.apps === 0 && __e.apps.length === 0 && __e.unassigned === null"));
+check(
+  "isNoMatchValue parity",
+  run('isNoMatchValue("No data available")') === true &&
+    run('isNoMatchValue("m5.large")') === false &&
+    run('isNoMatchValue("")') === true,
+);
+check(
+  "empty payload → zeroed model, no throw",
+  run(
+    "__e = buildPortfolioModel({ results: [], providers: [] }); __e.estate.apps === 0 && __e.apps.length === 0 && __e.unassigned === null",
+  ),
+);
 check(
   "no App Name column → everything Unassigned, 0 named apps",
-  run('__n = buildPortfolioModel({ providers: ["aws"], results: [{ "CPU Count": "2", "Memory (GB)": "4", "AWS Optimized Instance": "t3.small" }] }); __n.apps.length === 0 && __n.unassigned.vms === 1'),
+  run(
+    '__n = buildPortfolioModel({ providers: ["aws"], results: [{ "CPU Count": "2", "Memory (GB)": "4", "AWS Optimized Instance": "t3.small" }] }); __n.apps.length === 0 && __n.unassigned.vms === 1',
+  ),
 );
 
 console.log("[UI render]");
 run("receivePortfolio(__payload)");
 const cHtml = els.portfolioContent.innerHTML;
-check("empty state hidden once data renders", els.portfolioEmpty.classes.has("hidden"));
+check(
+  "empty state hidden once data renders",
+  els.portfolioEmpty.classes.has("hidden"),
+);
 check(
   "Overview + per-app + Unassigned tabs rendered",
   /📊 Overview/.test(cHtml) &&
@@ -264,7 +349,9 @@ check(
     !/Analytics/.test(els["pf-app-tbody"].innerHTML),
 );
 run('filterPortfolioApps("")');
-run("togglePortfolioAppRow(portfolioModel.apps.findIndex(a=>a.app==='Billing'))");
+run(
+  "togglePortfolioAppRow(portfolioModel.apps.findIndex(a=>a.app==='Billing'))",
+);
 check(
   "expanding a row reveals its VM table",
   /pf-detail-row/.test(els["pf-app-tbody"].innerHTML),

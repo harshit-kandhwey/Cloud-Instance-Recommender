@@ -45,7 +45,11 @@ const sandbox = {
   setInterval: () => 0,
   clearInterval: () => {},
   alerts: [],
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   Blob: class {
     constructor(parts) {
       this.content = parts.join("");
@@ -66,7 +70,8 @@ sandbox.document = {
     tag,
     style: {},
     click() {
-      if (this.tag === "a") downloads[downloads.length - 1].name = this.download;
+      if (this.tag === "a")
+        downloads[downloads.length - 1].name = this.download;
     },
   }),
   getElementById: (id) => fakeElement(id),
@@ -113,15 +118,69 @@ function check(name, cond, detail) {
 // whitespace-only-app VM (both skipped), and four app names starting with the
 // OWASP formula-injection triggers = + - @ (must all be escaped in the CSV).
 const results = [
-  { "VM Name": "a1", "App Name": "Storefront", "CPU Count": "4", "Memory (GB)": "16", "AWS Like-to-Like Instance": "m5.xlarge" },
-  { "VM Name": "a2", "App Name": "Storefront", "CPU Count": "2", "Memory (GB)": "8", "AWS Like-to-Like Instance": "m5.large" },
-  { "VM Name": "b1", "App Name": "Billing", "CPU Count": "8", "Memory (GB)": "32", "AWS Like-to-Like Instance": "No data available" },
-  { "VM Name": "u1", "App Name": "", "CPU Count": "1", "Memory (GB)": "2", "AWS Like-to-Like Instance": "t3.micro" },
-  { "VM Name": "w1", "App Name": "   ", "CPU Count": "1", "Memory (GB)": "2", "AWS Like-to-Like Instance": "t3.micro" },
-  { "VM Name": "e1", "App Name": "=Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
-  { "VM Name": "e2", "App Name": "+Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
-  { "VM Name": "e3", "App Name": "-Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
-  { "VM Name": "e4", "App Name": "@Evil", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" },
+  {
+    "VM Name": "a1",
+    "App Name": "Storefront",
+    "CPU Count": "4",
+    "Memory (GB)": "16",
+    "AWS Like-to-Like Instance": "m5.xlarge",
+  },
+  {
+    "VM Name": "a2",
+    "App Name": "Storefront",
+    "CPU Count": "2",
+    "Memory (GB)": "8",
+    "AWS Like-to-Like Instance": "m5.large",
+  },
+  {
+    "VM Name": "b1",
+    "App Name": "Billing",
+    "CPU Count": "8",
+    "Memory (GB)": "32",
+    "AWS Like-to-Like Instance": "No data available",
+  },
+  {
+    "VM Name": "u1",
+    "App Name": "",
+    "CPU Count": "1",
+    "Memory (GB)": "2",
+    "AWS Like-to-Like Instance": "t3.micro",
+  },
+  {
+    "VM Name": "w1",
+    "App Name": "   ",
+    "CPU Count": "1",
+    "Memory (GB)": "2",
+    "AWS Like-to-Like Instance": "t3.micro",
+  },
+  {
+    "VM Name": "e1",
+    "App Name": "=Evil",
+    "CPU Count": "2",
+    "Memory (GB)": "4",
+    "AWS Like-to-Like Instance": "t3.small",
+  },
+  {
+    "VM Name": "e2",
+    "App Name": "+Evil",
+    "CPU Count": "2",
+    "Memory (GB)": "4",
+    "AWS Like-to-Like Instance": "t3.small",
+  },
+  {
+    "VM Name": "e3",
+    "App Name": "-Evil",
+    "CPU Count": "2",
+    "Memory (GB)": "4",
+    "AWS Like-to-Like Instance": "t3.small",
+  },
+  {
+    "VM Name": "e4",
+    "App Name": "@Evil",
+    "CPU Count": "2",
+    "Memory (GB)": "4",
+    "AWS Like-to-Like Instance": "t3.small",
+  },
 ];
 vm.runInContext(`processedResults = ${JSON.stringify(results)};`, ctx);
 
