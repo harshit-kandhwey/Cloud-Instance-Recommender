@@ -357,4 +357,86 @@ check(
   /pf-detail-row/.test(els["pf-app-tbody"].innerHTML),
 );
 
+console.log("[sheet-name sanitization]");
+check(
+  "strips illegal chars : \\ / ? * [ ]",
+  run(`sanitizeSheetName("A/B:C[D]*?")`) === "A_B_C_D",
+);
+check(
+  "truncates to 31 chars",
+  run(`sanitizeSheetName("x".repeat(40)).length`) === 31,
+);
+check('blank → "Sheet"', run(`sanitizeSheetName("   ")`) === "Sheet");
+check('all-illegal → "Sheet"', run(`sanitizeSheetName("[]")`) === "Sheet");
+check(
+  "dedupes case-insensitively with numeric suffixes",
+  run(
+    `(function(){var u=new Set();return [uniqueSheetName("App",u),uniqueSheetName("app",u),uniqueSheetName("APP",u)].join("|");})()`,
+  ) === "App|app (2)|APP (3)",
+);
+
+console.log("[workbook model]");
+const wbModel = run("buildPortfolioWorkbookModel(__m)");
+check(
+  "sheets: Summary, Contents, 2 apps, Unassigned, About",
+  wbModel.sheets.map((s) => s.name).join("|") ===
+    "Portfolio Summary|Contents|Analytics|Billing|Unassigned|About",
+  wbModel.sheets.map((s) => s.name).join("|"),
+);
+const summarySheet = wbModel.sheets[0];
+check(
+  "summary title merged across 13 columns",
+  summarySheet.merges[0].e.c === 12,
+);
+check(
+  "summary autofilter over header + 2 app rows",
+  summarySheet.autofilter === "A4:M6",
+);
+const totalRow = summarySheet.rows[summarySheet.rows.length - 1];
+check(
+  "summary TOTAL row is present and styled",
+  totalRow[0].v === "TOTAL (estate)" &&
+    totalRow[0].s === "total" &&
+    totalRow[2].v === 30,
+);
+const contentsLinks = wbModel.sheets[1].rows
+  .filter((r) => r[0] && r[0].l)
+  .map((r) => r[0].l.Target);
+check(
+  "contents links target every sheet",
+  contentsLinks.includes("#'Portfolio Summary'!A1") &&
+    contentsLinks.includes("#'Billing'!A1") &&
+    contentsLinks.includes("#'Unassigned'!A1") &&
+    contentsLinks.includes("#'About'!A1"),
+  contentsLinks.join(", "),
+);
+const billingSheet = wbModel.sheets.find((s) => s.name === "Billing");
+check(
+  "app sheet: title + back-to-Contents link + autofilter",
+  billingSheet.rows[0][0].v === "Billing" &&
+    billingSheet.rows[1][0].l.Target === "#'Contents'!A1" &&
+    /^A\d+:[A-Z]+\d+$/.test(billingSheet.autofilter),
+);
+check(
+  "About sheet notes pricing is excluded",
+  JSON.stringify(wbModel.sheets[5].rows).includes("Intentionally excluded"),
+);
+
+console.log("[xlsx write smoke — vendored styling fork]");
+load("js/vendor/xlsx-js-style.min.js");
+check(
+  "styling fork loaded (XLSX.utils + style_version)",
+  !!(sandbox.XLSX && sandbox.XLSX.utils) && sandbox.XLSX.style_version != null,
+);
+run("__wb = writeWorkbook(buildPortfolioWorkbookModel(__m), true);");
+check(
+  "workbook carries all sheet names",
+  run(`__wb.SheetNames.join("|")`) ===
+    "Portfolio Summary|Contents|Analytics|Billing|Unassigned|About",
+);
+check(
+  "workbook serializes to xlsx bytes",
+  run(`XLSX.write(__wb, { type: "base64", bookType: "xlsx" }).length`) > 1000,
+);
+
 process.exit(failures ? 1 : 0);

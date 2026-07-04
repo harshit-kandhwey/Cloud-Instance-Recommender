@@ -3,10 +3,10 @@
 // Receives a generated result set handed off from a tool page — postMessage is
 // the primary channel (same-origin, no size cap, CSP-safe), with a localStorage
 // copy as a cold-open / reload fallback — then renders an application-centric
-// view and (in a later commit) an executive Excel export.
+// dashboard and builds an executive Excel workbook on demand.
 //
-// This commit wires up the handoff and the page shell. The analytics engine,
-// the tabbed UI, and the workbook export are added in subsequent commits.
+// Sections: handoff receiver · analytics engine (pure) · tabbed dashboard UI ·
+// executive Excel export (neutral sheet-data model + a thin SheetJS writer).
 
 // PORTFOLIO_STORAGE_KEY, isNoMatchValue, and getInstanceColumns are defined in
 // app-core.js (loaded before this file on app-portfolio.html) and shared with
@@ -534,7 +534,9 @@ function renderPortfolio() {
             : ""
         }${generatedAt ? ` · ${esc(generatedAt)}` : ""}
       </div>
-      <div id="pfExportSlot"></div>
+      <button class="btn btn-primary" id="pfExportBtn" onclick="exportPortfolioWorkbook()">
+        ⬇️ Download Executive Excel
+      </button>
     </div>
     <div class="pf-tabs" role="tablist">${tabs.join("")}</div>
     ${panels.join("")}
@@ -842,6 +844,409 @@ function renderVmTable(a, m) {
     )
     .join("");
   return `<div class="pf-block"><h4>📋 VM detail (${a.vms})</h4><div class="pf-scroll"><table class="pf-table pf-table-sm"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+
+// ─── Executive Excel export ───────────────────────────────────────────────────
+// A neutral sheet-data model (buildPortfolioWorkbookModel) is turned into an
+// .xlsx by a thin writer (writeWorkbook). Styling is applied only when the
+// xlsx-js-style fork is the active library; the plain SheetJS community build
+// still produces a well-structured (unstyled) workbook. The model builder and
+// the sheet-name sanitizer are pure and unit-tested; the write step is a thin
+// adapter over the vendored library.
+
+// A1 helpers (pure — the writer uses XLSX.utils, these keep the model library-free).
+function a1col(c) {
+  let s = "";
+  c += 1;
+  while (c) {
+    const m = (c - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    c = Math.floor((c - 1) / 26);
+  }
+  return s;
+}
+function a1(r, c) {
+  return a1col(c) + (r + 1);
+}
+
+// Cell factories for the neutral model.
+function num(v, z) {
+  return { v: typeof v === "number" ? v : 0, t: "n", z: z || "#,##0" };
+}
+function pct(v) {
+  return { v: typeof v === "number" ? v : 0, t: "n", z: "0%" };
+}
+// Applies a semantic style key to every cell in a row (wrapping primitives).
+function styleRow(cells, styleKey) {
+  return cells.map((c) => {
+    if (c === null || c === undefined) return { v: "", s: styleKey };
+    if (typeof c === "object") return Object.assign({}, c, { s: styleKey });
+    return { v: c, s: styleKey };
+  });
+}
+
+// Excel sheet-name rules: ≤31 chars, none of : \ / ? * [ ], no leading/trailing
+// apostrophe. We also drop interior apostrophes so quoted HYPERLINK targets are safe.
+function sanitizeSheetName(name) {
+  let s = String(name == null ? "" : name)
+    .replace(/[:\\/?*\[\]']/g, "_")
+    .trim();
+  if (s.length > 31) s = s.slice(0, 31);
+  s = s.replace(/^_+|_+$/g, "").trim();
+  return s || "Sheet";
+}
+// De-dupes case-insensitively (Excel treats sheet names case-insensitively),
+// appending " (2)", " (3)"… and keeping the result ≤31 chars.
+function uniqueSheetName(base, used) {
+  let name = base;
+  let n = 2;
+  while (used.has(name.toLowerCase())) {
+    const suffix = ` (${n})`;
+    name = base.slice(0, 31 - suffix.length) + suffix;
+    n++;
+  }
+  used.add(name.toLowerCase());
+  return name;
+}
+
+// All result columns (input order first, then provider outputs) for detail tables.
+function wbDetailColumns(model) {
+  const firstStat =
+    model.apps[0] || model.unassigned || { rows: [] };
+  const sample = (firstStat.rows && firstStat.rows[0]) || {};
+  const keys = Object.keys(sample);
+  const headers = (model.meta.columnHeaders || []).filter((h) =>
+    keys.includes(h),
+  );
+  const rest = keys.filter((k) => !headers.includes(k));
+  return [...headers, ...rest];
+}
+
+// One app's sheet: title, back-link, KPI block, then the per-VM detail table.
+function buildAppSheet(stat, sheetName, title, detailCols) {
+  const rows = [];
+  rows.push([{ v: title, s: "title" }]);
+  rows.push([
+    {
+      v: "← Back to Contents",
+      s: "link",
+      l: { Target: "#'Contents'!A1", Tooltip: "Contents" },
+    },
+  ]);
+  rows.push([]);
+  const kpi = (k, v) => rows.push([{ v: k, s: "kpiKey" }, v]);
+  kpi("VMs", num(stat.vms));
+  kpi("vCPUs (total)", num(stat.vcpus));
+  kpi("vCPUs (avg)", num(stat.avgVcpus, "#,##0.00"));
+  kpi("Memory GB (total)", num(stat.memory, "#,##0.00"));
+  kpi("Memory GB (avg)", num(stat.avgMemory, "#,##0.00"));
+  kpi("Match rate", pct(stat.matchRate / 100));
+  kpi("Matched / No-Match", `${stat.matched} / ${stat.noMatch}`);
+  kpi("Distinct regions", num(stat.regions.length));
+  kpi("Multi-region", stat.multiRegion ? "Yes" : "No");
+  kpi("Compliance", Object.keys(stat.compliance).join(", ") || "—");
+  kpi("Regions", stat.regions.join(", ") || "—");
+  if (stat.noMatchReasons.length) {
+    kpi(
+      "Top no-match reason",
+      `${stat.noMatchReasons[0].reason} (×${stat.noMatchReasons[0].count})`,
+    );
+  }
+  rows.push([]);
+  const detailHeaderIdx = rows.length;
+  rows.push(styleRow(detailCols, "header"));
+  stat.rows.forEach((r) =>
+    rows.push(detailCols.map((c) => (r[c] == null ? "" : String(r[c])))),
+  );
+
+  const lastCol = Math.max(detailCols.length, 2) - 1;
+  const cols = detailCols.map((c, i) => ({
+    wch: i === 0 ? 22 : Math.min(Math.max(String(c).length + 2, 10), 28),
+  }));
+  return {
+    name: sheetName,
+    rows,
+    cols,
+    merges: [{ s: { r: 0, c: 0 }, e: { r: 0, c: lastCol } }],
+    autofilter: `${a1(detailHeaderIdx, 0)}:${a1(detailHeaderIdx + stat.rows.length, lastCol)}`,
+  };
+}
+
+function buildAboutSheet(meta, providers) {
+  const rows = [];
+  rows.push([{ v: "About this workbook", s: "title" }]);
+  rows.push([]);
+  const kv = (k, v) => rows.push([{ v: k, s: "kpiKey" }, v]);
+  kv("Generated at", meta.generatedAt || "—");
+  kv("Source page", meta.sourcePage || "—");
+  kv("Providers", providers.join(", ") || "—");
+  ["AWS", "AZURE", "GCP"].forEach((P) => {
+    if (meta.dataDates && meta.dataDates[P]) kv(`${P} data date`, meta.dataDates[P]);
+  });
+  kv("Pricing", "Intentionally excluded from this tool's outputs.");
+  rows.push([]);
+  rows.push([{ v: "Column legend", s: "sectionHead" }]);
+  [
+    "App Name — the application each VM belongs to (drives this workbook's grouping).",
+    "{P} Like-to-Like Instance — same-or-larger match for the current size.",
+    "{P} Optimized Instance — utilization-based, right-sized match.",
+    "{P} Rules Applied — rule-engine adjustments that shaped the pick.",
+    "{P} No Match Reason — why a VM received no recommendation.",
+  ].forEach((t) => rows.push([t]));
+  rows.push([]);
+  rows.push([{ v: "Notes", s: "sectionHead" }]);
+  [
+    "Workload mix reflects the Workload column in the results; app-inherited workloads aren't shown.",
+    "Right-sizing counts compare each Optimized vCPU count to the current vCPUs.",
+    "All data is processed in your browser; nothing is uploaded anywhere.",
+  ].forEach((t) => rows.push([t]));
+  return { name: "About", rows, cols: [{ wch: 26 }, { wch: 64 }] };
+}
+
+// Turns the analytics model into the neutral workbook model (pure, unit-tested).
+function buildPortfolioWorkbookModel(model) {
+  const meta = model.meta;
+  const providers = (meta.providers || []).map((p) => p.toUpperCase());
+  const est = model.estate;
+  const detailCols = wbDetailColumns(model);
+
+  // Final, unique sheet names (reserve the fixed names first so apps can't collide).
+  const FIXED = {
+    summary: "Portfolio Summary",
+    contents: "Contents",
+    unassigned: "Unassigned",
+    about: "About",
+  };
+  const used = new Set(Object.values(FIXED).map((n) => n.toLowerCase()));
+  const appSheetNames = model.apps.map((a) =>
+    uniqueSheetName(sanitizeSheetName(a.app || "App"), used),
+  );
+
+  const allStats = model.unassigned ? [...model.apps, model.unassigned] : model.apps;
+  const sumMix = (key, b) => allStats.reduce((s, a) => s + (a[key][b] || 0), 0);
+  const regionUnion = new Set();
+  const compUnion = new Set();
+  allStats.forEach((a) => {
+    a.regions.forEach((r) => regionUnion.add(r));
+    Object.keys(a.compliance).forEach((c) => compUnion.add(c));
+  });
+
+  const sheets = [];
+
+  // 1. Portfolio Summary
+  const sumHeader = [
+    "Application", "VMs", "vCPUs", "Memory (GB)", "Matched", "No-Match",
+    "Match %", "Distinct Regions", "Multi-region", "Compliance",
+    "Production", "Windows", "Linux",
+  ];
+  const sumRows = [];
+  sumRows.push([{ v: "App Portfolio — Executive Summary", s: "title" }]);
+  sumRows.push([
+    {
+      v: `Generated from ${meta.sourcePage || "a tool page"}${
+        providers.length ? ` · ${providers.join(", ")}` : ""
+      }${meta.generatedAt ? ` · ${meta.generatedAt}` : ""} · pricing excluded`,
+      s: "subtitle",
+    },
+  ]);
+  sumRows.push([]);
+  const sumHeaderIdx = sumRows.length;
+  sumRows.push(styleRow(sumHeader, "header"));
+  model.apps.forEach((a, i) => {
+    const row = [
+      a.app,
+      num(a.vms),
+      num(a.vcpus),
+      num(a.memory, "#,##0.00"),
+      num(a.matched),
+      num(a.noMatch),
+      pct(a.matchRate / 100),
+      num(a.regions.length),
+      a.multiRegion ? "Yes" : "No",
+      Object.keys(a.compliance).join(", ") || "—",
+      num(a.envMix.Production || 0),
+      num(a.osMix.Windows || 0),
+      num(a.osMix.Linux || 0),
+    ];
+    sumRows.push(i % 2 ? styleRow(row, "band") : row);
+  });
+  sumRows.push(
+    styleRow(
+      [
+        "TOTAL (estate)",
+        num(est.vms),
+        num(est.vcpus),
+        num(est.memory, "#,##0.00"),
+        num(est.matched),
+        num(est.noMatch),
+        pct(est.matchRate / 100),
+        num(regionUnion.size),
+        "",
+        [...compUnion].join(", ") || "—",
+        num(sumMix("envMix", "Production")),
+        num(sumMix("osMix", "Windows")),
+        num(sumMix("osMix", "Linux")),
+      ],
+      "total",
+    ),
+  );
+  sheets.push({
+    name: FIXED.summary,
+    rows: sumRows,
+    cols: [28, 7, 8, 12, 8, 9, 8, 15, 11, 20, 11, 9, 7].map((w) => ({ wch: w })),
+    merges: [{ s: { r: 0, c: 0 }, e: { r: 0, c: sumHeader.length - 1 } }],
+    autofilter: `${a1(sumHeaderIdx, 0)}:${a1(sumHeaderIdx + model.apps.length, sumHeader.length - 1)}`,
+  });
+
+  // 2. Contents (hyperlinks to every sheet)
+  const cRows = [];
+  cRows.push([{ v: "Contents", s: "title" }]);
+  cRows.push([]);
+  cRows.push(styleRow(["Sheet", "VMs"], "header"));
+  const linkTo = (name, text, vms) =>
+    cRows.push([
+      { v: text, s: "link", l: { Target: `#'${name}'!A1`, Tooltip: text } },
+      vms === "" ? "" : num(vms),
+    ]);
+  linkTo(FIXED.summary, "Portfolio Summary", "");
+  model.apps.forEach((a, i) => linkTo(appSheetNames[i], a.app, a.vms));
+  if (model.unassigned)
+    linkTo(FIXED.unassigned, "Unassigned (no App Name)", model.unassigned.vms);
+  linkTo(FIXED.about, "About", "");
+  sheets.push({ name: FIXED.contents, rows: cRows, cols: [{ wch: 40 }, { wch: 8 }] });
+
+  // 3. One sheet per app
+  model.apps.forEach((a, i) =>
+    sheets.push(buildAppSheet(a, appSheetNames[i], a.app, detailCols)),
+  );
+
+  // 4. Unassigned
+  if (model.unassigned)
+    sheets.push(
+      buildAppSheet(model.unassigned, FIXED.unassigned, "Unassigned (no App Name)", detailCols),
+    );
+
+  // 5. About
+  sheets.push(buildAboutSheet(meta, providers));
+
+  return { sheets };
+}
+
+// Concrete cell styles — applied only when the styling fork is active.
+const PF_XLSX_STYLES = {
+  title: { font: { bold: true, sz: 16, color: { rgb: "1F2A5A" } } },
+  subtitle: { font: { sz: 10, italic: true, color: { rgb: "5B6B8C" } } },
+  header: {
+    font: { bold: true, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "4C63D2" } },
+    alignment: { horizontal: "left", vertical: "center" },
+  },
+  total: { font: { bold: true }, fill: { fgColor: { rgb: "E8EBFF" } } },
+  band: { fill: { fgColor: { rgb: "F4F6FF" } } },
+  kpiKey: { font: { bold: true, color: { rgb: "5B2D8C" } } },
+  sectionHead: { font: { bold: true, sz: 12, color: { rgb: "2C3E8C" } } },
+  link: { font: { color: { rgb: "1A56DB" }, underline: true } },
+};
+
+function toWsCell(cell, styled) {
+  if (cell === null || cell === undefined) return { t: "s", v: "" };
+  if (typeof cell !== "object") {
+    return { t: typeof cell === "number" ? "n" : "s", v: cell };
+  }
+  const ws = { v: cell.v == null ? "" : cell.v };
+  ws.t = cell.t || (typeof cell.v === "number" ? "n" : "s");
+  if (cell.z) ws.z = cell.z;
+  if (cell.l) ws.l = cell.l;
+  if (styled && cell.s && PF_XLSX_STYLES[cell.s]) ws.s = PF_XLSX_STYLES[cell.s];
+  return ws;
+}
+
+// Thin adapter: neutral model → SheetJS workbook. Sheet names are already
+// final/unique from the builder, so they're used verbatim.
+function writeWorkbook(wbModel, styled) {
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+  wbModel.sheets.forEach((sheet) => {
+    const ws = {};
+    let maxR = 0;
+    let maxC = 0;
+    (sheet.rows || []).forEach((row, r) => {
+      (row || []).forEach((c, ci) => {
+        ws[XLSX.utils.encode_cell({ r, c: ci })] = toWsCell(c, styled);
+        if (ci > maxC) maxC = ci;
+      });
+      if (r > maxR) maxR = r;
+    });
+    ws["!ref"] = XLSX.utils.encode_range({
+      s: { r: 0, c: 0 },
+      e: { r: maxR, c: maxC },
+    });
+    if (sheet.cols) ws["!cols"] = sheet.cols;
+    if (sheet.merges) ws["!merges"] = sheet.merges;
+    if (sheet.autofilter) ws["!autofilter"] = { ref: sheet.autofilter };
+    XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+  });
+  return wb;
+}
+
+// Lazy-loads the spreadsheet engine on first export: the styling fork if it's
+// vendored, else the plain community build already used for uploads.
+let _pfXlsxPromise = null;
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => {
+      s.remove();
+      reject(new Error("failed to load " + src));
+    };
+    document.head.appendChild(s);
+  });
+}
+function ensurePortfolioXlsx() {
+  if (_pfXlsxPromise) return _pfXlsxPromise;
+  _pfXlsxPromise = loadScriptOnce("js/vendor/xlsx-js-style.min.js")
+    .then(() => ({ styled: true }))
+    .catch(() =>
+      loadScriptOnce("js/vendor/xlsx.full.min.js").then(() => ({
+        styled: false,
+      })),
+    );
+  return _pfXlsxPromise;
+}
+
+function exportPortfolioWorkbook() {
+  if (!portfolioModel) return;
+  const btn = document.getElementById("pfExportBtn");
+  const restore = btn ? btn.textContent : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Building…";
+  }
+  ensurePortfolioXlsx()
+    .then((info) => {
+      if (!window.XLSX) throw new Error("spreadsheet engine unavailable");
+      const wb = writeWorkbook(
+        buildPortfolioWorkbookModel(portfolioModel),
+        !!info.styled,
+      );
+      const fname = `app-portfolio_${new Date().toISOString().split("T")[0]}.xlsx`;
+      window.XLSX.writeFile(wb, fname);
+    })
+    .catch((e) => {
+      console.error("Portfolio Excel export failed:", e);
+      alert(
+        "Sorry — building the Excel workbook failed: " +
+          (e && e.message ? e.message : e),
+      );
+    })
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
+    });
 }
 
 // defer guarantees the DOM is parsed, but guard in case the load method changes.
