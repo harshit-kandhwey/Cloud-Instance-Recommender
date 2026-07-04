@@ -46,7 +46,12 @@ function escapeCell(val) {
 }
 
 function toCsv(results) {
-  const headers = Object.keys(results[0]);
+  if (!results.length) {
+    throw new Error("toCsv: no results to serialize");
+  }
+  // Union of keys across all rows (first-seen order) so a column appearing
+  // only on later rows can't be silently dropped from the golden
+  const headers = [...new Set(results.flatMap((row) => Object.keys(row)))];
   return [
     headers.map(escapeCell).join(","),
     ...results.map((row) =>
@@ -121,7 +126,11 @@ const SCENARIOS = [
   {
     file: "aws-l2l.csv",
     providers: ["aws"],
-    options: { ...BASE_OPTIONS, generateLikeToLike: true, generateOptimized: false },
+    options: {
+      ...BASE_OPTIONS,
+      generateLikeToLike: true,
+      generateOptimized: false,
+    },
   },
   {
     file: "multicloud-both.csv",
@@ -149,7 +158,9 @@ const SCENARIOS = [
       options,
     );
     fs.writeFileSync(path.join(OUT, file), toCsv(results), "utf8");
-    console.log(`${file}: ${results.length} rows, ${Object.keys(results[0]).length} columns`);
+    console.log(
+      `${file}: ${results.length} rows, ${Object.keys(results[0]).length} columns`,
+    );
   }
 
   const fallbackWarns = warnings.filter((w) => w.includes("fallback"));

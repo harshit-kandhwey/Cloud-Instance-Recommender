@@ -21,9 +21,7 @@ for (const suite of suites) {
     timeout: 120000,
   });
   const ok = result.status === 0;
-  console.log(
-    `${ok ? "PASS" : "FAIL"}  ${suite}  (${Date.now() - started}ms)`,
-  );
+  console.log(`${ok ? "PASS" : "FAIL"}  ${suite}  (${Date.now() - started}ms)`);
   if (!ok) {
     failed.push(suite);
     process.stdout.write(result.stdout || "");

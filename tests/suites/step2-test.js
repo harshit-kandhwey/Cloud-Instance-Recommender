@@ -104,7 +104,8 @@ for (const f of [
   "js/base/generate.js",
   "js/base/preview.js",
   "js/base/downloads.js",
-]) load(f);
+])
+  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -130,7 +131,8 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   check("aws us-east-1 exact", v.aws["us-east-1"].status === "exact");
   check(
     "aws us-east-1a fuzzy → us_east_1",
-    v.aws["us-east-1a"].status === "fuzzy" && v.aws["us-east-1a"].key === "us_east_1",
+    v.aws["us-east-1a"].status === "fuzzy" &&
+      v.aws["us-east-1a"].key === "us_east_1",
     JSON.stringify(v.aws["us-east-1a"]),
   );
   check("aws narnia-99 unknown", v.aws["narnia-99"].status === "unknown");
@@ -151,14 +153,28 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
     panel.innerHTML.slice(0, 300),
   );
   check("panel has unknown chip", panel.innerHTML.includes("narnia-99 ✗"));
-  check("panel warns about sample data", panel.innerHTML.includes("sample data"));
+  check(
+    "panel warns about sample data",
+    panel.innerHTML.includes("sample data"),
+  );
   check(
     "unknown count is 3",
     /3 region name\(s\) not recognized/.test(panel.innerHTML),
   );
 
-  // Give prefetch fire-and-forget a moment, then check what got requested
-  await new Promise((r) => setTimeout(r, 300));
+  // Poll for the fire-and-forget prefetch instead of a fixed sleep (CI-safe)
+  const expectedSrcs = [
+    "js/aws/regions/us_east_1.js",
+    "js/azure/regions/eastus.js",
+    "js/gcp/regions/us_central1.js",
+  ];
+  const deadline = Date.now() + 2000;
+  while (
+    Date.now() < deadline &&
+    !expectedSrcs.every((s) => requestedSrcs.includes(s))
+  ) {
+    await new Promise((r) => setTimeout(r, 25));
+  }
   console.log("[prefetch] requested: " + requestedSrcs.join(", "));
   check(
     "prefetch loaded valid + fuzzy regions only",
@@ -188,7 +204,10 @@ d,4,16,us-west-2`;
   console.log("[re-upload]");
   check("panel still visible", !panel.classes.has("hidden"));
   check("old chips replaced", !panel.innerHTML.includes("narnia-99"));
-  check("no warning when all valid", !panel.innerHTML.includes("not recognized"));
+  check(
+    "no warning when all valid",
+    !panel.innerHTML.includes("not recognized"),
+  );
   check("validation replaced", !ctx._regionValidation.azure);
 
   process.exit(failures ? 1 : 0);

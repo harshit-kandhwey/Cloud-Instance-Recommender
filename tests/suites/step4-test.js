@@ -98,14 +98,15 @@ function buildContext({ pageScripts, storageThrows } = {}) {
     "js/gcp/gcp-instance-selector.js",
     "js/base/instance-selector-factory.js",
     "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-  ]) load(f);
+    "js/base/ui-shell.js",
+    "js/base/ingest.js",
+    "js/base/manual-entry.js",
+    "js/base/form-controls.js",
+    "js/base/generate.js",
+    "js/base/preview.js",
+    "js/base/downloads.js",
+  ])
+    load(f);
   return { ctx, elements, storage };
 }
 
@@ -134,9 +135,15 @@ function getHeaders(ctx) {
     const { ctx, elements } = buildContext();
     parse(ctx, "VM Name,CPU Count,Memory (GB),AWS Region\na,4,16,us-east-1");
     check("csvData populated", getCsvData(ctx).length === 1);
-    check("headers unchanged", getHeaders(ctx).join(",") === "VM Name,CPU Count,Memory (GB),AWS Region");
+    check(
+      "headers unchanged",
+      getHeaders(ctx).join(",") === "VM Name,CPU Count,Memory (GB),AWS Region",
+    );
     check("panel hidden", elements.columnMappingSection.classes.has("hidden"));
-    check("no rename note", !elements.fileStatus.innerHTML.includes("Mapped columns"));
+    check(
+      "no rename note",
+      !elements.fileStatus.innerHTML.includes("Mapped columns"),
+    );
   }
 
   console.log("[2. synonyms CSV → silent auto-map + note]");
@@ -145,12 +152,28 @@ function getHeaders(ctx) {
     parse(ctx, "Hostname,vCPUs,RAM,AWS Region\nsrv1,8,32,us-west-2");
     const data = getCsvData(ctx);
     check("csvData populated", data.length === 1);
-    check("keys canonical", "CPU Count" in data[0] && "Memory (GB)" in data[0] && "VM Name" in data[0], JSON.stringify(Object.keys(data[0])));
-    check("values preserved", data[0]["CPU Count"] === "8" && data[0]["VM Name"] === "srv1");
+    check(
+      "keys canonical",
+      "CPU Count" in data[0] &&
+        "Memory (GB)" in data[0] &&
+        "VM Name" in data[0],
+      JSON.stringify(Object.keys(data[0])),
+    );
+    check(
+      "values preserved",
+      data[0]["CPU Count"] === "8" && data[0]["VM Name"] === "srv1",
+    );
     check("headers rewritten", getHeaders(ctx).includes("CPU Count"));
     check("panel hidden", elements.columnMappingSection.classes.has("hidden"));
-    check("rename note shown", elements.fileStatus.innerHTML.includes("Mapped columns"), elements.fileStatus.innerHTML);
-    check("success status", elements.fileStatus.className.includes("alert-success"));
+    check(
+      "rename note shown",
+      elements.fileStatus.innerHTML.includes("Mapped columns"),
+      elements.fileStatus.innerHTML,
+    );
+    check(
+      "success status",
+      elements.fileStatus.className.includes("alert-success"),
+    );
   }
 
   console.log("[3. ambiguous (collision) → panel, deferred pipeline]");
@@ -159,17 +182,35 @@ function getHeaders(ctx) {
     parse(ctx, "CPU Count,vCPUs,Memory (GB),VM Name\n4,4,16,a");
     check("csvData EMPTY while pending", getCsvData(ctx).length === 0);
     check("panel shown", !elements.columnMappingSection.classes.has("hidden"));
-    check("panel mentions ambiguity", elements.columnMappingSection.innerHTML.includes("several columns could match"));
-    check("generate blocked with mapping message", (() => {
-      // selectedProviders default? ensure non-empty to reach csvData gate
-      vm.runInContext("selectedProviders = ['aws']", ctx);
-      vm.runInContext("generateRecommendations()", ctx);
-      return ctx.alerts.some((a) => a.includes("column mapping"));
-    })(), JSON.stringify(ctx.alerts));
+    check(
+      "panel mentions ambiguity",
+      elements.columnMappingSection.innerHTML.includes(
+        "several columns could match",
+      ),
+    );
+    check(
+      "generate blocked with mapping message",
+      (() => {
+        // selectedProviders default? ensure non-empty to reach csvData gate
+        vm.runInContext("selectedProviders = ['aws']", ctx);
+        vm.runInContext("generateRecommendations()", ctx);
+        return ctx.alerts.some((a) => a.includes("column mapping"));
+      })(),
+      JSON.stringify(ctx.alerts),
+    );
 
     // Simulate user: CPU Count ← "CPU Count" (index 0), Memory ← index 2, VM Name ← index 3
     const headers = ["CPU Count", "vCPUs", "Memory (GB)", "VM Name"];
-    const canonicals = ["CPU Count", "Memory (GB)", "CPU Utilization", "Memory Utilization", "VM Name", "AWS Region", "Azure Region", "GCP Region"];
+    const canonicals = [
+      "CPU Count",
+      "Memory (GB)",
+      "CPU Utilization",
+      "Memory Utilization",
+      "VM Name",
+      "AWS Region",
+      "Azure Region",
+      "GCP Region",
+    ];
     canonicals.forEach((c, idx) => {
       const el = ctx.document.getElementById(`colmap_${idx}`);
       if (c === "CPU Count") el.value = "0";
@@ -181,7 +222,10 @@ function getHeaders(ctx) {
     const data = getCsvData(ctx);
     check("after confirm: csvData populated", data.length === 1);
     check("after confirm: vCPUs kept as extra column", "vCPUs" in data[0]);
-    check("after confirm: panel hidden again", elements.columnMappingSection.classes.has("hidden"));
+    check(
+      "after confirm: panel hidden again",
+      elements.columnMappingSection.classes.has("hidden"),
+    );
   }
 
   console.log("[4. saved mapping replays without panel]");
@@ -190,21 +234,42 @@ function getHeaders(ctx) {
     // Seed storage as if the user confirmed before: same signature as below
     const saved = { Puestos: "CPU Count", Memoria: "Memory (GB)" };
     const sig = ["puestos", "memoria", "vm name"].sort().join("|");
-    storage["cloudInstanceRecommenderColumnMaps"] = JSON.stringify({ [sig]: saved });
+    storage["cloudInstanceRecommenderColumnMaps"] = JSON.stringify({
+      [sig]: saved,
+    });
     parse(ctx, "Puestos,Memoria,VM Name\n2,8,x");
-    check("saved mapping auto-applied", getCsvData(ctx).length === 1 && "CPU Count" in getCsvData(ctx)[0], JSON.stringify(getCsvData(ctx)));
-    check("panel not shown", elements.columnMappingSection.classes.has("hidden"));
+    check(
+      "saved mapping auto-applied",
+      getCsvData(ctx).length === 1 && "CPU Count" in getCsvData(ctx)[0],
+      JSON.stringify(getCsvData(ctx)),
+    );
+    check(
+      "panel not shown",
+      elements.columnMappingSection.classes.has("hidden"),
+    );
   }
 
   console.log("[5. private mode (localStorage throws) survives]");
   {
     const { ctx, elements } = buildContext({ storageThrows: true });
     parse(ctx, "Hostname,vCPUs,RAM\nsrv1,8,32");
-    check("silent auto-map still works", getCsvData(ctx).length === 1 && "CPU Count" in getCsvData(ctx)[0]);
+    check(
+      "silent auto-map still works",
+      getCsvData(ctx).length === 1 && "CPU Count" in getCsvData(ctx)[0],
+    );
     // Panel path + confirm (saveColumnMapping throws internally, must not break)
     parse(ctx, "CPU Count,vCPUs,Memory (GB)\n4,4,16");
     check("panel shown", !elements.columnMappingSection.classes.has("hidden"));
-    const canonicals = ["CPU Count", "Memory (GB)", "CPU Utilization", "Memory Utilization", "VM Name", "AWS Region", "Azure Region", "GCP Region"];
+    const canonicals = [
+      "CPU Count",
+      "Memory (GB)",
+      "CPU Utilization",
+      "Memory Utilization",
+      "VM Name",
+      "AWS Region",
+      "Azure Region",
+      "GCP Region",
+    ];
     canonicals.forEach((c, idx) => {
       const el = ctx.document.getElementById(`colmap_${idx}`);
       if (c === "CPU Count") el.value = "0";
@@ -220,23 +285,41 @@ function getHeaders(ctx) {
     const { ctx } = buildContext(); // single-provider page (aws)
     parse(ctx, "VM Name,CPU Count,Memory (GB),Region\na,4,16,us-east-1");
     const data = getCsvData(ctx);
-    check("single-provider: Region → AWS Region", data.length === 1 && data[0]["AWS Region"] === "us-east-1", JSON.stringify(data[0]));
+    check(
+      "single-provider: Region → AWS Region",
+      data.length === 1 && data[0]["AWS Region"] === "us-east-1",
+      JSON.stringify(data[0]),
+    );
   }
   {
     const { ctx, elements } = buildContext({
-      pageScripts: ["js/aws/aws-data.js", "js/azure/azure-data.js", "js/gcp/gcp-data.js"],
+      pageScripts: [
+        "js/aws/aws-data.js",
+        "js/azure/azure-data.js",
+        "js/gcp/gcp-data.js",
+      ],
     });
     parse(ctx, "VM Name,CPU Count,Memory (GB),Region\na,4,16,us-east-1");
     const data = getCsvData(ctx);
-    check("multicloud: Region left untouched (no guess)", data.length === 1 && data[0]["Region"] === "us-east-1", JSON.stringify(data[0]));
-    check("multicloud: no panel for optional-only mismatch", elements.columnMappingSection.classes.has("hidden"));
+    check(
+      "multicloud: Region left untouched (no guess)",
+      data.length === 1 && data[0]["Region"] === "us-east-1",
+      JSON.stringify(data[0]),
+    );
+    check(
+      "multicloud: no panel for optional-only mismatch",
+      elements.columnMappingSection.classes.has("hidden"),
+    );
   }
 
   console.log("[7. required column missing entirely → panel]");
   {
     const { ctx, elements } = buildContext();
     parse(ctx, "VM Name,Sockets,Storage\na,2,100");
-    check("panel shown for unmatched required", !elements.columnMappingSection.classes.has("hidden"));
+    check(
+      "panel shown for unmatched required",
+      !elements.columnMappingSection.classes.has("hidden"),
+    );
     check("csvData deferred", getCsvData(ctx).length === 0);
   }
 

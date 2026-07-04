@@ -14,7 +14,11 @@ const sandbox = {
   setInterval: () => 0,
   clearInterval: () => {},
   alert: () => {},
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
 };
 sandbox.window = sandbox;
 sandbox.document = {
@@ -55,7 +59,8 @@ for (const f of [
   "js/base/generate.js",
   "js/base/preview.js",
   "js/base/downloads.js",
-]) load(f);
+])
+  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -66,20 +71,42 @@ function check(name, cond, detail) {
   }
 }
 
-const r = (p, raw) => vm.runInContext(`resolveRegion(${JSON.stringify(p)}, ${JSON.stringify(raw)})`, ctx);
+const r = (p, raw) =>
+  vm.runInContext(
+    `resolveRegion(${JSON.stringify(p)}, ${JSON.stringify(raw)})`,
+    ctx,
+  );
 
 console.log("[monolith state: no {P}_REGION_KEYS]");
-check("aws us-east-1 exact via window global", r("aws", "us-east-1").status === "exact");
+check(
+  "aws us-east-1 exact via window global",
+  r("aws", "us-east-1").status === "exact",
+);
 check("aws key is us_east_1", r("aws", "us-east-1").key === "us_east_1");
-check("azure East US exact via window global", r("azure", "East US").status === "exact");
+check(
+  "azure East US exact via window global",
+  r("azure", "East US").status === "exact",
+);
 check("aws narnia-99 unknown", r("aws", "narnia-99").status === "unknown");
 check("azure Atlantis unknown", r("azure", "Atlantis").status === "unknown");
-check("gcp (no data at all) unknown", r("gcp", "us-central1").status === "unknown");
+check(
+  "gcp (no data at all) unknown",
+  r("gcp", "us-central1").status === "unknown",
+);
 
 console.log("[public wrappers]");
 const sel = ctx.InstanceSelectorFactory.createSelector("aws");
-check("resolveManifestKey wrapper exists", typeof sel.resolveManifestKey === "function");
-check("ensureRegionScriptLoaded wrapper exists", typeof sel.ensureRegionScriptLoaded === "function");
-check("no manifest → resolveManifestKey null", sel.resolveManifestKey("us_east_1") === null);
+check(
+  "resolveManifestKey wrapper exists",
+  typeof sel.resolveManifestKey === "function",
+);
+check(
+  "ensureRegionScriptLoaded wrapper exists",
+  typeof sel.ensureRegionScriptLoaded === "function",
+);
+check(
+  "no manifest → resolveManifestKey null",
+  sel.resolveManifestKey("us_east_1") === null,
+);
 
 process.exit(failures ? 1 : 0);

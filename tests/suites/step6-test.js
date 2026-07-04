@@ -41,7 +41,11 @@ const sandbox = {
   setInterval: () => 0,
   clearInterval: () => {},
   alert: () => {},
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
 };
 sandbox.window = sandbox;
 sandbox.document = {
@@ -75,7 +79,8 @@ for (const f of [
   "js/base/generate.js",
   "js/base/preview.js",
   "js/base/downloads.js",
-]) load(f);
+])
+  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -114,21 +119,32 @@ function check(name, cond, detail) {
     });
   }
 
-  vm.runInContext(
-    `showResultsPreview(${JSON.stringify(results)})`,
-    ctx,
-  );
+  vm.runInContext(`showResultsPreview(${JSON.stringify(results)})`, ctx);
   const container = elements.resultsPreviewSection;
 
   console.log("[initial render]");
-  check("search input rendered", container.innerHTML.includes('id="previewSearch"'));
-  check("unfiltered count", container.innerHTML.includes("first 20 of 25 rows"));
+  check(
+    "search input rendered",
+    container.innerHTML.includes('id="previewSearch"'),
+  );
+  check(
+    "unfiltered count",
+    container.innerHTML.includes("first 20 of 25 rows"),
+  );
 
   console.log("[filtering]");
   ctx._previewFilterChanged("db-");
   await new Promise((r) => setTimeout(r, 250)); // wait out the 150ms debounce
-  check("filtered count line", container.innerHTML.includes("first 5 of 5 matching rows (25 total)"), container.innerHTML.match(/Results Preview \([^)]*\)/)?.[0]);
-  check("only db rows shown", !container.innerHTML.includes("web-01") && container.innerHTML.includes("db-05"));
+  check(
+    "filtered count line",
+    container.innerHTML.includes("first 5 of 5 matching rows (25 total)"),
+    container.innerHTML.match(/Results Preview \([^)]*\)/)?.[0],
+  );
+  check(
+    "only db rows shown",
+    !container.innerHTML.includes("web-01") &&
+      container.innerHTML.includes("db-05"),
+  );
   check("input value restored", elements.previewSearch.value === "db-");
   check("focus restored", focusCalls > 0);
 
@@ -138,25 +154,44 @@ function check(name, cond, detail) {
   ctx._previewFilterChanged("r6");
   ctx._previewFilterChanged("r6i");
   await new Promise((r) => setTimeout(r, 250));
-  check("three keystrokes → one re-render", focusCalls === renders0 + 1, `focusCalls=${focusCalls}`);
-  check("value filter matches instance col", container.innerHTML.includes("first 5 of 5 matching rows"));
+  check(
+    "three keystrokes → one re-render",
+    focusCalls === renders0 + 1,
+    `focusCalls=${focusCalls}`,
+  );
+  check(
+    "value filter matches instance col",
+    container.innerHTML.includes("first 5 of 5 matching rows"),
+  );
 
   console.log("[sort while filtered]");
   ctx._sortPreview(0); // sort by VM Name
-  check("filter survives sort", container.innerHTML.includes("matching rows (25 total)"));
-  check("sorted + filtered rows", container.innerHTML.indexOf("db-01") < container.innerHTML.indexOf("db-05"));
+  check(
+    "filter survives sort",
+    container.innerHTML.includes("matching rows (25 total)"),
+  );
+  check(
+    "sorted + filtered rows",
+    container.innerHTML.indexOf("db-01") < container.innerHTML.indexOf("db-05"),
+  );
   check("input value survives sort", elements.previewSearch.value === "r6i");
 
   console.log("[no matches]");
   ctx._previewFilterChanged("zzz-nothing");
   await new Promise((r) => setTimeout(r, 250));
   check("no-match message", container.innerHTML.includes("No rows match"));
-  check("zero count", container.innerHTML.includes("first 0 of 0 matching rows (25 total)"));
+  check(
+    "zero count",
+    container.innerHTML.includes("first 0 of 0 matching rows (25 total)"),
+  );
 
   console.log("[clear filter]");
   ctx._previewFilterChanged("");
   await new Promise((r) => setTimeout(r, 250));
-  check("back to unfiltered", container.innerHTML.includes("first 20 of 25 rows"));
+  check(
+    "back to unfiltered",
+    container.innerHTML.includes("first 20 of 25 rows"),
+  );
 
   process.exit(failures ? 1 : 0);
 })().catch((e) => {

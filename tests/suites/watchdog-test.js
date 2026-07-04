@@ -17,7 +17,11 @@ const sandbox = {
   setInterval: () => 0,
   clearInterval: () => {},
   alert: () => {},
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   Worker: class FakeStalledWorker {
     constructor() {}
     postMessage() {
@@ -76,7 +80,8 @@ for (const f of [
   "js/base/generate.js",
   "js/base/preview.js",
   "js/base/downloads.js",
-]) load(f);
+])
+  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -88,7 +93,9 @@ function check(name, cond, detail) {
 }
 
 (async () => {
-  ctx._workerWatchdogMs = 300; // short watchdog for the test
+  const watchdogMs = 300;
+  const testTimeoutMs = 2500;
+  ctx._workerWatchdogMs = watchdogMs; // short watchdog for the test
 
   const rows = [
     {
@@ -114,13 +121,32 @@ function check(name, cond, detail) {
   };
 
   const start = Date.now();
-  const results = await ctx.runRecommendationBatch(rows, ["aws"], options);
+  const results = await Promise.race([
+    ctx.runRecommendationBatch(rows, ["aws"], options),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("watchdog fallback did not settle")),
+        testTimeoutMs,
+      ),
+    ),
+  ]);
   const elapsed = Date.now() - start;
 
   check("worker was attempted", posted === 1, `posted=${posted}`);
-  check("worker terminated after stall", terminated === 1, `terminated=${terminated}`);
-  check("watchdog waited before fallback", elapsed >= 300, `${elapsed}ms`);
-  check("fallback produced results", Array.isArray(results) && results.length === 1);
+  check(
+    "worker terminated after stall",
+    terminated === 1,
+    `terminated=${terminated}`,
+  );
+  check(
+    "watchdog used the short test timeout before fallback",
+    elapsed >= watchdogMs && elapsed < testTimeoutMs,
+    `${elapsed}ms`,
+  );
+  check(
+    "fallback produced results",
+    Array.isArray(results) && results.length === 1,
+  );
   check(
     "fallback used real region data",
     results[0]["AWS Like-to-Like Instance"] &&

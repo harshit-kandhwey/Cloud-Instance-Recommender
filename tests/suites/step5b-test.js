@@ -20,30 +20,46 @@ const elements = {};
 function fakeElement(id) {
   if (!elements[id]) {
     elements[id] = {
-      id, innerHTML: "", className: "", style: {}, value: "",
+      id,
+      innerHTML: "",
+      className: "",
+      style: {},
+      value: "",
       classes: new Set(["hidden"]),
       classList: {
         add: (c) => elements[id].classes.add(c),
         remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {}, contains: (c) => elements[id].classes.has(c),
+        toggle: () => {},
+        contains: (c) => elements[id].classes.has(c),
       },
-      addEventListener: () => {}, querySelectorAll: () => [],
-      focus: () => {}, setSelectionRange: () => {}, scrollIntoView: () => {},
+      addEventListener: () => {},
+      querySelectorAll: () => [],
+      focus: () => {},
+      setSelectionRange: () => {},
+      scrollIntoView: () => {},
     };
   }
   return elements[id];
 }
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout, clearTimeout, setInterval: () => 0, clearInterval: () => {},
+  setTimeout,
+  clearTimeout,
+  setInterval: () => 0,
+  clearInterval: () => {},
   alert: () => {},
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
 };
 sandbox.window = sandbox;
 sandbox.document = {
   createElement: (tag) => ({ tag, style: {} }),
   getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) => (sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : []),
+  querySelectorAll: (sel) =>
+    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
   addEventListener: () => {},
   head: {
     appendChild(script) {
@@ -63,7 +79,9 @@ sandbox.document = {
 };
 const ctx = vm.createContext(sandbox);
 const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, { filename: rel });
+  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
+    filename: rel,
+  });
 load("js/aws/aws-data.js");
 for (const f of [
   "js/base/rule-engine.js",
@@ -80,15 +98,22 @@ for (const f of [
   "js/base/generate.js",
   "js/base/preview.js",
   "js/base/downloads.js",
-]) load(f);
+])
+  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {
   if (cond) console.log(`  ok: ${name}`);
-  else { failures++; console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`); }
+  else {
+    failures++;
+    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
+  }
 }
 
-const AOA = [["VM Name", "CPU Count", "Memory (GB)"], ["a", 4, 16]];
+const AOA = [
+  ["VM Name", "CPU Count", "Memory (GB)"],
+  ["a", 4, 16],
+];
 
 (async () => {
   console.log("[multi-sheet note surfaces in fileStatus]");
@@ -98,25 +123,59 @@ const AOA = [["VM Name", "CPU Count", "Memory (GB)"], ["a", 4, 16]];
       { name: "Notes", aoa: [["x"]] },
       { name: "More", aoa: [["y"]] },
     ]);
-    await ctx.ingestFile({ name: "multi.xlsx", size: buf.byteLength, arrayBuffer: async () => buf });
-    check("note in fileStatus", elements.fileStatus.innerHTML.includes("3 sheets — only the first (&quot;Data&quot;) was used"), elements.fileStatus.innerHTML);
-    check("still success status", elements.fileStatus.className.includes("alert-success"));
+    await ctx.ingestFile({
+      name: "multi.xlsx",
+      size: buf.byteLength,
+      arrayBuffer: async () => buf,
+    });
+    check(
+      "note in fileStatus",
+      elements.fileStatus.innerHTML.includes(
+        "3 sheets — only the first (&quot;Data&quot;) was used",
+      ),
+      elements.fileStatus.innerHTML,
+    );
+    check(
+      "still success status",
+      elements.fileStatus.className.includes("alert-success"),
+    );
   }
 
   console.log("[single sheet → no note]");
   {
     const buf = makeXlsx([{ name: "Only", aoa: AOA }]);
-    await ctx.ingestFile({ name: "one.xlsx", size: buf.byteLength, arrayBuffer: async () => buf });
+    await ctx.ingestFile({
+      name: "one.xlsx",
+      size: buf.byteLength,
+      arrayBuffer: async () => buf,
+    });
     check("no note", !elements.fileStatus.innerHTML.includes("sheets"));
   }
 
   console.log("[size/empty guards]");
   {
-    await ctx.ingestFile({ name: "big.xlsx", size: 11 * 1024 * 1024, arrayBuffer: async () => { throw new Error("should not be called"); } });
-    check("oversized rejected before buffering", elements.fileStatus.innerHTML.includes("Maximum allowed size is 10MB"), elements.fileStatus.innerHTML);
+    await ctx.ingestFile({
+      name: "big.xlsx",
+      size: 11 * 1024 * 1024,
+      arrayBuffer: async () => {
+        throw new Error("should not be called");
+      },
+    });
+    check(
+      "oversized rejected before buffering",
+      elements.fileStatus.innerHTML.includes("Maximum allowed size is 10MB"),
+      elements.fileStatus.innerHTML,
+    );
 
-    await ctx.ingestFile({ name: "zero.xlsx", size: 0, arrayBuffer: async () => new ArrayBuffer(0) });
-    check("empty file rejected", elements.fileStatus.innerHTML.includes("File is empty"));
+    await ctx.ingestFile({
+      name: "zero.xlsx",
+      size: 0,
+      arrayBuffer: async () => new ArrayBuffer(0),
+    });
+    check(
+      "empty file rejected",
+      elements.fileStatus.innerHTML.includes("File is empty"),
+    );
   }
 
   console.log("[csv reader.onerror]");
@@ -129,26 +188,40 @@ const AOA = [["VM Name", "CPU Count", "Memory (GB)"], ["a", 4, 16]];
     };
     await ctx.ingestFile({ name: "broken.csv", size: 10 });
     await new Promise((r) => setTimeout(r, 50));
-    check("read failure surfaces in UI", elements.fileStatus.innerHTML.includes("Could not read the file"), elements.fileStatus.innerHTML);
+    check(
+      "read failure surfaces in UI",
+      elements.fileStatus.innerHTML.includes("Could not read the file"),
+      elements.fileStatus.innerHTML,
+    );
   }
 
   console.log("[file-handler validator scoped to CSV]");
   {
     const fhCtx = vm.createContext({
-      window: {}, console: { log: () => {}, warn: () => {}, error: () => {} },
-      document: undefined, module: { exports: {} },
-      setTimeout, clearTimeout,
+      window: {},
+      console: { log: () => {}, warn: () => {}, error: () => {} },
+      document: undefined,
+      module: { exports: {} },
+      setTimeout,
+      clearTimeout,
     });
     fhCtx.window = fhCtx;
     vm.runInContext(
       fs.readFileSync(path.join(REPO, "js/base/file-handler.js"), "utf8"),
-      fhCtx, { filename: "file-handler.js" },
+      fhCtx,
+      { filename: "file-handler.js" },
     );
     const FileHandler = fhCtx.module.exports.FileHandler;
     const fh = new FileHandler();
     check("csv accepted", fh._isValidFileType({ name: "a.csv", type: "" }));
-    check("xlsx NOT advertised by text parser", !fh._isValidFileType({ name: "a.xlsx", type: "" }));
+    check(
+      "xlsx NOT advertised by text parser",
+      !fh._isValidFileType({ name: "a.xlsx", type: "" }),
+    );
   }
 
   process.exit(failures ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

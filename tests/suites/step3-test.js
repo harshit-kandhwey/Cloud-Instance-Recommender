@@ -134,7 +134,10 @@ vm.runInContext(
 
 (async () => {
   console.log("[worker protocol]");
-  check("onmessage handler registered", typeof workerCtx.onmessage === "function");
+  check(
+    "onmessage handler registered",
+    typeof workerCtx.onmessage === "function",
+  );
   // window shim: factory assigns window.getInstanceRecommendationWithSelector;
   // reachable as a global only if self.window = self worked
   check(
@@ -173,7 +176,10 @@ vm.runInContext(
     JSON.stringify(progress),
   );
 
-  const golden = fs.readFileSync(path.join(GOLD, "multicloud-both.csv"), "utf8");
+  const golden = fs.readFileSync(
+    path.join(GOLD, "multicloud-both.csv"),
+    "utf8",
+  );
   check("worker output matches golden", toCsv(result.results) === golden);
 
   console.log("[main-thread fallback with hooks]");

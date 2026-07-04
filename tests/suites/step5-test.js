@@ -28,8 +28,13 @@ function buildContext() {
   function fakeElement(id) {
     if (!elements[id]) {
       elements[id] = {
-        id, innerHTML: "", className: "", textContent: "", style: {},
-        value: "", checked: false,
+        id,
+        innerHTML: "",
+        className: "",
+        textContent: "",
+        style: {},
+        value: "",
+        checked: false,
         classes: new Set(["hidden"]),
         classList: {
           add: (c) => elements[id].classes.add(c),
@@ -45,10 +50,16 @@ function buildContext() {
   }
   const sandbox = {
     console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout, clearTimeout,
-    setInterval: () => 0, clearInterval: () => {},
+    setTimeout,
+    clearTimeout,
+    setInterval: () => 0,
+    clearInterval: () => {},
     alert: () => {},
-    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    },
   };
   sandbox.window = sandbox;
   sandbox.document = {
@@ -76,7 +87,9 @@ function buildContext() {
   };
   const ctx = vm.createContext(sandbox);
   const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, { filename: rel });
+    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
+      filename: rel,
+    });
   load("js/aws/aws-data.js");
   for (const f of [
     "js/base/rule-engine.js",
@@ -86,25 +99,36 @@ function buildContext() {
     "js/gcp/gcp-instance-selector.js",
     "js/base/instance-selector-factory.js",
     "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-  ]) load(f);
+    "js/base/ui-shell.js",
+    "js/base/ingest.js",
+    "js/base/manual-entry.js",
+    "js/base/form-controls.js",
+    "js/base/generate.js",
+    "js/base/preview.js",
+    "js/base/downloads.js",
+  ])
+    load(f);
   return { ctx, elements, requested };
 }
 
 let failures = 0;
 function check(name, cond, detail) {
   if (cond) console.log(`  ok: ${name}`);
-  else { failures++; console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`); }
+  else {
+    failures++;
+    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
+  }
 }
 
 const AOA = [
-  ["VM Name", "CPU Count", "Memory (GB)", "CPU Utilization", "Memory Utilization", "AWS Region"],
+  [
+    "VM Name",
+    "CPU Count",
+    "Memory (GB)",
+    "CPU Utilization",
+    "Memory Utilization",
+    "AWS Region",
+  ],
   ["web-server-01", 4, 16, 45, 60, "us-east-1"],
   ["db-server-02", 8, 32, 70, 80, "us-west-2"],
 ];
@@ -117,26 +141,48 @@ db-server-02,8,32,70,80,us-west-2`;
   {
     const { ctx, requested } = buildContext();
     check("XLSX not preloaded", !ctx.XLSX);
-    await ctx.ingestFile(fakeFile("servers.xlsx", makeXlsx([{ name: "Sheet1", aoa: AOA }])));
-    check("vendor script lazily injected", requested.includes("js/vendor/xlsx.full.min.js"), requested.join(","));
+    await ctx.ingestFile(
+      fakeFile("servers.xlsx", makeXlsx([{ name: "Sheet1", aoa: AOA }])),
+    );
+    check(
+      "vendor script lazily injected",
+      requested.includes("js/vendor/xlsx.full.min.js"),
+      requested.join(","),
+    );
     const data = vm.runInContext("csvData", ctx);
     check("2 rows ingested", data.length === 2, JSON.stringify(data));
-    check("values are trimmed strings", data[0]["CPU Count"] === "4" && data[1]["Memory (GB)"] === "32");
+    check(
+      "values are trimmed strings",
+      data[0]["CPU Count"] === "4" && data[1]["Memory (GB)"] === "32",
+    );
 
     // Byte-equivalence with the CSV path ⇒ identical downstream output
     const xlsxJson = JSON.stringify(data);
     vm.runInContext(`parseCSV(${JSON.stringify(CSV_EQUIV)})`, ctx);
     const csvJson = JSON.stringify(vm.runInContext("csvData", ctx));
-    check("xlsx rows identical to CSV rows", xlsxJson === csvJson, `${xlsxJson}\nvs\n${csvJson}`);
+    check(
+      "xlsx rows identical to CSV rows",
+      xlsxJson === csvJson,
+      `${xlsxJson}\nvs\n${csvJson}`,
+    );
   }
 
   console.log("[2. synonym headers in xlsx go through column mapping]");
   {
     const { ctx } = buildContext();
-    const aoa = [["Hostname", "vCPUs", "RAM", "AWS Region"], ["srv1", 8, 32, "us-west-2"]];
+    const aoa = [
+      ["Hostname", "vCPUs", "RAM", "AWS Region"],
+      ["srv1", 8, 32, "us-west-2"],
+    ];
     await ctx.ingestFile(fakeFile("x.xlsx", makeXlsx([{ name: "S", aoa }])));
     const data = vm.runInContext("csvData", ctx);
-    check("auto-mapped to canonical keys", data.length === 1 && data[0]["CPU Count"] === "8" && data[0]["VM Name"] === "srv1", JSON.stringify(data));
+    check(
+      "auto-mapped to canonical keys",
+      data.length === 1 &&
+        data[0]["CPU Count"] === "8" &&
+        data[0]["VM Name"] === "srv1",
+      JSON.stringify(data),
+    );
   }
 
   console.log("[3. multi-sheet → first sheet]");
@@ -144,11 +190,20 @@ db-server-02,8,32,70,80,us-west-2`;
     const { ctx } = buildContext();
     const wb = makeXlsx([
       { name: "First", aoa: AOA },
-      { name: "Second", aoa: [["VM Name", "CPU Count", "Memory (GB)"], ["WRONG", 1, 1]] },
+      {
+        name: "Second",
+        aoa: [
+          ["VM Name", "CPU Count", "Memory (GB)"],
+          ["WRONG", 1, 1],
+        ],
+      },
     ]);
     await ctx.ingestFile(fakeFile("multi.xlsx", wb));
     const data = vm.runInContext("csvData", ctx);
-    check("first sheet used", data.length === 2 && data[0]["VM Name"] === "web-server-01");
+    check(
+      "first sheet used",
+      data.length === 2 && data[0]["VM Name"] === "web-server-01",
+    );
   }
 
   console.log("[4. empty rows dropped, empty sheet errors cleanly]");
@@ -163,10 +218,14 @@ db-server-02,8,32,70,80,us-west-2`;
     await ctx.ingestFile(fakeFile("gaps.xlsx", makeXlsx([{ name: "S", aoa }])));
     check("empty row dropped", vm.runInContext("csvData", ctx).length === 2);
 
-    await ctx.ingestFile(fakeFile("empty.xlsx", makeXlsx([{ name: "S", aoa: [] }])));
-    check("empty sheet → warning status, no crash",
+    await ctx.ingestFile(
+      fakeFile("empty.xlsx", makeXlsx([{ name: "S", aoa: [] }])),
+    );
+    check(
+      "empty sheet → warning status, no crash",
       elements.fileStatus.innerHTML.includes("Could not read the Excel file"),
-      elements.fileStatus.innerHTML);
+      elements.fileStatus.innerHTML,
+    );
   }
 
   console.log("[5. csv path untouched by ingestFile routing]");
@@ -181,9 +240,18 @@ db-server-02,8,32,70,80,us-west-2`;
     };
     await ctx.ingestFile({ name: "plain.csv", _text: CSV_EQUIV });
     await new Promise((r) => setTimeout(r, 50));
-    check("csv ingested via parseCSV", vm.runInContext("csvData", ctx).length === 2);
-    check("xlsx lib NOT loaded for csv", !requested.includes("js/vendor/xlsx.full.min.js"));
+    check(
+      "csv ingested via parseCSV",
+      vm.runInContext("csvData", ctx).length === 2,
+    );
+    check(
+      "xlsx lib NOT loaded for csv",
+      !requested.includes("js/vendor/xlsx.full.min.js"),
+    );
   }
 
   process.exit(failures ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
