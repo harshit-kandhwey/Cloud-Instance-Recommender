@@ -159,7 +159,7 @@ const SCENARIOS = [
     );
     fs.writeFileSync(path.join(OUT, file), toCsv(results), "utf8");
     console.log(
-      `${file}: ${results.length} rows, ${Object.keys(results[0]).length} columns`,
+      `${file}: ${results.length} rows, ${new Set(results.flatMap((row) => Object.keys(row))).size} columns`,
     );
   }
 
