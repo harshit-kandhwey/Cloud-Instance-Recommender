@@ -54,6 +54,14 @@ function _buildStatsHtml(results) {
 
   const noMatchRows = results.length - matchedRows;
   const pct = Math.round((matchedRows / results.length) * 100);
+
+  // Distinct applications, when the results carry an App Name column
+  const appCount = allKeys.includes("App Name")
+    ? new Set(
+        results.map((r) => (r["App Name"] || "").trim()).filter(Boolean),
+      ).size
+    : 0;
+
   const rulesSummary = Object.entries(rulesCounts)
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${escapeHtml(k)}(${v})`)
@@ -77,6 +85,7 @@ function _buildStatsHtml(results) {
       <span style="color:var(--text-body);">📊 <strong>${results.length}</strong> rows</span>
       <span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
       ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
+      ${appCount > 0 ? `<span style="color:var(--text-body);">🧩 <strong>${appCount}</strong> apps</span>` : ""}
       ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;

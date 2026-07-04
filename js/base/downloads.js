@@ -114,6 +114,109 @@ function updateNoMatchButton(results) {
   }
 }
 
+// ─── Per-app rollup / App Summary export ──────────────────────────────────────
+// Aggregates the per-VM results by App Name: VM count, total vCPUs / memory,
+// and how many VMs did / didn't get a recommendation. Recommendations stay
+// per-VM in the main export — this is a reporting rollup on top. Returns [] when
+// there is no App Name column. VMs with a blank App Name belong to no app and
+// are skipped, so the count matches the "N apps" chip in the stats bar.
+function getAppSummary(results) {
+  if (!results || !results.length) return [];
+  const keys = Object.keys(results[0]);
+  if (!keys.includes("App Name")) return [];
+  const instCols = keys.filter(
+    (k) =>
+      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
+  );
+  const byApp = new Map();
+  results.forEach((row) => {
+    const app = (row["App Name"] || "").trim();
+    if (!app) return; // VMs with no app aren't part of any app rollup
+    if (!byApp.has(app)) {
+      byApp.set(app, {
+        app,
+        vms: 0,
+        vcpus: 0,
+        memory: 0,
+        matched: 0,
+        noMatch: 0,
+      });
+    }
+    const s = byApp.get(app);
+    s.vms++;
+    s.vcpus += parseInt(row["CPU Count"], 10) || 0;
+    s.memory += parseFloat(row["Memory (GB)"]) || 0;
+    const hasMatch =
+      instCols.length > 0 && instCols.some((c) => !isNoMatchValue(row[c]));
+    if (hasMatch) s.matched++;
+    else s.noMatch++;
+  });
+  return [...byApp.values()].sort((a, b) => a.app.localeCompare(b.app));
+}
+
+// Exports the per-app rollup as its own CSV — resource totals + match counts.
+function downloadAppSummary() {
+  const summary = getAppSummary(processedResults);
+  if (!summary.length) {
+    alert(
+      "No App Name column in the results — add one to your file to get an app summary.",
+    );
+    return;
+  }
+
+  const headers = [
+    "App Name",
+    "VMs",
+    "Total vCPUs",
+    "Total Memory (GB)",
+    "Matched VMs",
+    "No-Match VMs",
+  ];
+  const csvContent = [
+    headers.map(escapeCsvCell).join(","),
+    ...summary.map((s) =>
+      [
+        s.app,
+        s.vms,
+        s.vcpus,
+        Math.round(s.memory * 100) / 100,
+        s.matched,
+        s.noMatch,
+      ]
+        .map(escapeCsvCell)
+        .join(","),
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = "app-summary.csv";
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+
+  console.log(`App summary export completed: ${summary.length} apps`);
+}
+
+// Shows the app-summary button (with app count) only when results carry an
+// App Name column; hidden otherwise.
+function updateAppSummaryButton(results) {
+  const btn = document.getElementById("downloadAppSummaryBtn");
+  if (!btn) return;
+  const summary = getAppSummary(results);
+  if (summary.length > 0) {
+    btn.textContent = `🧩 App Summary CSV (${summary.length})`;
+    btn.title = `Per-application rollup of ${summary.length} app(s): VM count, total vCPUs/memory, and match counts`;
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
 // AWS Pricing Calculator Bulk Template download
 // Generates a CSV matching the EC2 Instances BulkUpload Template format.
 // type = 'l2l' | 'optimized' — always one type per file to avoid double-counting.
