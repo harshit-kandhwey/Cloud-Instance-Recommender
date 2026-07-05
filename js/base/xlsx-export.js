@@ -32,7 +32,9 @@ function resultsColToA1(c) {
 // id-like values; leaves anything else (instance names, regions, …) as text.
 function resultsCellType(v) {
   if (v === null || v === undefined || v === "") return { t: "s", v: "" };
-  if (typeof v === "number") return { t: "n", v };
+  // NaN/Infinity aren't valid OOXML numeric cells — keep them as text.
+  if (typeof v === "number")
+    return Number.isFinite(v) ? { t: "n", v } : { t: "s", v: String(v) };
   const s = String(v);
   if (/^-?\d{1,15}(\.\d+)?$/.test(s)) return { t: "n", v: Number(s) };
   return { t: "s", v: s };
@@ -100,6 +102,13 @@ function loadResultsXlsxScript(src) {
 }
 function ensureResultsXlsx() {
   if (_resultsXlsxPromise) return _resultsXlsxPromise;
+  // Reuse an already-loaded engine only if it can style (the fork sets
+  // style_version). If just the plain upload build is present we still load the
+  // fork, since the results export is meant to be styled.
+  if (window.XLSX && window.XLSX.style_version != null) {
+    _resultsXlsxPromise = Promise.resolve({ styled: true });
+    return _resultsXlsxPromise;
+  }
   _resultsXlsxPromise = loadResultsXlsxScript("js/vendor/xlsx-js-style.min.js")
     .then(() => ({ styled: true }))
     .catch(() =>

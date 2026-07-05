@@ -65,6 +65,16 @@ check(
   ct("1234567890123456"),
 );
 check("cell type: number value → number", ct(8) === '{"t":"n","v":8}', ct(8));
+check(
+  "cell type: NaN → text (not an invalid numeric cell)",
+  run("JSON.stringify(resultsCellType(NaN))") === '{"t":"s","v":"NaN"}',
+  run("JSON.stringify(resultsCellType(NaN))"),
+);
+check(
+  "cell type: Infinity → text",
+  run("JSON.stringify(resultsCellType(Infinity))") === '{"t":"s","v":"Infinity"}',
+  run("JSON.stringify(resultsCellType(Infinity))"),
+);
 
 // ── Sheet model ─────────────────────────────────────────────────────────────
 run(

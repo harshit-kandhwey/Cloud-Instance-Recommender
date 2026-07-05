@@ -28,51 +28,8 @@ function makeEl(props) {
   );
 }
 
-// recommendation type radios
-makeEl({ id: "likeToLike", type: "radio", name: "recommendationType", value: "like-to-like" });
-makeEl({ id: "optimized", type: "radio", name: "recommendationType", value: "optimized" });
-makeEl({ id: "both", type: "radio", name: "recommendationType", value: "both" });
-// optimization + filter checkboxes
-[
-  "cpuBased",
-  "memoryBased",
-  "currentGenerationOnly",
-  "restrictInstanceFamilyNames",
-  "restrictProcessorManufacturers",
-  "restrictMainFamilies",
-  "excludeTypes",
-].forEach((id) => makeEl({ id, type: "checkbox" }));
-// number inputs
-[
-  "cpuDownsizeMax",
-  "cpuKeepMin",
-  "cpuKeepMax",
-  "cpuUpsizeMin",
-  "memoryDownsizeMax",
-  "memoryKeepMin",
-  "memoryKeepMax",
-  "memoryUpsizeMin",
-].forEach((id) => makeEl({ id, type: "number" }));
-// rule-engine text inputs
-[
-  "ruleDefaultEnv",
-  "ruleDefaultOS",
-  "ruleDefaultWorkload",
-  "ruleDefaultCompliance",
-  "ruleDefaultMinGen",
-].forEach((id) => makeEl({ id, type: "text" }));
-// provider checkboxes
-["aws", "azure", "gcp"].forEach((id) => makeEl({ id, type: "checkbox" }));
-// dynamic per-provider group checkboxes
-[
-  "familyName_0",
-  "familyName_1",
-  "processor_0",
-  "mainFamily_0",
-  "azureSeries_0",
-  "gcpType_0",
-  "exclude_aws_Graviton",
-].forEach((id) => makeEl({ id, type: "checkbox" }));
+// The control surface is built from presets.js's own constant lists after the
+// module loads (see below the load), so the test auto-syncs with the source.
 
 const document = {
   readyState: "complete",
@@ -119,6 +76,22 @@ vm.runInContext(
   { filename: "js/base/presets.js" },
 );
 
+// Build the fake control surface from presets.js's constants so a newly
+// captured field automatically gains a matching fake element.
+const constArr = (name) => JSON.parse(run(`JSON.stringify(${name})`));
+makeEl({ id: "likeToLike", type: "radio", name: "recommendationType", value: "like-to-like" });
+makeEl({ id: "optimized", type: "radio", name: "recommendationType", value: "optimized" });
+makeEl({ id: "both", type: "radio", name: "recommendationType", value: "both" });
+constArr("PRESET_CHECKBOXES").forEach((id) => makeEl({ id, type: "checkbox" }));
+constArr("PRESET_NUMBERS").forEach((id) => makeEl({ id, type: "number" }));
+constArr("PRESET_TEXTS").forEach((id) => makeEl({ id, type: "text" }));
+constArr("PRESET_PROVIDER_IDS").forEach((id) => makeEl({ id, type: "checkbox" }));
+// Two representative dynamic checkboxes per group prefix (incl. mc_proc_/mc_cat_).
+constArr("PRESET_GROUP_PREFIXES").forEach((p) => {
+  makeEl({ id: `${p}0`, type: "checkbox" });
+  makeEl({ id: `${p}1`, type: "checkbox" });
+});
+
 // ── Harness ───────────────────────────────────────────────────────────────────
 let failures = 0;
 function check(name, cond, detail) {
@@ -152,8 +125,10 @@ set("ruleDefaultCompliance", { value: "PCI" });
 set("aws", { checked: true });
 set("azure", { checked: true });
 set("processor_0", { checked: true });
-set("exclude_aws_Graviton", { checked: true });
+set("exclude_0", { checked: true });
 set("familyName_1", { checked: true });
+set("mc_proc_0", { checked: true }); // multicloud cross-provider filters
+set("mc_cat_0", { checked: true });
 
 const cfgA = run("capturePresetConfig()");
 
@@ -183,9 +158,15 @@ check(
   JSON.stringify(cfgA.providers),
 );
 check(
-  "capture reads dynamic group checkboxes only",
-  JSON.stringify(cfgA.groupChecked.sort()) ===
-    JSON.stringify(["exclude_aws_Graviton", "familyName_1", "processor_0"]),
+  "capture reads dynamic group checkboxes (incl. multicloud mc_ filters)",
+  JSON.stringify(cfgA.groupChecked.slice().sort()) ===
+    JSON.stringify([
+      "exclude_0",
+      "familyName_1",
+      "mc_cat_0",
+      "mc_proc_0",
+      "processor_0",
+    ]),
   JSON.stringify(cfgA.groupChecked),
 );
 
@@ -238,11 +219,13 @@ check(
   `mainFamily_0=${els.mainFamily_0.checked}`,
 );
 check(
-  "apply re-checks saved group boxes",
+  "apply re-checks saved group boxes (incl. mc_proc_/mc_cat_)",
   els.processor_0.checked === true &&
-    els.exclude_aws_Graviton.checked === true &&
-    els.familyName_1.checked === true,
-  `processor_0=${els.processor_0.checked}`,
+    els.exclude_0.checked === true &&
+    els.familyName_1.checked === true &&
+    els.mc_proc_0.checked === true &&
+    els.mc_cat_0.checked === true,
+  `processor_0=${els.processor_0.checked} mc_proc_0=${els.mc_proc_0.checked}`,
 );
 
 // ── Full round-trip: capture after apply equals the original ───────────────────
@@ -282,6 +265,20 @@ check(
     const out = run("loadPresetsStore()");
     return out && typeof out === "object" && Object.keys(out).length === 0;
   })(),
+);
+
+// ── Corrupt-config guard (applySelectedPreset must not falsely report success) ─
+reg({ id: "presetSelect", value: "" });
+reg({ id: "presetStatus", textContent: "", style: {} });
+sandbox.__page = "aws";
+run(`savePresetsStore({ aws: { "Broken": { savedAt: 1 } } })`); // entry with no config
+els.presetSelect.value = "Broken";
+run("applySelectedPreset()");
+check(
+  "applySelectedPreset reports corruption (not 'Applied') when config is missing",
+  /corrupted/i.test(els.presetStatus.textContent) &&
+    els.presetStatus.style.color === "var(--red-strong)",
+  `status="${els.presetStatus.textContent}" color=${els.presetStatus.style.color}`,
 );
 
 if (failures) {

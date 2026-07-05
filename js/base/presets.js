@@ -56,6 +56,9 @@ const PRESET_GROUP_PREFIXES = [
   "azureFamily_",
   "gcpType_",
   "exclude_",
+  // multicloud.html cross-provider filters (Processor Architecture / Category)
+  "mc_proc_",
+  "mc_cat_",
 ];
 
 function presetsPageKey() {
@@ -305,6 +308,10 @@ function applySelectedPreset() {
   const entry = presetsForPage()[name];
   if (!entry) {
     setPresetStatus(`Preset "${name}" no longer exists.`, false);
+    return;
+  }
+  if (!entry.config) {
+    setPresetStatus(`Preset "${name}" is corrupted and could not be applied.`, false);
     return;
   }
   applyPresetConfig(entry.config);

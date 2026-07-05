@@ -46,12 +46,24 @@ sandbox.window = sandbox;
 sandbox.window.opener = null;
 sandbox.window.addEventListener = () => {};
 sandbox.window.removeEventListener = () => {};
+// Records the data-row of the last .pf-row-toggle focused, so the focus
+// restoration in togglePortfolioAppRow can be asserted.
+let lastFocusedRow = null;
 sandbox.document = {
   readyState: "complete",
   documentElement: { dataset: {} },
   getElementById: (id) => fakeEl(id),
   addEventListener: () => {},
-  querySelector: () => null,
+  querySelector: (sel) => {
+    const m = /\.pf-row-toggle\[data-row="(\d+)"\]/.exec(sel || "");
+    if (m)
+      return {
+        focus() {
+          lastFocusedRow = m[1];
+        },
+      };
+    return null;
+  },
   querySelectorAll: () => [],
   head: { appendChild() {} },
   body: { appendChild() {} },
@@ -356,6 +368,12 @@ run(
 check(
   "expanding a row reveals its VM table",
   /pf-detail-row/.test(els["pf-app-tbody"].innerHTML),
+);
+check(
+  "toggling a row restores focus to its toggle button",
+  lastFocusedRow ===
+    String(run("portfolioModel.apps.findIndex(a=>a.app==='Billing')")),
+  `lastFocusedRow=${lastFocusedRow}`,
 );
 
 console.log("[sheet-name sanitization]");
