@@ -3,7 +3,7 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-3.2-green)
+![Version](https://img.shields.io/badge/Version-3.3-green)
 ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
@@ -91,6 +91,17 @@ For small inventories, skip the file entirely: "Or enter VMs manually" opens a f
 
 When some rows get no recommendation from any provider, a "No-Match Rows CSV" button (with count) exports exactly those rows together with their `No Match Reason` and `Rules Applied` diagnostics — fix the rows, re-upload, re-run.
 
+### 🧩 App Grouping, Portfolio & Executive Excel (v3.3)
+
+Add an optional **`App Name`** column and the tool groups your estate by application:
+
+- **App → Workload mapping** — when a file has `App Name` but no `Workload` column, a panel lets you assign a workload per application; every VM in that app inherits it at generation (a row's own `Workload` cell still takes precedence).
+- **App Summary CSV** — a per-application rollup (VM count, total vCPUs/memory, matched vs no-match) exported alongside the results.
+- **📊 App Portfolio page** — after generating, **Open App Portfolio** hands the results to a dedicated `app-portfolio.html` (entirely in-browser — nothing is uploaded) with an **Overview** tab (sortable/searchable app table, rankings, and data-hygiene callouts) and **one tab per app** (KPIs, ENV/OS/workload mini-bars, compliance and region chips, recommended-family distribution, match health with top no-match reasons, and right-sizing counts on Optimized runs).
+- **Executive Excel** — a styled `.xlsx` download: a **Portfolio Summary** (one row per app + an estate TOTALS row), a **Contents** sheet with links, one **sheet per app** (plus **Unassigned**), and an **About** sheet. Styling comes from the vendored `xlsx-js-style` fork, falling back to the plain SheetJS build if it can't load — same workbook, unstyled.
+
+Everything runs client-side, and no pricing appears in any view or sheet.
+
 ### 🌓 Dark Mode & Accessibility (v3.2)
 
 A theme toggle in the nav switches light/dark instantly (no flash on load); your choice persists across pages and reloads, and with no saved choice the site follows the OS setting. The UI is keyboard-operable end to end — collapsible sections and sortable table headers work with Enter/Space, status updates are announced to screen readers, and every page has a skip-to-content link and visible focus outlines.
@@ -106,6 +117,7 @@ Cloud-Instance-Recommender/
 ├── azure.html               # Azure recommendations
 ├── gcp.html                 # GCP recommendations
 ├── multicloud.html          # Multi-cloud comparison
+├── app-portfolio.html       # App-centric dashboard + executive Excel (fed by a handoff)
 ├── user-guide.html          # Full user guide
 │
 ├── docs/
@@ -118,6 +130,7 @@ Cloud-Instance-Recommender/
 ├── css/
 │   ├── theme.css            # Light/dark theme tokens (CSS custom properties)
 │   ├── style.css            # Main application styles
+│   ├── portfolio.css        # App Portfolio dashboard styles
 │   └── index_style.css      # Landing page styles
 │
 ├── logos/                   # Cloud provider logos
@@ -139,11 +152,14 @@ Cloud-Instance-Recommender/
     │   ├── form-controls.js                # Filters, rule engine UI, option readers
     │   ├── generate.js                     # Option gathering + worker batch runner
     │   ├── preview.js                      # Stats bar + results preview table
-    │   └── downloads.js                    # CSV exports, bulk template, usage stats
+    │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
+    │   └── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
     │
     ├── vendor/
-    │   ├── xlsx.full.min.js                # SheetJS (Excel parsing, lazy-loaded)
-    │   └── XLSX-LICENSE.txt                # Apache-2.0 license for SheetJS
+    │   ├── xlsx.full.min.js                # SheetJS (Excel parsing/upload, lazy-loaded)
+    │   ├── XLSX-LICENSE.txt                # Apache-2.0 license for SheetJS
+    │   ├── xlsx-js-style.min.js            # SheetJS styling fork (portfolio Excel export)
+    │   └── XLSX-JS-STYLE-LICENSE.txt       # Apache-2.0 license for xlsx-js-style
     │
     ├── aws/
     │   ├── aws-instance-selector.js        # AWS-specific logic
@@ -200,6 +216,7 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 **Optional columns (enable rule-based filtering per row):**
 | Column | Values | Effect |
 |--------|--------|--------|
+| `App Name` | Any text | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
 | `CPU Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
 | `Memory Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
 | `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |

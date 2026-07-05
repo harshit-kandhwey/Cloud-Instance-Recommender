@@ -683,9 +683,15 @@
      ══════════════════════════════════════════════════════════════════════ -->
     <div class="content">
       <div class="section-heading" id="whats-new">
-        <h2>🆕 What's New in v3.2</h2>
+        <h2>🆕 What's New in v3.3</h2>
       </div>
       <ul class="check">
+        <li>
+          <strong>App Portfolio &amp; executive Excel</strong> — add an
+          <code>App Name</code> column and group your estate by application:
+          a per-app dashboard (<strong>Open App Portfolio</strong> after
+          generating) and a styled multi-sheet <code>.xlsx</code> export.
+        </li>
         <li>
           <strong>Excel upload</strong> — <code>.xlsx</code> workbooks are
           accepted alongside CSV; the first sheet is used.
@@ -828,6 +834,10 @@
             >
             <a href="#bulk-export"
               >AWS Pricing Calculator Bulk Template
+              <span class="toc-num">16</span></a
+            >
+            <a href="#app-portfolio-export"
+              >App Portfolio &amp; Executive Excel
               <span class="toc-num">16</span></a
             >
           </div>
@@ -2244,6 +2254,84 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
             recommended instances, then save.
           </li>
         </ol>
+      </div>
+
+      <div id="app-portfolio-export">
+        <h3>📊 App Portfolio &amp; Executive Excel</h3>
+        <p>
+          Include an <strong>App Name</strong> column in your inventory and the
+          tool can present the whole estate
+          <strong>grouped by application</strong>. After generating, an
+          <strong>Open App Portfolio</strong> button appears in the download
+          section on every provider page.
+        </p>
+
+        <h4>App → Workload mapping</h4>
+        <p>
+          If your file has <code>App Name</code> but no
+          <code>Workload</code> column, a mapping panel lets you assign a
+          workload to each application. Every VM in that application inherits the
+          workload at generation time — a row's own <code>Workload</code> cell
+          still takes precedence when present.
+        </p>
+
+        <h4>App Summary CSV</h4>
+        <p>
+          A per-application rollup — VM count, total vCPUs and memory, and
+          matched vs no-match counts — downloadable from the same download
+          section.
+        </p>
+
+        <h4>The App Portfolio page</h4>
+        <p>
+          <strong>Open App Portfolio</strong> hands the current results to a
+          dedicated page <em>in your browser</em> (nothing is uploaded). It opens
+          with:
+        </p>
+        <ul class="check">
+          <li>
+            <strong>Overview tab</strong> — estate KPIs, a sortable and
+            searchable application table (ENV mini-bar, match rate, region count
+            and compliance flags per app, expandable to that app's VMs), plus
+            rankings and callouts: biggest apps, worst match rate,
+            compliance-sensitive apps, and unassigned VMs.
+          </li>
+          <li>
+            <strong>One tab per application</strong> — VM / vCPU / memory KPIs,
+            ENV / OS / workload mini-bars, compliance and region chips, the
+            recommended instance-family spread per provider, match health with
+            the top no-match reasons, right-sizing counts (on Optimized runs),
+            and a full per-VM detail table.
+          </li>
+        </ul>
+
+        <h4>Executive Excel workbook</h4>
+        <p>
+          The <strong>Download Executive Excel</strong> button builds a styled,
+          multi-sheet <code>.xlsx</code> entirely in the browser:
+        </p>
+        <ul class="check">
+          <li>
+            <strong>Portfolio Summary</strong> — one row per application plus an
+            estate <em>TOTALS</em> row, with autofilter and number formatting.
+          </li>
+          <li><strong>Contents</strong> — clickable links to every sheet.</li>
+          <li>
+            <strong>One sheet per application</strong> (and an
+            <strong>Unassigned</strong> sheet) — a KPI block and the full per-VM
+            detail table.
+          </li>
+          <li>
+            <strong>About</strong> — a column legend, data dates, and notes.
+          </li>
+        </ul>
+
+        <div class="callout callout-info">
+          <strong>No pricing, no upload</strong>
+          As everywhere else in the tool, no pricing appears in any sheet, and
+          the data is passed to the portfolio page in-browser — it never leaves
+          your machine.
+        </div>
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════════════

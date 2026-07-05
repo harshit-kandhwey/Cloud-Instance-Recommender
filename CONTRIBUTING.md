@@ -30,6 +30,7 @@ python -m http.server 8080
 ├── azure.html              # Azure recommender
 ├── gcp.html                # GCP recommender
 ├── multicloud.html         # Multi-cloud comparison
+├── app-portfolio.html      # App Portfolio dashboard + executive Excel
 ├── user-guide.html         # Interactive user guide
 │
 ├── docs/
@@ -41,6 +42,7 @@ python -m http.server 8080
 ├── css/
 │   ├── theme.css           # Light/dark theme tokens — new colors go here
 │   ├── style.css           # Main styles (uses var(--token) only)
+│   ├── portfolio.css       # App Portfolio dashboard styles
 │   └── index_style.css     # Landing page styles
 │
 ├── tools/
@@ -61,8 +63,11 @@ python -m http.server 8080
     │   ├── form-controls.js                # Filters + option readers
     │   ├── generate.js                     # Worker batch runner
     │   ├── preview.js
-    │   └── downloads.js
-    ├── vendor/             # Vendored third-party libs (SheetJS) + licenses
+    │   ├── downloads.js                    # + App Portfolio handoff
+    │   └── portfolio.js                    # App Portfolio (loaded only on app-portfolio.html)
+    ├── vendor/             # Vendored libs + licenses: SheetJS (upload) and the
+    │                       #   xlsx-js-style fork (portfolio Excel). Keep byte-
+    │                       #   identical to upstream — do NOT run a formatter on them.
     ├── aws/                # Selector, UI, manifest + regions/ data (35 files)
     ├── azure/              # Selector, UI, manifest + regions/ data (60 files)
     └── gcp/                # Selector, UI, manifest + regions/ data (46 files)
@@ -107,9 +112,11 @@ No framework or npm install needed — see [tests/README.md](tests/README.md) fo
 ## Input Format
 
 The accepted input format includes these optional columns:
-`ENV`, `OS`, `Workload`, `Compliance`, `Min Gen`, `Exclude`
+`App Name`, `ENV`, `OS`, `Workload`, `Compliance`, `Min Gen`, `Exclude`
 
-Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads (first sheet) are also accepted, and common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/main-script.js`.
+`App Name` groups VMs by application (App Summary CSV + App Portfolio) and lets VMs inherit a workload from the app→workload mapping panel.
+
+Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads (first sheet) are also accepted, and common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/app-core.js`.
 
 ## Reporting Bugs
 
