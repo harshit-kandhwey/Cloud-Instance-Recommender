@@ -268,6 +268,9 @@ async function processRecommendations() {
     // "Open App Portfolio" handoff button (hidden when there's no named app)
     updateAppPortfolioButton(processedResults);
 
+    // Reveal the scenario-comparison bar so this run can be pinned/compared
+    if (typeof updateScenarioCompare === "function") updateScenarioCompare();
+
     // Log what was actually generated
     if (processedResults.length > 0) {
       const sampleResult = processedResults[0];
