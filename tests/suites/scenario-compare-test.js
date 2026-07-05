@@ -105,6 +105,26 @@ check(
   JSON.stringify(d3.changedRows.map((r) => r.key)),
 );
 
+// ── Falls back to index pairing when VM Names are duplicated ───────────────────
+sandbox.A3b = {
+  results: [
+    { "VM Name": "dup", [AWS]: "m5.large" },
+    { "VM Name": "dup", [AWS]: "c5.large" },
+  ],
+};
+sandbox.B3b = {
+  results: [
+    { "VM Name": "dup", [AWS]: "m5.large" },
+    { "VM Name": "dup", [AWS]: "c6i.large" },
+  ],
+};
+const d3b = run("diffScenarios(A3b, B3b)");
+check(
+  "duplicate VM Names fall back to index pairing (only row 2 changed)",
+  d3b.summary.changedRows === 1 && d3b.pairedRows === 2,
+  JSON.stringify(d3b.summary),
+);
+
 // ── Differing row counts → note + compares the overlap ─────────────────────────
 sandbox.A4 = {
   results: [

@@ -130,6 +130,70 @@ check(
 );
 check("formatNearestMiss of null → empty string", run("formatNearestMiss(null)") === "");
 
+// ── instance-family-name filter attribution (base filter) ──────────────────────
+const rFam = run(
+  `__sel.computeNearestMiss(instA, 2, 4, { restrictInstanceFamilyNames: true, selectedInstanceFamilyNames: ["Compute optimized"] })`,
+);
+check(
+  "attributes the block to instance-family name",
+  JSON.stringify(rFam.blockedBy) === JSON.stringify(["instance-family name"]),
+  JSON.stringify(rFam.blockedBy),
+);
+
+// ── family/series filter runs through a provider applyFilters override ─────────
+// Mirrors how AWS/Azure/GCP selectors add main-family filtering on top of super.
+run(`
+  class __OverrideSel extends BaseInstanceSelector {
+    getProviderName() { return "AWS"; }
+    getSampleData() { return []; }
+    applyFilters(instances, cpu, mem, options) {
+      let f = super.applyFilters(instances, cpu, mem, options);
+      if (options.restrictMainFamilies && options.selectedMainFamilies && options.selectedMainFamilies.length) {
+        f = f.filter((i) => options.selectedMainFamilies.includes(this.getMainInstanceFamily(i.instanceType)));
+      }
+      return f;
+    }
+  }
+  __ov = new __OverrideSel();
+`);
+const rSeries = run(
+  `__ov.computeNearestMiss(instA, 2, 4, { restrictMainFamilies: true, selectedMainFamilies: ["c"] })`,
+);
+check(
+  "computeNearestMiss honors a provider applyFilters override",
+  rSeries && rSeries.instanceType === "t3.medium",
+  JSON.stringify(rSeries),
+);
+check(
+  "attributes the block to instance family/series",
+  JSON.stringify(rSeries.blockedBy) === JSON.stringify(["instance family/series"]),
+  JSON.stringify(rSeries.blockedBy),
+);
+
+// ── RuleEngine present but a no-op on the size-only pass ({} → workload general) ─
+// Locks the invariant: rules can't skew the nearest-miss candidate or its
+// attribution (the real engine also falls back rather than emptying the pool).
+run(`
+  RuleEngine = {
+    apply: function (instances, options) {
+      var wl = (options.rowWorkload || "general").toLowerCase();
+      return wl === "general"
+        ? { instances: instances, rules: [] }
+        : { instances: [], rules: ["forced-empty"] };
+    }
+  };
+`);
+const rRule = run(
+  `__sel.computeNearestMiss(instA, 2, 4, { currentGenerationOnly: true })`,
+);
+check(
+  "RuleEngine no-op on size-only pass leaves the nearest + attribution intact",
+  rRule &&
+    rRule.instanceType === "t3.medium" &&
+    JSON.stringify(rRule.blockedBy) === JSON.stringify(["current-generation only"]),
+  JSON.stringify(rRule),
+);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);
