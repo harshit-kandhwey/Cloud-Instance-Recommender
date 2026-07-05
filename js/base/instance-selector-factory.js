@@ -38,6 +38,16 @@ class InstanceSelectorFactory {
   }
 }
 
+// Formats a selector's nearestMiss object for the "Nearest Miss" column:
+// "m7i.large (2 vCPU / 8 GB) — relax: current-generation only".
+function formatNearestMiss(nm) {
+  if (!nm || !nm.instanceType) return "";
+  const base = `${nm.instanceType} (${nm.vCpus} vCPU / ${nm.memory} GB)`;
+  return nm.blockedBy && nm.blockedBy.length
+    ? `${base} — relax: ${nm.blockedBy.join(", ")}`
+    : base;
+}
+
 // Enhanced integration function with multi-provider support.
 // Optional hooks = { onProgress(done, total), yieldEvery } — when provided,
 // the row loop reports progress and yields to the event loop every
@@ -163,6 +173,7 @@ window.getInstanceRecommendationWithSelector = async function (
       // Always initialize shared columns so schema is consistent across all rows
       result[`${providerUpper} Rules Applied`] = "";
       result[`${providerUpper} No Match Reason`] = "";
+      result[`${providerUpper} Nearest Miss`] = "";
 
       // Per-row Exclude: merge CSV "Exclude" column with page-level excludeTypes
       const rowExcludeRaw = (row["Exclude"] || "").trim();
@@ -229,6 +240,9 @@ window.getInstanceRecommendationWithSelector = async function (
             likeToLike.reason
           ) {
             result[`${providerUpper} No Match Reason`] = likeToLike.reason;
+            result[`${providerUpper} Nearest Miss`] = formatNearestMiss(
+              likeToLike.nearestMiss,
+            );
           }
         }
 
@@ -255,6 +269,9 @@ window.getInstanceRecommendationWithSelector = async function (
                 optimized.reason
               ) {
                 result[`${providerUpper} No Match Reason`] = optimized.reason;
+                result[`${providerUpper} Nearest Miss`] = formatNearestMiss(
+                  optimized.nearestMiss,
+                );
               }
             }
           } else {

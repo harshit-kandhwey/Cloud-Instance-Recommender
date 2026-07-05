@@ -377,7 +377,17 @@ class BaseInstanceSelector {
       console.warn(
         `No instances meet filtering criteria for ${this.getProviderName()} ${region}`,
       );
-      return this.createEmptyResult("No instances meet filtering requirements");
+      const empty = this.createEmptyResult(
+        "No instances meet filtering requirements",
+      );
+      const nearestMiss = this.computeNearestMiss(
+        regionData,
+        currentCpu,
+        currentMemory,
+        options,
+      );
+      if (nearestMiss) empty.nearestMiss = nearestMiss;
+      return empty;
     }
 
     // filteredInstances[0] is cheapest (price-sorted by parseData)
@@ -524,6 +534,94 @@ class BaseInstanceSelector {
     }
 
     return filtered;
+  }
+
+  // When no instance passes the active filters, find the cheapest instance that
+  // still meets the size requirement and identify which soft-filter group(s)
+  // removed it. Runs through the real (provider) filter pipeline, so it stays
+  // correct for provider-specific filters too. Returns null when nothing even
+  // meets the size — that shortfall isn't a filter problem, so there's no
+  // "nearest miss" to relax toward.
+  computeNearestMiss(instances, currentCpu, currentMemory, options) {
+    if (!instances || !instances.length) return null;
+    // Size-only pass (no soft filters): instances are price-sorted, so [0] is
+    // the cheapest instance that would fit.
+    const sizingOnly = this.applyFilters(
+      instances,
+      currentCpu,
+      currentMemory,
+      {},
+    );
+    if (!sizingOnly.length) return null;
+    const nearest = sizingOnly[0];
+    const blockedBy = [];
+    for (const probe of this._nearestMissProbes(options)) {
+      // If the nearest instance is removed when only this group is active,
+      // that group is (part of) why nothing matched.
+      const survives = this.applyFilters(
+        [nearest],
+        currentCpu,
+        currentMemory,
+        probe.opts,
+      ).length;
+      if (!survives) blockedBy.push(probe.label);
+    }
+    return {
+      instanceType: nearest.instanceType,
+      vCpus: nearest.vCpus,
+      memory: nearest.memory,
+      blockedBy,
+    };
+  }
+
+  // One probe per soft-filter group, each carrying only that group's option
+  // keys (union across providers — a provider ignores keys it doesn't use), so
+  // running it alone reveals whether that group blocks a given instance.
+  _nearestMissProbes(options) {
+    const pick = (keys) => {
+      const o = {};
+      keys.forEach((k) => {
+        if (options[k] !== undefined) o[k] = options[k];
+      });
+      return o;
+    };
+    return [
+      {
+        label: "current-generation only",
+        opts: pick(["currentGenerationOnly"]),
+      },
+      {
+        label: "instance-family name",
+        opts: pick([
+          "restrictInstanceFamilyNames",
+          "selectedInstanceFamilyNames",
+        ]),
+      },
+      {
+        label: "processor manufacturer",
+        opts: pick([
+          "restrictProcessorManufacturers",
+          "selectedProcessorManufacturers",
+          "selectedAzureProcessors",
+          "selectedGCPProcessors",
+        ]),
+      },
+      {
+        label: "instance family/series",
+        opts: pick([
+          "restrictMainFamilies",
+          "selectedMainFamilies",
+          "selectedAzureSeries",
+          "selectedAzureVMFamilies",
+          "selectedGCPFamilies",
+          "selectedGCPMachineTypes",
+        ]),
+      },
+      {
+        label: "exclude types",
+        opts: pick(["excludeTypes", "excludeGraviton", "excludeARM"]),
+      },
+    ];
   }
 
   // N/2, N, N+1 optimization strategy
