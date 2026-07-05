@@ -389,8 +389,12 @@ check(
   summarySheet.merges[0].e.c === 12,
 );
 check(
-  "summary autofilter over header + 2 app rows",
-  summarySheet.autofilter === "A4:M6",
+  "summary autofilter spans header + 2 apps + Unassigned",
+  summarySheet.autofilter === "A4:M7",
+);
+check(
+  "summary includes an Unassigned row (reconciles to TOTAL)",
+  summarySheet.rows.some((r) => r[0] === "Unassigned (no App Name)"),
 );
 const totalRow = summarySheet.rows[summarySheet.rows.length - 1];
 check(

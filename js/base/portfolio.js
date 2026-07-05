@@ -909,16 +909,20 @@ function uniqueSheetName(base, used) {
   return name;
 }
 
-// All result columns (input order first, then provider outputs) for detail tables.
+// All result columns (input order first, then provider outputs) for detail
+// tables. Scans every VM across every app so a column that only appears on
+// later rows isn't dropped.
 function wbDetailColumns(model) {
-  const firstStat =
-    model.apps[0] || model.unassigned || { rows: [] };
-  const sample = (firstStat.rows && firstStat.rows[0]) || {};
-  const keys = Object.keys(sample);
-  const headers = (model.meta.columnHeaders || []).filter((h) =>
-    keys.includes(h),
-  );
-  const rest = keys.filter((k) => !headers.includes(k));
+  const present = new Set();
+  [...(model.apps || []), model.unassigned]
+    .filter(Boolean)
+    .forEach((stat) =>
+      (stat.rows || []).forEach((row) =>
+        Object.keys(row || {}).forEach((k) => present.add(k)),
+      ),
+    );
+  const headers = (model.meta.columnHeaders || []).filter((h) => present.has(h));
+  const rest = [...present].filter((k) => !headers.includes(k));
   return [...headers, ...rest];
 }
 
@@ -1052,7 +1056,17 @@ function buildPortfolioWorkbookModel(model) {
   sumRows.push([]);
   const sumHeaderIdx = sumRows.length;
   sumRows.push(styleRow(sumHeader, "header"));
-  model.apps.forEach((a, i) => {
+  // Named apps plus the Unassigned bucket, so the visible rows reconcile to the
+  // estate TOTAL below (which counts unassigned VMs too).
+  const summaryStats = model.unassigned
+    ? [
+        ...model.apps,
+        Object.assign({}, model.unassigned, {
+          app: "Unassigned (no App Name)",
+        }),
+      ]
+    : model.apps;
+  summaryStats.forEach((a, i) => {
     const row = [
       a.app,
       num(a.vms),
@@ -1095,7 +1109,7 @@ function buildPortfolioWorkbookModel(model) {
     rows: sumRows,
     cols: [28, 7, 8, 12, 8, 9, 8, 15, 11, 20, 11, 9, 7].map((w) => ({ wch: w })),
     merges: [{ s: { r: 0, c: 0 }, e: { r: 0, c: sumHeader.length - 1 } }],
-    autofilter: `${a1(sumHeaderIdx, 0)}:${a1(sumHeaderIdx + model.apps.length, sumHeader.length - 1)}`,
+    autofilter: `${a1(sumHeaderIdx, 0)}:${a1(sumHeaderIdx + summaryStats.length, sumHeader.length - 1)}`,
   });
 
   // 2. Contents (hyperlinks to every sheet)
@@ -1212,7 +1226,13 @@ function ensurePortfolioXlsx() {
       loadScriptOnce("js/vendor/xlsx.full.min.js").then(() => ({
         styled: false,
       })),
-    );
+    )
+    .catch((err) => {
+      // Both engines failed to load — clear the cached rejection so a later
+      // export attempt retries instead of failing instantly forever.
+      _pfXlsxPromise = null;
+      throw err;
+    });
   return _pfXlsxPromise;
 }
 
