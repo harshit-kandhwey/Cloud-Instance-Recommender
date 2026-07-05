@@ -921,7 +921,9 @@ function wbDetailColumns(model) {
         Object.keys(row || {}).forEach((k) => present.add(k)),
       ),
     );
-  const headers = (model.meta.columnHeaders || []).filter((h) => present.has(h));
+  const headers = (model.meta.columnHeaders || []).filter((h) =>
+    present.has(h),
+  );
   const rest = [...present].filter((k) => !headers.includes(k));
   return [...headers, ...rest];
 }
@@ -985,7 +987,8 @@ function buildAboutSheet(meta, providers) {
   kv("Source page", meta.sourcePage || "—");
   kv("Providers", providers.join(", ") || "—");
   ["AWS", "AZURE", "GCP"].forEach((P) => {
-    if (meta.dataDates && meta.dataDates[P]) kv(`${P} data date`, meta.dataDates[P]);
+    if (meta.dataDates && meta.dataDates[P])
+      kv(`${P} data date`, meta.dataDates[P]);
   });
   kv("Pricing", "Intentionally excluded from this tool's outputs.");
   rows.push([]);
@@ -1026,7 +1029,9 @@ function buildPortfolioWorkbookModel(model) {
     uniqueSheetName(sanitizeSheetName(a.app || "App"), used),
   );
 
-  const allStats = model.unassigned ? [...model.apps, model.unassigned] : model.apps;
+  const allStats = model.unassigned
+    ? [...model.apps, model.unassigned]
+    : model.apps;
   const sumMix = (key, b) => allStats.reduce((s, a) => s + (a[key][b] || 0), 0);
   const regionUnion = new Set();
   const compUnion = new Set();
@@ -1039,9 +1044,19 @@ function buildPortfolioWorkbookModel(model) {
 
   // 1. Portfolio Summary
   const sumHeader = [
-    "Application", "VMs", "vCPUs", "Memory (GB)", "Matched", "No-Match",
-    "Match %", "Distinct Regions", "Multi-region", "Compliance",
-    "Production", "Windows", "Linux",
+    "Application",
+    "VMs",
+    "vCPUs",
+    "Memory (GB)",
+    "Matched",
+    "No-Match",
+    "Match %",
+    "Distinct Regions",
+    "Multi-region",
+    "Compliance",
+    "Production",
+    "Windows",
+    "Linux",
   ];
   const sumRows = [];
   sumRows.push([{ v: "App Portfolio — Executive Summary", s: "title" }]);
@@ -1107,7 +1122,9 @@ function buildPortfolioWorkbookModel(model) {
   sheets.push({
     name: FIXED.summary,
     rows: sumRows,
-    cols: [28, 7, 8, 12, 8, 9, 8, 15, 11, 20, 11, 9, 7].map((w) => ({ wch: w })),
+    cols: [28, 7, 8, 12, 8, 9, 8, 15, 11, 20, 11, 9, 7].map((w) => ({
+      wch: w,
+    })),
     merges: [{ s: { r: 0, c: 0 }, e: { r: 0, c: sumHeader.length - 1 } }],
     autofilter: `${a1(sumHeaderIdx, 0)}:${a1(sumHeaderIdx + summaryStats.length, sumHeader.length - 1)}`,
   });
@@ -1127,7 +1144,11 @@ function buildPortfolioWorkbookModel(model) {
   if (model.unassigned)
     linkTo(FIXED.unassigned, "Unassigned (no App Name)", model.unassigned.vms);
   linkTo(FIXED.about, "About", "");
-  sheets.push({ name: FIXED.contents, rows: cRows, cols: [{ wch: 40 }, { wch: 8 }] });
+  sheets.push({
+    name: FIXED.contents,
+    rows: cRows,
+    cols: [{ wch: 40 }, { wch: 8 }],
+  });
 
   // 3. One sheet per app
   model.apps.forEach((a, i) =>
@@ -1137,7 +1158,12 @@ function buildPortfolioWorkbookModel(model) {
   // 4. Unassigned
   if (model.unassigned)
     sheets.push(
-      buildAppSheet(model.unassigned, FIXED.unassigned, "Unassigned (no App Name)", detailCols),
+      buildAppSheet(
+        model.unassigned,
+        FIXED.unassigned,
+        "Unassigned (no App Name)",
+        detailCols,
+      ),
     );
 
   // 5. About
