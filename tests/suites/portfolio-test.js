@@ -51,6 +51,7 @@ sandbox.document = {
   documentElement: { dataset: {} },
   getElementById: (id) => fakeEl(id),
   addEventListener: () => {},
+  querySelector: () => null,
   querySelectorAll: () => [],
   head: { appendChild() {} },
   body: { appendChild() {} },

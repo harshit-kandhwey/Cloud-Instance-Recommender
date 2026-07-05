@@ -637,8 +637,8 @@ function renderAppTableBody() {
         const compCell = a.hasCompliance
           ? pfChips(Object.keys(a.compliance), "pf-chip-danger")
           : "—";
-        const main = `<tr class="pf-app-row" tabindex="0" role="button" aria-expanded="${open}" onclick="togglePortfolioAppRow(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePortfolioAppRow(${i});}">
-          <td><span class="pf-caret">${open ? "▾" : "▸"}</span> ${esc(a.app)}</td>
+        const main = `<tr class="pf-app-row" onclick="togglePortfolioAppRow(${i})">
+          <td><button type="button" class="pf-row-toggle" data-row="${i}" aria-expanded="${open}" onclick="event.stopPropagation();togglePortfolioAppRow(${i})"><span class="pf-caret">${open ? "▾" : "▸"}</span> ${esc(a.app)}</button></td>
           <td>${a.vms}</td>
           <td>${a.vcpus}</td>
           <td>${fmtNum(a.memory)}</td>
@@ -740,6 +740,10 @@ function togglePortfolioAppRow(i) {
   if (overviewState.expanded.has(i)) overviewState.expanded.delete(i);
   else overviewState.expanded.add(i);
   renderAppTableBody();
+  // The toggle button was replaced by the re-render — restore focus so
+  // keyboard users stay anchored to the row they just expanded/collapsed.
+  const toggle = document.querySelector(`.pf-row-toggle[data-row="${i}"]`);
+  if (toggle) toggle.focus();
 }
 function updateSortIndicators() {
   document.querySelectorAll(".pf-th-sort").forEach((th) => {
@@ -848,7 +852,7 @@ function renderRightSizing(a, m) {
 function vmDetailColumns(m, appStat) {
   const sample =
     (appStat && appStat.rows && appStat.rows[0]) ||
-    (portfolioData.results && portfolioData.results[0]) ||
+    (portfolioData && portfolioData.results && portfolioData.results[0]) ||
     {};
   const keys = Object.keys(sample);
   const headers = (m.meta.columnHeaders || []).filter((h) => keys.includes(h));

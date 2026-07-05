@@ -251,6 +251,41 @@ body {
   border-color: var(--border-mid);
 }
 
+/* Filter presets bar */
+.preset-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+.preset-label {
+  font-weight: 600;
+  color: var(--text);
+}
+.preset-select {
+  width: auto;
+  min-width: 200px;
+  max-width: 100%;
+  padding: 8px 12px;
+}
+.preset-bar .btn {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+.preset-bar .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.preset-status {
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .alert {
   padding: 15px 20px;
   border-radius: 8px;
