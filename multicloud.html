@@ -86,6 +86,7 @@
     <script defer src="js/base/preview.js"></script>
     <script defer src="js/base/downloads.js"></script>
     <script defer src="js/base/presets.js"></script>
+    <script defer src="js/base/xlsx-export.js"></script>
   </head>
 
   <body>
@@ -1135,6 +1136,13 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
               </div>
               <button class="btn btn-primary" onclick="downloadResults()">
                 📥 Download Results CSV
+              </button>
+              <button
+                class="btn btn-secondary"
+                id="downloadResultsXlsxBtn"
+                onclick="downloadResultsXlsx()"
+              >
+                📊 Download Results Excel
               </button>
 
               <button
