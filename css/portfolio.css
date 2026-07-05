@@ -284,6 +284,9 @@
 .pf-app-row:hover {
   background: var(--surface-tint) !important;
 }
+.pf-app-row:focus-visible {
+  outline-offset: -2px;
+}
 .pf-caret {
   display: inline-block;
   width: 12px;

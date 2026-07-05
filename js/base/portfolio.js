@@ -500,28 +500,28 @@ function renderPortfolio() {
     : "";
 
   const tabs = [
-    `<button class="pf-tab active" data-tab="overview" onclick="switchPortfolioTab('overview')">📊 Overview</button>`,
+    `<button class="pf-tab active" role="tab" aria-selected="true" aria-controls="pf-panel-overview" id="pf-tab-overview" data-tab="overview" onclick="switchPortfolioTab('overview')">📊 Overview</button>`,
     ...m.apps.map(
       (a, i) =>
-        `<button class="pf-tab" data-tab="app-${i}" onclick="switchPortfolioTab('app-${i}')">${esc(a.app)}</button>`,
+        `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-app-${i}" id="pf-tab-app-${i}" data-tab="app-${i}" onclick="switchPortfolioTab('app-${i}')">${esc(a.app)}</button>`,
     ),
   ];
   if (m.unassigned) {
     tabs.push(
-      `<button class="pf-tab" data-tab="unassigned" onclick="switchPortfolioTab('unassigned')">❓ Unassigned</button>`,
+      `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-unassigned" id="pf-tab-unassigned" data-tab="unassigned" onclick="switchPortfolioTab('unassigned')">❓ Unassigned</button>`,
     );
   }
 
   const panels = [
-    `<div class="pf-panel active" id="pf-panel-overview">${renderOverview(m)}</div>`,
+    `<div class="pf-panel active" id="pf-panel-overview" role="tabpanel" aria-labelledby="pf-tab-overview">${renderOverview(m)}</div>`,
     ...m.apps.map(
       (a, i) =>
-        `<div class="pf-panel" id="pf-panel-app-${i}">${renderAppPanel(a, m, i)}</div>`,
+        `<div class="pf-panel" id="pf-panel-app-${i}" role="tabpanel" aria-labelledby="pf-tab-app-${i}">${renderAppPanel(a, m, i)}</div>`,
     ),
   ];
   if (m.unassigned) {
     panels.push(
-      `<div class="pf-panel" id="pf-panel-unassigned">${renderAppPanel(m.unassigned, m, "unassigned")}</div>`,
+      `<div class="pf-panel" id="pf-panel-unassigned" role="tabpanel" aria-labelledby="pf-tab-unassigned">${renderAppPanel(m.unassigned, m, "unassigned")}</div>`,
     );
   }
 
@@ -548,7 +548,9 @@ function renderPortfolio() {
 
 function switchPortfolioTab(tab) {
   document.querySelectorAll(".pf-tab").forEach((t) => {
-    t.classList.toggle("active", t.getAttribute("data-tab") === tab);
+    const active = t.getAttribute("data-tab") === tab;
+    t.classList.toggle("active", active);
+    t.setAttribute("aria-selected", active ? "true" : "false");
   });
   document.querySelectorAll(".pf-panel").forEach((p) => {
     p.classList.toggle("active", p.id === `pf-panel-${tab}`);
@@ -557,7 +559,13 @@ function switchPortfolioTab(tab) {
 
 // ── Overview ──────────────────────────────────────────────────────────────────
 function sortableTh(label, key) {
-  return `<th class="pf-th-sort" data-sort="${key}" onclick="sortPortfolioApps('${key}')" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
+  const ariaSort =
+    key === overviewState.sort
+      ? overviewState.dir === "asc"
+        ? "ascending"
+        : "descending"
+      : "none";
+  return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSort}" onclick="sortPortfolioApps('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortPortfolioApps('${key}');}" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
 }
 
 function renderOverview(m) {
@@ -629,7 +637,7 @@ function renderAppTableBody() {
         const compCell = a.hasCompliance
           ? pfChips(Object.keys(a.compliance), "pf-chip-danger")
           : "—";
-        const main = `<tr class="pf-app-row" onclick="togglePortfolioAppRow(${i})">
+        const main = `<tr class="pf-app-row" tabindex="0" role="button" aria-expanded="${open}" onclick="togglePortfolioAppRow(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePortfolioAppRow(${i});}">
           <td><span class="pf-caret">${open ? "▾" : "▸"}</span> ${esc(a.app)}</td>
           <td>${a.vms}</td>
           <td>${a.vcpus}</td>
@@ -734,6 +742,17 @@ function togglePortfolioAppRow(i) {
   renderAppTableBody();
 }
 function updateSortIndicators() {
+  document.querySelectorAll(".pf-th-sort").forEach((th) => {
+    const key = th.getAttribute("data-sort");
+    th.setAttribute(
+      "aria-sort",
+      key === overviewState.sort
+        ? overviewState.dir === "asc"
+          ? "ascending"
+          : "descending"
+        : "none",
+    );
+  });
   document.querySelectorAll(".pf-sort-ind").forEach((s) => {
     const key = s.getAttribute("data-ind");
     s.textContent =
@@ -826,8 +845,11 @@ function renderRightSizing(a, m) {
 }
 
 // All result columns (input order first, then the provider outputs), scrollable.
-function vmDetailColumns(m) {
-  const sample = (portfolioData.results && portfolioData.results[0]) || {};
+function vmDetailColumns(m, appStat) {
+  const sample =
+    (appStat && appStat.rows && appStat.rows[0]) ||
+    (portfolioData.results && portfolioData.results[0]) ||
+    {};
   const keys = Object.keys(sample);
   const headers = (m.meta.columnHeaders || []).filter((h) => keys.includes(h));
   const rest = keys.filter((k) => !headers.includes(k));
@@ -835,7 +857,7 @@ function vmDetailColumns(m) {
 }
 
 function renderVmTable(a, m) {
-  const cols = vmDetailColumns(m);
+  const cols = vmDetailColumns(m, a);
   const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
   const body = a.rows
     .map(
