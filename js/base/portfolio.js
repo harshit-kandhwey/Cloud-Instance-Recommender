@@ -558,14 +558,12 @@ function switchPortfolioTab(tab) {
 }
 
 // ── Overview ──────────────────────────────────────────────────────────────────
+function ariaSortFor(key) {
+  if (key !== overviewState.sort) return "none";
+  return overviewState.dir === "asc" ? "ascending" : "descending";
+}
 function sortableTh(label, key) {
-  const ariaSort =
-    key === overviewState.sort
-      ? overviewState.dir === "asc"
-        ? "ascending"
-        : "descending"
-      : "none";
-  return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSort}" onclick="sortPortfolioApps('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortPortfolioApps('${key}');}" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
+  return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSortFor(key)}" onclick="sortPortfolioApps('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortPortfolioApps('${key}');}" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
 }
 
 function renderOverview(m) {
@@ -638,7 +636,7 @@ function renderAppTableBody() {
           ? pfChips(Object.keys(a.compliance), "pf-chip-danger")
           : "—";
         const main = `<tr class="pf-app-row" onclick="togglePortfolioAppRow(${i})">
-          <td><button type="button" class="pf-row-toggle" data-row="${i}" aria-expanded="${open}" onclick="event.stopPropagation();togglePortfolioAppRow(${i})"><span class="pf-caret">${open ? "▾" : "▸"}</span> ${esc(a.app)}</button></td>
+          <td><button type="button" class="pf-row-toggle" data-row="${i}" aria-expanded="${open}" aria-controls="pf-detail-${i}" onclick="event.stopPropagation();togglePortfolioAppRow(${i})"><span class="pf-caret" aria-hidden="true">${open ? "▾" : "▸"}</span> ${esc(a.app)}</button></td>
           <td>${a.vms}</td>
           <td>${a.vcpus}</td>
           <td>${fmtNum(a.memory)}</td>
@@ -648,7 +646,7 @@ function renderAppTableBody() {
           <td>${compCell}</td>
         </tr>`;
         const detail = open
-          ? `<tr class="pf-detail-row"><td colspan="8">${renderAppExpand(a, i)}</td></tr>`
+          ? `<tr class="pf-detail-row" id="pf-detail-${i}"><td colspan="8">${renderAppExpand(a, i)}</td></tr>`
           : "";
         return main + detail;
       })
@@ -747,15 +745,7 @@ function togglePortfolioAppRow(i) {
 }
 function updateSortIndicators() {
   document.querySelectorAll(".pf-th-sort").forEach((th) => {
-    const key = th.getAttribute("data-sort");
-    th.setAttribute(
-      "aria-sort",
-      key === overviewState.sort
-        ? overviewState.dir === "asc"
-          ? "ascending"
-          : "descending"
-        : "none",
-    );
+    th.setAttribute("aria-sort", ariaSortFor(th.getAttribute("data-sort")));
   });
   document.querySelectorAll(".pf-sort-ind").forEach((s) => {
     const key = s.getAttribute("data-ind");

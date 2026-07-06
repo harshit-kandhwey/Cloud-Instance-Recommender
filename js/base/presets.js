@@ -109,7 +109,8 @@ function capturePresetConfig() {
   });
   PRESET_NUMBERS.forEach((id) => {
     const el = document.getElementById(id);
-    if (el && el.value !== "") cfg.numbers[id] = el.value;
+    // Capture unconditionally (like texts) so a blank field round-trips as blank.
+    if (el) cfg.numbers[id] = el.value;
   });
   PRESET_TEXTS.forEach((id) => {
     const el = document.getElementById(id);

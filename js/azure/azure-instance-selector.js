@@ -418,6 +418,10 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       options,
     );
 
+    // NOTE: any provider-specific soft filter added below must get a matching
+    // probe group in base-instance-selector.js `_nearestMissProbes`, or the
+    // "Nearest Miss" column will under-report why an instance was excluded.
+
     // Azure-specific: ARM filtering
     if (options.excludeARM) {
       filteredInstances = filteredInstances.filter((instance) => {

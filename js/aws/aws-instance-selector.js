@@ -745,6 +745,10 @@ class AWSInstanceSelector extends BaseInstanceSelector {
       options,
     );
 
+    // NOTE: any provider-specific soft filter added below must get a matching
+    // probe group in base-instance-selector.js `_nearestMissProbes`, or the
+    // "Nearest Miss" column will under-report why an instance was excluded.
+
     // AWS-specific: Legacy Graviton filtering (backwards compatibility)
     if (options.excludeGraviton) {
       filteredInstances = filteredInstances.filter((instance) => {
