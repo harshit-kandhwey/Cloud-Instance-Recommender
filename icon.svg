@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cloud Instance Recommender">
+  <rect width="512" height="512" rx="112" fill="#4c63d2" />
+  <g stroke="#ffffff" stroke-width="20" stroke-linecap="round">
+    <line x1="200" y1="148" x2="200" y2="182" />
+    <line x1="256" y1="148" x2="256" y2="182" />
+    <line x1="312" y1="148" x2="312" y2="182" />
+    <line x1="200" y1="330" x2="200" y2="364" />
+    <line x1="256" y1="330" x2="256" y2="364" />
+    <line x1="312" y1="330" x2="312" y2="364" />
+    <line x1="148" y1="200" x2="182" y2="200" />
+    <line x1="148" y1="256" x2="182" y2="256" />
+    <line x1="148" y1="312" x2="182" y2="312" />
+    <line x1="330" y1="200" x2="364" y2="200" />
+    <line x1="330" y1="256" x2="364" y2="256" />
+    <line x1="330" y1="312" x2="364" y2="312" />
+  </g>
+  <rect x="180" y="180" width="152" height="152" rx="24" fill="#ffffff" />
+  <rect x="216" y="216" width="80" height="80" rx="12" fill="#4c63d2" />
+</svg>

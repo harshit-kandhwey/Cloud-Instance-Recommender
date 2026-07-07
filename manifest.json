@@ -1,0 +1,19 @@
+{
+  "name": "Cloud Instance Recommender",
+  "short_name": "Cloud Rec",
+  "description": "Map on-prem VMs to AWS, Azure, and GCP instance recommendations — CSV/Excel in, right-sized instances out. Runs entirely in your browser.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#4c63d2",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
