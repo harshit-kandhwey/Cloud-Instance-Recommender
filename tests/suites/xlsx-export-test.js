@@ -26,7 +26,8 @@ const load = (rel) =>
   vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
     filename: rel,
   });
-const run = (expr) => vm.runInContext(expr, ctx, { filename: "xlsx-export-test" });
+const run = (expr) =>
+  vm.runInContext(expr, ctx, { filename: "xlsx-export-test" });
 
 load("js/base/xlsx-export.js");
 
@@ -42,18 +43,28 @@ function check(name, cond, detail) {
 // ── Column-letter math ──────────────────────────────────────────────────────
 check(
   "resultsColToA1 A/Z/AA/AB/AZ/BA",
-  run(
-    '[0,25,26,27,51,52].map(resultsColToA1).join(",")',
-  ) === "A,Z,AA,AB,AZ,BA",
+  run('[0,25,26,27,51,52].map(resultsColToA1).join(",")') === "A,Z,AA,AB,AZ,BA",
   run('[0,25,26,27,51,52].map(resultsColToA1).join(",")'),
 );
 
 // ── Numeric detection ───────────────────────────────────────────────────────
 const ct = (v) => run(`JSON.stringify(resultsCellType(${JSON.stringify(v)}))`);
 check("cell type: empty string → text", ct("") === '{"t":"s","v":""}', ct(""));
-check("cell type: integer string → number", ct("16") === '{"t":"n","v":16}', ct("16"));
-check("cell type: decimal string → number", ct("3.5") === '{"t":"n","v":3.5}', ct("3.5"));
-check("cell type: negative → number", ct("-4") === '{"t":"n","v":-4}', ct("-4"));
+check(
+  "cell type: integer string → number",
+  ct("16") === '{"t":"n","v":16}',
+  ct("16"),
+);
+check(
+  "cell type: decimal string → number",
+  ct("3.5") === '{"t":"n","v":3.5}',
+  ct("3.5"),
+);
+check(
+  "cell type: negative → number",
+  ct("-4") === '{"t":"n","v":-4}',
+  ct("-4"),
+);
 check(
   "cell type: instance name → text",
   ct("m6g.xlarge") === '{"t":"s","v":"m6g.xlarge"}',
@@ -72,7 +83,8 @@ check(
 );
 check(
   "cell type: Infinity → text",
-  run("JSON.stringify(resultsCellType(Infinity))") === '{"t":"s","v":"Infinity"}',
+  run("JSON.stringify(resultsCellType(Infinity))") ===
+    '{"t":"s","v":"Infinity"}',
   run("JSON.stringify(resultsCellType(Infinity))"),
 );
 
@@ -126,7 +138,9 @@ check(
 );
 check(
   "header cell A1 carries the fill style",
-  run('!!(__wb.Sheets["Recommendations"]["A1"].s && __wb.Sheets["Recommendations"]["A1"].s.fill)'),
+  run(
+    '!!(__wb.Sheets["Recommendations"]["A1"].s && __wb.Sheets["Recommendations"]["A1"].s.fill)',
+  ),
 );
 check(
   "numeric CPU cell is typed as a number",

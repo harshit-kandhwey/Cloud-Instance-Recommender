@@ -127,9 +127,7 @@ function makeScenario() {
     label: `Run ${scenarioPinCount}`,
     at: new Date().toLocaleTimeString(),
     providers:
-      typeof selectedProviders !== "undefined"
-        ? selectedProviders.slice()
-        : [],
+      typeof selectedProviders !== "undefined" ? selectedProviders.slice() : [],
     // Reference is safe — processedResults is replaced (not mutated) each run.
     results: processedResults,
     // Config snapshot (best-effort; presets.js provides capturePresetConfig).
@@ -139,7 +137,11 @@ function makeScenario() {
 }
 
 function pinScenario() {
-  if (typeof processedResults === "undefined" || !processedResults || !processedResults.length) {
+  if (
+    typeof processedResults === "undefined" ||
+    !processedResults ||
+    !processedResults.length
+  ) {
     alert("Generate recommendations first, then pin the run.");
     return;
   }

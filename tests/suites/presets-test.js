@@ -24,7 +24,10 @@ function reg(el) {
 }
 function makeEl(props) {
   return reg(
-    Object.assign({ id: "", type: "", name: "", value: "", checked: false }, props),
+    Object.assign(
+      { id: "", type: "", name: "", value: "", checked: false },
+      props,
+    ),
   );
 }
 
@@ -37,7 +40,9 @@ const document = {
   getElementById: (id) => els[id] || null,
   querySelector: (sel) => {
     if (sel === 'input[name="recommendationType"]:checked')
-      return allEls.find((e) => e.name === "recommendationType" && e.checked) || null;
+      return (
+        allEls.find((e) => e.name === "recommendationType" && e.checked) || null
+      );
     return null;
   },
   querySelectorAll: (sel) => {
@@ -79,13 +84,30 @@ vm.runInContext(
 // Build the fake control surface from presets.js's constants so a newly
 // captured field automatically gains a matching fake element.
 const constArr = (name) => JSON.parse(run(`JSON.stringify(${name})`));
-makeEl({ id: "likeToLike", type: "radio", name: "recommendationType", value: "like-to-like" });
-makeEl({ id: "optimized", type: "radio", name: "recommendationType", value: "optimized" });
-makeEl({ id: "both", type: "radio", name: "recommendationType", value: "both" });
+makeEl({
+  id: "likeToLike",
+  type: "radio",
+  name: "recommendationType",
+  value: "like-to-like",
+});
+makeEl({
+  id: "optimized",
+  type: "radio",
+  name: "recommendationType",
+  value: "optimized",
+});
+makeEl({
+  id: "both",
+  type: "radio",
+  name: "recommendationType",
+  value: "both",
+});
 constArr("PRESET_CHECKBOXES").forEach((id) => makeEl({ id, type: "checkbox" }));
 constArr("PRESET_NUMBERS").forEach((id) => makeEl({ id, type: "number" }));
 constArr("PRESET_TEXTS").forEach((id) => makeEl({ id, type: "text" }));
-constArr("PRESET_PROVIDER_IDS").forEach((id) => makeEl({ id, type: "checkbox" }));
+constArr("PRESET_PROVIDER_IDS").forEach((id) =>
+  makeEl({ id, type: "checkbox" }),
+);
 // Two representative dynamic checkboxes per group prefix (incl. mc_proc_/mc_cat_).
 constArr("PRESET_GROUP_PREFIXES").forEach((p) => {
   makeEl({ id: `${p}0`, type: "checkbox" });
@@ -195,7 +217,8 @@ check(
 );
 check(
   "apply restores number + text inputs",
-  els.cpuDownsizeMax.value === "30" && els.ruleDefaultEnv.value === "Production",
+  els.cpuDownsizeMax.value === "30" &&
+    els.ruleDefaultEnv.value === "Production",
   `cpuDownsizeMax=${els.cpuDownsizeMax.value} env=${els.ruleDefaultEnv.value}`,
 );
 check(
@@ -205,12 +228,15 @@ check(
 );
 check(
   "apply restores provider checkboxes",
-  els.aws.checked === true && els.azure.checked === true && els.gcp.checked === false,
+  els.aws.checked === true &&
+    els.azure.checked === true &&
+    els.gcp.checked === false,
   `aws=${els.aws.checked} azure=${els.azure.checked} gcp=${els.gcp.checked}`,
 );
 check(
   "apply mutates selectedProviders in place",
-  JSON.stringify(sandbox.selectedProviders) === JSON.stringify(["aws", "azure"]),
+  JSON.stringify(sandbox.selectedProviders) ===
+    JSON.stringify(["aws", "azure"]),
   JSON.stringify(sandbox.selectedProviders),
 );
 check(
@@ -232,7 +258,10 @@ check(
 const cfgB = run("capturePresetConfig()");
 check(
   "capture(after apply) deep-equals the original config",
-  JSON.stringify({ ...cfgB, groupChecked: cfgB.groupChecked.slice().sort() }) ===
+  JSON.stringify({
+    ...cfgB,
+    groupChecked: cfgB.groupChecked.slice().sort(),
+  }) ===
     JSON.stringify({ ...cfgA, groupChecked: cfgA.groupChecked.slice().sort() }),
   JSON.stringify(cfgB),
 );
@@ -255,8 +284,9 @@ check(
 );
 check(
   "store round-trips through localStorage",
-  run(`JSON.parse(localStorage.getItem("cloudInstanceRecommenderFilterPresets")).aws["Prod PCI"].config.recommendationType`) ===
-    "both",
+  run(
+    `JSON.parse(localStorage.getItem("cloudInstanceRecommenderFilterPresets")).aws["Prod PCI"].config.recommendationType`,
+  ) === "both",
 );
 check(
   "loadPresetsStore tolerates malformed JSON",

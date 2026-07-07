@@ -96,11 +96,15 @@ function isPresetGroupId(id) {
 
 // Snapshot the current configuration controls into a plain, JSON-safe object.
 function capturePresetConfig() {
-  const cfg = { checkboxes: {}, numbers: {}, texts: {}, providers: [], groupChecked: [] };
+  const cfg = {
+    checkboxes: {},
+    numbers: {},
+    texts: {},
+    providers: [],
+    groupChecked: [],
+  };
 
-  const rt = document.querySelector(
-    'input[name="recommendationType"]:checked',
-  );
+  const rt = document.querySelector('input[name="recommendationType"]:checked');
   if (rt) cfg.recommendationType = rt.value;
 
   PRESET_CHECKBOXES.forEach((id) => {
@@ -152,7 +156,10 @@ function applyPresetConfig(cfg) {
       const el = document.getElementById(id);
       if (el) el.checked = cfg.providers.includes(id);
     });
-    if (typeof selectedProviders !== "undefined" && Array.isArray(selectedProviders)) {
+    if (
+      typeof selectedProviders !== "undefined" &&
+      Array.isArray(selectedProviders)
+    ) {
       selectedProviders.length = 0;
       PRESET_PROVIDER_IDS.forEach((id) => {
         const el = document.getElementById(id);
@@ -237,9 +244,7 @@ function renderPresetsBar() {
     a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
   const options = [`<option value="">— Select a preset —</option>`]
-    .concat(
-      names.map((n) => `<option value="${pEsc(n)}">${pEsc(n)}</option>`),
-    )
+    .concat(names.map((n) => `<option value="${pEsc(n)}">${pEsc(n)}</option>`))
     .join("");
 
   host.innerHTML = `
@@ -312,7 +317,10 @@ function applySelectedPreset() {
     return;
   }
   if (!entry.config) {
-    setPresetStatus(`Preset "${name}" is corrupted and could not be applied.`, false);
+    setPresetStatus(
+      `Preset "${name}" is corrupted and could not be applied.`,
+      false,
+    );
     return;
   }
   applyPresetConfig(entry.config);

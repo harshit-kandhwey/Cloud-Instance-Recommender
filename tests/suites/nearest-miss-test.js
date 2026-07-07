@@ -22,7 +22,8 @@ const load = (rel) =>
   vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
     filename: rel,
   });
-const run = (expr) => vm.runInContext(expr, ctx, { filename: "nearest-miss-test" });
+const run = (expr) =>
+  vm.runInContext(expr, ctx, { filename: "nearest-miss-test" });
 
 load("js/base/base-instance-selector.js");
 load("js/base/instance-selector-factory.js");
@@ -36,8 +37,28 @@ run(`
 
 // Price-sorted instances; both are current-gen 2 and Intel.
 sandbox.instA = [
-  { instanceType: "t3.medium", vCpus: 2, memory: 4, price: 0.04, generation: 2, familyName: "General purpose", processor: "Intel", family: "t3", isGraviton: 0 },
-  { instanceType: "m5.large", vCpus: 2, memory: 8, price: 0.1, generation: 2, familyName: "General purpose", processor: "Intel", family: "m5", isGraviton: 0 },
+  {
+    instanceType: "t3.medium",
+    vCpus: 2,
+    memory: 4,
+    price: 0.04,
+    generation: 2,
+    familyName: "General purpose",
+    processor: "Intel",
+    family: "t3",
+    isGraviton: 0,
+  },
+  {
+    instanceType: "m5.large",
+    vCpus: 2,
+    memory: 8,
+    price: 0.1,
+    generation: 2,
+    familyName: "General purpose",
+    processor: "Intel",
+    family: "m5",
+    isGraviton: 0,
+  },
 ];
 
 let failures = 0;
@@ -89,7 +110,11 @@ check(
 const r4 = run(
   `__sel.computeNearestMiss(instA, 64, 256, { currentGenerationOnly: true })`,
 );
-check("returns null when nothing fits the size", r4 === null, JSON.stringify(r4));
+check(
+  "returns null when nothing fits the size",
+  r4 === null,
+  JSON.stringify(r4),
+);
 
 // ── getLikeToLikeInstance attaches nearestMiss to its no-match result ──────────
 run(`__sel.instanceData = { r1: instA };`);
@@ -128,7 +153,10 @@ check(
     `formatNearestMiss({ instanceType: "m7i.large", vCpus: 2, memory: 8, blockedBy: [] })`,
   ) === "m7i.large (2 vCPU / 8 GB)",
 );
-check("formatNearestMiss of null → empty string", run("formatNearestMiss(null)") === "");
+check(
+  "formatNearestMiss of null → empty string",
+  run("formatNearestMiss(null)") === "",
+);
 
 // ── instance-family-name filter attribution (base filter) ──────────────────────
 const rFam = run(
@@ -166,7 +194,8 @@ check(
 );
 check(
   "attributes the block to instance family/series",
-  JSON.stringify(rSeries.blockedBy) === JSON.stringify(["instance family/series"]),
+  JSON.stringify(rSeries.blockedBy) ===
+    JSON.stringify(["instance family/series"]),
   JSON.stringify(rSeries.blockedBy),
 );
 
@@ -190,7 +219,8 @@ check(
   "RuleEngine no-op on size-only pass leaves the nearest + attribution intact",
   rRule &&
     rRule.instanceType === "t3.medium" &&
-    JSON.stringify(rRule.blockedBy) === JSON.stringify(["current-generation only"]),
+    JSON.stringify(rRule.blockedBy) ===
+      JSON.stringify(["current-generation only"]),
   JSON.stringify(rRule),
 );
 

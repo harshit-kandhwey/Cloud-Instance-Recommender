@@ -14,7 +14,11 @@ const REPO = path.resolve(__dirname, "..", "..");
 
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
-  localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+  localStorage: {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  },
   document: { getElementById: () => null, addEventListener: () => {} },
 };
 sandbox.window = sandbox;
@@ -23,7 +27,8 @@ const load = (rel) =>
   vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
     filename: rel,
   });
-const run = (expr) => vm.runInContext(expr, ctx, { filename: "scenario-compare-test" });
+const run = (expr) =>
+  vm.runInContext(expr, ctx, { filename: "scenario-compare-test" });
 
 load("js/base/app-core.js");
 load("js/base/scenario-compare.js");
@@ -58,7 +63,11 @@ check(
   JSON.stringify(d1.cols) === JSON.stringify([AWS]),
   JSON.stringify(d1.cols),
 );
-check("both rows report as changed", d1.summary.changedRows === 2, JSON.stringify(d1.summary));
+check(
+  "both rows report as changed",
+  d1.summary.changedRows === 2,
+  JSON.stringify(d1.summary),
+);
 check("newly-matched counted (db1)", d1.summary.newlyMatched === 1);
 check("no newly-unmatched", d1.summary.newlyUnmatched === 0);
 check(
@@ -153,7 +162,9 @@ check(
 );
 
 // ── Only columns common to both runs are compared ──────────────────────────────
-sandbox.A6 = { results: [{ "VM Name": "x", [AWS]: "m5.large", [AZ]: "D2s_v5" }] };
+sandbox.A6 = {
+  results: [{ "VM Name": "x", [AWS]: "m5.large", [AZ]: "D2s_v5" }],
+};
 sandbox.B6 = { results: [{ "VM Name": "x", [AWS]: "m6i.large" }] };
 const d6 = run("diffScenarios(A6, B6)");
 check(
