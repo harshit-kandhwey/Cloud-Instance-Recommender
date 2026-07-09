@@ -3,7 +3,7 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-3.3-green)
+![Version](https://img.shields.io/badge/Version-3.4-green)
 ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
@@ -102,6 +102,26 @@ Add an optional **`App Name`** column and the tool groups your estate by applica
 
 Everything runs client-side, and no pricing appears in any view or sheet.
 
+### ⭐ Filter Presets (v3.4)
+
+Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. Nothing is applied automatically — a preset takes effect only when you click Apply.
+
+### 📗 Results Excel Export (v3.4)
+
+Next to the results CSV, **📊 Download Results Excel** writes the same grid as a styled single-sheet `.xlsx`: formatted header row, autofilter, fitted column widths, and numeric columns typed as real numbers so sorting and filtering behave correctly in Excel with no import dialog. The spreadsheet engine is lazy-loaded on first click.
+
+### 🧭 Nearest-Miss Diagnostics (v3.4)
+
+When a row gets no recommendation, a per-provider **Nearest Miss** column shows the closest instance that satisfied the CPU/memory requirement and names the filter group(s) that excluded it — e.g. `m7i.large (2 vCPU / 8 GB) — relax: current-generation only` — so you know exactly which filter to relax instead of guessing.
+
+### 🔀 Scenario Comparison (v3.4)
+
+Pin a generation run as scenario A, tweak filters, re-generate, pin as B, and **Compare A ↔ B**: a summary (VMs changed, match rate A → B, newly matched / newly unmatched) plus a table of only the changed rows with old → new values per recommendation column. Rows pair by VM Name (or by position when names aren't unique), so use the same input file for both runs. Scenarios live in memory for the session only.
+
+### 📲 Install & Offline (PWA) (v3.4)
+
+The site is an installable Progressive Web App. A service worker precaches the app shell and keeps everything you've used — pages, scripts, region data — cached with a stale-while-revalidate policy, so after the first visit the tool works offline for the regions you've already loaded and silently picks up updates on the next online visit.
+
 ### 🌓 Dark Mode & Accessibility (v3.2)
 
 A theme toggle in the nav switches light/dark instantly (no flash on load); your choice persists across pages and reloads, and with no saved choice the site follows the OS setting. The UI is keyboard-operable end to end — collapsible sections and sortable table headers work with Enter/Space, status updates are announced to screen readers, and every page has a skip-to-content link and visible focus outlines.
@@ -119,6 +139,10 @@ Cloud-Instance-Recommender/
 ├── multicloud.html          # Multi-cloud comparison
 ├── app-portfolio.html       # App-centric dashboard + executive Excel (fed by a handoff)
 ├── user-guide.html          # Full user guide
+│
+├── manifest.json            # PWA manifest (installable app)
+├── sw.js                    # Service worker — offline cache (stale-while-revalidate)
+├── icon.svg                 # App icon
 │
 ├── docs/
 │   └── user-guide.pdf       # PDF version of the user guide
@@ -138,7 +162,11 @@ Cloud-Instance-Recommender/
 ├── tools/
 │   └── split-data.js        # Node tool: splits monolithic data into per-region files
 │
+├── tests/                   # Plain-Node test harness: suites + golden compare (see tests/README.md)
+│
 └── js/
+    ├── pwa-register.js                     # Service-worker registration (loaded by every page)
+    │
     ├── base/
     │   ├── base-instance-selector.js       # Abstract base class + lazy region loading
     │   ├── instance-selector-factory.js    # Provider factory + recommendation orchestration
@@ -153,6 +181,9 @@ Cloud-Instance-Recommender/
     │   ├── generate.js                     # Option gathering + worker batch runner
     │   ├── preview.js                      # Stats bar + results preview table
     │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
+    │   ├── presets.js                      # Filter presets (save/apply, localStorage)
+    │   ├── xlsx-export.js                  # Styled results .xlsx export
+    │   ├── scenario-compare.js             # Pin + diff two generation runs
     │   └── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
     │
     ├── vendor/
@@ -206,25 +237,27 @@ python -m http.server 8080
 Download the sample CSV from any provider page and fill in your VM inventory. `.xlsx` workbooks are also accepted (the first sheet is used). Column names don't have to match exactly — common variants like `vCPUs`, `RAM`, or `Hostname` are auto-mapped, and anything ambiguous opens a mapping panel.
 
 **Required columns:**
-| Column | Description |
-|--------|-------------|
-| `VM Name` | Identifier for the VM |
-| `CPU Count` | Number of vCPUs |
-| `Memory (GB)` | RAM in gigabytes |
+
+| Column              | Description                                     |
+| ------------------- | ----------------------------------------------- |
+| `VM Name`           | Identifier for the VM                           |
+| `CPU Count`         | Number of vCPUs                                 |
+| `Memory (GB)`       | RAM in gigabytes                                |
 | `[Provider] Region` | e.g. `AWS Region`, `Azure Region`, `GCP Region` |
 
 **Optional columns (enable rule-based filtering per row):**
-| Column | Values | Effect |
-|--------|--------|--------|
-| `App Name` | Any text | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
-| `CPU Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
-| `Memory Utilization` | 0–100 | Drives N/2 / N / N+1 optimization |
-| `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
-| `OS` | Linux / Windows / macOS | Affects ARM/Graviton eligibility |
-| `Workload` | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first |
-| `Compliance` | PCI / HIPAA / SOC2 / FIPS | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS) |
-| `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4 | Minimum instance generation to include |
-| `Exclude` | Comma-separated type names (e.g. `Burstable,GPU`) | Exclude specific instance types for this row only |
+
+| Column               | Values                                                              | Effect                                                                                                    |
+| -------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `App Name`           | Any text                                                            | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
+| `CPU Utilization`    | 0–100                                                               | Drives N/2 / N / N+1 optimization                                                                         |
+| `Memory Utilization` | 0–100                                                               | Drives N/2 / N / N+1 optimization                                                                         |
+| `ENV`                | Production / Staging / Dev / Test                                   | Tightens burstable and generation rules                                                                   |
+| `OS`                 | Linux / Windows / macOS                                             | Affects ARM/Graviton eligibility                                                                          |
+| `Workload`           | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first                                                                            |
+| `Compliance`         | PCI / HIPAA / SOC2 / FIPS                                           | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS)                                                  |
+| `Min Gen`            | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4                              | Minimum instance generation to include                                                                    |
+| `Exclude`            | Comma-separated type names (e.g. `Burstable,GPU`)                   | Exclude specific instance types for this row only                                                         |
 
 **Example (multi-cloud):**
 
@@ -250,17 +283,18 @@ worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,
 
 The results CSV contains your original columns plus per-provider recommendation columns:
 
-| Column                                            | Description                                          |
-| ------------------------------------------------- | ---------------------------------------------------- |
-| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                 |
-| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                   |
-| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                       |
-| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                     |
-| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired  |
-| `AWS No Match Reason`                             | Explains why no instance was found (when applicable) |
-| _(Azure and GCP columns follow the same pattern)_ |                                                      |
+| Column                                            | Description                                                                        |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                                               |
+| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                                                 |
+| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                                                     |
+| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                                                   |
+| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired                                |
+| `AWS No Match Reason`                             | Explains why no instance was found (when applicable)                               |
+| `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax |
+| _(Azure and GCP columns follow the same pattern)_ |                                                                                    |
 
-The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **No-Match Rows CSV** button for fix-and-re-upload remediation.
+The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **No-Match Rows CSV** button for fix-and-re-upload remediation. The same grid is also downloadable as a styled Excel workbook (**Download Results Excel**), and any two runs can be pinned and diffed with **Scenario comparison** to see exactly what a filter change did.
 
 > **Pricing is intentionally excluded from output.** Cloud pricing depends on region, OS, discounts, Reserved Instances, Savings Plans, and enterprise agreements — a static price in the CSV would be misleading within weeks. Use the provider's pricing calculator with the recommended instance types for authoritative cost figures.
 
@@ -325,7 +359,8 @@ const results = await getInstanceRecommendationWithSelector(
 - **Client-Side Only** — All processing runs in your browser
 - **No Data Transmission** — CSV files never leave your machine
 - **No Authentication** — No login, fully anonymous
-- **Local Storage** — Only usage statistics are stored locally
+- **Local Storage** — Only preferences are stored locally (usage statistics, theme choice, confirmed column mappings, saved filter presets) — never your inventory
+- **Offline Cache** — The service worker caches the app's own static files (pages, scripts, instance data) for offline use; your uploads and results are never cached
 
 ---
 

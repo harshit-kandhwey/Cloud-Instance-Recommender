@@ -11,7 +11,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
-    <title>Cloud Instance Recommender — User Guide v3.2</title>
+    <title>Cloud Instance Recommender — User Guide v3.4</title>
     <script>
       // Set theme before first paint. A saved choice wins; otherwise follow
       // the OS setting (and keep following it until the user picks manually).
@@ -676,7 +676,7 @@
         <span class="badge badge-mc">☁ Multi-Cloud</span>
       </div>
       <div class="cover-meta">
-        <span>📄 Version 3.2</span>
+        <span>📄 Version 3.4</span>
         <span>📅 July 2026</span>
         <span>👥 IT Professionals · Cloud Architects · DevOps Engineers</span>
       </div>
@@ -687,7 +687,38 @@
      ══════════════════════════════════════════════════════════════════════ -->
     <div class="content">
       <div class="section-heading" id="whats-new">
-        <h2>🆕 What's New in v3.3</h2>
+        <h2>🆕 What's New in v3.4</h2>
+      </div>
+      <ul class="check">
+        <li>
+          <strong>Filter presets</strong> — save the whole filter configuration
+          under a name and re-apply it anytime from the bar above the Generate
+          button; presets are per page and stay in your browser.
+        </li>
+        <li>
+          <strong>Results Excel</strong> — download the results grid as a styled
+          <code>.xlsx</code> (formatted header, autofilter, numeric columns)
+          alongside the existing CSV.
+        </li>
+        <li>
+          <strong>Nearest Miss column</strong> — no-match rows now name the
+          closest qualifying instance and the filter(s) that excluded it, so you
+          know exactly what to relax.
+        </li>
+        <li>
+          <strong>Scenario comparison</strong> — pin two generation runs and
+          diff them: match-rate change, newly matched/unmatched VMs, and old →
+          new values for every changed recommendation.
+        </li>
+        <li>
+          <strong>Install &amp; offline</strong> — the tool is an installable
+          app that keeps working offline after your first visit; updates apply
+          automatically the next time you're online.
+        </li>
+      </ul>
+
+      <div class="section-heading" id="whats-new-previous">
+        <h2>🕘 Previously in v3.2–v3.3</h2>
       </div>
       <ul class="check">
         <li>
@@ -836,12 +867,19 @@
             <a href="#csv-export"
               >Standard Results CSV <span class="toc-num">16</span></a
             >
+            <a href="#xlsx-export"
+              >Results Excel (.xlsx) <span class="toc-num">16</span></a
+            >
             <a href="#bulk-export"
               >AWS Pricing Calculator Bulk Template
               <span class="toc-num">16</span></a
             >
             <a href="#app-portfolio-export"
               >App Portfolio &amp; Executive Excel
+              <span class="toc-num">16</span></a
+            >
+            <a href="#scenario-compare"
+              >Comparing Two Runs (Scenario Comparison)
               <span class="toc-num">16</span></a
             >
           </div>
@@ -856,6 +894,9 @@
             >
             <a href="#conflict-detect"
               >Conflict Detection <span class="toc-num">18</span></a
+            >
+            <a href="#filter-presets"
+              >Filter Presets <span class="toc-num">18</span></a
             >
           </div>
         </div>
@@ -1031,13 +1072,17 @@
             <tr>
               <td>Internet</td>
               <td>
-                Required for initial page load; all processing is local
-                thereafter
+                Required for the first visit; after that an offline cache keeps
+                pages and previously used region data working without
+                connectivity
               </td>
             </tr>
             <tr>
               <td>Local storage</td>
-              <td>Used for usage statistics only; no sensitive data stored</td>
+              <td>
+                Used for preferences only (usage statistics, theme, saved column
+                mappings, filter presets); no inventory data stored
+              </td>
             </tr>
           </tbody>
         </table>
@@ -1064,10 +1109,22 @@
 
         <div class="callout callout-info">
           <strong>Tip</strong>
-          The data files are large (AWS ~5 MB, Azure ~10 MB, GCP ~3 MB). On
-          first load, allow a few seconds for the browser to parse the instance
-          catalogue before uploading your CSV.
+          Instance data loads per region, on demand — pages open in moments and
+          only the regions your inventory references are fetched. If you click
+          Generate before the data finishes loading, the run is queued and
+          starts automatically.
         </div>
+
+        <h4>Installing as an app (optional)</h4>
+        <p>
+          The tool is a Progressive Web App. Use your browser's
+          <strong>Install</strong> action (the install icon in the address bar,
+          or <em>Add to Home Screen</em> on mobile) to run it as a standalone
+          app. Installed or not, the site keeps working
+          <strong>offline</strong> after the first visit — pages and any region
+          data you've already used are served from a local cache, and updates
+          are picked up automatically on your next online visit.
+        </p>
       </div>
 
       <!-- ══════════════════════════════════════════════════════════════════════
@@ -1236,8 +1293,7 @@ web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,6
 db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,7
 app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,
 cache-server-04,Storefront,4,16,25,30,us-east-1,Staging,Linux,Cache,,6
-ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
-        >
+ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre>
 
         <div class="callout callout-warn">
           <strong>Formatting rules</strong>
@@ -2006,6 +2062,23 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
             <td>Pipe-separated list of rules that fired for this row</td>
             <td>1a: Burstable excluded | 1c: Size floor applied</td>
           </tr>
+          <tr>
+            <td>
+              <span class="col-pill col-pill-new">AWS No Match Reason</span>
+            </td>
+            <td>Why no instance was found (no-match rows only)</td>
+            <td>CPU Count is 0 or missing</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="col-pill col-pill-new">AWS Nearest Miss</span>
+            </td>
+            <td>
+              Closest instance that met the CPU/memory requirement, and which
+              filter group(s) excluded it (no-match rows only)
+            </td>
+            <td>m7i.large (2 vCPU / 8 GB) — relax: current-generation only</td>
+          </tr>
         </tbody>
       </table>
 
@@ -2085,6 +2158,18 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
             Filtering by "Rules Applied" to audit environment-specific decisions
           </li>
         </ul>
+      </div>
+
+      <div id="xlsx-export">
+        <h3>📗 Results Excel (.xlsx)</h3>
+        <p>
+          Next to the CSV, <strong>📊 Download Results Excel</strong> writes the
+          same rows and columns as a single-sheet workbook with a formatted
+          header row, autofilter, fitted column widths, and numeric columns
+          stored as real numbers — so sorting and filtering behave correctly in
+          Excel with no import dialog or encoding step. The spreadsheet engine
+          loads on first click; everything runs in the browser.
+        </p>
       </div>
 
       <div id="bulk-export">
@@ -2338,6 +2423,37 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
         </div>
       </div>
 
+      <div id="scenario-compare">
+        <h3>🔀 Comparing Two Runs (Scenario Comparison)</h3>
+        <p>
+          The download section includes a
+          <strong>Scenario comparison</strong> bar for measuring what a
+          configuration change actually does to the recommendations:
+        </p>
+        <ol class="steps">
+          <li>
+            Generate recommendations, then click
+            <strong>📌 Pin this run</strong> — it becomes scenario A.
+          </li>
+          <li>
+            Change filters (or apply a different preset) and generate again.
+          </li>
+          <li>
+            Pin the new run (scenario B) and click
+            <strong>Compare A ↔ B</strong>.
+          </li>
+        </ol>
+        <p>
+          The comparison shows how many VMs changed, the match rate A → B, newly
+          matched and newly unmatched counts, and a table of only the changed
+          rows with old → new values for each recommendation column. Rows are
+          paired by VM Name (or by position when names aren't unique), so use
+          the same input file for both runs. Pinning a third run keeps the two
+          most recent; scenarios are held in memory and clear when the page
+          reloads.
+        </p>
+      </div>
+
       <!-- ══════════════════════════════════════════════════════════════════════
      9. ADVANCED FILTERING
      ══════════════════════════════════════════════════════════════════════ -->
@@ -2562,6 +2678,38 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
         </tbody>
       </table>
 
+      <div id="filter-presets">
+        <h3>⭐ Filter Presets</h3>
+        <p>
+          The bar above the <strong>Generate Recommendations</strong> button
+          saves the entire configuration under a name — recommendation type,
+          optimization thresholds, the five Rule Engine defaults, every provider
+          filter, and the exclude-type selections (plus the provider checkboxes
+          on the Multi-Cloud page).
+        </p>
+        <ul class="check">
+          <li>
+            <strong>💾 Save current as…</strong> — snapshot the current controls
+            under a new name.
+          </li>
+          <li>
+            <strong>Apply</strong> — restore a preset; dependent panels
+            (optimization ranges, exclude grids) rebuild automatically.
+          </li>
+          <li>
+            <strong>Update</strong> / <strong>Delete</strong> — overwrite a
+            preset with the current settings, or remove it.
+          </li>
+        </ul>
+        <p>
+          Presets are scoped to the page they were saved on (an AWS preset
+          doesn't appear on Azure) and are stored in your browser's local
+          storage — they never leave your machine and survive reloads. Nothing
+          is applied automatically: a preset takes effect only when you click
+          Apply.
+        </p>
+      </div>
+
       <!-- ══════════════════════════════════════════════════════════════════════
      10. MULTI-CLOUD COMPARISON
      ══════════════════════════════════════════════════════════════════════ -->
@@ -2585,8 +2733,7 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
       <pre>
 VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
 web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,</pre
-      >
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,</pre>
 
       <h3>Regional Equivalents Reference</h3>
       <table class="avoid-break">
@@ -2726,11 +2873,14 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
         <tbody>
           <tr>
             <td>"No data available" for all VMs</td>
-            <td>Region not supported or data file not yet loaded</td>
             <td>
-              Wait for the data files to finish loading (check the browser tab
-              title). Verify the region name is in the supported list (see
-              in-app sample template).
+              Region not recognised, or filters eliminated every candidate
+            </td>
+            <td>
+              Check the Region Check panel after upload — red chips mean the
+              region isn't in the catalogue. If regions are green, read the
+              Nearest Miss column: it names the closest candidate and the filter
+              group to relax.
             </td>
           </tr>
           <tr>
@@ -2747,9 +2897,10 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
             <td>No recommendation after ENV = Production</td>
             <td>Rule engine eliminated all candidates</td>
             <td>
-              Check the Rules Applied column. Try relaxing the Advanced
-              Filtering options. Ensure the region has current-generation
-              instances (all major regions do).
+              Check the Rules Applied and Nearest Miss columns — the latter
+              names the closest candidate and which filter excluded it. Try
+              relaxing the Advanced Filtering options. Ensure the region has
+              current-generation instances (all major regions do).
             </td>
           </tr>
           <tr>
@@ -2782,11 +2933,12 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
         </thead>
         <tbody>
           <tr>
-            <td>Page feels slow on first load</td>
+            <td>Generation waits after clicking the button</td>
             <td>
-              The data files are large (AWS ~5 MB, Azure ~10 MB). GitHub Pages
-              serves them with gzip compression, but parsing still takes a few
-              seconds. Wait for the browser to finish before uploading.
+              Instance data loads per region on demand; if your CSV's regions
+              are still downloading, the run is queued and starts automatically
+              once they arrive — no action needed. On repeat visits the data is
+              served from the offline cache.
             </td>
           </tr>
           <tr>
@@ -2924,16 +3076,27 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
 
       <p>
         <strong>Q: Can I use this tool offline?</strong><br />
-        A: The initial page load requires an internet connection to download the
-        instance data files. Once loaded, you can process CSV files without
-        connectivity. The instance data is cached in your browser until you
-        refresh the page.
+        A: Yes — after your first visit. A service worker caches the pages and
+        any region data you've used, so those keep working without connectivity,
+        and you can optionally install the site as an app from your browser.
+        Regions you've never loaded still need one online visit. Updates are
+        picked up automatically the next time you're online.
       </p>
 
       <p>
         <strong>Q: Which file formats are supported?</strong><br />
-        A: CSV (comma-separated values) with UTF-8 encoding. Excel files must be
-        saved as CSV first.
+        A: CSV (UTF-8) and Excel <code>.xlsx</code> workbooks — the first sheet
+        is used. Common header variants like <code>vCPUs</code>,
+        <code>RAM</code>, or <code>Hostname</code> are mapped to the expected
+        columns automatically.
+      </p>
+
+      <p>
+        <strong>Q: Can I save my filter configuration for next time?</strong
+        ><br />
+        A: Yes — use the ⭐ Filter presets bar above the Generate button to save
+        the current configuration under a name and re-apply it later. Presets
+        are per page and stored only in your browser (see Section 9).
       </p>
 
       <h3>⚙ Technical</h3>
@@ -3080,7 +3243,7 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
 
       <div class="doc-footer">
         <span>Cloud Instance Recommender — User Guide</span>
-        <span>Version 3.2 · July 2026</span>
+        <span>Version 3.4 · July 2026</span>
         <span
           >Target: IT Professionals · Cloud Architects · DevOps Engineers</span
         >

@@ -33,6 +33,10 @@ python -m http.server 8080
 ├── app-portfolio.html      # App Portfolio dashboard + executive Excel
 ├── user-guide.html         # Interactive user guide
 │
+├── manifest.json           # PWA manifest (installable app)
+├── sw.js                   # Service worker (offline cache) — see note below
+├── icon.svg                # App icon
+│
 ├── docs/
 │   └── user-guide.pdf      # PDF user guide
 │
@@ -64,7 +68,11 @@ python -m http.server 8080
     │   ├── generate.js                     # Worker batch runner
     │   ├── preview.js
     │   ├── downloads.js                    # + App Portfolio handoff
+    │   ├── presets.js                      # Filter presets (save/apply, localStorage)
+    │   ├── xlsx-export.js                  # Styled results .xlsx export
+    │   ├── scenario-compare.js             # Pin + diff two generation runs
     │   └── portfolio.js                    # App Portfolio (loaded only on app-portfolio.html)
+    ├── pwa-register.js     # Service-worker registration (loaded by every page)
     ├── vendor/             # Vendored libs + licenses: SheetJS (upload) and the
     │                       #   xlsx-js-style fork (portfolio Excel). Keep byte-
     │                       #   identical to upstream — do NOT run a formatter on them.
@@ -82,6 +90,17 @@ To refresh the data:
 1. Generate the fresh **monolithic** `{provider}-data.js` as before (PowerShell scripts documented in the internal wiki) and drop it in place of the manifest at `js/{provider}/{provider}-data.js` — the site keeps working in this state, so you can verify it before splitting
 2. Run `node tools/split-data.js` — it rewrites the manifest and regenerates `js/{provider}/regions/`, removing region files that no longer exist upstream. The tool is idempotent (skips providers already in manifest form) and hard-fails rather than writing anything if the input doesn't parse cleanly
 3. Verify with spot-checks on known instance types, then commit the manifest **and** the regenerated `regions/` files together
+
+## Service Worker (offline support)
+
+`sw.js` precaches the app shell (HTML + CSS + manifest + icon) and runtime-caches everything else same-origin with stale-while-revalidate, so code and data changes reach users automatically on their next online visit — ordinary changes need no service-worker action.
+
+Two cases do need one:
+
+- **Adding an HTML page or stylesheet** — add it to the `PRECACHE` list in `sw.js` so it works offline from the first install.
+- **Forcing a clean re-precache** (e.g. after renaming or deleting shell files) — bump the `CACHE` version string in `sw.js`.
+
+Note the service worker only registers on a secure context (GitHub Pages, `localhost`) — pages opened via `file://` simply skip it.
 
 ## Running Tests
 
