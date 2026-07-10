@@ -238,6 +238,7 @@ function pEsc(s) {
 function renderPresetsBar() {
   const host = document.getElementById("filterPresetsBar");
   if (!host) return;
+  disarmAllPresetButtons();
 
   const presets = presetsForPage();
   const names = Object.keys(presets).sort((a, b) =>
@@ -254,9 +255,15 @@ function renderPresetsBar() {
         ${options}
       </select>
       <button type="button" class="btn btn-secondary" id="presetApplyBtn" onclick="applySelectedPreset()" disabled>Apply</button>
-      <button type="button" class="btn btn-secondary" id="presetUpdateBtn" onclick="updateSelectedPreset()" disabled>Update</button>
-      <button type="button" class="btn btn-secondary" id="presetDeleteBtn" onclick="deleteSelectedPreset()" disabled>Delete</button>
-      <button type="button" class="btn btn-secondary" onclick="savePresetAs()">💾 Save current as…</button>
+      <button type="button" class="btn btn-secondary" id="presetUpdateBtn" onclick="updateSelectedPreset()" onblur="disarmPresetButton('presetUpdateBtn')" disabled>Update</button>
+      <button type="button" class="btn btn-secondary" id="presetDeleteBtn" onclick="deleteSelectedPreset()" onblur="disarmPresetButton('presetDeleteBtn')" disabled>Delete</button>
+      <button type="button" class="btn btn-secondary" id="presetSaveAsBtn" onclick="savePresetAs()">💾 Save current as…</button>
+      <span id="presetSaveForm" class="preset-save-form hidden">
+        <label class="sr-only" for="presetNameInput">Preset name</label>
+        <input id="presetNameInput" class="form-control preset-name-input" type="text" placeholder="Preset name" maxlength="60" onkeydown="onPresetNameKeydown(event)" oninput="disarmPresetButton('presetSaveConfirmBtn')" />
+        <button type="button" class="btn btn-primary" id="presetSaveConfirmBtn" onclick="confirmSavePreset()" onblur="disarmPresetButton('presetSaveConfirmBtn')">Save</button>
+        <button type="button" class="btn btn-secondary" onclick="cancelSavePreset()">Cancel</button>
+      </span>
       <span id="presetStatus" class="preset-status" role="status" aria-live="polite"></span>
     </div>`;
 }
@@ -274,6 +281,7 @@ function selectedPresetName() {
 }
 
 function onPresetSelectChange() {
+  disarmAllPresetButtons();
   const has = !!selectedPresetName();
   ["presetApplyBtn", "presetUpdateBtn", "presetDeleteBtn"].forEach((id) => {
     const b = document.getElementById(id);
@@ -282,19 +290,108 @@ function onPresetSelectChange() {
   setPresetStatus("");
 }
 
-function savePresetAs() {
-  const name = (window.prompt("Save preset as:") || "").trim();
-  if (!name) return;
+// ─── Inline confirmation (replaces window.prompt / window.confirm) ────────────
+// Destructive/overwriting actions are two-step: the first click arms the
+// button (label swap + status hint), a second click within 4s runs the
+// action; moving focus away, editing the name, changing the selection, or
+// the timeout disarms it.
 
+const presetArm = {}; // button id → { timer, label, msg }
+
+function armPresetButton(id, armedLabel, armMsg, action) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (presetArm[id]) {
+    disarmPresetButton(id);
+    action();
+    return;
+  }
+  presetArm[id] = {
+    timer: setTimeout(() => disarmPresetButton(id), 4000),
+    label: btn.textContent,
+    msg: armMsg,
+  };
+  btn.textContent = armedLabel;
+  if (btn.classList) btn.classList.add("preset-armed");
+  setPresetStatus(armMsg, false);
+}
+
+function disarmPresetButton(id) {
+  const st = presetArm[id];
+  if (!st) return;
+  clearTimeout(st.timer);
+  delete presetArm[id];
+  const btn = document.getElementById(id);
+  if (btn) {
+    btn.textContent = st.label;
+    if (btn.classList) btn.classList.remove("preset-armed");
+  }
+  // Clear the arming hint, but never a message someone else set since.
+  const status = document.getElementById("presetStatus");
+  if (status && status.textContent === st.msg) setPresetStatus("");
+}
+
+function disarmAllPresetButtons() {
+  Object.keys(presetArm).forEach(disarmPresetButton);
+}
+
+// "Save current as…" opens an inline name form in the bar.
+function savePresetAs() {
+  const form = document.getElementById("presetSaveForm");
+  const input = document.getElementById("presetNameInput");
+  if (!form || !input) return;
+  const opener = document.getElementById("presetSaveAsBtn");
+  if (opener && opener.classList) opener.classList.add("hidden");
+  if (form.classList) form.classList.remove("hidden");
+  input.value = "";
+  setPresetStatus("");
+  if (typeof input.focus === "function") input.focus();
+}
+
+function cancelSavePreset() {
+  disarmPresetButton("presetSaveConfirmBtn");
+  const form = document.getElementById("presetSaveForm");
+  const opener = document.getElementById("presetSaveAsBtn");
+  if (form && form.classList) form.classList.add("hidden");
+  if (opener && opener.classList) opener.classList.remove("hidden");
+}
+
+function onPresetNameKeydown(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    confirmSavePreset();
+  } else if (e.key === "Escape") {
+    cancelSavePreset();
+  }
+}
+
+function confirmSavePreset() {
+  const input = document.getElementById("presetNameInput");
+  const name = ((input && input.value) || "").trim();
+  if (!name) {
+    setPresetStatus("Enter a name for the preset.", false);
+    return;
+  }
+  if (Object.prototype.hasOwnProperty.call(presetsForPage(), name)) {
+    // Arms on the first click; the second click lands in the armed branch
+    // and runs the overwrite with whatever the name field holds then.
+    armPresetButton(
+      "presetSaveConfirmBtn",
+      "Overwrite?",
+      `A preset named "${name}" already exists — click again to overwrite.`,
+      () => writePreset(name, "Saved"),
+    );
+    return;
+  }
+  writePreset(name, "Saved");
+}
+
+// Snapshot the current controls into the named preset and reflect it in the
+// bar (re-render collapses the save form and picks the preset in the select).
+function writePreset(name, verb) {
   const store = loadPresetsStore();
   const page = presetsPageKey();
   store[page] = store[page] || {};
-  if (
-    Object.prototype.hasOwnProperty.call(store[page], name) &&
-    !window.confirm(`A preset named "${name}" already exists. Overwrite it?`)
-  ) {
-    return;
-  }
   store[page][name] = { savedAt: Date.now(), config: capturePresetConfig() };
 
   if (!savePresetsStore(store)) {
@@ -305,7 +402,7 @@ function savePresetAs() {
   const sel = document.getElementById("presetSelect");
   if (sel) sel.value = name;
   onPresetSelectChange();
-  setPresetStatus(`Saved "${name}".`, true);
+  setPresetStatus(`${verb} "${name}".`, true);
 }
 
 function applySelectedPreset() {
@@ -330,37 +427,55 @@ function applySelectedPreset() {
 function updateSelectedPreset() {
   const name = selectedPresetName();
   if (!name) return;
-  if (!window.confirm(`Update "${name}" with the current configuration?`))
-    return;
+  armPresetButton(
+    "presetUpdateBtn",
+    "Confirm update?",
+    `Overwrite "${name}" with the current configuration? Click again to confirm.`,
+    () => {
+      const store = loadPresetsStore();
+      const page = presetsPageKey();
+      store[page] = store[page] || {};
+      store[page][name] = {
+        savedAt: Date.now(),
+        config: capturePresetConfig(),
+      };
 
-  const store = loadPresetsStore();
-  const page = presetsPageKey();
-  store[page] = store[page] || {};
-  store[page][name] = { savedAt: Date.now(), config: capturePresetConfig() };
-
-  if (!savePresetsStore(store)) {
-    setPresetStatus("Could not update preset (storage unavailable).", false);
-    return;
-  }
-  setPresetStatus(`Updated "${name}".`, true);
+      if (!savePresetsStore(store)) {
+        setPresetStatus(
+          "Could not update preset (storage unavailable).",
+          false,
+        );
+        return;
+      }
+      setPresetStatus(`Updated "${name}".`, true);
+    },
+  );
 }
 
 function deleteSelectedPreset() {
   const name = selectedPresetName();
   if (!name) return;
-  if (!window.confirm(`Delete preset "${name}"?`)) return;
+  armPresetButton(
+    "presetDeleteBtn",
+    "Confirm delete?",
+    `Delete preset "${name}"? Click again to confirm.`,
+    () => {
+      const store = loadPresetsStore();
+      const page = presetsPageKey();
+      if (store[page]) delete store[page][name];
 
-  const store = loadPresetsStore();
-  const page = presetsPageKey();
-  if (store[page]) delete store[page][name];
-
-  if (!savePresetsStore(store)) {
-    setPresetStatus("Could not delete preset (storage unavailable).", false);
-    return;
-  }
-  renderPresetsBar();
-  onPresetSelectChange();
-  setPresetStatus(`Deleted "${name}".`, true);
+      if (!savePresetsStore(store)) {
+        setPresetStatus(
+          "Could not delete preset (storage unavailable).",
+          false,
+        );
+        return;
+      }
+      renderPresetsBar();
+      onPresetSelectChange();
+      setPresetStatus(`Deleted "${name}".`, true);
+    },
+  );
 }
 
 function initFilterPresets() {

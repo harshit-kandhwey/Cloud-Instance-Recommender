@@ -285,6 +285,22 @@ body {
   font-size: 13px;
   font-weight: 600;
 }
+.preset-save-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.preset-name-input {
+  width: 180px;
+  padding: 8px 12px;
+}
+/* Armed two-step confirm state (Update/Delete/Overwrite awaiting 2nd click) */
+.preset-bar .preset-armed {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
 
 /* Scenario comparison */
 .scenario-bar {

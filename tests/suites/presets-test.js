@@ -5,6 +5,8 @@
 //     in place)
 //   - capture → mutate → apply(captured) → capture is a faithful round-trip
 //   - persistence is per-page-scoped and survives a storage read/write cycle
+//   - save/overwrite/update/delete run through the inline form and two-step
+//     confirm buttons (no window.prompt / window.confirm anywhere)
 // presets.js only calls the provider toggle handlers when they exist
 // (typeof guard), so this sandbox omits them — the capture/apply/persist core
 // is exercised in isolation with a purpose-built fake DOM.
@@ -23,12 +25,27 @@ function reg(el) {
   return el;
 }
 function makeEl(props) {
-  return reg(
-    Object.assign(
-      { id: "", type: "", name: "", value: "", checked: false },
-      props,
-    ),
+  const el = Object.assign(
+    {
+      id: "",
+      type: "",
+      name: "",
+      value: "",
+      checked: false,
+      textContent: "",
+      disabled: false,
+      style: {},
+      classes: new Set(),
+      focus: () => {},
+    },
+    props,
   );
+  el.classList = {
+    add: (c) => el.classes.add(c),
+    remove: (c) => el.classes.delete(c),
+    contains: (c) => el.classes.has(c),
+  };
+  return reg(el);
 }
 
 // The control surface is built from presets.js's own constant lists after the
@@ -58,6 +75,8 @@ const storage = {};
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   document,
+  setTimeout,
+  clearTimeout,
   __page: "aws",
   selectedProviders: [],
   localStorage: {
@@ -309,6 +328,101 @@ check(
   /corrupted/i.test(els.presetStatus.textContent) &&
     els.presetStatus.style.color === "var(--red-strong)",
   `status="${els.presetStatus.textContent}" color=${els.presetStatus.style.color}`,
+);
+
+// ── Inline save / two-step confirm flows (no window.prompt / window.confirm) ──
+sandbox.__page = "aws";
+run(`savePresetsStore({})`);
+makeEl({ id: "presetSaveForm" });
+makeEl({ id: "presetNameInput", type: "text" });
+makeEl({ id: "presetSaveAsBtn", textContent: "💾 Save current as…" });
+makeEl({ id: "presetSaveConfirmBtn", textContent: "Save" });
+makeEl({ id: "presetUpdateBtn", textContent: "Update" });
+makeEl({ id: "presetDeleteBtn", textContent: "Delete" });
+
+check(
+  "presets.js no longer calls window.prompt/window.confirm",
+  !/window\.(prompt|confirm)\(/.test(
+    fs.readFileSync(path.join(REPO, "js/base/presets.js"), "utf8"),
+  ),
+);
+
+run("savePresetAs()");
+check(
+  "savePresetAs reveals the inline form and hides the opener",
+  !els.presetSaveForm.classes.has("hidden") &&
+    els.presetSaveAsBtn.classes.has("hidden"),
+);
+
+run("confirmSavePreset()");
+check(
+  "empty name → error status, nothing saved",
+  /enter a name/i.test(els.presetStatus.textContent) &&
+    Object.keys(run("presetsForPage()")).length === 0,
+  els.presetStatus.textContent,
+);
+
+els.presetNameInput.value = "Prod baseline";
+run("confirmSavePreset()");
+check(
+  "new name saves immediately",
+  /^Saved "Prod baseline"/.test(els.presetStatus.textContent) &&
+    Object.keys(run("presetsForPage()")).join(",") === "Prod baseline",
+  els.presetStatus.textContent,
+);
+
+els.presetNameInput.value = "Prod baseline";
+run("confirmSavePreset()");
+check(
+  "existing name arms the save button instead of overwriting",
+  els.presetSaveConfirmBtn.textContent === "Overwrite?" &&
+    /already exists/i.test(els.presetStatus.textContent),
+  `label="${els.presetSaveConfirmBtn.textContent}" status="${els.presetStatus.textContent}"`,
+);
+run("confirmSavePreset()");
+check(
+  "second click overwrites and restores the button label",
+  /^Saved "Prod baseline"/.test(els.presetStatus.textContent) &&
+    els.presetSaveConfirmBtn.textContent === "Save",
+  els.presetStatus.textContent,
+);
+
+els.presetSelect.value = "Prod baseline";
+run("deleteSelectedPreset()");
+check(
+  "first Delete click arms (preset still stored)",
+  els.presetDeleteBtn.textContent === "Confirm delete?" &&
+    Object.keys(run("presetsForPage()")).length === 1,
+  els.presetDeleteBtn.textContent,
+);
+run("deleteSelectedPreset()");
+check(
+  "second Delete click removes the preset and restores the label",
+  Object.keys(run("presetsForPage()")).length === 0 &&
+    /^Deleted "Prod baseline"/.test(els.presetStatus.textContent) &&
+    els.presetDeleteBtn.textContent === "Delete",
+  `status="${els.presetStatus.textContent}" label="${els.presetDeleteBtn.textContent}"`,
+);
+
+run(
+  `savePresetsStore({ aws: { "P1": { savedAt: 1, config: capturePresetConfig() } } })`,
+);
+els.presetSelect.value = "P1";
+run("updateSelectedPreset()");
+check(
+  "first Update click arms",
+  els.presetUpdateBtn.textContent === "Confirm update?",
+  els.presetUpdateBtn.textContent,
+);
+run("onPresetSelectChange()");
+check(
+  "changing the selection disarms the pending confirm",
+  els.presetUpdateBtn.textContent === "Update",
+  els.presetUpdateBtn.textContent,
+);
+check(
+  "disarmed Update did not touch the stored preset",
+  run(`presetsForPage()["P1"].savedAt`) === 1,
 );
 
 if (failures) {
