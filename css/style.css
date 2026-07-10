@@ -574,6 +574,41 @@ body {
   text-align: center;
 }
 
+/* Labeled clusters of download buttons (Results / AWS Pricing Calculator /
+   Analysis) so the section reads as groups instead of a flat button run */
+.download-groups {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.download-group {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 10px 14px 12px;
+}
+
+.download-group-label {
+  font-size: 0.72em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.download-group-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Success icon styling */
 .success-icon {
   margin-right: 10px;

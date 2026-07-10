@@ -145,8 +145,7 @@
 VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
 web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
 db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,</pre
-              >
+app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,</pre>
             </div>
 
             <button class="btn btn-secondary" onclick="downloadSampleCSV()">
@@ -1139,43 +1138,50 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <span class="success-icon">✅</span>
                 Recommendations generated successfully!
               </div>
-              <button class="btn btn-primary" onclick="downloadResults()">
-                📥 Download Results CSV
-              </button>
-              <button
-                class="btn btn-secondary"
-                id="downloadResultsXlsxBtn"
-                onclick="downloadResultsXlsx()"
-              >
-                📊 Download Results Excel
-              </button>
+              <div class="download-groups">
+                <div class="download-group">
+                  <div class="download-group-label">Results</div>
+                  <div class="download-group-btns">
+                    <button class="btn btn-primary" onclick="downloadResults()">
+                      📥 Download Results CSV
+                    </button>
+                    <button
+                      class="btn btn-secondary"
+                      id="downloadResultsXlsxBtn"
+                      onclick="downloadResultsXlsx()"
+                    >
+                      📊 Download Results Excel
+                    </button>
+                  </div>
+                </div>
 
-              <button
-                id="downloadNoMatchBtn"
-                class="btn btn-secondary hidden"
-                onclick="downloadNoMatchRows()"
-                style="margin-top: 8px"
-              >
-                ⚠️ No-Match Rows CSV
-              </button>
-
-              <button
-                id="downloadAppSummaryBtn"
-                class="btn btn-secondary hidden"
-                onclick="downloadAppSummary()"
-                style="margin-top: 8px"
-              >
-                🧩 App Summary CSV
-              </button>
-
-              <button
-                id="openAppPortfolioBtn"
-                class="btn btn-primary hidden"
-                onclick="openAppPortfolio()"
-                style="margin-top: 8px"
-              >
-                📊 Open App Portfolio
-              </button>
+                <div class="download-group hidden" id="analysisGroup">
+                  <div class="download-group-label">Analysis</div>
+                  <div class="download-group-btns">
+                    <button
+                      id="downloadNoMatchBtn"
+                      class="btn btn-secondary hidden"
+                      onclick="downloadNoMatchRows()"
+                    >
+                      ⚠️ No-Match Rows CSV
+                    </button>
+                    <button
+                      id="downloadAppSummaryBtn"
+                      class="btn btn-secondary hidden"
+                      onclick="downloadAppSummary()"
+                    >
+                      🧩 App Summary CSV
+                    </button>
+                    <button
+                      id="openAppPortfolioBtn"
+                      class="btn btn-primary hidden"
+                      onclick="openAppPortfolio()"
+                    >
+                      📊 Open App Portfolio
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <div id="scenarioCompareSection" class="hidden"></div>
 

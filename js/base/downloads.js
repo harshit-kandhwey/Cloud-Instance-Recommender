@@ -110,6 +110,24 @@ function updateNoMatchButton(results) {
   } else {
     btn.classList.add("hidden");
   }
+  updateAnalysisGroupVisibility();
+}
+
+// The three Analysis buttons toggle independently; hide their labeled cluster
+// when none of them is visible so the label never sits over an empty group.
+function updateAnalysisGroupVisibility() {
+  const group = document.getElementById("analysisGroup");
+  if (!group) return;
+  const anyVisible = [
+    "downloadNoMatchBtn",
+    "downloadAppSummaryBtn",
+    "openAppPortfolioBtn",
+  ].some((id) => {
+    const btn = document.getElementById(id);
+    return btn && !btn.classList.contains("hidden");
+  });
+  if (anyVisible) group.classList.remove("hidden");
+  else group.classList.add("hidden");
 }
 
 // ─── Per-app rollup / App Summary export ──────────────────────────────────────
@@ -216,6 +234,7 @@ function updateAppSummaryButton(results) {
   } else {
     btn.classList.add("hidden");
   }
+  updateAnalysisGroupVisibility();
 }
 
 // ─── App Portfolio handoff ────────────────────────────────────────────────────
@@ -326,6 +345,7 @@ function updateAppPortfolioButton(results) {
   } else {
     btn.classList.add("hidden");
   }
+  updateAnalysisGroupVisibility();
 }
 
 // AWS Pricing Calculator Bulk Template download

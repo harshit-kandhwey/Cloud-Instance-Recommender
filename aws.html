@@ -130,8 +130,7 @@
 VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
 web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,
 db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,</pre
-              >
+app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,</pre>
             </div>
 
             <details style="margin-top: 10px">
@@ -1188,61 +1187,63 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,</pre
                 <span class="success-icon">✅</span>
                 Recommendations generated successfully!
               </div>
-              <div
-                id="downloadBtnsRow"
-                style="
-                  display: flex;
-                  gap: 12px;
-                  flex-wrap: wrap;
-                  align-items: center;
-                  margin-top: 8px;
-                "
-              >
-                <button class="btn btn-primary" onclick="downloadResults()">
-                  📥 Download Results CSV
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  id="downloadResultsXlsxBtn"
-                  onclick="downloadResultsXlsx()"
-                >
-                  📊 Download Results Excel
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  onclick="downloadAWSBulkTemplate()"
-                  title="Generates a CSV pre-formatted for the AWS Pricing Calculator Bulk Import (EC2 Instances template)"
-                >
-                  🧾 Download AWS Pricing Calculator Bulk Template
-                </button>
+              <div class="download-groups">
+                <div class="download-group">
+                  <div class="download-group-label">Results</div>
+                  <div class="download-group-btns">
+                    <button class="btn btn-primary" onclick="downloadResults()">
+                      📥 Download Results CSV
+                    </button>
+                    <button
+                      class="btn btn-secondary"
+                      id="downloadResultsXlsxBtn"
+                      onclick="downloadResultsXlsx()"
+                    >
+                      📊 Download Results Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div class="download-group">
+                  <div class="download-group-label">AWS Pricing Calculator</div>
+                  <div class="download-group-btns" id="downloadBtnsRow">
+                    <button
+                      class="btn btn-secondary"
+                      onclick="downloadAWSBulkTemplate()"
+                      title="Generates a CSV pre-formatted for the AWS Pricing Calculator Bulk Import (EC2 Instances template)"
+                    >
+                      🧾 Bulk Import Template
+                    </button>
+                  </div>
+                </div>
+
+                <div class="download-group hidden" id="analysisGroup">
+                  <div class="download-group-label">Analysis</div>
+                  <div class="download-group-btns">
+                    <button
+                      id="downloadNoMatchBtn"
+                      class="btn btn-secondary hidden"
+                      onclick="downloadNoMatchRows()"
+                    >
+                      ⚠️ No-Match Rows CSV
+                    </button>
+                    <button
+                      id="downloadAppSummaryBtn"
+                      class="btn btn-secondary hidden"
+                      onclick="downloadAppSummary()"
+                    >
+                      🧩 App Summary CSV
+                    </button>
+                    <button
+                      id="openAppPortfolioBtn"
+                      class="btn btn-primary hidden"
+                      onclick="openAppPortfolio()"
+                    >
+                      📊 Open App Portfolio
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              <button
-                id="downloadNoMatchBtn"
-                class="btn btn-secondary hidden"
-                onclick="downloadNoMatchRows()"
-                style="margin-top: 8px"
-              >
-                ⚠️ No-Match Rows CSV
-              </button>
-
-              <button
-                id="downloadAppSummaryBtn"
-                class="btn btn-secondary hidden"
-                onclick="downloadAppSummary()"
-                style="margin-top: 8px"
-              >
-                🧩 App Summary CSV
-              </button>
-
-              <button
-                id="openAppPortfolioBtn"
-                class="btn btn-primary hidden"
-                onclick="openAppPortfolio()"
-                style="margin-top: 8px"
-              >
-                📊 Open App Portfolio
-              </button>
 
               <div id="scenarioCompareSection" class="hidden"></div>
 

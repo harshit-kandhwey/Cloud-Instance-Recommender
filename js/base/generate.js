@@ -256,7 +256,7 @@ async function processRecommendations() {
     // Show inline results preview
     showResultsPreview(processedResults);
 
-    // On AWS page with both types: replace download button with split buttons
+    // AWS page: sync the calculator bulk-template button(s) with the run types
     updateDownloadButtons(processedResults);
 
     // No-match remediation export button (hidden when everything matched)

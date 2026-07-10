@@ -372,7 +372,11 @@ window._previewFilterChanged = function (value) {
   }, 150);
 };
 
-// ─── Update bulk template buttons for AWS when both L2L + Optimized generated ─
+// ─── AWS Pricing Calculator bulk-template button(s) ───────────────────────────
+// #downloadBtnsRow holds only the bulk-template button(s) inside the "AWS
+// Pricing Calculator" download group (aws.html only). After a run with both
+// L2L + Optimized types, split into one template per type to avoid
+// double-counting in the calculator.
 
 function updateDownloadButtons(results) {
   const row = document.getElementById("downloadBtnsRow");
@@ -389,26 +393,19 @@ function updateDownloadButtons(results) {
   if (!isAWSOnly) return;
 
   if (hasL2L && hasOpt) {
-    // Both types: show Results CSV + two separate bulk template buttons
     row.innerHTML = `
-      <button class="btn btn-primary" onclick="downloadResults()">
-        📥 Download Results CSV
-      </button>
       <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('l2l')" title="AWS Pricing Calculator Bulk Import — Like-to-Like instances only">
-        🧾 Bulk Template (Like-to-Like)
+        🧾 Bulk Import (Like-to-Like)
       </button>
       <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('optimized')" title="AWS Pricing Calculator Bulk Import — Optimized instances only">
-        🧾 Bulk Template (Optimized)
+        🧾 Bulk Import (Optimized)
       </button>
     `;
   } else {
-    // Single type: Results CSV + one bulk template button (auto-resolves to the present type)
+    // Single type: one bulk template button (auto-resolves to the present type)
     row.innerHTML = `
-      <button class="btn btn-primary" onclick="downloadResults()">
-        📥 Download Results CSV
-      </button>
       <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate()" title="AWS Pricing Calculator Bulk Import (EC2 Instances template)">
-        🧾 Download AWS Pricing Calculator Bulk Template
+        🧾 Bulk Import Template
       </button>
     `;
   }
