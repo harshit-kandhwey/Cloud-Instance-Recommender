@@ -7,6 +7,8 @@
 //   - persistence is per-page-scoped and survives a storage read/write cycle
 //   - save/overwrite/update/delete run through the inline form and two-step
 //     confirm buttons (no window.prompt / window.confirm anywhere)
+//   - JSON export/import: validatePresetImport shape-checks, merge renames
+//     collisions instead of overwriting, and an export round-trips back in
 // presets.js only calls the provider toggle handlers when they exist
 // (typeof guard), so this sandbox omits them — the capture/apply/persist core
 // is exercised in isolation with a purpose-built fake DOM.
@@ -423,6 +425,133 @@ check(
 check(
   "disarmed Update did not touch the stored preset",
   run(`presetsForPage()["P1"].savedAt`) === 1,
+);
+
+// ── Export / import: pure validate + merge ─────────────────────────────────────
+sandbox.badPayloads = [
+  null,
+  [],
+  "text",
+  {},
+  { presets: [] },
+  { presets: {} },
+  { presets: { X: {} } },
+  { presets: { X: { savedAt: 1 } } },
+];
+check(
+  "validatePresetImport rejects malformed payloads",
+  run(`badPayloads.every((p) => validatePresetImport(p).ok === false)`),
+);
+check(
+  "validatePresetImport accepts a valid payload and surfaces the page",
+  (() => {
+    const v = run(
+      `validatePresetImport({ page: "gcp", presets: { A: { savedAt: 1, config: {} } } })`,
+    );
+    return v.ok === true && v.page === "gcp" && !!v.presets.A;
+  })(),
+);
+
+const mergeRes = run(`
+  mergeImportedPresets(
+    { Kept: { savedAt: 1, config: {} }, Dup: { savedAt: 2, config: {} }, "Dup (imported)": { savedAt: 3, config: {} } },
+    { Fresh: { savedAt: 40, config: {} }, Dup: { savedAt: 50, config: {} }, NoStamp: { config: {} } },
+    999,
+  )
+`);
+check(
+  "merge adds new names, keeps existing entries untouched",
+  mergeRes.merged.Fresh.savedAt === 40 &&
+    mergeRes.merged.Kept.savedAt === 1 &&
+    mergeRes.merged.Dup.savedAt === 2,
+  JSON.stringify(mergeRes.merged),
+);
+check(
+  "collision renamed with a numbered suffix when '(imported)' is taken",
+  mergeRes.merged["Dup (imported 2)"] &&
+    mergeRes.merged["Dup (imported 2)"].savedAt === 50,
+  JSON.stringify(Object.keys(mergeRes.merged)),
+);
+check(
+  "missing savedAt stamped with `now`; counts reported",
+  mergeRes.merged.NoStamp.savedAt === 999 &&
+    mergeRes.added === 3 &&
+    mergeRes.renamed === 1,
+  JSON.stringify(mergeRes),
+);
+
+// ── Export / import: end-to-end through the fake DOM ───────────────────────────
+const downloads = [];
+sandbox.Blob = class {
+  constructor(parts) {
+    this.content = parts.join("");
+  }
+};
+sandbox.URL = {
+  createObjectURL: (blob) => {
+    downloads.push({ blob });
+    return "blob:x";
+  },
+  revokeObjectURL: () => {},
+};
+document.createElement = (tag) => ({
+  tag,
+  style: {},
+  click() {
+    if (this.tag === "a") downloads[downloads.length - 1].name = this.download;
+  },
+});
+document.body = { appendChild: () => {}, removeChild: () => {} };
+
+sandbox.__page = "aws";
+run("savePresetsStore({})");
+run("exportPresets()");
+check(
+  "export with no presets → status error, no download",
+  /no presets/i.test(els.presetStatus.textContent) && downloads.length === 0,
+  els.presetStatus.textContent,
+);
+
+run(
+  `savePresetsStore({ aws: { "Alpha": { savedAt: 5, config: capturePresetConfig() } } })`,
+);
+run("exportPresets()");
+check(
+  "export downloads cloud-recommender-presets-{page}.json",
+  downloads.length === 1 &&
+    downloads[0].name === "cloud-recommender-presets-aws.json",
+  JSON.stringify(downloads.map((d) => d.name)),
+);
+const exported = JSON.parse(downloads[0].blob.content);
+check(
+  "export payload carries page, exportedAt, and the presets",
+  exported.page === "aws" &&
+    typeof exported.exportedAt === "string" &&
+    exported.presets.Alpha.savedAt === 5 &&
+    !!exported.presets.Alpha.config,
+  JSON.stringify(Object.keys(exported)),
+);
+
+run(`applyPresetImportText("{not json")`);
+check(
+  "import of invalid JSON → friendly status error",
+  /not valid JSON/i.test(els.presetStatus.textContent),
+  els.presetStatus.textContent,
+);
+
+sandbox.__page = "azure";
+sandbox.__importText = downloads[0].blob.content;
+run("applyPresetImportText(__importText)");
+check(
+  "aws export imports onto the azure page with a cross-page note",
+  Object.keys(run("presetsForPage()")).join(",") === "Alpha" &&
+    /Imported 1 preset/.test(els.presetStatus.textContent) &&
+    /aws page/.test(els.presetStatus.textContent),
+  `presets=${JSON.stringify(Object.keys(run("presetsForPage()")))} status="${els.presetStatus.textContent}"`,
+);
+check(
+  "imported preset keeps its original savedAt",
+  run(`presetsForPage()["Alpha"].savedAt`) === 5,
 );
 
 if (failures) {

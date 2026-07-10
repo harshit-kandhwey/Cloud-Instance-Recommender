@@ -11,6 +11,7 @@
 // available filters differ per provider, and are applied manually — nothing
 // is auto-restored on load. Persistence mirrors the column-map pattern in
 // ingest.js (localStorage, try/catch so private mode never breaks the flow).
+// A JSON export/import moves a page's presets between browsers/machines.
 
 const FILTER_PRESETS_KEY = "cloudInstanceRecommenderFilterPresets";
 
@@ -217,6 +218,157 @@ function applyPresetConfig(cfg) {
   });
 }
 
+// ─── Export / import (JSON) ───────────────────────────────────────────────────
+// Presets are per-browser localStorage; a JSON file moves them between
+// machines/browsers. The export carries only the CURRENT page's presets.
+
+function buildPresetExport(page, presets) {
+  return { page, exportedAt: new Date().toISOString(), presets };
+}
+
+// Pure: shape-check a parsed import payload.
+// Returns { ok:true, page, presets } or { ok:false, error }.
+function validatePresetImport(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { ok: false, error: "not a preset export file." };
+  }
+  const presets = payload.presets;
+  if (!presets || typeof presets !== "object" || Array.isArray(presets)) {
+    return { ok: false, error: "no presets found in the file." };
+  }
+  const names = Object.keys(presets);
+  if (!names.length) {
+    return { ok: false, error: "the file contains no presets." };
+  }
+  for (const name of names) {
+    const entry = presets[name];
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      !entry.config ||
+      typeof entry.config !== "object"
+    ) {
+      return { ok: false, error: `preset "${name}" has no configuration.` };
+    }
+  }
+  return {
+    ok: true,
+    page: typeof payload.page === "string" ? payload.page : "",
+    presets,
+  };
+}
+
+// Pure: merge imported presets into a page's map without overwriting —
+// colliding names get an " (imported)" / " (imported N)" suffix. Imported
+// savedAt stamps are kept when numeric, else set to `now`.
+function mergeImportedPresets(existing, imported, now) {
+  const merged = { ...existing };
+  let added = 0;
+  let renamed = 0;
+  Object.keys(imported).forEach((name) => {
+    let finalName = name;
+    if (Object.prototype.hasOwnProperty.call(merged, finalName)) {
+      finalName = `${name} (imported)`;
+      for (
+        let n = 2;
+        Object.prototype.hasOwnProperty.call(merged, finalName);
+        n++
+      ) {
+        finalName = `${name} (imported ${n})`;
+      }
+      renamed++;
+    }
+    const entry = imported[name];
+    merged[finalName] = {
+      savedAt: typeof entry.savedAt === "number" ? entry.savedAt : now,
+      config: entry.config,
+    };
+    added++;
+  });
+  return { merged, added, renamed };
+}
+
+function exportPresets() {
+  const page = presetsPageKey();
+  const presets = presetsForPage();
+  const count = Object.keys(presets).length;
+  if (!count) {
+    setPresetStatus("No presets on this page to export.", false);
+    return;
+  }
+  const payload = buildPresetExport(page, presets);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cloud-recommender-presets-${page}.json`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setPresetStatus(`Exported ${count} preset(s).`, true);
+}
+
+function importPresets() {
+  const input = document.getElementById("presetImportInput");
+  if (input && typeof input.click === "function") input.click();
+}
+
+function handlePresetImportFile(event) {
+  const file = event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => applyPresetImportText(String(reader.result || ""));
+  reader.onerror = () =>
+    setPresetStatus("Import failed: could not read the file.", false);
+  reader.readAsText(file);
+  // Reset so picking the same file again re-fires the change event.
+  event.target.value = "";
+}
+
+function applyPresetImportText(text) {
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    setPresetStatus("Import failed: the file is not valid JSON.", false);
+    return;
+  }
+  const v = validatePresetImport(payload);
+  if (!v.ok) {
+    setPresetStatus(`Import failed: ${v.error}`, false);
+    return;
+  }
+
+  const page = presetsPageKey();
+  const store = loadPresetsStore();
+  const { merged, added, renamed } = mergeImportedPresets(
+    store[page] || {},
+    v.presets,
+    Date.now(),
+  );
+  store[page] = merged;
+  if (!savePresetsStore(store)) {
+    setPresetStatus(
+      "Could not save imported presets (storage unavailable).",
+      false,
+    );
+    return;
+  }
+  renderPresetsBar();
+  onPresetSelectChange();
+  const renameNote = renamed
+    ? `, ${renamed} renamed to avoid a name collision`
+    : "";
+  const pageNote =
+    v.page && v.page !== page
+      ? ` — note: exported from the ${v.page} page`
+      : "";
+  setPresetStatus(`Imported ${added} preset(s)${renameNote}${pageNote}.`, true);
+}
+
 // ─── UI ───────────────────────────────────────────────────────────────────────
 
 function pEsc(s) {
@@ -264,6 +416,9 @@ function renderPresetsBar() {
         <button type="button" class="btn btn-primary" id="presetSaveConfirmBtn" onclick="confirmSavePreset()" onblur="disarmPresetButton('presetSaveConfirmBtn')">Save</button>
         <button type="button" class="btn btn-secondary" onclick="cancelSavePreset()">Cancel</button>
       </span>
+      <button type="button" class="btn btn-secondary" onclick="exportPresets()" title="Download this page's presets as a JSON file" ${names.length ? "" : "disabled"}>📤 Export</button>
+      <button type="button" class="btn btn-secondary" onclick="importPresets()" title="Import presets from a JSON export file">📥 Import</button>
+      <input type="file" id="presetImportInput" accept=".json,application/json" class="hidden" onchange="handlePresetImportFile(event)" />
       <span id="presetStatus" class="preset-status" role="status" aria-live="polite"></span>
     </div>`;
 }
