@@ -58,5 +58,12 @@ if ("serviceWorker" in navigator && window.isSecureContext) {
 
   window.addEventListener("offline", goOffline);
   window.addEventListener("online", backOnline);
-  if (navigator.onLine === false) goOffline();
+  // Every page loads this file with `defer`, so document.body exists by the
+  // time this runs — but that guarantee lives in the HTML files, not here,
+  // so fall back to DOMContentLoaded rather than assume it.
+  if (navigator.onLine === false) {
+    if (document.body) goOffline();
+    else
+      document.addEventListener("DOMContentLoaded", goOffline, { once: true });
+  }
 })();

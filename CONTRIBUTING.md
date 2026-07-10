@@ -46,10 +46,15 @@ python -m http.server 8080
 │   ├── portfolio.css       # App Portfolio dashboard styles
 │   └── index_style.css     # Landing page styles
 │
+├── logos/                  # Cloud provider logos
+│
 ├── tools/
 │   └── split-data.js       # Splits monolithic data files into per-region files
 │
+├── tests/                  # Plain-Node suites + golden compare (see tests/README.md)
+│
 └── js/
+    ├── pwa-register.js     # Service-worker registration (loaded by every page)
     ├── base/               # Shared logic (modules load in the order listed
     │   │                     in the HTML pages; they share the global scope)
     │   ├── base-instance-selector.js       # + lazy region loading
@@ -69,7 +74,6 @@ python -m http.server 8080
     │   ├── xlsx-export.js                  # Styled results .xlsx export
     │   ├── scenario-compare.js             # Pin + diff two generation runs
     │   └── portfolio.js                    # App Portfolio (loaded only on app-portfolio.html)
-    ├── pwa-register.js     # Service-worker registration (loaded by every page)
     ├── vendor/             # Vendored libs + licenses: SheetJS (upload) and the
     │                       #   xlsx-js-style fork (portfolio Excel). Keep byte-
     │                       #   identical to upstream — do NOT run a formatter on them.

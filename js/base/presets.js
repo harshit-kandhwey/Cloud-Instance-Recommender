@@ -15,6 +15,11 @@
 
 const FILTER_PRESETS_KEY = "cloudInstanceRecommenderFilterPresets";
 
+// Preset names land as plain-object keys (store[page][name] = …), and
+// assigning "__proto__" that way mutates the object's prototype instead of
+// adding a key — so these names can never be presets, typed or imported.
+const RESERVED_PRESET_NAMES = ["__proto__", "constructor", "prototype"];
+
 // Simple single-value controls captured by element id.
 const PRESET_CHECKBOXES = [
   "cpuBased",
@@ -241,6 +246,9 @@ function validatePresetImport(payload) {
     return { ok: false, error: "the file contains no presets." };
   }
   for (const name of names) {
+    if (RESERVED_PRESET_NAMES.includes(name)) {
+      return { ok: false, error: `preset name "${name}" is reserved.` };
+    }
     const entry = presets[name];
     if (
       !entry ||
@@ -260,7 +268,9 @@ function validatePresetImport(payload) {
 
 // Pure: merge imported presets into a page's map without overwriting —
 // colliding names get an " (imported)" / " (imported N)" suffix. Imported
-// savedAt stamps are kept when numeric, else set to `now`.
+// savedAt stamps are kept when numeric, else set to `now`. Names are already
+// vetted by validatePresetImport (reserved names rejected), so plain bracket
+// assignment is safe here.
 function mergeImportedPresets(existing, imported, now) {
   const merged = { ...existing };
   let added = 0;
@@ -525,6 +535,13 @@ function confirmSavePreset() {
   const name = ((input && input.value) || "").trim();
   if (!name) {
     setPresetStatus("Enter a name for the preset.", false);
+    return;
+  }
+  if (RESERVED_PRESET_NAMES.includes(name)) {
+    setPresetStatus(
+      `Preset name "${name}" is reserved — choose another name.`,
+      false,
+    );
     return;
   }
   if (Object.prototype.hasOwnProperty.call(presetsForPage(), name)) {

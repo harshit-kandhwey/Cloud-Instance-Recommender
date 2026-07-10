@@ -7,7 +7,8 @@
 //   - every HTML page links the manifest and registers the worker
 //   - the offline indicator banner appears on `offline`, flips to a
 //     self-hiding "back online" notice, and shows immediately when the
-//     page loads without a connection
+//     page loads without a connection (deferring to DOMContentLoaded when
+//     <body> doesn't exist yet)
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -282,10 +283,15 @@ const req = (url, extra) =>
   );
 
   // ── offline banner: run pwa-register.js in a fake page ────────────────────
-  function makePage(onLine) {
+  function makePage(onLine, opts) {
+    opts = opts || {};
     const pendingTimers = [];
     const winListeners = {};
+    const docListeners = {};
     const pageEls = {};
+    const appendEl = (el) => {
+      pageEls[el.id] = el;
+    };
     const page = {
       console: sandbox.console,
       navigator: { onLine }, // no serviceWorker key → registration skipped
@@ -295,6 +301,9 @@ const req = (url, extra) =>
       },
       clearTimeout: () => {},
       document: {
+        addEventListener: (type, fn) => {
+          docListeners[type] = fn;
+        },
         getElementById: (id) => pageEls[id] || null,
         createElement: () => ({
           id: "",
@@ -305,11 +314,9 @@ const req = (url, extra) =>
             this.attrs[k] = v;
           },
         }),
-        body: {
-          appendChild: (el) => {
-            pageEls[el.id] = el;
-          },
-        },
+        // bodyLater simulates the script running before <body> exists
+        // (e.g. in <head> without defer).
+        body: opts.bodyLater ? null : { appendChild: appendEl },
       },
     };
     page.window = page;
@@ -318,7 +325,15 @@ const req = (url, extra) =>
     };
     vm.createContext(page);
     vm.runInContext(reg, page, { filename: "js/pwa-register.js" });
-    return { pageEls, winListeners, pendingTimers };
+    return {
+      pageEls,
+      winListeners,
+      docListeners,
+      pendingTimers,
+      attachBody: () => {
+        page.document.body = { appendChild: appendEl };
+      },
+    };
   }
 
   const onlinePage = makePage(true);
@@ -356,6 +371,23 @@ const req = (url, extra) =>
     !!offlinePage.pageEls.offlineBanner &&
       offlinePage.pageEls.offlineBanner.style.display === "block" &&
       /Offline/.test(offlinePage.pageEls.offlineBanner.textContent),
+  );
+
+  // Offline at load but before <body> exists → no throw, banner deferred to
+  // DOMContentLoaded instead.
+  const lateBodyPage = makePage(false, { bodyLater: true });
+  check(
+    "offline load without a body defers the banner instead of throwing",
+    !lateBodyPage.pageEls.offlineBanner &&
+      typeof lateBodyPage.docListeners.DOMContentLoaded === "function",
+  );
+  lateBodyPage.attachBody();
+  lateBodyPage.docListeners.DOMContentLoaded();
+  check(
+    "deferred banner appears once DOMContentLoaded fires",
+    !!lateBodyPage.pageEls.offlineBanner &&
+      lateBodyPage.pageEls.offlineBanner.style.display === "block" &&
+      /Offline/.test(lateBodyPage.pageEls.offlineBanner.textContent),
   );
 
   if (failures) {

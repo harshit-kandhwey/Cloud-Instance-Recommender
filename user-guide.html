@@ -1293,8 +1293,7 @@ web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,6
 db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,7
 app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,
 cache-server-04,Storefront,4,16,25,30,us-east-1,Staging,Linux,Cache,,6
-ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
-        >
+ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre>
 
         <div class="callout callout-warn">
           <strong>Formatting rules</strong>
@@ -2691,7 +2690,7 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
         <ul class="check">
           <li>
             <strong>💾 Save current as…</strong> — snapshot the current controls
-            under a new name.
+            under a new name; a name box opens right in the bar.
           </li>
           <li>
             <strong>Apply</strong> — restore a preset; dependent panels
@@ -2699,15 +2698,23 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
           </li>
           <li>
             <strong>Update</strong> / <strong>Delete</strong> — overwrite a
-            preset with the current settings, or remove it.
+            preset with the current settings, or remove it. Both (and saving
+            over an existing name) ask for a second confirming click, so a stray
+            click can't destroy a preset.
+          </li>
+          <li>
+            <strong>📤 Export / 📥 Import</strong> — download the page's presets
+            as a JSON file and import them in another browser or on another
+            machine. Imports never overwrite: a name you already have comes in
+            with an "(imported)" suffix.
           </li>
         </ul>
         <p>
           Presets are scoped to the page they were saved on (an AWS preset
           doesn't appear on Azure) and are stored in your browser's local
-          storage — they never leave your machine and survive reloads. Nothing
-          is applied automatically: a preset takes effect only when you click
-          Apply.
+          storage — they never leave your machine unless you export them, and
+          they survive reloads. Nothing is applied automatically: a preset takes
+          effect only when you click Apply.
         </p>
       </div>
 
@@ -2734,8 +2741,7 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre
       <pre>
 VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
 web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,</pre
-      >
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,</pre>
 
       <h3>Regional Equivalents Reference</h3>
       <table class="avoid-break">
@@ -3098,7 +3104,8 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
         ><br />
         A: Yes — use the ⭐ Filter presets bar above the Generate button to save
         the current configuration under a name and re-apply it later. Presets
-        are per page and stored only in your browser (see Section 9).
+        are per page and stored in your browser, and can be exported as a JSON
+        file to move them to another browser or machine (see Section 9).
       </p>
 
       <h3>⚙ Technical</h3>

@@ -33,6 +33,11 @@ UI polish and housekeeping batch.
 - **Housekeeping** — project history moved to this CHANGELOG; per-feature
   version tags dropped from the README; unused `docs/user-guide.pdf` removed
   (the interactive `user-guide.html` is the user guide).
+- **Review hardening** — preset names that collide with `Object.prototype`
+  machinery (`__proto__`, `constructor`, `prototype`) are rejected on save
+  and import; the offline banner no longer assumes `<body>` exists when a
+  page loads offline; the user guide covers the inline preset dialogs and
+  JSON export/import; CONTRIBUTING's project tree synced with the README.
 
 ## v3.4 — 2026-07-05 → 2026-07-10
 

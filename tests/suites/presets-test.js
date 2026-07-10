@@ -6,7 +6,11 @@
 //   - capture → mutate → apply(captured) → capture is a faithful round-trip
 //   - persistence is per-page-scoped and survives a storage read/write cycle
 //   - save/overwrite/update/delete run through the inline form and two-step
-//     confirm buttons (no window.prompt / window.confirm anywhere)
+//     confirm buttons (no window.prompt / window.confirm anywhere), and the
+//     armed state auto-disarms when the 4s timer fires (fake timers)
+//   - reserved names (__proto__ / constructor / prototype) are rejected on
+//     save and import — assigning them as store keys would mutate the
+//     object's prototype instead of adding a preset
 //   - JSON export/import: validatePresetImport shape-checks, merge renames
 //     collisions instead of overwriting, and an export round-trips back in
 // presets.js only calls the provider toggle handlers when they exist
@@ -74,11 +78,24 @@ const document = {
 };
 
 const storage = {};
+// Controllable timers so the 4s arm auto-disarm can be driven deterministically.
+const timers = new Map();
+let timerSeq = 0;
+function fireTimers() {
+  const due = [...timers.values()];
+  timers.clear();
+  due.forEach((fn) => fn());
+}
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   document,
-  setTimeout,
-  clearTimeout,
+  setTimeout: (fn) => {
+    timers.set(++timerSeq, fn);
+    return timerSeq;
+  },
+  clearTimeout: (id) => {
+    timers.delete(id);
+  },
   __page: "aws",
   selectedProviders: [],
   localStorage: {
@@ -335,7 +352,8 @@ check(
 // ── Inline save / two-step confirm flows (no window.prompt / window.confirm) ──
 sandbox.__page = "aws";
 run(`savePresetsStore({})`);
-makeEl({ id: "presetSaveForm" });
+// The form starts hidden, as in the production markup renderPresetsBar emits.
+makeEl({ id: "presetSaveForm", classes: new Set(["hidden"]) });
 makeEl({ id: "presetNameInput", type: "text" });
 makeEl({ id: "presetSaveAsBtn", textContent: "💾 Save current as…" });
 makeEl({ id: "presetSaveConfirmBtn", textContent: "Save" });
@@ -356,11 +374,29 @@ check(
     els.presetSaveAsBtn.classes.has("hidden"),
 );
 
+run("cancelSavePreset()");
+check(
+  "cancel re-hides the form and restores the opener",
+  els.presetSaveForm.classes.has("hidden") &&
+    !els.presetSaveAsBtn.classes.has("hidden"),
+);
+run("savePresetAs()"); // reopen for the save flows below
+
 run("confirmSavePreset()");
 check(
   "empty name → error status, nothing saved",
   /enter a name/i.test(els.presetStatus.textContent) &&
     Object.keys(run("presetsForPage()")).length === 0,
+  els.presetStatus.textContent,
+);
+
+els.presetNameInput.value = "__proto__";
+run("confirmSavePreset()");
+check(
+  "reserved name __proto__ → rejected, nothing saved, no arm",
+  /reserved/i.test(els.presetStatus.textContent) &&
+    Object.keys(run("presetsForPage()")).length === 0 &&
+    els.presetSaveConfirmBtn.textContent === "Save",
   els.presetStatus.textContent,
 );
 
@@ -427,6 +463,30 @@ check(
   run(`presetsForPage()["P1"].savedAt`) === 1,
 );
 
+// ── Arm timeout: the 4s timer must revert the button on its own ───────────────
+run("updateSelectedPreset()");
+check(
+  "arming schedules exactly one disarm timer",
+  els.presetUpdateBtn.textContent === "Confirm update?" && timers.size === 1,
+  `label="${els.presetUpdateBtn.textContent}" timers=${timers.size}`,
+);
+fireTimers();
+check(
+  "timer fire auto-disarms: label + status reset, preset untouched",
+  els.presetUpdateBtn.textContent === "Update" &&
+    els.presetStatus.textContent === "" &&
+    run(`presetsForPage()["P1"].savedAt`) === 1,
+  `label="${els.presetUpdateBtn.textContent}" status="${els.presetStatus.textContent}"`,
+);
+run("updateSelectedPreset()");
+check(
+  "click after the timeout re-arms instead of running the action",
+  els.presetUpdateBtn.textContent === "Confirm update?" &&
+    run(`presetsForPage()["P1"].savedAt`) === 1,
+  els.presetUpdateBtn.textContent,
+);
+run("onPresetSelectChange()"); // disarm before the next section
+
 // ── Export / import: pure validate + merge ─────────────────────────────────────
 sandbox.badPayloads = [
   null,
@@ -441,6 +501,21 @@ sandbox.badPayloads = [
 check(
   "validatePresetImport rejects malformed payloads",
   run(`badPayloads.every((p) => validatePresetImport(p).ok === false)`),
+);
+// JSON.parse (unlike an object literal) creates "__proto__" as an own key,
+// which is exactly what a crafted import file would deliver.
+check(
+  "validatePresetImport rejects reserved preset names (__proto__ / constructor / prototype)",
+  run(`["__proto__", "constructor", "prototype"].every(
+    (n) =>
+      validatePresetImport(
+        JSON.parse(
+          '{"page":"aws","presets":{' +
+            JSON.stringify(n) +
+            ':{"savedAt":1,"config":{}}}}',
+        ),
+      ).ok === false,
+  )`),
 );
 check(
   "validatePresetImport accepts a valid payload and surfaces the page",
@@ -536,6 +611,16 @@ run(`applyPresetImportText("{not json")`);
 check(
   "import of invalid JSON → friendly status error",
   /not valid JSON/i.test(els.presetStatus.textContent),
+  els.presetStatus.textContent,
+);
+
+run(
+  `applyPresetImportText('{"page":"aws","presets":{"__proto__":{"savedAt":1,"config":{}}}}')`,
+);
+check(
+  "import of a __proto__ preset is rejected end-to-end, store untouched",
+  /reserved/i.test(els.presetStatus.textContent) &&
+    Object.keys(run("presetsForPage()")).join(",") === "Alpha",
   els.presetStatus.textContent,
 );
 
