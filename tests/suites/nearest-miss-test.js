@@ -6,7 +6,9 @@
 //   - formatNearestMiss renders the "Nearest Miss" column string
 // Uses the base selector directly (its own applyFilters covers the shared
 // filters); provider-specific filters ride the same probe mechanism and are
-// exercised end-to-end by the golden suites.
+// exercised end-to-end by the golden suites. A source-scan section at the end
+// enforces the probe coupling: every `options.<key>` a provider's applyFilters
+// reads must have a matching probe group in `_nearestMissProbes`.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -223,6 +225,65 @@ check(
       JSON.stringify(["current-generation only"]),
   JSON.stringify(rRule),
 );
+
+// ── probe coupling: every soft-filter option read in applyFilters is probed ────
+// Guards the contract stated in each provider selector ("any provider-specific
+// soft filter added below must get a matching probe group"): scan the
+// applyFilters source for `options.<key>` reads and require every key to show
+// up in a `_nearestMissProbes` pick list. Adding a filter without a probe —
+// which would make the Nearest Miss column under-report — fails here.
+load("js/aws/aws-instance-selector.js");
+load("js/azure/azure-instance-selector.js");
+load("js/gcp/gcp-instance-selector.js");
+
+const probesSrc = run(
+  "BaseInstanceSelector.prototype._nearestMissProbes.toString()",
+);
+
+function optionReads(fnSrc) {
+  const names = new Set();
+  for (const m of fnSrc.matchAll(/options\.([A-Za-z_$][\w$]*)/g)) {
+    names.add(m[1]);
+  }
+  return [...names];
+}
+
+const filterScans = [
+  { name: "Base", cls: "BaseInstanceSelector", sentinel: "excludeTypes" },
+  { name: "AWS", cls: "AWSInstanceSelector", sentinel: "excludeGraviton" },
+  {
+    name: "Azure",
+    cls: "AzureInstanceSelector",
+    sentinel: "selectedAzureSeries",
+  },
+  {
+    name: "GCP",
+    cls: "GCPInstanceSelector",
+    sentinel: "selectedGCPMachineTypes",
+  },
+];
+
+for (const scan of filterScans) {
+  const src = run(`${scan.cls}.prototype.applyFilters.toString()`);
+  if (scan.name !== "Base") {
+    check(
+      `${scan.name} applyFilters delegates to super.applyFilters`,
+      src.includes("super.applyFilters"),
+    );
+  }
+  const reads = optionReads(src);
+  check(
+    `${scan.name} scan sees its known filter option (extraction sanity)`,
+    reads.includes(scan.sentinel),
+    `reads: ${JSON.stringify(reads)}`,
+  );
+  const unprobed = reads.filter((key) => !probesSrc.includes(`"${key}"`));
+  check(
+    `${scan.name}: every applyFilters option read has a nearest-miss probe`,
+    unprobed.length === 0,
+    unprobed.length ? `missing probe for: ${unprobed.join(", ")}` : "",
+  );
+}
 
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
