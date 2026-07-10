@@ -27,7 +27,7 @@
 - [ ] I have not committed generated data files (unless this is a data refresh PR)
 - [ ] I have tested the affected HTML page(s) end-to-end
 - [ ] I have not introduced external dependencies (no CDN links, no npm packages)
-- [ ] Sample CSV templates (if changed) include all v3.0 columns: ENV, OS, Workload, Compliance, Min Gen
+- [ ] Sample CSV templates (if changed) include all rule-engine columns: ENV, OS, Workload, Compliance, Min Gen
 - [ ] Pricing is NOT included in any output CSV or UI display
 
 ## Screenshots (if UI change)

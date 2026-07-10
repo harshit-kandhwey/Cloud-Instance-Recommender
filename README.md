@@ -3,7 +3,6 @@
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![Version](https://img.shields.io/badge/Version-3.4-green)
 ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
@@ -389,6 +388,7 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 - **User Guide**: See `user-guide.html` in this repository
 - **Version History**: See [CHANGELOG.md](CHANGELOG.md)
+- **Roadmap**: See [ROADMAP.md](ROADMAP.md)
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com
 
