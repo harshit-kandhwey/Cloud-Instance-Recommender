@@ -5,6 +5,9 @@
 //     runtime-caches new same-origin GETs, offline navigation falls back to
 //     a cached shell), and non-GET / cross-origin requests are passed through
 //   - every HTML page links the manifest and registers the worker
+//   - the offline indicator banner appears on `offline`, flips to a
+//     self-hiding "back online" notice, and shows immediately when the
+//     page loads without a connection
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -276,6 +279,83 @@ const req = (url, extra) =>
     "pwa-register.js registers sw.js behind an isSecureContext guard",
     /serviceWorker\.register\("sw\.js"\)/.test(reg) &&
       /isSecureContext/.test(reg),
+  );
+
+  // ── offline banner: run pwa-register.js in a fake page ────────────────────
+  function makePage(onLine) {
+    const pendingTimers = [];
+    const winListeners = {};
+    const pageEls = {};
+    const page = {
+      console: sandbox.console,
+      navigator: { onLine }, // no serviceWorker key → registration skipped
+      setTimeout: (fn) => {
+        pendingTimers.push(fn);
+        return pendingTimers.length;
+      },
+      clearTimeout: () => {},
+      document: {
+        getElementById: (id) => pageEls[id] || null,
+        createElement: () => ({
+          id: "",
+          style: {},
+          attrs: {},
+          textContent: "",
+          setAttribute(k, v) {
+            this.attrs[k] = v;
+          },
+        }),
+        body: {
+          appendChild: (el) => {
+            pageEls[el.id] = el;
+          },
+        },
+      },
+    };
+    page.window = page;
+    page.addEventListener = (type, fn) => {
+      winListeners[type] = fn;
+    };
+    vm.createContext(page);
+    vm.runInContext(reg, page, { filename: "js/pwa-register.js" });
+    return { pageEls, winListeners, pendingTimers };
+  }
+
+  const onlinePage = makePage(true);
+  check(
+    "no banner while the page loads online",
+    !onlinePage.pageEls.offlineBanner,
+  );
+  onlinePage.winListeners.offline();
+  const ob = onlinePage.pageEls.offlineBanner;
+  check(
+    "offline event shows the banner as a polite status region",
+    !!ob &&
+      ob.style.display === "block" &&
+      /Offline/.test(ob.textContent) &&
+      ob.attrs.role === "status" &&
+      ob.attrs["aria-live"] === "polite",
+    ob &&
+      JSON.stringify({ d: ob.style.display, t: ob.textContent, a: ob.attrs }),
+  );
+  onlinePage.winListeners.online();
+  check(
+    "online event flips the banner to a back-online notice",
+    /Back online/.test(ob.textContent) && ob.style.display === "block",
+    ob.textContent,
+  );
+  onlinePage.pendingTimers.forEach((fn) => fn());
+  check(
+    "back-online notice hides itself after the timer",
+    ob.style.display === "none",
+  );
+
+  const offlinePage = makePage(false);
+  check(
+    "loading the page without a connection shows the banner immediately",
+    !!offlinePage.pageEls.offlineBanner &&
+      offlinePage.pageEls.offlineBanner.style.display === "block" &&
+      /Offline/.test(offlinePage.pageEls.offlineBanner.textContent),
   );
 
   if (failures) {
