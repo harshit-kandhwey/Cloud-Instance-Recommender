@@ -1,5 +1,6 @@
 // Scenario comparison: pin two generation runs (same input, different config)
-// and show a per-VM diff of what the recommendations changed.
+// and show which configuration settings differed plus a per-VM diff of what
+// the recommendations changed.
 //
 // Scenarios are held in memory for the session only (results grids can exceed
 // localStorage's ~5MB); pinning captures a reference to that run's
@@ -119,6 +120,117 @@ function diffScenarios(a, b) {
   };
 }
 
+// ─── Pure config diff ──────────────────────────────────────────────────────────
+
+// Friendly names for the flat controls captured by capturePresetConfig()
+// (unknown ids fall back to the raw id).
+const SCENARIO_CONFIG_LABELS = {
+  cpuBased: "CPU-based sizing",
+  memoryBased: "Memory-based sizing",
+  currentGenerationOnly: "Current generation only",
+  restrictInstanceFamilyNames: "Instance family name filter",
+  restrictProcessorManufacturers: "Processor manufacturer filter",
+  restrictMainFamilies: "Instance family/series filter",
+  excludeTypes: "Exclude instance types",
+  cpuDownsizeMax: "CPU downsize max %",
+  cpuKeepMin: "CPU keep min %",
+  cpuKeepMax: "CPU keep max %",
+  cpuUpsizeMin: "CPU upsize min %",
+  memoryDownsizeMax: "Memory downsize max %",
+  memoryKeepMin: "Memory keep min %",
+  memoryKeepMax: "Memory keep max %",
+  memoryUpsizeMin: "Memory upsize min %",
+  ruleDefaultEnv: "Default ENV",
+  ruleDefaultOS: "Default OS",
+  ruleDefaultWorkload: "Default Workload",
+  ruleDefaultCompliance: "Default Compliance",
+  ruleDefaultMinGen: "Default Min Gen",
+};
+
+// Dynamic filter checkbox id prefixes → readable group names (mirrors
+// PRESET_GROUP_PREFIXES in presets.js; the id remainder is the option value).
+const SCENARIO_GROUP_LABELS = {
+  familyName_: "Family name",
+  azureSeries_: "Azure series",
+  gcpFamily_: "GCP series",
+  processor_: "Processor",
+  azureProcessor_: "Azure processor",
+  gcpProcessor_: "GCP processor",
+  mainFamily_: "Instance family",
+  azureFamily_: "Azure VM family",
+  gcpType_: "GCP category",
+  exclude_: "Exclude",
+  mc_proc_: "Processor architecture",
+  mc_cat_: "Category",
+};
+
+function scenarioGroupLabel(id) {
+  for (const prefix of Object.keys(SCENARIO_GROUP_LABELS)) {
+    if (id.startsWith(prefix)) {
+      return `${SCENARIO_GROUP_LABELS[prefix]}: ${id.slice(prefix.length)}`;
+    }
+  }
+  return id;
+}
+
+// Pure: changed settings between two capturePresetConfig() snapshots, as
+// [{setting, a, b}] display rows. Returns null when either snapshot is missing
+// (presets.js wasn't loaded when that run was pinned); [] when nothing changed.
+function diffScenarioConfigs(cfgA, cfgB) {
+  if (!cfgA || !cfgB) return null;
+  const rows = [];
+
+  const rtA = String(cfgA.recommendationType ?? "");
+  const rtB = String(cfgB.recommendationType ?? "");
+  if (rtA !== rtB) {
+    rows.push({ setting: "Recommendation type", a: rtA, b: rtB });
+  }
+
+  const provA = (cfgA.providers || []).join(", ");
+  const provB = (cfgB.providers || []).join(", ");
+  if (provA !== provB) {
+    rows.push({ setting: "Providers", a: provA, b: provB });
+  }
+
+  // Flat keyed groups: a key missing on one side (control not on the page for
+  // that run) shows as blank rather than being skipped.
+  const scalarGroups = [
+    ["checkboxes", (v) => (v ? "on" : "off")],
+    ["numbers", (v) => String(v)],
+    ["texts", (v) => String(v)],
+  ];
+  scalarGroups.forEach(([group, fmt]) => {
+    const va = cfgA[group] || {};
+    const vb = cfgB[group] || {};
+    const keys = [...new Set([...Object.keys(va), ...Object.keys(vb)])];
+    keys.forEach((key) => {
+      const has = (o) => Object.prototype.hasOwnProperty.call(o, key);
+      const a = has(va) ? fmt(va[key]) : "";
+      const b = has(vb) ? fmt(vb[key]) : "";
+      if (a !== b) {
+        rows.push({ setting: SCENARIO_CONFIG_LABELS[key] || key, a, b });
+      }
+    });
+  });
+
+  // Dynamic filter selections: one row per checkbox that changed sides.
+  const setA = new Set(cfgA.groupChecked || []);
+  const setB = new Set(cfgB.groupChecked || []);
+  [...new Set([...setA, ...setB])].forEach((id) => {
+    const inA = setA.has(id);
+    const inB = setB.has(id);
+    if (inA !== inB) {
+      rows.push({
+        setting: scenarioGroupLabel(id),
+        a: inA ? "✓ selected" : "—",
+        b: inB ? "✓ selected" : "—",
+      });
+    }
+  });
+
+  return rows;
+}
+
 // ─── Pin / clear ────────────────────────────────────────────────────────────────
 
 function makeScenario() {
@@ -195,7 +307,16 @@ function renderScenarioBar() {
       <button type="button" class="btn btn-secondary" onclick="compareScenarios()" ${both ? "" : "disabled"}>Compare A ↔ B</button>
       <button type="button" class="btn btn-secondary" onclick="clearScenarios()" ${scenarioA || scenarioB ? "" : "disabled"}>Clear</button>
     </div>
-    <div id="scenarioCompareResult"></div>`;
+    <div id="scenarioCompareResult"></div>
+    <div id="scenarioLiveStatus" class="sr-only" role="status" aria-live="polite"></div>`;
+}
+
+// Announce comparison outcomes to screen readers via the persistent live
+// region (the results table itself is deliberately not live — a polite
+// one-line summary instead of a wall of cells).
+function setScenarioLiveStatus(text) {
+  const live = document.getElementById("scenarioLiveStatus");
+  if (live) live.textContent = text;
 }
 
 function renderScenarioComparison() {
@@ -205,7 +326,33 @@ function renderScenarioComparison() {
   const d = diffScenarios(scenarioA, scenarioB);
   if (!d.cols.length) {
     result.innerHTML = `<div class="scenario-note">These two runs have no comparable recommendation columns (different providers or recommendation types).</div>`;
+    setScenarioLiveStatus(
+      "Scenario comparison not possible: the two runs have no comparable recommendation columns.",
+    );
     return;
+  }
+
+  // What changed in the configuration between the two pinned runs.
+  const configDiff = diffScenarioConfigs(scenarioA.config, scenarioB.config);
+  let configBlock;
+  if (configDiff === null) {
+    configBlock = `<div class="scenario-note">Configuration snapshot not available for one or both runs, so setting changes can't be shown.</div>`;
+  } else if (!configDiff.length) {
+    configBlock = `<div class="scenario-note">Both runs used the same filter configuration.</div>`;
+  } else {
+    const cfgRows = configDiff
+      .map(
+        (r) =>
+          `<tr><td>${sEsc(r.setting)}</td><td class="scenario-a">${sEsc(r.a || "—")}</td><td class="scenario-b">${sEsc(r.b || "—")}</td></tr>`,
+      )
+      .join("");
+    configBlock = `
+      <div class="scenario-config">
+        <div class="scenario-config-title">⚙️ Configuration changes (A → B)</div>
+        <div class="scenario-scroll"><table class="scenario-table scenario-config-table">
+          <thead><tr><th>Setting</th><th>A</th><th>B</th></tr></thead>
+          <tbody>${cfgRows}</tbody></table></div>
+      </div>`;
   }
 
   const delta = (n) =>
@@ -251,6 +398,15 @@ function renderScenarioComparison() {
   result.innerHTML = `
     <div class="scenario-result">
       <div class="scenario-legend">Comparing <b>A: ${sEsc(scenarioA.label)}</b> ↔ <b>B: ${sEsc(scenarioB.label)}</b> — showing only changed rows.</div>
-      ${summary}${note}${body}
+      ${configBlock}${summary}${note}${body}
     </div>`;
+
+  const cfgPart =
+    configDiff === null
+      ? ""
+      : `; ${configDiff.length} configuration setting${configDiff.length === 1 ? "" : "s"} changed`;
+  setScenarioLiveStatus(
+    `Scenario comparison ready: ${d.summary.changedRows} of ${d.pairedRows} VMs changed; ` +
+      `match rate ${d.summary.matchRateA}% to ${d.summary.matchRateB}%${cfgPart}.`,
+  );
 }

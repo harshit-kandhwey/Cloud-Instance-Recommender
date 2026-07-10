@@ -5,7 +5,9 @@
 //     newly-unmatched using the shared isNoMatchValue
 //   - compares only the recommendation columns common to both runs
 //   - notes differing row counts
-// Uses the pure diff; the pin/render UI is thin DOM glue.
+//   - diffScenarioConfigs reports changed settings between the two runs'
+//     capturePresetConfig snapshots (null when a snapshot is missing)
+// Uses the pure diffs; the pin/render UI is thin DOM glue.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -181,6 +183,98 @@ check(
   "newly-unmatched counted when a match regresses",
   d7.summary.newlyUnmatched === 1 && d7.summary.newlyMatched === 0,
   JSON.stringify(d7.summary),
+);
+
+// ── Config diff: diffScenarioConfigs on capturePresetConfig snapshots ──────────
+const cfgBase = () => ({
+  recommendationType: "both",
+  checkboxes: { currentGenerationOnly: false, excludeTypes: false },
+  numbers: { cpuDownsizeMax: "20" },
+  texts: { ruleDefaultEnv: "" },
+  providers: ["aws"],
+  groupChecked: ["exclude_burstable"],
+});
+
+sandbox.cfgA = cfgBase();
+sandbox.cfgSame = cfgBase();
+check(
+  "identical configs → empty diff",
+  run("diffScenarioConfigs(cfgA, cfgSame)").length === 0,
+);
+check(
+  "missing snapshot → null (either side)",
+  run("diffScenarioConfigs(null, cfgSame)") === null &&
+    run("diffScenarioConfigs(cfgA, null)") === null,
+);
+
+sandbox.cfgChanged = cfgBase();
+sandbox.cfgChanged.recommendationType = "optimized";
+sandbox.cfgChanged.checkboxes.currentGenerationOnly = true;
+sandbox.cfgChanged.numbers.cpuDownsizeMax = "30";
+sandbox.cfgChanged.texts.ruleDefaultEnv = "Production";
+sandbox.cfgChanged.providers = ["aws", "azure"];
+sandbox.cfgChanged.groupChecked = ["exclude_gpu"];
+const cd = run("diffScenarioConfigs(cfgA, cfgChanged)");
+check(
+  "every changed setting reported (7 rows)",
+  cd.length === 7,
+  JSON.stringify(cd.map((r) => r.setting)),
+);
+check(
+  "recommendation type row carries A → B values",
+  cd.some(
+    (r) =>
+      r.setting === "Recommendation type" &&
+      r.a === "both" &&
+      r.b === "optimized",
+  ),
+  JSON.stringify(cd),
+);
+check(
+  "providers reported as joined lists",
+  cd.some(
+    (r) => r.setting === "Providers" && r.a === "aws" && r.b === "aws, azure",
+  ),
+);
+check(
+  "checkbox uses friendly label and on/off values",
+  cd.some(
+    (r) =>
+      r.setting === "Current generation only" && r.a === "off" && r.b === "on",
+  ),
+  JSON.stringify(cd),
+);
+check(
+  "number change reported",
+  cd.some(
+    (r) => r.setting === "CPU downsize max %" && r.a === "20" && r.b === "30",
+  ),
+);
+check(
+  "filter selection removed/added get prefix labels and sides",
+  cd.some(
+    (r) =>
+      r.setting === "Exclude: burstable" && r.a === "✓ selected" && r.b === "—",
+  ) &&
+    cd.some(
+      (r) =>
+        r.setting === "Exclude: gpu" && r.a === "—" && r.b === "✓ selected",
+    ),
+  JSON.stringify(cd),
+);
+
+// A control present in only one snapshot (e.g. page differences) shows blank
+// on the missing side instead of being dropped.
+sandbox.cfgMissingKey = cfgBase();
+delete sandbox.cfgMissingKey.numbers.cpuDownsizeMax;
+const cdMissing = run("diffScenarioConfigs(cfgA, cfgMissingKey)");
+check(
+  "key missing on one side → blank value, still reported",
+  cdMissing.length === 1 &&
+    cdMissing[0].setting === "CPU downsize max %" &&
+    cdMissing[0].a === "20" &&
+    cdMissing[0].b === "",
+  JSON.stringify(cdMissing),
 );
 
 if (failures) {
