@@ -37,9 +37,6 @@ python -m http.server 8080
 ├── sw.js                   # Service worker (offline cache) — see note below
 ├── icon.svg                # App icon
 │
-├── docs/
-│   └── user-guide.pdf      # PDF user guide
-│
 ├── assets/
 │   └── templates/aws/      # AWS Pricing Calculator bulk upload templates
 │

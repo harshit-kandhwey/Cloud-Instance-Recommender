@@ -25,7 +25,7 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 - **Optimized** — Smart right-sizing based on actual CPU/memory utilization (N/2, N, N+1 strategy)
 - **Both** — Generate like-to-like and optimized simultaneously; AWS produces two separate bulk template files
 
-### 🧠 Rule Engine (v3.1)
+### 🧠 Rule Engine
 
 Five interactive dropdowns set global defaults for the entire batch without editing your CSV:
 
@@ -63,35 +63,35 @@ The Rule Engine highlights contradicting filter combinations in red and explains
 
 AWS-only export that generates a CSV matching the EC2 Instances worksheet for the AWS Pricing Calculator Bulk Import. When both recommendation types are generated, **two separate files** are produced (Like-to-Like and Optimized) to prevent double-counting.
 
-### ⚡ Lazy Per-Region Data Loading (v3.2)
+### ⚡ Lazy Per-Region Data Loading
 
 Instance data is split into one file per region (141 files across the three providers). A page load fetches only a tiny manifest per provider; the region files your CSV actually references are fetched in the background right after upload, and anything still missing is loaded on demand during generation. Initial data download dropped from ~25 MB to a few KB. If Generate is clicked before data is ready, the request is queued and fires automatically.
 
-### 🧵 Web Worker Processing with Real Progress (v3.2)
+### 🧵 Web Worker Processing with Real Progress
 
 Recommendation batches run in a Web Worker, so large CSVs never freeze the page — with a progress bar that reports actual rows processed ("Processing row 250 of 1000"). If the worker can't start (e.g. opening the page from `file://`) or stalls, processing falls back automatically to a chunked main-thread run with the same progress reporting and identical output.
 
-### 🌍 Region Validation (v3.2)
+### 🌍 Region Validation
 
 After upload, a Region Check panel shows one chip per unique region in your CSV: green = recognized, amber = auto-resolved (e.g. `us-east-1a → us-east-1`), red = unknown (those rows would fall back to built-in sample data). A non-blocking warning also appears at Generate time if unknown regions remain.
 
-### 🔗 Column Auto-Mapping (v3.2)
+### 🔗 Column Auto-Mapping
 
 Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. The applied mapping can be reviewed and changed anytime via the **✏️ Edit mapping** button. Memory columns in **MB/MiB** (common in RVTools-style exports) are converted to GB automatically — detected from the header name, or selectable in the mapping panel. Confirmed mappings (including the unit) are remembered per header set (localStorage) and replay automatically on re-upload.
 
-### 📗 Excel Upload (v3.2)
+### 📗 Excel Upload
 
 Upload `.xlsx` files directly (first sheet is used). Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
 
-### ✍️ Manual VM Entry (v3.2)
+### ✍️ Manual VM Entry
 
 For small inventories, skip the file entirely: "Or enter VMs manually" opens a form (name, CPU, memory, utilization, region with autocomplete) where you add and remove VMs one by one. The list persists across reloads and feeds the exact same pipeline as uploads — region validation, worker processing, preview, and exports all behave identically. Enterprise-scale bulk upload via CSV/xlsx remains the primary path.
 
-### 🧾 No-Match Remediation Export (v3.2)
+### 🧾 No-Match Remediation Export
 
 When some rows get no recommendation from any provider, a "No-Match Rows CSV" button (with count) exports exactly those rows together with their `No Match Reason` and `Rules Applied` diagnostics — fix the rows, re-upload, re-run.
 
-### 🧩 App Grouping, Portfolio & Executive Excel (v3.3)
+### 🧩 App Grouping, Portfolio & Executive Excel
 
 Add an optional **`App Name`** column and the tool groups your estate by application:
 
@@ -102,27 +102,27 @@ Add an optional **`App Name`** column and the tool groups your estate by applica
 
 Everything runs client-side, and no pricing appears in any view or sheet.
 
-### ⭐ Filter Presets (v3.4)
+### ⭐ Filter Presets
 
 Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. Nothing is applied automatically — a preset takes effect only when you click Apply.
 
-### 📗 Results Excel Export (v3.4)
+### 📗 Results Excel Export
 
 Next to the results CSV, **📊 Download Results Excel** writes the same grid as a styled single-sheet `.xlsx`: formatted header row, autofilter, fitted column widths, and numeric columns typed as real numbers so sorting and filtering behave correctly in Excel with no import dialog. The spreadsheet engine is lazy-loaded on first click.
 
-### 🧭 Nearest-Miss Diagnostics (v3.4)
+### 🧭 Nearest-Miss Diagnostics
 
 When a row gets no recommendation, a per-provider **Nearest Miss** column shows the closest instance that satisfied the CPU/memory requirement and names the filter group(s) that excluded it — e.g. `m7i.large (2 vCPU / 8 GB) — relax: current-generation only` — so you know exactly which filter to relax instead of guessing.
 
-### 🔀 Scenario Comparison (v3.4)
+### 🔀 Scenario Comparison
 
 Pin a generation run as scenario A, tweak filters, re-generate, pin as B, and **Compare A ↔ B**: a summary (VMs changed, match rate A → B, newly matched / newly unmatched) plus a table of only the changed rows with old → new values per recommendation column. Rows pair by VM Name (or by position when names aren't unique), so use the same input file for both runs. Scenarios live in memory for the session only.
 
-### 📲 Install & Offline (PWA) (v3.4)
+### 📲 Install & Offline (PWA)
 
 The site is an installable Progressive Web App. A service worker precaches the app shell and keeps everything you've used — pages, scripts, region data — cached with a stale-while-revalidate policy, so after the first visit the tool works offline for the regions you've already loaded and silently picks up updates on the next online visit.
 
-### 🌓 Dark Mode & Accessibility (v3.2)
+### 🌓 Dark Mode & Accessibility
 
 A theme toggle in the nav switches light/dark instantly (no flash on load); your choice persists across pages and reloads, and with no saved choice the site follows the OS setting. The UI is keyboard-operable end to end — collapsible sections and sortable table headers work with Enter/Space, status updates are announced to screen readers, and every page has a skip-to-content link and visible focus outlines.
 
@@ -143,9 +143,6 @@ Cloud-Instance-Recommender/
 ├── manifest.json            # PWA manifest (installable app)
 ├── sw.js                    # Service worker — offline cache (stale-while-revalidate)
 ├── icon.svg                 # App icon
-│
-├── docs/
-│   └── user-guide.pdf       # PDF version of the user guide
 │
 ├── assets/
 │   └── templates/
@@ -390,7 +387,8 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 ## 📞 Contact & Support
 
 - **Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
-- **User Guide**: See `user-guide.html` (or `docs/user-guide.pdf`) in this repository
+- **User Guide**: See `user-guide.html` in this repository
+- **Version History**: See [CHANGELOG.md](CHANGELOG.md)
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com
 
