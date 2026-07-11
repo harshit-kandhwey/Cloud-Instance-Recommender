@@ -34,7 +34,8 @@ the untagged historical commits are resolved through this version map.
 
 | Version | Commit        | Date       | Change                                                                                                                                                         |
 | ------- | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.5.9   | _this commit_ | 2026-07-11 | Corrected the local-storage privacy note, extended nearest-miss guidance to auto-resolved regions, and tightened a preset comment and the probe-coupling test. |
+| 3.5.10  | _this commit_ | 2026-07-11 | Populated the roadmap with the adopted backlog, grouped into themed minor releases and a 4.0 major.                                                            |
+| 3.5.9   | 303d3d0       | 2026-07-11 | Corrected the local-storage privacy note, extended nearest-miss guidance to auto-resolved regions, and tightened a preset comment and the probe-coupling test. |
 | 3.5.8   | 4f7ce4d       | 2026-07-11 | Restructured the changelog into a newest-first, per-commit version map, added a roadmap, and removed hardcoded versions from the product.                      |
 | 3.5.7   | 9523d45       | 2026-07-10 | Hardened the review round: rejected reserved preset names, guarded the offline banner against a missing document body, and synced docs.                        |
 | 3.5.6   | 7255b95       | 2026-07-10 | Introduced this changelog, dropped the per-feature version tags from the README, and removed the unused PDF user guide.                                        |
