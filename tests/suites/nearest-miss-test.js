@@ -242,7 +242,10 @@ const probesSrc = run(
 
 function optionReads(fnSrc) {
   const names = new Set();
-  for (const m of fnSrc.matchAll(/options\.([A-Za-z_$][\w$]*)/g)) {
+  // Plain and optional-chained dotted reads (`options.foo`, `options?.foo`).
+  // Every provider today reads options this way; destructuring is not used and
+  // would slip past a static scan, so the contract is: read via dot access.
+  for (const m of fnSrc.matchAll(/options\??\.\s*([A-Za-z_$][\w$]*)/g)) {
     names.add(m[1]);
   }
   return [...names];

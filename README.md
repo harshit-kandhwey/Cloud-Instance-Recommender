@@ -355,7 +355,7 @@ const results = await getInstanceRecommendationWithSelector(
 - **Client-Side Only** — All processing runs in your browser
 - **No Data Transmission** — CSV files never leave your machine
 - **No Authentication** — No login, fully anonymous
-- **Local Storage** — Only preferences are stored locally (usage statistics, theme choice, confirmed column mappings, saved filter presets) — never your inventory
+- **Local Storage** — Only preferences and any manually entered VM list are stored locally (usage statistics, theme choice, confirmed column mappings, saved filter presets, manual VM entries); uploaded CSV/xlsx inventory is never stored
 - **Offline Cache** — The service worker caches the app's own static files (pages, scripts, instance data) for offline use; your uploads and results are never cached
 
 ---

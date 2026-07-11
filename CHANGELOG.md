@@ -25,24 +25,25 @@ and in git tags, so there is nothing to bump by hand.
 annotated git tag of their version. The 95 earlier published commits are
 catalogued here but not tagged. Going forward, each commit is tagged with its
 version when it lands, and tags are pushed only after the overall flow is
-validated. A commit's version is always recoverable with `git describe` even
-without a tag.
+validated. A tagged commit's version is recoverable with `git describe --tags`;
+the untagged historical commits are resolved through this version map.
 
 ## Version map
 
 ### 3.5 — UI polish, preset export/import, offline banner, housekeeping (2026-07-10 → 2026-07-11)
 
-| Version | Commit        | Date       | Change                                                                                                                                    |
-| ------- | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.5.8   | _this commit_ | 2026-07-11 | Restructured the changelog into a newest-first, per-commit version map, added a roadmap, and removed hardcoded versions from the product. |
-| 3.5.7   | 9523d45       | 2026-07-10 | Hardened the review round: rejected reserved preset names, guarded the offline banner against a missing document body, and synced docs.   |
-| 3.5.6   | 7255b95       | 2026-07-10 | Introduced this changelog, dropped the per-feature version tags from the README, and removed the unused PDF user guide.                   |
-| 3.5.5   | 11d635f       | 2026-07-10 | Added an offline indicator banner to every page.                                                                                          |
-| 3.5.4   | 22709c7       | 2026-07-10 | Added JSON export and import for filter presets.                                                                                          |
-| 3.5.3   | 4bc5cf8       | 2026-07-10 | Replaced the native preset prompt and confirm dialogs with inline UI.                                                                     |
-| 3.5.2   | 5a53cef       | 2026-07-10 | Added a configuration diff, a screen-reader live region, and a sticky header to scenario comparison.                                      |
-| 3.5.1   | c598047       | 2026-07-10 | Grouped the download section into labeled clusters and fixed the results Excel button being destroyed on the AWS page.                    |
-| 3.5.0   | 9e0a445       | 2026-07-10 | Added a coupling test tying every provider filter to a matching nearest-miss probe.                                                       |
+| Version | Commit        | Date       | Change                                                                                                                                                         |
+| ------- | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.5.9   | _this commit_ | 2026-07-11 | Corrected the local-storage privacy note, extended nearest-miss guidance to auto-resolved regions, and tightened a preset comment and the probe-coupling test. |
+| 3.5.8   | 4f7ce4d       | 2026-07-11 | Restructured the changelog into a newest-first, per-commit version map, added a roadmap, and removed hardcoded versions from the product.                      |
+| 3.5.7   | 9523d45       | 2026-07-10 | Hardened the review round: rejected reserved preset names, guarded the offline banner against a missing document body, and synced docs.                        |
+| 3.5.6   | 7255b95       | 2026-07-10 | Introduced this changelog, dropped the per-feature version tags from the README, and removed the unused PDF user guide.                                        |
+| 3.5.5   | 11d635f       | 2026-07-10 | Added an offline indicator banner to every page.                                                                                                               |
+| 3.5.4   | 22709c7       | 2026-07-10 | Added JSON export and import for filter presets.                                                                                                               |
+| 3.5.3   | 4bc5cf8       | 2026-07-10 | Replaced the native preset prompt and confirm dialogs with inline UI.                                                                                          |
+| 3.5.2   | 5a53cef       | 2026-07-10 | Added a configuration diff, a screen-reader live region, and a sticky header to scenario comparison.                                                           |
+| 3.5.1   | c598047       | 2026-07-10 | Grouped the download section into labeled clusters and fixed the results Excel button being destroyed on the AWS page.                                         |
+| 3.5.0   | 9e0a445       | 2026-07-10 | Added a coupling test tying every provider filter to a matching nearest-miss probe.                                                                            |
 
 ### 3.4 — Presets, results Excel, nearest-miss, scenario compare, PWA (2026-07-05 → 2026-07-10)
 

@@ -546,7 +546,8 @@ function confirmSavePreset() {
   }
   if (Object.prototype.hasOwnProperty.call(presetsForPage(), name)) {
     // Arms on the first click; the second click lands in the armed branch
-    // and runs the overwrite with whatever the name field holds then.
+    // and overwrites under the name captured here (editing the field disarms
+    // via oninput, forcing a re-arm, so this name always matches the input).
     armPresetButton(
       "presetSaveConfirmBtn",
       "Overwrite?",
