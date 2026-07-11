@@ -49,11 +49,8 @@ Not tied to any release — adopted once, then maintained every cycle:
 Small, high-frequency wins that improve everyday use. **In progress** — see the
 [changelog](CHANGELOG.md) for what has already shipped.
 
-- Anchor navigation / back-to-top on long tool pages. (S)
 - Landing page feature-overview cards plus a "what's new" teaser linked to the
   changelog. (S)
-- Strip the PDF-era page numbers from the user-guide table of contents —
-  meaningless in HTML. (S)
 
 ### 3.7 — Ingestion & input quality
 

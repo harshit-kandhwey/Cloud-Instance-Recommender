@@ -29,6 +29,46 @@ function setupStickyGenerate() {
   observer.observe(originalBtn);
 }
 
+// ─── Back to top ──────────────────────────────────────────────────────────────
+// The tool pages run long once results are rendered, and the controls all live
+// at the top. Sits left of the sticky Generate bar so the two never overlap.
+function setupBackToTop() {
+  if (!document.body) return;
+
+  const button = document.createElement("button");
+  button.id = "_backToTop";
+  button.type = "button";
+  button.setAttribute("aria-label", "Back to top");
+  button.title = "Back to top";
+  button.textContent = "↑";
+  Object.assign(button.style, {
+    position: "fixed",
+    bottom: "20px",
+    right: "20px",
+    zIndex: "998",
+    display: "none",
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
+    border: "1px solid var(--border-slate)",
+    background: "var(--surface)",
+    color: "var(--text-body)",
+    fontSize: "1.1rem",
+    cursor: "pointer",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
+  });
+  button.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  document.body.appendChild(button);
+
+  const sync = () => {
+    button.style.display = window.scrollY > 400 ? "block" : "none";
+  };
+  window.addEventListener("scroll", sync, { passive: true });
+  sync();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Initializing Cloud Instance Recommender with Modular Selectors");
 
@@ -41,6 +81,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Sticky floating generate button
   setupStickyGenerate();
+
+  // Back-to-top affordance for the long results view
+  setupBackToTop();
 
   // Start watching for data readiness; auto-fires any queued generate request
   watchForDataThenRun();
