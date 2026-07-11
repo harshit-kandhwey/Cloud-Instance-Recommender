@@ -332,6 +332,39 @@ function _renderPreviewTable(
   }
 }
 
+const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
+
+// The results on screen belong to the providers that were selected when Generate
+// ran. Changing the checkboxes afterwards does not re-run anything, so the
+// columns would quietly describe a selection the user no longer has. Say so
+// instead of letting them read a stale table (or export it).
+function updateStaleResultsNotice() {
+  const notice = document.getElementById("resultsStaleNotice");
+  if (!notice) return;
+
+  const ranWith = window._resultsProviders;
+  const hasResults =
+    typeof processedResults !== "undefined" &&
+    processedResults &&
+    processedResults.length > 0;
+  const stale =
+    hasResults &&
+    Array.isArray(ranWith) &&
+    (ranWith.length !== selectedProviders.length ||
+      ranWith.some((p) => !selectedProviders.includes(p)));
+
+  if (!stale) {
+    notice.classList.add("hidden");
+    notice.innerHTML = "";
+    return;
+  }
+
+  const named = ranWith.map((p) => PROVIDER_LABELS[p] || p).join(", ");
+  notice.className = "alert alert-warning";
+  notice.innerHTML = `⚠️ These results were generated for <strong>${escapeHtml(named)}</strong>, which is no longer what you have selected. Click Generate to update them — the table and every download still describe the old selection.`;
+  notice.classList.remove("hidden");
+}
+
 window._sortPreview = function (colIdx) {
   const s = window._previewState;
   if (!s) return;

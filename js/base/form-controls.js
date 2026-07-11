@@ -114,6 +114,11 @@ function toggleCloudProvider(provider) {
   if (excludeCheckbox && excludeCheckbox.checked) {
     updateExcludeControls();
   }
+
+  // Any already-generated results now describe a selection the user has changed
+  if (typeof updateStaleResultsNotice === "function") {
+    updateStaleResultsNotice();
+  }
 }
 
 // Handle recommendation type change - Updated for modular system

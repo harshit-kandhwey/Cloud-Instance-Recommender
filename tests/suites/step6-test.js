@@ -218,6 +218,54 @@ function check(name, cond, detail) {
   );
   check("source results not mutated", results[0]["VM Name"] === "web-01");
 
+  // Results describe the providers selected when Generate ran; changing the
+  // checkboxes afterwards re-runs nothing, so the drift has to be surfaced.
+  console.log("[stale results notice]");
+  // `processedResults` and `selectedProviders` are `let` bindings in app-core.js,
+  // so they must be assigned inside the context — a property on the sandbox
+  // object would just sit there, shadowed.
+  const setProviders = (list) =>
+    vm.runInContext(`selectedProviders = ${JSON.stringify(list)}`, ctx);
+  vm.runInContext(`processedResults = ${JSON.stringify(results)}`, ctx);
+  setProviders(["aws", "azure"]);
+  ctx._resultsProviders = ["aws", "azure"];
+  ctx.updateStaleResultsNotice();
+  check(
+    "selection unchanged → no notice",
+    elements.resultsStaleNotice.classes.has("hidden"),
+  );
+
+  setProviders(["aws"]);
+  ctx.updateStaleResultsNotice();
+  check(
+    "provider removed after generating → notice shown",
+    !elements.resultsStaleNotice.classes.has("hidden") &&
+      elements.resultsStaleNotice.innerHTML.includes("AWS, Azure"),
+    elements.resultsStaleNotice.innerHTML,
+  );
+
+  setProviders(["aws", "azure", "gcp"]);
+  ctx.updateStaleResultsNotice();
+  check(
+    "provider added after generating → notice shown",
+    !elements.resultsStaleNotice.classes.has("hidden"),
+  );
+
+  setProviders(["azure", "aws"]);
+  ctx.updateStaleResultsNotice();
+  check(
+    "same providers reordered → no notice",
+    elements.resultsStaleNotice.classes.has("hidden"),
+  );
+
+  vm.runInContext("processedResults = null", ctx);
+  setProviders(["gcp"]);
+  ctx.updateStaleResultsNotice();
+  check(
+    "no results yet → no notice",
+    elements.resultsStaleNotice.classes.has("hidden"),
+  );
+
   process.exit(failures ? 1 : 0);
 })().catch((e) => {
   console.error(e);

@@ -249,6 +249,11 @@ async function processRecommendations() {
       ),
     });
 
+    // The selection these results describe — compared against the live
+    // checkboxes to warn when they drift apart (see updateStaleResultsNotice)
+    window._resultsProviders = selectedProviders.slice();
+    updateStaleResultsNotice();
+
     // Update usage statistics and show download section
     updateUsageStatistics(csvData.length);
     document.getElementById("downloadSection").classList.remove("hidden");
