@@ -91,6 +91,8 @@ To refresh the data:
 2. Run `node tools/split-data.js` — it rewrites the manifest and regenerates `js/{provider}/regions/`, removing region files that no longer exist upstream. The tool is idempotent (skips providers already in manifest form) and hard-fails rather than writing anything if the input doesn't parse cleanly
 3. Verify with spot-checks on known instance types, then commit the manifest **and** the regenerated `regions/` files together
 
+If the refresh **adds** a region, also add it to the hardcoded list the provider's selector filters through (`awsRegions` in `js/aws/aws-instance-selector.js`, the display-name map in `js/azure/azure-instance-selector.js`). Those lists feed the manual-entry region autocomplete, while the upload's region chips validate straight against the manifest — so a region that is only in the manifest is accepted from a CSV but never suggested for manual entry. `tests/suites/lazy-test.js` fails when the two disagree. If the refresh **removes** a region, bump `CACHE` in `sw.js` (see "Service Worker" below).
+
 ## Service Worker (offline support)
 
 `sw.js` precaches the app shell (HTML + CSS + manifest + icon) and runtime-caches everything else same-origin with stale-while-revalidate, so code and data changes reach users automatically on their next online visit — ordinary changes need no service-worker action.

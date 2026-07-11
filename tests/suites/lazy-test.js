@@ -90,6 +90,32 @@ function check(name, cond, detail) {
     gcp.getAllAvailableRegionKeys().includes("us-central1"),
   );
 
+  // getAllAvailableRegionKeys feeds the manual-entry autocomplete, while the
+  // region chips validate straight against the manifest. AWS filters through a
+  // HARDCODED region list and Azure through a hardcoded display-name map, so a
+  // data refresh that adds a region silently drops it from autocomplete while
+  // the chips still accept it. Fail here instead: the two must offer the same
+  // set of regions.
+  console.log("[autocomplete covers every manifest region]");
+  for (const [name, selector] of [
+    ["aws", aws],
+    ["azure", azure],
+    ["gcp", gcp],
+  ]) {
+    const manifest = ctx.window[`${name.toUpperCase()}_REGION_KEYS`];
+    const offered = new Set(
+      selector
+        .getAllAvailableRegionKeys()
+        .map((r) => selector.normalizeRegionForJS(r)),
+    );
+    const missing = manifest.filter((key) => !offered.has(key));
+    check(
+      `${name}: every manifest region is offered for autocomplete`,
+      missing.length === 0,
+      `${missing.length} missing — add them to the hardcoded list in js/${name}/${name}-instance-selector.js: ${missing.slice(0, 10).join(", ")}`,
+    );
+  }
+
   console.log("[lazy inject: known regions]");
   check("us_east_1 not on window before load", ctx.us_east_1 === undefined);
   await aws.loadInstanceData(new Set(["us-east-1"]));

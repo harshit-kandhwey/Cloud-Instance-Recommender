@@ -277,6 +277,38 @@ check(
   JSON.stringify(cdMissing),
 );
 
+// ── A pinned scenario survives later runs and preview sorting ─────────────────
+// makeScenario() stores `processedResults` BY REFERENCE, which is only safe
+// while every consumer replaces that array instead of mutating it. sortResultRows
+// mutates what it is handed, so this pins the invariant rather than trusting a
+// comment: a pinned run must keep its rows after a regenerate and after the
+// preview is sorted.
+run(`processedResults = [
+  { "VM Name": "web1", "${AWS}": "m5.large" },
+  { "VM Name": "db1", "${AWS}": "r5.large" }
+]`);
+run("pinScenario()");
+const pinnedFirst = run("scenarioA.results[0]['VM Name']");
+check("scenario pinned", pinnedFirst === "web1");
+
+// A later run REPLACES processedResults (as generate.js does)
+run(`processedResults = [{ "VM Name": "other", "${AWS}": "t3.micro" }]`);
+check(
+  "pinned scenario keeps its own rows after a regenerate",
+  run("scenarioA.results.length") === 2 &&
+    run("scenarioA.results[0]['VM Name']") === "web1",
+  JSON.stringify(run("scenarioA.results")),
+);
+
+// Sorting for the preview/exports must copy, never reorder the pinned array
+run(`sortResultRows([...scenarioA.results], "VM Name", -1)`);
+check(
+  "pinned scenario's row order survives a preview sort",
+  run("scenarioA.results[0]['VM Name']") === "web1" &&
+    run("scenarioA.results[1]['VM Name']") === "db1",
+  JSON.stringify(run("scenarioA.results.map((r) => r['VM Name'])")),
+);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);
