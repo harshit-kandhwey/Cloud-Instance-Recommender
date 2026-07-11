@@ -161,19 +161,9 @@ Changes that redefine what the tool does or how it is built.
 
 ## Known issues (patch-level)
 
-Tracked and fixed continuously rather than scheduled into a release:
-
-- Preview sort state versus full-export order after filtering.
-- Multicloud: provider checkboxes changed after generation versus stale result
-  columns.
-- Region chips versus manual-entry autocomplete disagreeing on fuzzy keys.
-- Inconsistent export filenames (the results CSV is dated; the no-match,
-  app-summary, and presets exports are not).
-- Confirm the preset-status color tokens exist with adequate contrast in both
-  themes.
-- A `.csv` renamed to `.xlsx` should get a content sniff and a friendly error.
-- Re-confirm that a pinned scenario's results survive a regenerate after the
-  configuration-diff change.
+Tracked and fixed continuously rather than scheduled into a release. **The list
+is currently empty** — everything on it has shipped (see the changelog for what
+each fix did).
 
 ## Suggesting an item
 
