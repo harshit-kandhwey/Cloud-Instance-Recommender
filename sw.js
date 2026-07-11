@@ -2,10 +2,15 @@
 //
 // The app shell (HTML + CSS + manifest + icon) is precached on install so
 // navigations work offline. Everything else same-origin (JS modules, provider
-// data manifests, lazily-loaded region files, vendored SheetJS, logos, PDF) is
+// data manifests, lazily-loaded region files, vendored SheetJS, logos) is
 // cached at runtime with stale-while-revalidate: served instantly from cache
 // and refreshed in the background when online, so instance data stays current
-// without a build step. Bump CACHE to force a clean re-precache on next visit.
+// without a build step.
+//
+// Bump CACHE to force a clean re-precache on the next visit. A data refresh
+// normally does NOT need one — but if it DELETES region files, it does:
+// revalidating a deleted file 404s, so the cached copy would be served forever.
+// See "Service Worker" in CONTRIBUTING.md.
 //
 // CSP note: the page's `connect-src 'none'` restricts fetch/XHR from the page,
 // not the service worker — the SW's own fetches run in the worker context

@@ -133,9 +133,11 @@ function splitProvider({ name, prefix }) {
   for (const { key, fileContent } of files) {
     fs.writeFileSync(path.join(regionsDir, `${key}.js`), fileContent, "utf8");
   }
+  const pruned = [];
   for (const stale of fs.readdirSync(regionsDir)) {
     if (stale.endsWith(".js") && !newFileNames.has(stale)) {
       fs.unlinkSync(path.join(regionsDir, stale));
+      pruned.push(stale);
     }
   }
 
@@ -154,7 +156,18 @@ function splitProvider({ name, prefix }) {
   console.log(
     `[${name}] split ${regions.length} regions into js/${name}/regions/ and rewrote manifest`,
   );
-  return { name, count: regions.length };
+  // A pruned region stays in users' runtime cache: stale-while-revalidate keeps
+  // serving the cached copy because revalidating a deleted file 404s. Bumping
+  // CACHE in sw.js is the only thing that evicts it — so say so, loudly.
+  if (pruned.length) {
+    console.log(
+      `[${name}] removed ${pruned.length} region file(s) no longer upstream: ${pruned.join(", ")}`,
+    );
+    console.log(
+      `[${name}] ⚠ regions were removed — bump CACHE in sw.js so clients drop the stale copies`,
+    );
+  }
+  return { name, count: regions.length, pruned };
 }
 
 let failed = false;

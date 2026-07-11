@@ -95,10 +95,11 @@ To refresh the data:
 
 `sw.js` precaches the app shell (HTML + CSS + manifest + icon) and runtime-caches everything else same-origin with stale-while-revalidate, so code and data changes reach users automatically on their next online visit — ordinary changes need no service-worker action.
 
-Two cases do need one:
+Three cases do need one:
 
 - **Adding an HTML page or stylesheet** — add it to the `PRECACHE` list in `sw.js` so it works offline from the first install.
 - **Forcing a clean re-precache** (e.g. after renaming or deleting shell files) — bump the `CACHE` version string in `sw.js`.
+- **A data refresh that removes or renames region files** — bump `CACHE`. Ordinary data refreshes need no bump: changed manifests and region files are picked up by stale-while-revalidate (returning users see the previous data for one visit, then the new data). A _deleted_ file is the exception — revalidating it 404s, so the cache keeps serving the old copy indefinitely, and only a new `CACHE` evicts it. `tools/split-data.js` prints a warning naming every region file it prunes; if that warning appears, bump.
 
 Note the service worker only registers on a secure context (GitHub Pages, `localhost`) — pages opened via `file://` simply skip it.
 
