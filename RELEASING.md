@@ -1,0 +1,92 @@
+# Releasing
+
+How a change gets from a working tree to a published release. The app is a
+static site with no build step, so "releasing" is really two things: keeping the
+version record honest, and knowing the few cases where the service worker needs
+a nudge.
+
+## Where versions live
+
+**Only in [CHANGELOG.md](CHANGELOG.md) and git tags.** No version string appears
+in the README, the user guide, the pages, or `package.json` — there is nothing to
+hand-bump, and nothing that can drift.
+
+The project uses [Semantic Versioning](https://semver.org), applied per commit:
+
+- **MAJOR** — a platform-defining shift (the `4.0` line in
+  [ROADMAP.md](ROADMAP.md)).
+- **MINOR** — a feature release. Each is a themed group of work, and each has a
+  `### x.y` section in the changelog's version map.
+- **PATCH** — one commit inside a minor: a feature increment, a fix, a review
+  round, a docs change, or a formatting pass.
+
+So every commit on `main` gets a version, a changelog row, and an annotated tag.
+
+## Landing a commit
+
+1. **Verify.** All four must be clean:
+
+   ```bash
+   npm run format          # or format:check — CI fails on unformatted files
+   node tests/syntax-check.js
+   node tests/run-all.js   # suites + golden byte-compare
+   npm run typecheck
+   ```
+
+2. **Update the version map** at the top of [CHANGELOG.md](CHANGELOG.md):
+   - Replace `_this commit_` in the previous top row with that commit's real
+     short SHA (`git rev-parse --short HEAD`).
+   - Add a new top row for the change you are about to commit, with
+     `_this commit_` as its SHA and a sentence describing what the change does —
+     written for a reader, not a diff.
+
+   A commit cannot contain its own hash, which is why the tip row always carries
+   the placeholder and the next commit backfills it. Exactly one row should ever
+   say `_this commit_`.
+
+3. **Commit and tag:**
+
+   ```bash
+   git commit -m "..."
+   git tag -a v3.5.17 -m "3.5.17 — short description"
+   ```
+
+4. **Push** when you mean to publish:
+
+   ```bash
+   git push origin main --tags
+   ```
+
+## Cutting a minor release
+
+Releases are published per **minor line**, not per commit — a `3.6` release, not
+twelve `3.6.x` releases. When a minor line is finished, publish its highest tag:
+
+```bash
+gh release create v3.6.11 --verify-tag --latest \
+  --title "3.6" \
+  --notes "..."   # the minor's story, drawn from its changelog section
+```
+
+Point `--latest` at the newest line only. The tag must already be on `origin` —
+`--verify-tag` will refuse otherwise.
+
+## Before you publish
+
+- **Dependency CVE check** — see the CVE-watch routine in
+  [SECURITY.md](SECURITY.md). Due monthly anyway, and again before each release.
+- **New page or stylesheet?** Add it to `PRECACHE` in `sw.js`, or it will not be
+  available offline on a first install.
+- **Data refresh that removed regions?** Bump `CACHE` in `sw.js`. Ordinary data
+  refreshes need no bump; deletions do, because a deleted file 404s on
+  revalidation and the cached copy would otherwise be served forever.
+  `tools/split-data.js` warns whenever it prunes a region. Full rules are under
+  "Service Worker" in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Smoke-test in a browser.** The test harness is pure Node and cannot cover
+  drag-and-drop, the service worker, or the rendering of either theme.
+
+## What is not released
+
+Patches are not scheduled on the roadmap — they land continuously between
+releases and are recorded in the changelog. The roadmap plans feature releases
+only.

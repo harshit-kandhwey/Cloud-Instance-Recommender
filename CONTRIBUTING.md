@@ -112,6 +112,10 @@ node tests/syntax-check.js  # syntax check over first-party JS
 
 No framework or npm install needed — see [tests/README.md](tests/README.md) for how the harness works and when to regenerate goldens.
 
+## Versioning and Releases
+
+Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the pages, the README, or `package.json`. Every commit on `main` gets a version, a changelog row, and an annotated tag; releases are published per minor line. [RELEASING.md](RELEASING.md) is the full process, including the pre-publish checklist.
+
 ## Pull Request Guidelines
 
 1. **Fork** the repository and create a branch from `main`

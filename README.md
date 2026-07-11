@@ -388,6 +388,7 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **User Guide**: See `user-guide.html` in this repository
 - **Version History**: See [CHANGELOG.md](CHANGELOG.md)
 - **Roadmap**: See [ROADMAP.md](ROADMAP.md)
+- **Release Process**: See [RELEASING.md](RELEASING.md)
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com
 

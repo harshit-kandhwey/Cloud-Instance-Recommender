@@ -35,9 +35,10 @@ Not tied to any release — adopted once, then maintained every cycle:
   0.20.3 and `xlsx-js-style` 0.18.5); refresh `SECURITY.md`, and keep an
   explicit "nothing leaves your browser" privacy statement current on the
   landing page. (S)
-- **Release hygiene** — document when a data refresh warrants a service-worker
-  `CACHE` bump, and keep a short release-process note (versioning, changelog,
-  tagging, cache rules). (S)
+- **Release hygiene** — keep [RELEASING.md](RELEASING.md) current: it is the
+  release process (versioning, changelog, tagging, the pre-publish checklist)
+  and it points at the service-worker cache rules in
+  [CONTRIBUTING.md](CONTRIBUTING.md). (S)
 - **Planning in the open** — track the adopted backlog on a public GitHub
   Project board and keep the issue templates current. (S)
 
