@@ -15,15 +15,16 @@ The project follows **Semantic Versioning** (`MAJOR.MINOR.PATCH`):
   review round, docs, or formatting pass).
 
 The **version map** below assigns every commit since the first a version and
-describes what its change actually did. The 95 commits already published on
-`main` keep their original commit messages unchanged; this table is the
+describes what its change actually did. The 95 commits that predate the first
+tag (`v3.4.9`) keep their original commit messages unchanged; this table is the
 reconciled, readable record on top of them. Versions are no longer printed in
 the README, the user guide, or anywhere else in the product — they live here
 and in git tags, so there is nothing to bump by hand.
 
 **Tags.** Commits from `3.4.9` onward carry an annotated git tag of their
-version (pushed to `origin`). The 95 earlier published commits are catalogued
-here but not tagged. Going forward, each commit is tagged with its version when
+version. The 95 commits before that tag are catalogued here but not tagged —
+which is where the count comes from: every row in the map is either one of those
+95 or one of the tagged commits. Going forward, each commit is tagged with its version when
 it lands. A tagged commit's version is recoverable with `git describe --tags`;
 the untagged historical commits are resolved through this version map.
 
@@ -37,7 +38,8 @@ exactly one row (the current tip) ever carries the placeholder.
 
 | Version | Commit        | Date       | Change                                                                                                                                                                                                                                                                                                   |
 | ------- | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.5.25  | _this commit_ | 2026-07-12 | Addressed a review round: dropped files are now judged by content like every other upload, a PDF or RTF is refused instead of being parsed as text, the AWS bulk template and no-match export follow the preview's sort order, and a provider toggled mid-run can no longer mislabel the results.        |
+| 3.5.26  | _this commit_ | 2026-07-12 | Made the upload text test real: a NUL check alone let a PNG, JPEG, GIF or other binary through to the CSV parser, so images and documents are now refused while a UTF-8 CSV still reads as text. Also clarified the changelog's commit count and the npm-tooling wording in the contributor docs.        |
+| 3.5.25  | 6671ac0       | 2026-07-12 | Addressed a review round: dropped files are now judged by content like every other upload, a PDF or RTF is refused instead of being parsed as text, the AWS bulk template and no-match export follow the preview's sort order, and a provider toggled mid-run can no longer mislabel the results.        |
 | 3.5.24  | a8f5a6a       | 2026-07-12 | Emptied the roadmap's known-issues list: every patch-level item on it has now shipped.                                                                                                                                                                                                                   |
 | 3.5.23  | 196a93b       | 2026-07-12 | Guarded two couplings that only a comment protected: a pinned scenario must survive a later run and a preview sort, and the manual-entry region autocomplete must offer every region the upload's chips accept (it filters through hardcoded lists a data refresh can leave behind).                     |
 | 3.5.22  | a200637       | 2026-07-11 | Warned when the provider selection changes after a run: the table and the downloads still describe the providers that were selected when Generate was clicked, so the results are now labelled stale until it is clicked again.                                                                          |

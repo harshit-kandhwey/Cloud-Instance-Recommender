@@ -12,7 +12,9 @@ Thank you for your interest in contributing! This document explains how to get i
 
 ## Getting Started
 
-This is a **pure static website** — no build tools, no npm, no compilation.
+This is a **pure static website** — the site itself has no build step and no
+compilation. What you clone is what gets served, so you can open any HTML file
+in a browser and it works.
 
 ```bash
 git clone https://github.com/harshit-kandhwey/Cloud-Instance-Recommender.git
@@ -20,6 +22,16 @@ cd Cloud-Instance-Recommender
 # Open any HTML file directly in a browser, or serve with:
 python -m http.server 8080
 # Then visit http://localhost:8080
+```
+
+npm is used **only for development tooling** — Prettier and the TypeScript
+checker, both of which CI runs. Nothing from `node_modules` ever reaches a
+user's browser, and no npm step is needed to run the site. To use the tooling:
+
+```bash
+npm ci                      # install the dev dependencies (Prettier, TypeScript)
+npm run format              # or format:check — CI fails on unformatted files
+npm run typecheck
 ```
 
 ## Project Structure
@@ -129,7 +141,7 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 ## Code Style
 
 - Plain HTML5, CSS3, and vanilla JavaScript (ES6+)
-- No frameworks, no build steps, no npm
+- No frameworks and no build step — the shipped site is raw HTML/CSS/JS. (npm exists for dev tooling only; see [Getting Started](#getting-started).)
 - Keep functions small and focused
 - Prefer `const` over `let`; avoid `var`
 - Use descriptive variable names

@@ -123,12 +123,23 @@ function sniffFileKind(head) {
   // OLE2 compound file — a legacy .xls, which SheetJS's full build can read but
   // which users are better off re-saving
   if (startsWith(0xd0, 0xcf, 0x11, 0xe0)) return "legacy-excel";
-  // Formats whose magic bytes are printable would pass the NUL test below and be
-  // fed to the CSV parser as text. PDF is the one users actually drop by mistake.
+
+  // Formats whose signature is entirely printable would survive the control-
+  // character test below and be handed to the CSV parser as text.
   if (startsWith(0x25, 0x50, 0x44, 0x46, 0x2d)) return "binary"; // "%PDF-"
   if (startsWith(0x7b, 0x5c, 0x72, 0x74, 0x66)) return "binary"; // "{\rtf"
-  // Text never contains NUL; any binary we don't recognize lands here
-  if (head.includes(0x00)) return "binary";
+  if (startsWith(0x47, 0x49, 0x46, 0x38)) return "binary"; // "GIF8"
+  // JPEG's high bytes are not control characters, and the length bytes that
+  // follow are not reliably zero, so it needs naming too
+  if (startsWith(0xff, 0xd8, 0xff)) return "binary"; // JPEG
+
+  // Any C0 control character other than tab/CR/LF means this is not text. NUL is
+  // the obvious case, but a NUL test alone is not a text test: a real PNG
+  // (89 50 4E 47 0D 0A 1A 0A) has none, and only its 0x1A gives it away.
+  const TEXT_CONTROLS = [0x09, 0x0a, 0x0d];
+  if (head.some((b) => b < 0x20 && !TEXT_CONTROLS.includes(b))) return "binary";
+
+  // High bytes are fine — a UTF-8 BOM or a non-ASCII VM name is still text
   return "text";
 }
 

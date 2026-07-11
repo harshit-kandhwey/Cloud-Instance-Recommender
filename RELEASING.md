@@ -24,9 +24,12 @@ So every commit on `main` gets a version, a changelog row, and an annotated tag.
 
 ## Landing a commit
 
-1. **Verify.** All four must be clean:
+1. **Verify.** All four must be clean. `npm ci` first on a fresh checkout —
+   Prettier and TypeScript are dev dependencies, so the two `npm run` steps fail
+   without it (the two `node` steps need nothing installed):
 
    ```bash
+   npm ci                  # once per checkout, or after package.json changes
    npm run format          # or format:check — CI fails on unformatted files
    node tests/syntax-check.js
    node tests/run-all.js   # suites + golden byte-compare
