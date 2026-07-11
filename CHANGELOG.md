@@ -21,12 +21,15 @@ reconciled, readable record on top of them. Versions are no longer printed in
 the README, the user guide, or anywhere else in the product — they live here
 and in git tags, so there is nothing to bump by hand.
 
-**Tags.** Commits from `3.4.9` onward (everything currently unpushed) carry an
-annotated git tag of their version. The 95 earlier published commits are
-catalogued here but not tagged. Going forward, each commit is tagged with its
-version when it lands, and tags are pushed only after the overall flow is
-validated. A tagged commit's version is recoverable with `git describe --tags`;
+**Tags.** Commits from `3.4.9` onward carry an annotated git tag of their
+version (pushed to `origin`). The 95 earlier published commits are catalogued
+here but not tagged. Going forward, each commit is tagged with its version when
+it lands. A tagged commit's version is recoverable with `git describe --tags`;
 the untagged historical commits are resolved through this version map.
+
+The newest row uses `_this commit_` in place of a SHA because a commit cannot
+contain its own hash; the next commit backfills it with the real short SHA, so
+exactly one row (the current tip) ever carries the placeholder.
 
 ## Version map
 
@@ -34,7 +37,8 @@ the untagged historical commits are resolved through this version map.
 
 | Version | Commit        | Date       | Change                                                                                                                                                         |
 | ------- | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.5.10  | _this commit_ | 2026-07-11 | Populated the roadmap with the adopted backlog, grouped into themed minor releases and a 4.0 major.                                                            |
+| 3.5.11  | _this commit_ | 2026-07-11 | Addressed a docs review round: finalized the changelog SHAs and clarified roadmap wording on storage quota, the CI formatting gate, and the CVE-watch cadence. |
+| 3.5.10  | ecf9ef8       | 2026-07-11 | Populated the roadmap with the adopted backlog, grouped into themed minor releases and a 4.0 major.                                                            |
 | 3.5.9   | 303d3d0       | 2026-07-11 | Corrected the local-storage privacy note, extended nearest-miss guidance to auto-resolved regions, and tightened a preset comment and the probe-coupling test. |
 | 3.5.8   | 4f7ce4d       | 2026-07-11 | Restructured the changelog into a newest-first, per-commit version map, added a roadmap, and removed hardcoded versions from the product.                      |
 | 3.5.7   | 9523d45       | 2026-07-10 | Hardened the review round: rejected reserved preset names, guarded the offline banner against a missing document body, and synced docs.                        |

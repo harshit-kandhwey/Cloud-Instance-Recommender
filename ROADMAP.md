@@ -25,11 +25,16 @@ week or more). Dependencies are called out where one item needs another first.
 Not tied to any release — adopted once, then maintained every cycle:
 
 - **Formatting gate in CI** — run `prettier --check` on every push and pull
-  request; when it fails, auto-format and commit the result with `[skip ci]` so
-  the tree stays clean without a manual round-trip. (S)
-- **Dependency-CVE watch** — check the vendored SheetJS (0.20.3) for advisories
-  at least twice a period, refresh `SECURITY.md`, and keep an explicit "nothing
-  leaves your browser" privacy statement current on the landing page. (S)
+  request; when it fails, auto-format, run the full test suite on the formatted
+  tree in the same job, then commit the result. The `[skip ci]` marker is used
+  only to stop that commit from re-triggering the workflow — validation still
+  runs on the formatted tree, so no commit lands unverified. (S)
+- **Dependency-CVE watch** — monthly, and before each release, check the
+  vendored SheetJS builds under `js/vendor/` for advisories, treating the
+  versions embedded in those artifacts as the source of truth (today `xlsx.full`
+  0.20.3 and `xlsx-js-style` 0.18.5); refresh `SECURITY.md`, and keep an
+  explicit "nothing leaves your browser" privacy statement current on the
+  landing page. (S)
 - **Release hygiene** — document when a data refresh warrants a service-worker
   `CACHE` bump, and keep a short release-process note (versioning, changelog,
   tagging, cache rules). (S)
@@ -124,9 +129,12 @@ Broaden reach and shore up quality.
 - Dedicated security regression suite: CSV-cell XSS into the preview and
   portfolio, formula-injection round-trip, prototype pollution (extending the
   recent fix), and localStorage tampering. (M)
-- Storage manager — view and clear all app localStorage, with quota-pressure
-  handling (the portfolio copy alone can be ~4 MB of the ~5 MB budget); doubles
-  as a privacy feature. (M)
+- Storage manager — view and clear all app localStorage, with runtime quota
+  detection and quota-pressure handling. Browser localStorage limits vary by
+  browser, origin, and mode; the portfolio copy alone has been observed near
+  ~4 MB, close to the commonly seen ~5 MB ceiling, so the manager should measure
+  actual usage rather than assume a fixed budget. Doubles as a privacy
+  feature. (M)
 - Golden-test expansion: Azure-only, GCP-only, and nearest-miss goldens, plus a
   structural compare for xlsx. (M)
 - `docs/ARCHITECTURE.md` — module map, data flow, worker protocol, storage
