@@ -247,6 +247,68 @@ function hideDataToast() {
   }
 }
 
+// ─── Toasts ───────────────────────────────────────────────────────────────────
+// Replaces window.alert for everything the app tells the user: alert() is
+// unstyled, ignores the theme, blocks the page, and reads out the origin. These
+// render into the #toastStack placeholder, which is an aria-live region so a
+// screen reader announces each new message.
+//
+// Rendered as innerHTML into an existing container (rather than built with
+// createElement) to match how every other panel here works.
+
+const TOAST_TONES = {
+  info: { icon: "ℹ️", color: "var(--primary)" },
+  success: { icon: "✅", color: "var(--good-strong)" },
+  warning: { icon: "⚠️", color: "var(--amber-strong)" },
+  error: { icon: "❌", color: "var(--red-strong)" },
+};
+
+const _toasts = [];
+let _toastSeq = 0;
+
+function renderToasts() {
+  const stack = document.getElementById("toastStack");
+  if (!stack) return;
+
+  if (!_toasts.length) {
+    stack.innerHTML = "";
+    stack.classList.add("hidden");
+    return;
+  }
+
+  stack.innerHTML = _toasts
+    .map((toast) => {
+      const tone = TOAST_TONES[toast.type] || TOAST_TONES.info;
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border-soft);border-left:4px solid ${tone.color};border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);font-size:0.9rem;line-height:1.4;">
+          <span aria-hidden="true">${tone.icon}</span>
+          <span style="flex:1;">${escapeHtml(toast.message)}</span>
+          <button type="button" onclick="dismissToast(${toast.id})" aria-label="Dismiss notification" style="border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:0 2px;">×</button>
+        </div>`;
+    })
+    .join("");
+  stack.classList.remove("hidden");
+}
+
+// type: info | success | warning | error. duration 0 keeps it until dismissed.
+function showToast(message, type = "info", duration = 6000) {
+  const id = ++_toastSeq;
+  _toasts.push({ id, message: String(message), type });
+  renderToasts();
+  if (duration > 0) {
+    setTimeout(() => dismissToast(id), duration);
+  }
+  return id;
+}
+
+function dismissToast(id) {
+  const index = _toasts.findIndex((t) => t.id === Number(id));
+  if (index === -1) return;
+  _toasts.splice(index, 1);
+  renderToasts();
+}
+window.dismissToast = dismissToast;
+
 let _watcherStarted = false;
 let _preWarmStarted = false;
 

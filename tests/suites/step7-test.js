@@ -232,9 +232,9 @@ vm.runInContext(
   ctx,
 );
 check(
-  "alert instead of empty file",
-  ctx.alerts.some((a) => a.includes("nothing to export")),
-  JSON.stringify(ctx.alerts),
+  "toast instead of empty file",
+  elements.toastStack.innerHTML.includes("nothing to export"),
+  elements.toastStack.innerHTML,
 );
 check("no second download", downloads.length === 1);
 

@@ -705,8 +705,9 @@ function applyColumnMapping() {
     if (!select || select.value === "") continue;
     const source = pending.headers[parseInt(select.value, 10)];
     if (usedSources.has(source)) {
-      alert(
+      showToast(
         `Column "${source}" is assigned to more than one field. Each column can map to only one field.`,
+        "warning",
       );
       return;
     }
@@ -718,7 +719,10 @@ function applyColumnMapping() {
     (canonical) => !Object.values(mapping).includes(canonical),
   );
   if (missingRequired.length) {
-    alert(`Please assign a column for: ${missingRequired.join(", ")}`);
+    showToast(
+      `Please assign a column for: ${missingRequired.join(", ")}`,
+      "warning",
+    );
     return;
   }
 

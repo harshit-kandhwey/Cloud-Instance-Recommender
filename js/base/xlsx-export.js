@@ -126,7 +126,10 @@ function ensureResultsXlsx() {
 
 function downloadResultsXlsx() {
   if (typeof processedResults === "undefined" || !processedResults.length) {
-    alert("No results to download. Please generate recommendations first.");
+    showToast(
+      "No results to download. Please generate recommendations first.",
+      "warning",
+    );
     return;
   }
   const btn = document.getElementById("downloadResultsXlsxBtn");
@@ -148,9 +151,10 @@ function downloadResultsXlsx() {
     })
     .catch((e) => {
       console.error("Results Excel export failed:", e);
-      alert(
+      showToast(
         "Sorry — building the Excel file failed: " +
           (e && e.message ? e.message : e),
+        "error",
       );
     })
     .finally(() => {

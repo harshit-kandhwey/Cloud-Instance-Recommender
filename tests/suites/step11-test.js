@@ -157,7 +157,8 @@ function fill(ctx, values) {
   check(
     "missing CPU rejected",
     vm.runInContext("manualVMs.length", ctx) === 1 &&
-      ctx.alerts.some((a) => a.includes("greater than 0")),
+      elements.toastStack.innerHTML.includes("greater than 0"),
+    elements.toastStack.innerHTML,
   );
 
   fill(ctx, ["", "2", "8", "", "", "eu-west-1"]);

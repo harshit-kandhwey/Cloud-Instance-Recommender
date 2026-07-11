@@ -20,16 +20,17 @@ function generateRecommendations() {
 
   // Validation
   if (csvData.length === 0) {
-    alert(
+    showToast(
       window._pendingIngest
         ? "Please confirm the column mapping first (see the panel above)."
         : "Please upload a CSV file first.",
+      "warning",
     );
     return;
   }
 
   if (selectedProviders.length === 0) {
-    alert("Please select at least one cloud provider.");
+    showToast("Please select at least one cloud provider.", "warning");
     return;
   }
 
@@ -53,8 +54,9 @@ function generateRecommendations() {
 
   // Check if modular system is available
   if (typeof getInstanceRecommendationWithSelector === "undefined") {
-    alert(
-      "Modular Instance Selector system not found. Please include the required files:\n- base-instance-selector.js\n- aws-instance-selector.js\n- azure-instance-selector.js\n- gcp-instance-selector.js\n- instance-selector-factory.js",
+    showToast(
+      "The instance selector system failed to load. Please reload the page.",
+      "error",
     );
     return;
   }
@@ -66,7 +68,10 @@ function generateRecommendations() {
   );
 
   if (missingColumns.length > 0) {
-    alert(`Missing required columns: ${missingColumns.join(", ")}`);
+    showToast(
+      `Missing required columns: ${missingColumns.join(", ")}`,
+      "warning",
+    );
     return;
   }
 
@@ -74,7 +79,7 @@ function generateRecommendations() {
     'input[name="recommendationType"]:checked',
   );
   if (!recommendationType) {
-    alert("Please select a recommendation type.");
+    showToast("Please select a recommendation type.", "warning");
     return;
   }
 
@@ -292,8 +297,9 @@ async function processRecommendations() {
     }
   } catch (error) {
     console.error("Error processing recommendations:", error);
-    alert(
+    showToast(
       `An error occurred while processing recommendations: ${error.message}`,
+      "error",
     );
   } finally {
     const processingStatus = document.getElementById("processingStatus");

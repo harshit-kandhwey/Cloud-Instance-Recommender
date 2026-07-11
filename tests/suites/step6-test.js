@@ -266,6 +266,94 @@ function check(name, cond, detail) {
     elements.resultsStaleNotice.classes.has("hidden"),
   );
 
+  // Toasts replaced window.alert everywhere the app talks to the user.
+  console.log("[toasts]");
+  // fakeElement() creates on first lookup, so ask for it rather than reaching
+  // into the map before anything has rendered
+  const stack = ctx.document.getElementById("toastStack");
+
+  const infoId = ctx.showToast("Saved the thing", "success", 0);
+  check(
+    "toast renders its message and is revealed",
+    stack.innerHTML.includes("Saved the thing") && !stack.classes.has("hidden"),
+    stack.innerHTML,
+  );
+  check(
+    "success tone uses the theme token, not a hardcoded colour",
+    stack.innerHTML.includes("var(--good-strong)"),
+    stack.innerHTML,
+  );
+
+  ctx.showToast("Something broke", "error", 0);
+  check(
+    "a second toast stacks rather than replacing the first",
+    stack.innerHTML.includes("Saved the thing") &&
+      stack.innerHTML.includes("Something broke"),
+  );
+  check(
+    "error tone is announced assertively enough to differ from info",
+    stack.innerHTML.includes("var(--red-strong)"),
+  );
+
+  ctx.dismissToast(infoId);
+  check(
+    "dismissing one leaves the other",
+    !stack.innerHTML.includes("Saved the thing") &&
+      stack.innerHTML.includes("Something broke"),
+    stack.innerHTML,
+  );
+
+  // A message is user data — a VM named `<img onerror=...>` must not execute
+  ctx.showToast('<img src=x onerror="boom">', "info", 0);
+  check(
+    "message is escaped, not injected",
+    !stack.innerHTML.includes("<img src=x") &&
+      stack.innerHTML.includes("&lt;img"),
+    stack.innerHTML,
+  );
+
+  // Auto-dismiss
+  const tempId = ctx.showToast("Briefly", "info", 30);
+  check("timed toast shown", stack.innerHTML.includes("Briefly"));
+  await new Promise((r) => setTimeout(r, 80));
+  check(
+    "timed toast auto-dismisses",
+    !stack.innerHTML.includes("Briefly"),
+    stack.innerHTML,
+  );
+  check(
+    "dismissing an already-gone toast is a no-op",
+    (() => {
+      ctx.dismissToast(tempId);
+      return true;
+    })(),
+  );
+
+  // Guard the migration: alert() blocks the page and ignores the theme
+  const productSources = [
+    "js/base/app-core.js",
+    "js/base/generate.js",
+    "js/base/downloads.js",
+    "js/base/ingest.js",
+    "js/base/manual-entry.js",
+    "js/base/preview.js",
+    "js/base/presets.js",
+    "js/base/xlsx-export.js",
+    "js/base/scenario-compare.js",
+    "js/base/portfolio.js",
+    "js/base/form-controls.js",
+  ];
+  const offenders = productSources.filter((rel) => {
+    const src = fs.readFileSync(path.join(REPO, rel), "utf8");
+    // strip line comments so app-core's explanatory prose doesn't count
+    return /(^|[^.\w])alert\s*\(/.test(src.replace(/\/\/.*$/gm, ""));
+  });
+  check(
+    "no window.alert left in the product",
+    offenders.length === 0,
+    `still calling alert(): ${offenders.join(", ")}`,
+  );
+
   process.exit(failures ? 1 : 0);
 })().catch((e) => {
   console.error(e);

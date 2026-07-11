@@ -188,7 +188,10 @@ function manualAddVM() {
   const cpu = parseFloat(row["CPU Count"]);
   const memory = parseFloat(row["Memory (GB)"]);
   if (isNaN(cpu) || cpu <= 0 || isNaN(memory) || memory <= 0) {
-    alert("Please enter a CPU Count and Memory (GB) greater than 0.");
+    showToast(
+      "Please enter a CPU Count and Memory (GB) greater than 0.",
+      "warning",
+    );
     return;
   }
   if (!row["VM Name"]) row["VM Name"] = `vm-${manualVMs.length + 1}`;
@@ -227,7 +230,7 @@ function manualClearVMs() {
 // mapping is a no-op and everything downstream behaves like an upload)
 function manualApplyVMs() {
   if (!manualVMs.length) {
-    alert("Add at least one VM first.");
+    showToast("Add at least one VM first.", "warning");
     return;
   }
   window._uploadNote = null;

@@ -46,10 +46,9 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 ### 3.6 — Output fidelity & UI polish
 
-Small, high-frequency wins that improve everyday use.
+Small, high-frequency wins that improve everyday use. **In progress** — see the
+[changelog](CHANGELOG.md) for what has already shipped.
 
-- Replace the remaining native `alert()` dialogs with the themed toast/status
-  pattern for consistent styling and screen-reader behavior. (S)
 - Add a UTF-8 BOM to CSV downloads so Excel opens non-ASCII VM and application
   names correctly. (S)
 - Nearest-miss **one-click relax** — apply the single filter change that

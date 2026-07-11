@@ -1298,9 +1298,10 @@ function exportPortfolioWorkbook() {
     })
     .catch((e) => {
       console.error("Portfolio Excel export failed:", e);
-      alert(
+      showToast(
         "Sorry — building the Excel workbook failed: " +
           (e && e.message ? e.message : e),
+        "error",
       );
     })
     .finally(() => {

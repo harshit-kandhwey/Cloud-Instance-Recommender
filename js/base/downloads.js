@@ -3,7 +3,10 @@
 
 function downloadResults() {
   if (!processedResults || processedResults.length === 0) {
-    alert("No results to download. Please generate recommendations first.");
+    showToast(
+      "No results to download. Please generate recommendations first.",
+      "warning",
+    );
     return;
   }
 
@@ -52,8 +55,9 @@ function getNoMatchRows(results) {
 function downloadNoMatchRows() {
   const noMatch = getNoMatchRows(resultsInPreviewOrder(processedResults));
   if (!noMatch.length) {
-    alert(
+    showToast(
       "Every row received at least one recommendation — nothing to export.",
+      "info",
     );
     return;
   }
@@ -165,10 +169,11 @@ function downloadAppSummary() {
       processedResults &&
       processedResults.length &&
       Object.keys(processedResults[0]).includes("App Name");
-    alert(
+    showToast(
       hasAppNameCol
         ? "The App Name column is empty for every row — fill it in to get an app summary."
         : "No App Name column in the results — add one to your file to get an app summary.",
+      "warning",
     );
     return;
   }
@@ -275,7 +280,10 @@ function buildPortfolioPayload() {
 function openAppPortfolio() {
   const payload = buildPortfolioPayload();
   if (!payload) {
-    alert("Generate recommendations first, then open the App Portfolio.");
+    showToast(
+      "Generate recommendations first, then open the App Portfolio.",
+      "warning",
+    );
     return;
   }
 
@@ -295,8 +303,9 @@ function openAppPortfolio() {
 
   const child = window.open("app-portfolio.html");
   if (!child) {
-    alert(
+    showToast(
       "The App Portfolio page was blocked by a popup blocker. Allow popups for this site and try again.",
+      "warning",
     );
     return;
   }
@@ -344,7 +353,10 @@ function updateAppPortfolioButton(results) {
 // If omitted and only one type exists, that type is used automatically.
 function downloadAWSBulkTemplate(type) {
   if (!processedResults || processedResults.length === 0) {
-    alert("No results to download. Please generate recommendations first.");
+    showToast(
+      "No results to download. Please generate recommendations first.",
+      "warning",
+    );
     return;
   }
 
@@ -357,8 +369,9 @@ function downloadAWSBulkTemplate(type) {
   );
 
   if (!hasL2L && !hasOpt) {
-    alert(
+    showToast(
       "No AWS recommendations found. Please select AWS as a provider and regenerate.",
+      "warning",
     );
     return;
   }
@@ -368,7 +381,7 @@ function downloadAWSBulkTemplate(type) {
   const useOpt = type === "optimized" || (!type && !hasL2L && hasOpt);
 
   if (!useL2L && !useOpt) {
-    alert("Unknown bulk template type. Use 'l2l' or 'optimized'.");
+    showToast("Unknown bulk template type. Use 'l2l' or 'optimized'.", "error");
     return;
   }
 
@@ -450,8 +463,9 @@ function downloadAWSBulkTemplate(type) {
   });
 
   if (rows.length === 0) {
-    alert(
+    showToast(
       "No valid AWS instance recommendations to export. Check that your results contain successful matches.",
+      "warning",
     );
     return;
   }

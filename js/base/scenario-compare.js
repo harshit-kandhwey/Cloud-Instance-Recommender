@@ -254,7 +254,7 @@ function pinScenario() {
     !processedResults ||
     !processedResults.length
   ) {
-    alert("Generate recommendations first, then pin the run.");
+    showToast("Generate recommendations first, then pin the run.", "warning");
     return;
   }
   const scenario = makeScenario();

@@ -194,9 +194,9 @@ function getHeaders(ctx) {
         // selectedProviders default? ensure non-empty to reach csvData gate
         vm.runInContext("selectedProviders = ['aws']", ctx);
         vm.runInContext("generateRecommendations()", ctx);
-        return ctx.alerts.some((a) => a.includes("column mapping"));
+        return elements.toastStack.innerHTML.includes("column mapping");
       })(),
-      JSON.stringify(ctx.alerts),
+      elements.toastStack.innerHTML,
     );
 
     // Simulate user: CPU Count ← "CPU Count" (index 0), Memory ← index 2, VM Name ← index 3
