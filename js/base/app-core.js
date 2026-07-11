@@ -633,6 +633,73 @@ function resultsInPreviewOrder(results) {
   return sortResultRows([...results], column, state.sortDir);
 }
 
+// ─── Sizing savings ───────────────────────────────────────────────────────────
+// What the optimized sizing actually bought, per provider. Never aggregated
+// across providers: the same VM appears once per provider, so a combined total
+// would count the same saving two or three times over.
+//
+// The baseline is the like-for-like recommendation when the run produced one —
+// that is the honest comparison, since it is what you would have deployed
+// without optimizing. On an optimized-only run there is nothing to compare
+// against but the VM's current size, so that is used and labelled as such.
+function computeSizingSavings(results) {
+  if (!results || !results.length) return [];
+  const keys = Object.keys(results[0]);
+  const providers = keys
+    .filter((k) => k.endsWith(" Optimized Instance"))
+    .map((k) => k.replace(" Optimized Instance", ""));
+
+  const savings = [];
+  providers.forEach((provider) => {
+    const optInstance = `${provider} Optimized Instance`;
+    const optCpu = `${provider} Optimized vCPUs`;
+    const optMem = `${provider} Optimized Memory (GiB)`;
+    const baseInstance = `${provider} Like-to-Like Instance`;
+    const baseCpu = `${provider} Like-to-Like vCPUs`;
+    const baseMem = `${provider} Like-to-Like Memory (GiB)`;
+    const againstLikeForLike = keys.includes(baseCpu);
+
+    let vcpus = 0;
+    let memory = 0;
+    let rows = 0;
+
+    results.forEach((row) => {
+      if (isNoMatchValue(row[optInstance])) return;
+      const toCpu = parseFloat(row[optCpu]);
+      const toMem = parseFloat(row[optMem]);
+
+      let fromCpu;
+      let fromMem;
+      if (againstLikeForLike) {
+        // Only rows the like-for-like pass also matched can be compared
+        if (isNoMatchValue(row[baseInstance])) return;
+        fromCpu = parseFloat(row[baseCpu]);
+        fromMem = parseFloat(row[baseMem]);
+      } else {
+        fromCpu = parseFloat(row[COLUMN_MAPPINGS.cpu]);
+        fromMem = parseFloat(row[COLUMN_MAPPINGS.memory]);
+      }
+
+      if ([toCpu, toMem, fromCpu, fromMem].some((n) => isNaN(n))) return;
+      vcpus += fromCpu - toCpu;
+      memory += fromMem - toMem;
+      rows++;
+    });
+
+    if (rows > 0 && (vcpus !== 0 || memory !== 0)) {
+      savings.push({
+        provider,
+        vcpus: Math.round(vcpus * 10) / 10,
+        memory: Math.round(memory * 10) / 10,
+        rows,
+        baseline: againstLikeForLike ? "like-for-like" : "current size",
+      });
+    }
+  });
+
+  return savings;
+}
+
 // ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
 // The engine already works out, per unmatched row, which soft-filter group kept
 // the otherwise-fitting instance out ("Nearest Miss" column). This turns that

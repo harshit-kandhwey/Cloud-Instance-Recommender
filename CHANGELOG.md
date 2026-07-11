@@ -38,7 +38,8 @@ exactly one row (the current tip) ever carries the placeholder.
 
 | Version | Commit        | Date       | Change                                                                                                                                                                                                |
 | ------- | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.6.2   | _this commit_ | 2026-07-12 | Turned the nearest-miss diagnosis into an action: after a run, the app names the single filter that would rescue the most unmatched rows and offers to switch it off and regenerate in one click.     |
+| 3.6.3   | _this commit_ | 2026-07-12 | Added a per-provider chip to the stats bar showing the vCPU and memory that optimized sizing saved against the like-for-like recommendation — and, just as plainly, when it added resources instead.  |
+| 3.6.2   | 287fb2b       | 2026-07-12 | Turned the nearest-miss diagnosis into an action: after a run, the app names the single filter that would rescue the most unmatched rows and offers to switch it off and regenerate in one click.     |
 | 3.6.1   | b3a9383       | 2026-07-12 | Added a UTF-8 BOM to every CSV download, so Excel stops turning non-ASCII VM and application names into mojibake, and routed all seven CSV exports through a single download helper.                  |
 | 3.6.0   | 7d04569       | 2026-07-12 | Replaced every `alert()` with themed, dismissible toasts that respect the theme, announce themselves to a screen reader, and no longer freeze the page or print the site's address above the message. |
 

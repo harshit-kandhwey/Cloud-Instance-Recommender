@@ -358,6 +358,92 @@ function check(name, cond, detail) {
     ctx.document.createElement = realCreateElement;
   }
 
+  // What optimizing bought, per provider — never summed across providers, since
+  // the same VM appears once per provider
+  console.log("[sizing savings]");
+  {
+    const rows = [
+      {
+        "VM Name": "a",
+        "CPU Count": "8",
+        "Memory (GB)": "32",
+        "AWS Like-to-Like Instance": "m5.2xlarge",
+        "AWS Like-to-Like vCPUs": 8,
+        "AWS Like-to-Like Memory (GiB)": 32,
+        "AWS Optimized Instance": "m5.xlarge",
+        "AWS Optimized vCPUs": 4,
+        "AWS Optimized Memory (GiB)": 16,
+      },
+      {
+        "VM Name": "b",
+        "CPU Count": "2",
+        "Memory (GB)": "8",
+        "AWS Like-to-Like Instance": "m5.large",
+        "AWS Like-to-Like vCPUs": 2,
+        "AWS Like-to-Like Memory (GiB)": 8,
+        "AWS Optimized Instance": "m5.xlarge", // upsized
+        "AWS Optimized vCPUs": 4,
+        "AWS Optimized Memory (GiB)": 16,
+      },
+      {
+        "VM Name": "c", // no match — must not contribute
+        "CPU Count": "2",
+        "Memory (GB)": "8",
+        "AWS Like-to-Like Instance": "No data available",
+        "AWS Like-to-Like vCPUs": "",
+        "AWS Like-to-Like Memory (GiB)": "",
+        "AWS Optimized Instance": "No data available",
+        "AWS Optimized vCPUs": "",
+        "AWS Optimized Memory (GiB)": "",
+      },
+    ];
+    const saved = ctx.computeSizingSavings(rows);
+    check(
+      "nets downsizing against upsizing, skipping no-match rows",
+      saved.length === 1 &&
+        saved[0].provider === "AWS" &&
+        saved[0].vcpus === 2 && // (8-4) + (2-4)
+        saved[0].memory === 8 && // (32-16) + (8-16)
+        saved[0].rows === 2,
+      JSON.stringify(saved),
+    );
+    check(
+      "baseline is the like-for-like recommendation when there is one",
+      saved[0].baseline === "like-for-like",
+    );
+
+    // Optimized-only run: nothing to compare against but the current size
+    const optOnly = [
+      {
+        "VM Name": "a",
+        "CPU Count": "8",
+        "Memory (GB)": "32",
+        "AWS Optimized Instance": "m5.xlarge",
+        "AWS Optimized vCPUs": 4,
+        "AWS Optimized Memory (GiB)": 16,
+      },
+    ];
+    const savedOpt = ctx.computeSizingSavings(optOnly);
+    check(
+      "falls back to the current size when there is no like-for-like column",
+      savedOpt.length === 1 &&
+        savedOpt[0].vcpus === 4 &&
+        savedOpt[0].memory === 16 &&
+        savedOpt[0].baseline === "current size",
+      JSON.stringify(savedOpt),
+    );
+
+    check(
+      "a like-for-like-only run has no savings to report",
+      ctx.computeSizingSavings([
+        {
+          "AWS Like-to-Like Instance": "m5.large",
+          "AWS Like-to-Like vCPUs": 2,
+        },
+      ]).length === 0,
+    );
+  }
+
   // One-click relax: turn the Nearest Miss diagnosis into an action
   console.log("[relax suggestion]");
   {

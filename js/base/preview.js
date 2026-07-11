@@ -54,6 +54,21 @@ function _buildStatsHtml(results) {
       ).size
     : 0;
 
+  // What optimizing actually bought, per provider. Upsizing is reported just as
+  // plainly as downsizing — a stat that only ever shows a win is not a stat.
+  const savingsChips = computeSizingSavings(results)
+    .map((s) => {
+      const parts = [];
+      if (s.vcpus !== 0)
+        parts.push(`${s.vcpus > 0 ? "−" : "+"}${Math.abs(s.vcpus)} vCPU`);
+      if (s.memory !== 0)
+        parts.push(`${s.memory > 0 ? "−" : "+"}${Math.abs(s.memory)} GB`);
+      const saving = s.vcpus >= 0 && s.memory >= 0;
+      const color = saving ? "var(--good-strong)" : "var(--amber-strong)";
+      return `<span style="color:${color};" title="Optimized sizing across ${s.rows} matched row(s), compared with the ${s.baseline} recommendation">⚡ ${escapeHtml(s.provider)} <strong>${parts.join(" · ")}</strong></span>`;
+    })
+    .join("");
+
   const rulesSummary = Object.entries(rulesCounts)
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${escapeHtml(k)}(${v})`)
@@ -78,6 +93,7 @@ function _buildStatsHtml(results) {
       <span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
       ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
       ${appCount > 0 ? `<span style="color:var(--text-body);">🧩 <strong>${appCount}</strong> apps</span>` : ""}
+      ${savingsChips}
       ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;

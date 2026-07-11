@@ -49,7 +49,6 @@ Not tied to any release — adopted once, then maintained every cycle:
 Small, high-frequency wins that improve everyday use. **In progress** — see the
 [changelog](CHANGELOG.md) for what has already shipped.
 
-- Stats bar showing the total vCPU and RAM saved by optimized sizing. (S)
 - Copy-to-clipboard buttons on each results group. (S)
 - Collapse rarely-used filter sections by default and remember the state. (S)
 - Anchor navigation / back-to-top on long tool pages. (S)
