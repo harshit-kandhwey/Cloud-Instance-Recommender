@@ -216,18 +216,22 @@ function initializeRecommendationTypeHandlers() {
 // ─── Section collapse state ───────────────────────────────────────────────────
 // Sections you rarely touch start collapsed, so the page opens on the parts that
 // matter; every section then remembers whatever the user last did with it.
-// Keyed by the section's own title, which is stable and unique per page.
+//
+// Keyed by `data-section-id` on the header, NOT by its heading text: keying off
+// rendered copy means renaming a heading silently discards everyone's saved
+// state and quietly stops the default from applying.
 const SECTIONS_STORAGE_KEY = "cloudInstanceRecommenderSections";
-// Exact <h2 class="section-title"> text — a near-miss here fails silently, so
-// these are the strings as they appear on the four tool pages.
-const DEFAULT_COLLAPSED_SECTIONS = [
-  "Sample CSV Template",
-  "Advanced Instance Filtering (Optional)",
-  "Usage Statistics",
-];
 
-// Titles can wrap across lines in the markup, so collapse whitespace
+// The ids of the sections that start collapsed. Only headers carrying
+// `onclick="toggleSection(this)"` are collapsible at all — currently the sample
+// template and the advanced filters.
+const DEFAULT_COLLAPSED_SECTIONS = ["sample-template", "advanced-filters"];
+
+// Falls back to the heading text so a section without an id still persists
+// (it just inherits the old fragility).
 function sectionKey(header) {
+  const id = header.getAttribute && header.getAttribute("data-section-id");
+  if (id) return id;
   const title = header.querySelector && header.querySelector(".section-title");
   return title ? title.textContent.replace(/\s+/g, " ").trim() : "";
 }

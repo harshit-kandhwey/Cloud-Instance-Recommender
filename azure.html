@@ -130,7 +130,11 @@
       <main class="main-content" id="main">
         <!-- Sample CSV Template Section -->
         <section class="section">
-          <div class="section-header" onclick="toggleSection(this)">
+          <div
+            class="section-header"
+            data-section-id="sample-template"
+            onclick="toggleSection(this)"
+          >
             <span class="section-icon">📄</span>
             <h2 class="section-title">Sample CSV Template</h2>
             <span class="toggle-icon">▲</span>
@@ -643,7 +647,11 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,</pre>
 
         <!-- Advanced Filtering -->
         <section class="section collapsed">
-          <div class="section-header" onclick="toggleSection(this)">
+          <div
+            class="section-header"
+            data-section-id="advanced-filters"
+            onclick="toggleSection(this)"
+          >
             <span class="section-icon">🔧</span>
             <h2 class="section-title">
               Advanced Instance Filtering (Optional)

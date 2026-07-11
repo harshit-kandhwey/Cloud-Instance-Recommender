@@ -450,10 +450,11 @@ nav a.active {
   text-align: center;
 }
 
+/* No nowrap: "See the full changelog →" is long enough to overflow a narrow
+   phone if it is forbidden from wrapping. */
 .whats-new a {
   color: var(--primary);
   font-weight: 600;
-  white-space: nowrap;
 }
 
 .privacy-note {

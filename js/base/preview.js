@@ -153,6 +153,30 @@ function showResultsPreview(results) {
   scrollAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// The one definition of "what the preview is showing": filter first
+// (case-insensitive substring across the visible columns), then sort. The table
+// and the clipboard both go through this — two copies of it would be two chances
+// to drift, and "the clipboard agrees with the screen" is the whole guarantee.
+// Always returns a NEW array; `results` is never reordered in place.
+function filterAndSortRows(results, displayCols, filter, sortCol, sortDir) {
+  const needle = String(filter || "")
+    .trim()
+    .toLowerCase();
+  const rows = needle
+    ? results.filter((row) =>
+        displayCols.some((c) =>
+          String(row[c] ?? "")
+            .toLowerCase()
+            .includes(needle),
+        ),
+      )
+    : [...results];
+  if (sortCol !== null && sortCol !== undefined) {
+    sortResultRows(rows, displayCols[sortCol], sortDir);
+  }
+  return rows;
+}
+
 function _renderPreviewTable(
   container,
   results,
@@ -169,23 +193,18 @@ function _renderPreviewTable(
   const isVcpuCol = (c) => c.includes("vCPUs");
   const isMemCol = (c) => c.includes("Memory (GiB)");
 
-  // Filter first (case-insensitive substring across visible columns), sort after
+  const rows = filterAndSortRows(
+    results,
+    displayCols,
+    filter,
+    sortCol,
+    sortDir,
+  );
+  // Only for the wording below ("No rows match …", the count line); the
+  // filtering itself is the helper's job
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
-  let rows = needle
-    ? results.filter((row) =>
-        displayCols.some((c) =>
-          String(row[c] ?? "")
-            .toLowerCase()
-            .includes(needle),
-        ),
-      )
-    : [...results];
-  if (sortCol !== null) {
-    // Same comparator the exports use, so the file matches the screen's order
-    sortResultRows(rows, displayCols[sortCol], sortDir);
-  }
 
   // Build L2L vCPU map per provider for diff view
   const l2lVcpuColMap = {};
@@ -423,21 +442,14 @@ function copyPreviewToClipboard() {
   const state = window._previewState;
   if (!state || !state.results || !state.results.length) return;
 
-  const needle = String(state.filter || "")
-    .trim()
-    .toLowerCase();
-  let rows = needle
-    ? state.results.filter((row) =>
-        state.displayCols.some((c) =>
-          String(row[c] ?? "")
-            .toLowerCase()
-            .includes(needle),
-        ),
-      )
-    : [...state.results];
-  if (state.sortCol !== null) {
-    sortResultRows(rows, state.displayCols[state.sortCol], state.sortDir);
-  }
+  // Same helper the table renders from, so the two cannot disagree
+  const rows = filterAndSortRows(
+    state.results,
+    state.displayCols,
+    state.filter,
+    state.sortCol,
+    state.sortDir,
+  );
 
   copyTextToClipboard(
     buildPreviewTsv(rows, state.displayCols),

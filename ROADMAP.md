@@ -44,12 +44,6 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 ## Minor releases
 
-### 3.6 — Output fidelity & UI polish
-
-Small, high-frequency wins that improve everyday use. **Feature work complete**
-— the line now closes with its bug-fix patches. See the
-[changelog](CHANGELOG.md) for what shipped.
-
 ### 3.7 — Ingestion & input quality
 
 Meet users where their inventory actually comes from, and catch bad input early.

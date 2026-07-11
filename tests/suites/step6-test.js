@@ -609,23 +609,22 @@ function check(name, cond, detail) {
   }
 
   // Guard the migration: alert() blocks the page and ignores the theme
-  const productSources = [
-    "js/base/app-core.js",
-    "js/base/generate.js",
-    "js/base/downloads.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/preview.js",
-    "js/base/presets.js",
-    "js/base/xlsx-export.js",
-    "js/base/scenario-compare.js",
-    "js/base/portfolio.js",
-    "js/base/form-controls.js",
-  ];
+  // Every first-party module, discovered rather than listed — a hand-written list
+  // silently stops covering whatever is added next (it had already missed the
+  // three provider-specific files, which is exactly where alert() lived).
+  const productSources = [];
+  for (const dir of ["js/base", "js/aws", "js/azure", "js/gcp"]) {
+    for (const file of fs.readdirSync(path.join(REPO, dir))) {
+      if (file.endsWith(".js") && !file.endsWith("-data.js")) {
+        productSources.push(`${dir}/${file}`);
+      }
+    }
+  }
   const offenders = productSources.filter((rel) => {
     const src = fs.readFileSync(path.join(REPO, rel), "utf8");
-    // strip line comments so app-core's explanatory prose doesn't count
-    return /(^|[^.\w])alert\s*\(/.test(src.replace(/\/\/.*$/gm, ""));
+    // \b, not [^.\w]: the latter treats the dot as a word character, so
+    // `window.alert(` — the very thing being banned — would slip through
+    return /\balert\s*\(/.test(src.replace(/\/\/.*$/gm, ""));
   });
   check(
     "no window.alert left in the product",

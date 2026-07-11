@@ -275,7 +275,12 @@ check(
 console.log("[floating controls]");
 {
   const shell = read("js/base/ui-shell.js");
-  const backToTop = shell.slice(shell.indexOf("function setupBackToTop"));
+  // Bound the slice to this function: running to end-of-file would drag in
+  // unrelated code and could fail (or pass) for reasons that have nothing to do
+  // with the button
+  const start = shell.indexOf("function setupBackToTop");
+  const end = shell.indexOf("\nfunction ", start + 1);
+  const backToTop = shell.slice(start, end === -1 ? undefined : end);
   check(
     "back-to-top is bottom-left, clear of the toast stack",
     /left: "20px"/.test(backToTop) && !/right: "20px"/.test(backToTop),
@@ -292,20 +297,24 @@ console.log("[floating controls]");
 // user last did with it.
 console.log("[section collapse state]");
 {
-  const makeSection = (title) => {
+  // id is the stable key; the title is only a fallback for a header without one
+  const makeSection = (id, title) => {
     const section = makeAttrElement();
     const header = makeAttrElement({
       querySelector: (sel) =>
         sel === ".section-title" ? { textContent: title } : null,
     });
+    if (id) header.attrs["data-section-id"] = id;
     header.parentElement = section;
-    return { section, header, title };
+    return { section, header, id, title };
   };
 
-  const upload = makeSection("Upload CSV File");
-  const sample = makeSection("Sample CSV Template");
-  // The markup wraps this title across lines — the key must survive that
-  const advanced = makeSection("\n  Advanced Instance Filtering (Optional)\n");
+  const upload = makeSection("upload", "Upload CSV File");
+  const sample = makeSection("sample-template", "Sample CSV Template");
+  const advanced = makeSection(
+    "advanced-filters",
+    "\n  Advanced Instance Filtering (Optional)\n",
+  );
   sectionHeaders = [upload.header, sample.header, advanced.header];
 
   ctx.restoreSectionStates();
@@ -319,10 +328,19 @@ console.log("[section collapse state]");
       advanced.section.classes.has("collapsed"),
   );
   check(
-    "a wrapped multi-line title still matches",
-    ctx.sectionKey(advanced.header) ===
-      "Advanced Instance Filtering (Optional)",
+    "the key is the stable id, not the heading text",
+    ctx.sectionKey(advanced.header) === "advanced-filters",
     ctx.sectionKey(advanced.header),
+  );
+  check(
+    "a header with no id falls back to its whitespace-collapsed title",
+    ctx.sectionKey(makeSection(null, "\n  Some Section\n").header) ===
+      "Some Section",
+  );
+  check(
+    "every collapsible header in the markup carries an id",
+    (read("aws.html").match(/data-section-id="/g) || []).length ===
+      (read("aws.html").match(/onclick="toggleSection\(this\)"/g) || []).length,
   );
   check(
     "aria-expanded matches the collapsed state",
@@ -356,9 +374,9 @@ console.log("[section collapse state]");
   );
 
   check(
-    "state is stored per page",
+    "state is stored per page, under the stable id",
     JSON.parse(ctx.localStorage.getItem("cloudInstanceRecommenderSections"))
-      .aws["Sample CSV Template"] === "open",
+      .aws["sample-template"] === "open",
   );
 }
 
