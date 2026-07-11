@@ -128,6 +128,8 @@ No framework or npm install needed — see [tests/README.md](tests/README.md) fo
 - Use descriptive variable names
 - No comments explaining _what_ the code does — only add a comment when the _why_ is non-obvious
 
+Formatting is Prettier's job, not yours: run `npm run format` before you commit (`npm run format:check` shows what it would change). CI runs the same check on every push and pull request and fails if anything is unformatted. `.prettierignore` keeps Prettier away from the vendored SheetJS builds and the generated region data — never reformat those.
+
 ## Input Format
 
 The accepted input format includes these optional columns:

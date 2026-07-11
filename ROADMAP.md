@@ -25,10 +25,10 @@ week or more). Dependencies are called out where one item needs another first.
 Not tied to any release — adopted once, then maintained every cycle:
 
 - **Formatting gate in CI** — run `prettier --check` on every push and pull
-  request; when it fails, auto-format, run the full test suite on the formatted
-  tree in the same job, then commit the result. The `[skip ci]` marker is used
-  only to stop that commit from re-triggering the workflow — validation still
-  runs on the formatted tree, so no commit lands unverified. (S)
+  request, failing the build on anything unformatted. Auto-formatting and
+  committing the fix from CI was considered and rejected: a bot commit would
+  land without a changelog row or a version tag, putting holes in the
+  per-commit version map. `npm run format` fixes it locally instead. (S)
 - **Dependency-CVE watch** — monthly, and before each release, check the
   vendored SheetJS builds under `js/vendor/` for advisories, treating the
   versions embedded in those artifacts as the source of truth (today `xlsx.full`
