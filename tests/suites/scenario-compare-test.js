@@ -300,13 +300,31 @@ check(
   JSON.stringify(run("scenarioA.results")),
 );
 
-// Sorting for the preview/exports must copy, never reorder the pinned array
-run(`sortResultRows([...scenarioA.results], "VM Name", -1)`);
+// Sorting for the preview/exports must copy, never reorder the pinned array.
+// Drive the REAL entry point the exports use (resultsInPreviewOrder) rather than
+// spreading into a copy here — a hand-made copy in the test would prove only
+// that the spread operator works, and would still pass if a production call site
+// started sorting a pinned scenario in place.
+run(`window._previewState = {
+  results: scenarioA.results,
+  displayCols: ["VM Name"],
+  sortCol: 0,
+  sortDir: 1,
+  filter: ""
+}`);
+const exported = run(
+  `resultsInPreviewOrder(scenarioA.results).map((r) => r["VM Name"])`,
+);
+const pinnedAfter = run(`scenarioA.results.map((r) => r["VM Name"])`);
 check(
-  "pinned scenario's row order survives a preview sort",
-  run("scenarioA.results[0]['VM Name']") === "web1" &&
-    run("scenarioA.results[1]['VM Name']") === "db1",
-  JSON.stringify(run("scenarioA.results.map((r) => r['VM Name'])")),
+  "the export path really does reorder (so the next check means something)",
+  JSON.stringify(exported) === JSON.stringify(["db1", "web1"]),
+  JSON.stringify(exported),
+);
+check(
+  "...while the pinned scenario keeps its own row order",
+  JSON.stringify(pinnedAfter) === JSON.stringify(["web1", "db1"]),
+  JSON.stringify(pinnedAfter),
 );
 
 if (failures) {

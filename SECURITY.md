@@ -72,6 +72,40 @@ the pages keep a restrictive Content Security Policy.
 not a lockfile, since these are not npm dependencies at runtime. Each build's
 version is in its header comment and in `XLSX.version` at runtime.
 
+### Artifact integrity
+
+These files are **executable code shipped to every visitor**, so a tampered
+download would become client-side code under our own origin — which is also
+where the CSP trusts it from. The checksums of what is committed:
+
+| File                             | SHA-256                                                            |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `js/vendor/xlsx.full.min.js`     | `cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41` |
+| `js/vendor/xlsx-js-style.min.js` | `ea81a0d4747f3c9daa52612e770ec183f580d19e32024ce0a6df4f794677b83e` |
+
+Verify at any time:
+
+```bash
+sha256sum js/vendor/*.min.js          # macOS: shasum -a 256
+```
+
+**Replacing a vendored bundle** — never skip a step:
+
+1. Download only from the upstream project's own distribution
+   ([cdn.sheetjs.com](https://cdn.sheetjs.com/) for SheetJS; the GitHub release
+   assets for `xlsx-js-style`). Not from a mirror, a package aggregator, or a
+   search result.
+2. **Record the exact upstream URL and the checksum you downloaded** in the pull
+   request, and paste the `sha256sum` output of the file you are committing. A
+   reviewer must be able to re-download the same URL and reproduce the hash.
+3. Update the table above with the new version and checksum in the same commit as
+   the file, so the two can never drift apart.
+4. Run `node tests/run-all.js` — the upload and Excel-export suites exercise both
+   libraries.
+
+If a checksum cannot be reproduced from the upstream URL, treat the artifact as
+compromised and do not commit it.
+
 The dev dependencies in `package.json` (TypeScript, Prettier) never reach a
 user's browser; they exist only for type-checking and formatting.
 
