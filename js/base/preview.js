@@ -167,14 +167,8 @@ function _renderPreviewTable(
       )
     : [...results];
   if (sortCol !== null) {
-    rows.sort((a, b) => {
-      const av = a[displayCols[sortCol]] ?? "";
-      const bv = b[displayCols[sortCol]] ?? "";
-      const an = parseFloat(av);
-      const bn = parseFloat(bv);
-      if (!isNaN(an) && !isNaN(bn)) return (an - bn) * sortDir;
-      return String(av).localeCompare(String(bv)) * sortDir;
-    });
+    // Same comparator the exports use, so the file matches the screen's order
+    sortResultRows(rows, displayCols[sortCol], sortDir);
   }
 
   // Build L2L vCPU map per provider for diff view
@@ -307,8 +301,13 @@ function _renderPreviewTable(
   }
 
   html += `</tbody></table></div>`;
-  if (rows.length > 20) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing first 20 ${needle ? "matching " : ""}rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
+  // A filter narrows only the preview; downloads always carry every row. Say so
+  // whenever a filter is active — including when it narrows below 20 rows, where
+  // the "showing first 20" line alone would leave the difference invisible.
+  if (needle) {
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Filter matches ${rows.length} of ${results.length} rows${rows.length > 20 ? " (showing the first 20)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
+  } else if (rows.length > 20) {
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing first 20 rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
   }
   html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · Red rows = no match</p>`;
 

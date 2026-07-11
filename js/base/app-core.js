@@ -520,6 +520,34 @@ function getInstanceColumns(results) {
   );
 }
 
+// Sorts rows by one column, numerically when both values parse as numbers.
+// Mutates and returns `rows` — callers pass a copy when they need one.
+function sortResultRows(rows, column, direction) {
+  return rows.sort((a, b) => {
+    const av = a[column] ?? "";
+    const bv = b[column] ?? "";
+    const an = parseFloat(av);
+    const bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return (an - bn) * direction;
+    return String(av).localeCompare(String(bv)) * direction;
+  });
+}
+
+// The result set as an export should see it: in the preview's current SORT
+// order, so a downloaded file is ordered the way the user last arranged it on
+// screen — but never narrowed by the preview's search FILTER, because a
+// download is always the complete result set. (The preview's count line says so
+// whenever a filter is active, so the two cannot silently disagree.)
+function resultsInPreviewOrder(results) {
+  const state = typeof window !== "undefined" && window._previewState;
+  if (!state || state.sortCol === null || !results || !results.length) {
+    return results;
+  }
+  const column = state.displayCols && state.displayCols[state.sortCol];
+  if (!column || !(column in results[0])) return results;
+  return sortResultRows([...results], column, state.sortDir);
+}
+
 // localStorage key for the App Portfolio handoff copy (written by
 // downloads.js#openAppPortfolio, read by portfolio.js).
 const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";

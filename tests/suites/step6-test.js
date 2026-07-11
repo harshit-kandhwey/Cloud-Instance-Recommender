@@ -193,6 +193,31 @@ function check(name, cond, detail) {
     container.innerHTML.includes("first 20 of 25 rows"),
   );
 
+  // A download must never silently disagree with the screen: it follows the
+  // preview's sort, ignores its filter, and says so while a filter is active.
+  console.log("[exports vs preview state]");
+  ctx._sortPreview(0); // toggles the existing VM Name ascending sort → descending
+  ctx._previewFilterChanged("db-");
+  await new Promise((r) => setTimeout(r, 250));
+
+  check(
+    "filtered preview discloses the full download size",
+    container.innerHTML.includes(
+      "Downloads always contain the full 25-row dataset",
+    ),
+    container.innerHTML.slice(-300),
+  );
+
+  const ordered = ctx.resultsInPreviewOrder(results);
+  check("export keeps every row despite the filter", ordered.length === 25);
+  check(
+    "export follows the preview's sort order",
+    ordered[0]["VM Name"] === "web-20" &&
+      ordered[ordered.length - 1]["VM Name"] === "db-01",
+    `${ordered[0]["VM Name"]} … ${ordered[ordered.length - 1]["VM Name"]}`,
+  );
+  check("source results not mutated", results[0]["VM Name"] === "web-01");
+
   process.exit(failures ? 1 : 0);
 })().catch((e) => {
   console.error(e);

@@ -9,10 +9,12 @@ function downloadResults() {
 
   console.log("Downloading results with", processedResults.length, "rows");
 
-  const headers = Object.keys(processedResults[0]);
+  // Every row, in the order the preview is currently sorted by
+  const rows = resultsInPreviewOrder(processedResults);
+  const headers = Object.keys(rows[0]);
   const csvContent = [
     headers.map(escapeCsvCell).join(","),
-    ...processedResults.map((row) =>
+    ...rows.map((row) =>
       headers.map((header) => escapeCsvCell(row[header] ?? "")).join(","),
     ),
   ].join("\n");

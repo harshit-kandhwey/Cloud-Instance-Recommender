@@ -139,7 +139,7 @@ function downloadResultsXlsx() {
     .then((info) => {
       if (!window.XLSX) throw new Error("spreadsheet engine unavailable");
       const wb = buildResultsWorkbook(
-        buildResultsSheetModel(processedResults),
+        buildResultsSheetModel(resultsInPreviewOrder(processedResults)),
         !!info.styled,
         window.XLSX,
       );
