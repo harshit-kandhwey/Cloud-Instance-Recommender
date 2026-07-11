@@ -633,6 +633,91 @@ function resultsInPreviewOrder(results) {
   return sortResultRows([...results], column, state.sortDir);
 }
 
+// ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
+// The engine already works out, per unmatched row, which soft-filter group kept
+// the otherwise-fitting instance out ("Nearest Miss" column). This turns that
+// into an action: the ONE filter that, switched off, rescues the most rows.
+//
+// Each probe label maps to the checkbox that turns that group off, and to the
+// handler that hides its sub-panel (both in form-controls.js).
+const RELAX_CONTROLS = {
+  "current-generation only": {
+    id: "currentGenerationOnly",
+    toggle: "toggleCurrentGenerationFilter",
+  },
+  "instance-family name": {
+    id: "restrictInstanceFamilyNames",
+    toggle: "toggleInstanceFamilyNameFilter",
+  },
+  "processor manufacturer": {
+    id: "restrictProcessorManufacturers",
+    toggle: "toggleProcessorManufacturerFilter",
+  },
+  "instance family/series": {
+    id: "restrictMainFamilies",
+    toggle: "toggleMainFamiliesFilter",
+  },
+  "exclude types": { id: "excludeTypes", toggle: "toggleExcludeTypes" },
+};
+
+// "m7i.large (2 vCPU / 8 GB) — relax: current-generation only, exclude types"
+// → ["current-generation only", "exclude types"]. The format is ours (see
+// formatNearestMiss in instance-selector-factory.js), so parsing it back is safe.
+function parseRelaxLabels(cell) {
+  const parts = String(cell || "").split(" — relax: ");
+  if (parts.length < 2) return [];
+  return parts[1]
+    .split(", ")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// The single filter change that rescues the most fully-unmatched rows, or null.
+//
+// A row counts toward a label only when SOME provider's nearest miss is blocked
+// by that label ALONE. A miss blocked by two groups is not rescued by relaxing
+// one of them, so counting it would promise a rescue that never arrives.
+function computeRelaxSuggestion(results) {
+  if (!results || !results.length) return null;
+  const instanceCols = getInstanceColumns(results);
+  const missCols = Object.keys(results[0]).filter((k) =>
+    k.includes("Nearest Miss"),
+  );
+  if (!instanceCols.length || !missCols.length) return null;
+
+  const unmatched = results.filter((row) =>
+    instanceCols.every((c) => isNoMatchValue(row[c])),
+  );
+  if (!unmatched.length) return null;
+
+  const rescues = new Map();
+  unmatched.forEach((row) => {
+    const rescuers = new Set();
+    missCols.forEach((col) => {
+      const labels = parseRelaxLabels(row[col]);
+      if (labels.length === 1) rescuers.add(labels[0]);
+    });
+    rescuers.forEach((label) =>
+      rescues.set(label, (rescues.get(label) || 0) + 1),
+    );
+  });
+
+  let best = null;
+  rescues.forEach((count, label) => {
+    if (RELAX_CONTROLS[label] && (!best || count > best.count)) {
+      best = { label, count };
+    }
+  });
+  if (!best) return null;
+
+  return {
+    label: best.label,
+    rescues: best.count,
+    unmatched: unmatched.length,
+    control: RELAX_CONTROLS[best.label],
+  };
+}
+
 // localStorage key for the App Portfolio handoff copy (written by
 // downloads.js#openAppPortfolio, read by portfolio.js).
 const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";

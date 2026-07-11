@@ -272,6 +272,9 @@ async function processRecommendations() {
     // Show inline results preview
     showResultsPreview(processedResults);
 
+    // Offer the single filter change that would rescue the most unmatched rows
+    updateRelaxSuggestion(processedResults);
+
     // AWS page: sync the calculator bulk-template button(s) with the run types
     updateDownloadButtons(processedResults);
 

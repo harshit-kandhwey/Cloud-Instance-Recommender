@@ -358,6 +358,93 @@ function check(name, cond, detail) {
     ctx.document.createElement = realCreateElement;
   }
 
+  // One-click relax: turn the Nearest Miss diagnosis into an action
+  console.log("[relax suggestion]");
+  {
+    const NM = "AWS Nearest Miss";
+    const INST = "AWS Like-to-Like Instance";
+    const row = (name, miss) => ({
+      "VM Name": name,
+      [INST]: "No data available",
+      [NM]: miss,
+    });
+
+    check(
+      "parses the labels back out of the cell",
+      JSON.stringify(
+        ctx.parseRelaxLabels(
+          "m7i.large (2 vCPU / 8 GB) — relax: current-generation only, exclude types",
+        ),
+      ) === JSON.stringify(["current-generation only", "exclude types"]),
+    );
+    check(
+      "a miss with no blocker yields no labels",
+      ctx.parseRelaxLabels("m7i.large (2 vCPU / 8 GB)").length === 0,
+    );
+
+    // 3 rows blocked by current-gen alone, 1 by exclude types alone, and 1 by
+    // BOTH — the last cannot be rescued by a single change and must not count.
+    const results = [
+      row("a", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
+      row("b", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
+      row("c", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
+      row("d", "m7i.large (2 vCPU / 8 GB) — relax: exclude types"),
+      row(
+        "e",
+        "m7i.large (2 vCPU / 8 GB) — relax: current-generation only, exclude types",
+      ),
+    ];
+    const suggestion = ctx.computeRelaxSuggestion(results);
+    check(
+      "picks the filter that rescues the most rows",
+      suggestion &&
+        suggestion.label === "current-generation only" &&
+        suggestion.rescues === 3,
+      JSON.stringify(suggestion),
+    );
+    check(
+      "a row blocked by two filters is not counted as rescuable",
+      suggestion.rescues === 3 && suggestion.unmatched === 5,
+      JSON.stringify(suggestion),
+    );
+    check(
+      "maps the label to the checkbox that turns it off",
+      suggestion.control.id === "currentGenerationOnly",
+    );
+
+    // A matched row means nothing to relax
+    check(
+      "no suggestion when everything matched",
+      ctx.computeRelaxSuggestion([
+        { "VM Name": "ok", [INST]: "m5.large", [NM]: "" },
+      ]) === null,
+    );
+
+    ctx.updateRelaxSuggestion(results);
+    const panel = ctx.document.getElementById("relaxSuggestion");
+    check(
+      "panel offers the action",
+      !panel.classes.has("hidden") &&
+        panel.innerHTML.includes("current-generation only") &&
+        panel.innerHTML.includes("applyRelaxSuggestion()"),
+      panel.innerHTML,
+    );
+
+    // Applying it unchecks the box; regenerate is gated elsewhere (no csvData)
+    const box = ctx.document.getElementById("currentGenerationOnly");
+    box.checked = true;
+    ctx.applyRelaxSuggestion();
+    check("applying unchecks the filter", box.checked === false);
+
+    ctx.updateRelaxSuggestion([
+      { "VM Name": "ok", [INST]: "m5.large", [NM]: "" },
+    ]);
+    check(
+      "panel hides when there is nothing to suggest",
+      panel.classes.has("hidden"),
+    );
+  }
+
   // Guard the migration: alert() blocks the page and ignores the theme
   const productSources = [
     "js/base/app-core.js",

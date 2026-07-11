@@ -365,6 +365,50 @@ function updateStaleResultsNotice() {
   notice.classList.remove("hidden");
 }
 
+// Offers the single filter change that rescues the most unmatched rows, so the
+// user doesn't have to read the Nearest Miss column and work it out by hand.
+function updateRelaxSuggestion(results) {
+  const panel = document.getElementById("relaxSuggestion");
+  if (!panel) return;
+
+  const suggestion = computeRelaxSuggestion(results);
+  window._relaxSuggestion = suggestion;
+
+  if (!suggestion) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+    return;
+  }
+
+  const { label, rescues, unmatched } = suggestion;
+  panel.className = "alert alert-info";
+  panel.innerHTML = `
+    💡 <strong>${rescues}</strong> of the ${unmatched} unmatched row(s) would match if you relaxed one filter: <strong>${escapeHtml(label)}</strong>.
+    <button type="button" class="btn btn-secondary" onclick="applyRelaxSuggestion()" style="margin-left: 8px; padding: 4px 12px; font-size: 13px;">🔓 Relax it and regenerate</button>`;
+  panel.classList.remove("hidden");
+}
+
+// Turns the filter off and re-runs. Regenerating (rather than patching the
+// results in place) keeps one source of truth: the results always come from the
+// filters as they currently stand.
+function applyRelaxSuggestion() {
+  const suggestion = window._relaxSuggestion;
+  if (!suggestion) return;
+
+  const checkbox = document.getElementById(suggestion.control.id);
+  if (!checkbox) return;
+  checkbox.checked = false;
+
+  // Let the control's own handler hide its sub-panel, so the form doesn't keep
+  // showing options for a filter that is now off
+  const handler = window[suggestion.control.toggle];
+  if (typeof handler === "function") handler();
+
+  showToast(`Relaxed "${suggestion.label}" — regenerating…`, "info", 4000);
+  generateRecommendations();
+}
+window.applyRelaxSuggestion = applyRelaxSuggestion;
+
 window._sortPreview = function (colIdx) {
   const s = window._previewState;
   if (!s) return;
