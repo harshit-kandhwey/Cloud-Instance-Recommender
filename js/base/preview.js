@@ -260,18 +260,15 @@ function _renderPreviewTable(
       : ri % 2 === 0
         ? "var(--surface)"
         : "var(--surface-alt-2)";
-    const rowCsv = displayCols
-      .map((c) => {
-        const v = String(row[c] ?? "");
-        return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
-      })
-      .join(",");
+    // Tab-separated like the table-level copy, so a single row also pastes
+    // across cells rather than landing in one
+    const rowTsv = buildPreviewTsv([row], displayCols).split("\n")[1];
 
     html += `<tr style="background:${bg};">`;
     // Copy button
     html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
-      <button onclick="navigator.clipboard.writeText(${escapeHtml(JSON.stringify(rowCsv))}).catch(()=>{})"
-        title="Copy row as CSV" aria-label="Copy row ${ri + 1} as CSV"
+      <button onclick="copyTextToClipboard(${escapeHtml(JSON.stringify(rowTsv))}, 'Copied row ${ri + 1} to the clipboard')"
+        title="Copy this row" aria-label="Copy row ${ri + 1}"
         style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
     </td>`;
 
@@ -399,6 +396,26 @@ function buildPreviewTsv(rows, displayCols) {
   ].join("\n");
 }
 
+// One clipboard path for both copy buttons, so neither can fail silently.
+// navigator.clipboard needs a secure context; a page opened from file:// has
+// none, so fall back to the old selection-based copy rather than doing nothing.
+function copyTextToClipboard(text, successMessage) {
+  const done = () => showToast(successMessage, "success", 3000);
+  const failed = () =>
+    showToast("Could not copy to the clipboard", "warning", 4000);
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, () => {
+      if (copyViaTextarea(text)) done();
+      else failed();
+    });
+    return;
+  }
+  if (copyViaTextarea(text)) done();
+  else failed();
+}
+window.copyTextToClipboard = copyTextToClipboard;
+
 // Copies every row the filter currently matches — not just the 20 rendered —
 // in the preview's sort order, so the clipboard agrees with the screen for the
 // same reason the exports do.
@@ -422,23 +439,10 @@ function copyPreviewToClipboard() {
     sortResultRows(rows, state.displayCols[state.sortCol], state.sortDir);
   }
 
-  const tsv = buildPreviewTsv(rows, state.displayCols);
-  const done = () =>
-    showToast(`Copied ${rows.length} row(s) to the clipboard`, "success", 3000);
-  const failed = () =>
-    showToast("Could not copy to the clipboard", "warning", 4000);
-
-  // navigator.clipboard needs a secure context; a page opened from file:// has
-  // none, so fall back to the old selection-based copy rather than doing nothing
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(tsv).then(done, () => {
-      if (!copyViaTextarea(tsv)) failed();
-      else done();
-    });
-    return;
-  }
-  if (copyViaTextarea(tsv)) done();
-  else failed();
+  copyTextToClipboard(
+    buildPreviewTsv(rows, state.displayCols),
+    `Copied ${rows.length} row(s) to the clipboard`,
+  );
 }
 window.copyPreviewToClipboard = copyPreviewToClipboard;
 

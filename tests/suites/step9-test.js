@@ -40,10 +40,17 @@ function makeAttrElement(extra = {}) {
     classList: {
       add: (c) => el.classes.add(c),
       remove: (c) => el.classes.delete(c),
-      toggle: (c) =>
-        el.classes.has(c) ? el.classes.delete(c) : el.classes.add(c),
+      // The real classList.toggle takes an optional force argument, and
+      // restoreSectionStates relies on it to SET rather than flip
+      toggle: (c, force) => {
+        if (force === undefined) {
+          return el.classes.has(c) ? el.classes.delete(c) : el.classes.add(c);
+        }
+        return force ? el.classes.add(c) : el.classes.delete(c);
+      },
       contains: (c) => el.classes.has(c),
     },
+    querySelector: () => null,
     querySelectorAll: () => [],
     focus: () => {},
     setSelectionRange: () => {},
@@ -64,6 +71,9 @@ headerCollapsed.parentElement = sectionCollapsed;
 headerOpen.onclick = () => ctx.toggleSection(headerOpen);
 headerCollapsed.onclick = () => ctx.toggleSection(headerCollapsed);
 
+// The section list the fake document reports; swapped out by the collapse tests
+let sectionHeaders = [headerOpen, headerCollapsed];
+
 const elements = {};
 function fakeElement(id) {
   if (!elements[id]) elements[id] = makeAttrElement({ id });
@@ -77,11 +87,20 @@ const sandbox = {
   setInterval: () => 0,
   clearInterval: () => {},
   alert: () => {},
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
+  // A real store: section collapse state has to survive a "reload"
+  localStorage: (() => {
+    const store = {};
+    return {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => {
+        store[k] = String(v);
+      },
+      removeItem: (k) => {
+        delete store[k];
+      },
+    };
+  })(),
+  location: { pathname: "/aws.html" },
 };
 sandbox.window = sandbox;
 sandbox.document = {
@@ -89,8 +108,7 @@ sandbox.document = {
   getElementById: (id) => fakeElement(id),
   querySelectorAll: (sel) => {
     if (sel === "script[src]") return [{ src: "js/aws/aws-data.js" }];
-    if (sel === ".section-header[onclick]")
-      return [headerOpen, headerCollapsed];
+    if (sel === ".section-header[onclick]") return sectionHeaders;
     return [];
   },
   addEventListener: () => {},
@@ -209,7 +227,7 @@ check(
 );
 check(
   "copy button labelled",
-  container.innerHTML.includes('aria-label="Copy row 1 as CSV"'),
+  container.innerHTML.includes('aria-label="Copy row 1"'),
 );
 ctx._sortPreview(0);
 check(
@@ -249,5 +267,80 @@ check(
   "user-guide has :focus-visible",
   read("user-guide.html").includes(":focus-visible"),
 );
+
+// ─── Section collapse state ───────────────────────────────────────────────────
+// Rarely-used sections start collapsed; every section then remembers what the
+// user last did with it.
+console.log("[section collapse state]");
+{
+  const makeSection = (title) => {
+    const section = makeAttrElement();
+    const header = makeAttrElement({
+      querySelector: (sel) =>
+        sel === ".section-title" ? { textContent: title } : null,
+    });
+    header.parentElement = section;
+    return { section, header, title };
+  };
+
+  const upload = makeSection("Upload CSV File");
+  const sample = makeSection("Sample CSV Template");
+  // The markup wraps this title across lines — the key must survive that
+  const advanced = makeSection("\n  Advanced Instance Filtering (Optional)\n");
+  sectionHeaders = [upload.header, sample.header, advanced.header];
+
+  ctx.restoreSectionStates();
+  check(
+    "a section you always use stays open",
+    !upload.section.classes.has("collapsed"),
+  );
+  check(
+    "rarely-used sections start collapsed",
+    sample.section.classes.has("collapsed") &&
+      advanced.section.classes.has("collapsed"),
+  );
+  check(
+    "a wrapped multi-line title still matches",
+    ctx.sectionKey(advanced.header) ===
+      "Advanced Instance Filtering (Optional)",
+    ctx.sectionKey(advanced.header),
+  );
+  check(
+    "aria-expanded matches the collapsed state",
+    sample.header.attrs["aria-expanded"] === "false" &&
+      upload.header.attrs["aria-expanded"] === "true",
+  );
+
+  // Open the default-collapsed one and collapse the default-open one
+  ctx.toggleSection(sample.header);
+  ctx.toggleSection(upload.header);
+  check(
+    "toggling flips both",
+    !sample.section.classes.has("collapsed") &&
+      upload.section.classes.has("collapsed"),
+  );
+
+  // "Reload": drop the classes and restore from storage alone
+  sample.section.classes.delete("collapsed");
+  upload.section.classes.delete("collapsed");
+  advanced.section.classes.delete("collapsed");
+  ctx.restoreSectionStates();
+  check(
+    "the user's choice beats the default after a reload",
+    !sample.section.classes.has("collapsed") &&
+      upload.section.classes.has("collapsed"),
+    `sample collapsed=${sample.section.classes.has("collapsed")}, upload collapsed=${upload.section.classes.has("collapsed")}`,
+  );
+  check(
+    "a section never touched keeps its default",
+    advanced.section.classes.has("collapsed"),
+  );
+
+  check(
+    "state is stored per page",
+    JSON.parse(ctx.localStorage.getItem("cloudInstanceRecommenderSections"))
+      .aws["Sample CSV Template"] === "open",
+  );
+}
 
 process.exit(failures ? 1 : 0);
