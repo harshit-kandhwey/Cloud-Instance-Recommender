@@ -50,7 +50,7 @@ function getNoMatchRows(results) {
 // the diagnostic columns (No Match Reason / Rules Applied) — a remediation
 // worksheet: fix these rows, re-upload, re-generate.
 function downloadNoMatchRows() {
-  const noMatch = getNoMatchRows(processedResults);
+  const noMatch = getNoMatchRows(resultsInPreviewOrder(processedResults));
   if (!noMatch.length) {
     alert(
       "Every row received at least one recommendation — nothing to export.",
@@ -396,7 +396,7 @@ function downloadAWSBulkTemplate(type) {
 
   const rows = [];
 
-  processedResults.forEach((row) => {
+  resultsInPreviewOrder(processedResults).forEach((row) => {
     const vmName = row["VM Name"] || row["Server Name"] || "VM";
     const region = row["AWS Region"] || "";
     const env = row["ENV"] || row["Environment"] || "Default";

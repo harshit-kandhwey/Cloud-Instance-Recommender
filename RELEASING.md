@@ -48,7 +48,7 @@ So every commit on `main` gets a version, a changelog row, and an annotated tag.
 
    ```bash
    git commit -m "..."
-   git tag -a v3.5.17 -m "3.5.17 — short description"
+   git tag -a v<next-version> -m "<next-version> — short description"
    ```
 
 4. **Push** when you mean to publish:

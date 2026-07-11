@@ -112,6 +112,12 @@ async function processRecommendations() {
     "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
   );
 
+  // Pin the selection for the whole run. The batch below is awaited, so a
+  // checkbox toggled while it is in flight would otherwise leave the results
+  // describing one selection and _resultsProviders recording another — making
+  // the stale-results notice wrong in exactly the case it exists for.
+  const providersForRun = selectedProviders.slice();
+
   const recommendationType = document.querySelector(
     'input[name="recommendationType"]:checked',
   ).value;
@@ -238,7 +244,7 @@ async function processRecommendations() {
     console.log("Running recommendation batch (worker with fallback)");
     processedResults = await runRecommendationBatch(
       csvData,
-      selectedProviders,
+      providersForRun,
       options,
     );
 
@@ -251,7 +257,7 @@ async function processRecommendations() {
 
     // The selection these results describe — compared against the live
     // checkboxes to warn when they drift apart (see updateStaleResultsNotice)
-    window._resultsProviders = selectedProviders.slice();
+    window._resultsProviders = providersForRun;
     updateStaleResultsNotice();
 
     // Update usage statistics and show download section

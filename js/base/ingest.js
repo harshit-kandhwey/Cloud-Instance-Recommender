@@ -73,11 +73,10 @@ function setupFileDragAndDrop(fileInput) {
     const files = e.dataTransfer && e.dataTransfer.files;
     if (!files || !files.length) return;
 
+    // No extension gate here: ingestFile decides by content, so a workbook
+    // whose name doesn't end in .xlsx is still accepted, and anything that
+    // isn't a spreadsheet is refused there with a specific reason.
     const file = files[0];
-    if (!/\.(csv|xlsx)$/i.test(file.name)) {
-      showUploadError("Please drop a CSV or Excel (.xlsx) file.");
-      return;
-    }
 
     // Route through the input so the change handler stays the only entry point
     const dataTransfer = new DataTransfer();
@@ -124,6 +123,10 @@ function sniffFileKind(head) {
   // OLE2 compound file — a legacy .xls, which SheetJS's full build can read but
   // which users are better off re-saving
   if (startsWith(0xd0, 0xcf, 0x11, 0xe0)) return "legacy-excel";
+  // Formats whose magic bytes are printable would pass the NUL test below and be
+  // fed to the CSV parser as text. PDF is the one users actually drop by mistake.
+  if (startsWith(0x25, 0x50, 0x44, 0x46, 0x2d)) return "binary"; // "%PDF-"
+  if (startsWith(0x7b, 0x5c, 0x72, 0x74, 0x66)) return "binary"; // "{\rtf"
   // Text never contains NUL; any binary we don't recognize lands here
   if (head.includes(0x00)) return "binary";
   return "text";

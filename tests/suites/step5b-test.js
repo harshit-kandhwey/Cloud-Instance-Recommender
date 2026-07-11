@@ -220,6 +220,17 @@ const AOA = [
     check("NUL byte → binary", sniff([0x89, 0x50, 0x00, 0x01]) === "binary");
     check("plain text → text", sniff([0x56, 0x4d, 0x2c, 0x43]) === "text");
     check("no bytes → unknown", ctx.sniffFileKind(null) === "unknown");
+    // A PDF's magic bytes are printable ("%PDF-") and it carries no NUL this
+    // early, so without an explicit check it would sniff as text and be fed to
+    // the CSV parser
+    check(
+      "PDF → binary, not text",
+      sniff([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]) === "binary",
+    );
+    check(
+      "RTF → binary, not text",
+      sniff([0x7b, 0x5c, 0x72, 0x74, 0x66, 0x31]) === "binary",
+    );
 
     // A genuine workbook that someone renamed to .csv
     const xlsxBytes = new Uint8Array(makeXlsx([{ name: "Only", aoa: AOA }]));
@@ -265,6 +276,27 @@ const AOA = [
       "binary junk rejected with guidance",
       // innerHTML is escaped, so match around the apostrophe
       elements.fileStatus.innerHTML.includes("look like a CSV or Excel"),
+      elements.fileStatus.innerHTML,
+    );
+
+    await ctx.ingestFile(
+      fakeFile(
+        "report.csv",
+        Buffer.from("%PDF-1.7\nnot really a spreadsheet", "utf8"),
+      ),
+    );
+    check(
+      "a PDF is refused rather than parsed as CSV",
+      elements.fileStatus.innerHTML.includes("look like a CSV or Excel"),
+      elements.fileStatus.innerHTML,
+    );
+
+    // A workbook with no extension at all: the drop handler no longer gates on
+    // the name, so ingestFile must still accept it on its bytes
+    await ctx.ingestFile(fakeFile("inventory", xlsxBytes));
+    check(
+      "an extensionless workbook is still read as Excel",
+      elements.fileStatus.className.includes("alert-success"),
       elements.fileStatus.innerHTML,
     );
   }

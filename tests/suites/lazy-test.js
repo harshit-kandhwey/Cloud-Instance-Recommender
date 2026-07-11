@@ -114,6 +114,18 @@ function check(name, cond, detail) {
       missing.length === 0,
       `${missing.length} missing — add them to the hardcoded list in js/${name}/${name}-instance-selector.js: ${missing.slice(0, 10).join(", ")}`,
     );
+
+    // The other direction: a hardcoded entry for a region the manifest no longer
+    // has would offer a region nothing can load. Today the selectors filter by
+    // the manifest so this cannot happen — assert it so a refactor that drops
+    // that filter is caught rather than silently offering dead regions.
+    const manifestKeys = new Set(manifest);
+    const stale = [...offered].filter((key) => !manifestKeys.has(key));
+    check(
+      `${name}: no region is offered that the manifest does not have`,
+      stale.length === 0,
+      `${stale.length} stale — remove them from the hardcoded list in js/${name}/${name}-instance-selector.js: ${stale.slice(0, 10).join(", ")}`,
+    );
   }
 
   console.log("[lazy inject: known regions]");
