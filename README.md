@@ -82,6 +82,8 @@ Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the cano
 
 Upload `.xlsx` files directly (first sheet is used). Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
 
+Uploads are routed by their **content**, not their file extension: a workbook saved as `.csv` (or a CSV saved as `.xlsx`) is still read correctly, and you are told it happened. A legacy `.xls` or a file that is neither is rejected with an explanation rather than parsed into nonsense.
+
 ### ✍️ Manual VM Entry
 
 For small inventories, skip the file entirely: "Or enter VMs manually" opens a form (name, CPU, memory, utilization, region with autocomplete) where you add and remove VMs one by one. The list persists across reloads and feeds the exact same pipeline as uploads — region validation, worker processing, preview, and exports all behave identically. Enterprise-scale bulk upload via CSV/xlsx remains the primary path.

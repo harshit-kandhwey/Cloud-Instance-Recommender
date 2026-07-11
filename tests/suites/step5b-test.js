@@ -178,6 +178,97 @@ const AOA = [
     );
   }
 
+  // The extension is a claim; the first bytes are evidence. A real workbook
+  // renamed .csv used to be read as text and parsed into garbage rows.
+  console.log("[content sniffing beats the extension]");
+  {
+    // A file whose bytes are actually readable, unlike the mocks above (which
+    // have no slice() and therefore fall back to routing by extension)
+    const fakeFile = (name, bytes) => {
+      // Copy: Buffer.slice() is a VIEW into Node's shared pool, so .buffer on it
+      // would hand back the whole pool rather than these bytes
+      const u8 = new Uint8Array(bytes);
+      return {
+        name,
+        size: u8.byteLength,
+        _bytes: u8,
+        slice: (start, end) => ({
+          arrayBuffer: async () => u8.slice(start, end).buffer,
+        }),
+        arrayBuffer: async () => u8.buffer,
+      };
+    };
+    ctx.FileReader = class {
+      readAsText(file) {
+        const self = this;
+        setTimeout(
+          () =>
+            self.onload({
+              target: { result: Buffer.from(file._bytes).toString("utf8") },
+            }),
+          0,
+        );
+      }
+    };
+
+    const sniff = (bytes) => ctx.sniffFileKind(new Uint8Array(bytes));
+    check("PK zip header → excel", sniff([0x50, 0x4b, 0x03, 0x04]) === "excel");
+    check(
+      "OLE header → legacy-excel",
+      sniff([0xd0, 0xcf, 0x11, 0xe0]) === "legacy-excel",
+    );
+    check("NUL byte → binary", sniff([0x89, 0x50, 0x00, 0x01]) === "binary");
+    check("plain text → text", sniff([0x56, 0x4d, 0x2c, 0x43]) === "text");
+    check("no bytes → unknown", ctx.sniffFileKind(null) === "unknown");
+
+    // A genuine workbook that someone renamed to .csv
+    const xlsxBytes = new Uint8Array(makeXlsx([{ name: "Only", aoa: AOA }]));
+    await ctx.ingestFile(fakeFile("inventory.csv", xlsxBytes));
+    check(
+      "workbook named .csv is read as Excel, not garbage text",
+      elements.fileStatus.className.includes("alert-success") &&
+        elements.fileStatus.innerHTML.includes("1 rows"),
+      elements.fileStatus.innerHTML,
+    );
+    check(
+      "and the rerouting is disclosed",
+      elements.fileStatus.innerHTML.includes("is an Excel workbook"),
+      elements.fileStatus.innerHTML,
+    );
+
+    // ...and the reverse: CSV text saved with an .xlsx extension
+    const csvText = "VM Name,CPU Count,Memory (GB)\nweb-1,4,16\n";
+    await ctx.ingestFile(
+      fakeFile("inventory.xlsx", Buffer.from(csvText, "utf8")),
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    check(
+      "text named .xlsx is read as CSV",
+      elements.fileStatus.className.includes("alert-success") &&
+        elements.fileStatus.innerHTML.includes("is plain text"),
+      elements.fileStatus.innerHTML,
+    );
+
+    await ctx.ingestFile(
+      fakeFile("old-book.xls", new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 1, 2])),
+    );
+    check(
+      "legacy .xls rejected with guidance",
+      elements.fileStatus.innerHTML.includes("save it as .xlsx or CSV"),
+      elements.fileStatus.innerHTML,
+    );
+
+    await ctx.ingestFile(
+      fakeFile("photo.csv", new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 1])),
+    );
+    check(
+      "binary junk rejected with guidance",
+      // innerHTML is escaped, so match around the apostrophe
+      elements.fileStatus.innerHTML.includes("look like a CSV or Excel"),
+      elements.fileStatus.innerHTML,
+    );
+  }
+
   console.log("[csv reader.onerror]");
   {
     ctx.FileReader = class {

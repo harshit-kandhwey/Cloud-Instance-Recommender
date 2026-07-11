@@ -110,8 +110,38 @@ function ensureXlsxLoaded() {
   return window._xlsxLoadPromise;
 }
 
-// Routes an uploaded file into the pipeline: .xlsx via SheetJS (first sheet
-// only), everything else as CSV text
+// What a file actually IS, from its first bytes — the extension is a claim, not
+// evidence. A .xlsx is a ZIP; a workbook renamed .csv would otherwise be read as
+// text and silently parsed into garbage rows.
+// Returns "excel" | "legacy-excel" | "binary" | "text", or "unknown" when the
+// bytes could not be read (callers then fall back to the extension).
+function sniffFileKind(head) {
+  if (!head || !head.length) return "unknown";
+  const startsWith = (...bytes) => bytes.every((b, i) => head[i] === b);
+
+  // ZIP local-file header ("PK\x03\x04") — every .xlsx is a ZIP container
+  if (startsWith(0x50, 0x4b, 0x03, 0x04)) return "excel";
+  // OLE2 compound file — a legacy .xls, which SheetJS's full build can read but
+  // which users are better off re-saving
+  if (startsWith(0xd0, 0xcf, 0x11, 0xe0)) return "legacy-excel";
+  // Text never contains NUL; any binary we don't recognize lands here
+  if (head.includes(0x00)) return "binary";
+  return "text";
+}
+
+async function readFileHead(file, bytes = 8) {
+  if (typeof file.slice !== "function") return null;
+  try {
+    return new Uint8Array(await file.slice(0, bytes).arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+// Routes an uploaded file into the pipeline by its CONTENT: a ZIP goes to
+// SheetJS (first sheet only), text goes to the CSV parser, and anything else is
+// rejected with an explanation. The extension only decides when the bytes are
+// unavailable.
 async function ingestFile(file) {
   window._uploadNote = null;
   window._ingestLabel = null;
@@ -127,7 +157,33 @@ async function ingestFile(file) {
     return;
   }
 
-  if (!/\.xlsx$/i.test(file.name)) {
+  const namedXlsx = /\.xlsx$/i.test(file.name);
+  const kind = sniffFileKind(await readFileHead(file));
+
+  if (kind === "legacy-excel") {
+    showUploadError(
+      `"${file.name}" is a legacy Excel workbook (.xls). Open it in Excel and save it as .xlsx or CSV, then upload it again.`,
+    );
+    return;
+  }
+  if (kind === "binary") {
+    showUploadError(
+      `"${file.name}" doesn't look like a CSV or Excel file. Please upload a .csv or .xlsx inventory.`,
+    );
+    return;
+  }
+
+  // Content wins over the name, but say so — a silently re-routed file would be
+  // confusing when the user goes looking for why their ".csv" opened as Excel.
+  if (kind === "excel" && !namedXlsx) {
+    window._uploadNote = `"${file.name}" is named as a CSV but is an Excel workbook — read as Excel`;
+  } else if (kind === "text" && namedXlsx) {
+    window._uploadNote = `"${file.name}" is named as an Excel file but is plain text — read as CSV`;
+  }
+
+  const asExcel = kind === "unknown" ? namedXlsx : kind === "excel";
+
+  if (!asExcel) {
     const reader = new FileReader();
     reader.onload = function (e) {
       parseCSV(e.target.result);
@@ -173,8 +229,12 @@ async function ingestFile(file) {
       .filter((row) => Object.values(row).some((v) => v !== ""));
 
     if (workbook.SheetNames.length > 1) {
-      // Surfaced in the file status by applyIngest — not just the console
-      window._uploadNote = `Workbook has ${workbook.SheetNames.length} sheets — only the first ("${sheetName}") was used`;
+      // Surfaced in the file status by applyIngest — not just the console.
+      // Appended, so it cannot swallow a mis-named-file note set above.
+      const sheetNote = `Workbook has ${workbook.SheetNames.length} sheets — only the first ("${sheetName}") was used`;
+      window._uploadNote = window._uploadNote
+        ? `${window._uploadNote}. ${sheetNote}`
+        : sheetNote;
     }
     ingestRows(headers, rows);
   } catch (error) {
