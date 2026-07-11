@@ -61,10 +61,9 @@ python -m http.server 8080
     │   ├── instance-selector-factory.js
     │   ├── rule-engine.js
     │   ├── recommendation-worker.js        # Web Worker batch processing
-    │   ├── file-handler.js
     │   ├── app-core.js                     # State, mapping tables, readiness, regions
     │   ├── ui-shell.js                     # Page init + accessibility
-    │   ├── ingest.js                       # Upload, parsing, column mapping
+    │   ├── ingest.js                       # Upload (incl. drag & drop), parsing, column mapping
     │   ├── manual-entry.js
     │   ├── form-controls.js                # Filters + option readers
     │   ├── generate.js                     # Worker batch runner

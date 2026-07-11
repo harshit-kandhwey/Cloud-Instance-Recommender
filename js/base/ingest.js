@@ -25,20 +25,66 @@ frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,W
   document.body.removeChild(a);
 }
 
-// Handle file upload using the integrated file handler
+// Handle file upload
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
   console.log("File upload started:", file.name);
-
-  // Use the integrated file handler if available
-  if (window.integrationManager && window.integrationManager.isReady) {
-    // Let the FileHandlerIntegration handle it
-    return;
-  }
-
   ingestFile(file);
+}
+
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+
+function showUploadError(message) {
+  const fileStatus = document.getElementById("fileStatus");
+  if (!fileStatus) return;
+  fileStatus.className = "alert alert-warning";
+  fileStatus.innerHTML = `⚠️ ${escapeHtml(message)}`;
+  fileStatus.classList.remove("hidden");
+}
+
+// Drag-and-drop onto the upload box. The document-wide preventDefault matters:
+// without it a drop that misses the zone makes the browser navigate to the file.
+function setupFileDragAndDrop(fileInput) {
+  const dropZone = fileInput.closest(".file-upload") || fileInput.parentElement;
+  if (!dropZone) return;
+
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  ["dragenter", "dragover", "dragleave", "drop"].forEach((event) => {
+    dropZone.addEventListener(event, stop);
+    document.body.addEventListener(event, stop);
+  });
+
+  ["dragenter", "dragover"].forEach((event) =>
+    dropZone.addEventListener(event, () => dropZone.classList.add("dragover")),
+  );
+  ["dragleave", "drop"].forEach((event) =>
+    dropZone.addEventListener(event, () =>
+      dropZone.classList.remove("dragover"),
+    ),
+  );
+
+  dropZone.addEventListener("drop", (e) => {
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || !files.length) return;
+
+    const file = files[0];
+    if (!/\.(csv|xlsx)$/i.test(file.name)) {
+      showUploadError("Please drop a CSV or Excel (.xlsx) file.");
+      return;
+    }
+
+    // Route through the input so the change handler stays the only entry point
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 
 // Loads the vendored SheetJS parser on first use only (Excel uploads are
@@ -70,6 +116,17 @@ async function ingestFile(file) {
   window._uploadNote = null;
   window._ingestLabel = null;
 
+  // Applies to both branches — an empty or oversized CSV used to be caught
+  // only by the legacy handler, which no longer exists
+  if (file.size === 0) {
+    showUploadError("File is empty");
+    return;
+  }
+  if (file.size > MAX_UPLOAD_SIZE) {
+    showUploadError("File size too large. Maximum allowed size is 10MB.");
+    return;
+  }
+
   if (!/\.xlsx$/i.test(file.name)) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -88,11 +145,6 @@ async function ingestFile(file) {
   }
 
   try {
-    const MAX_XLSX_SIZE = 10 * 1024 * 1024; // same limit as the CSV path
-    if (file.size === 0) throw new Error("File is empty");
-    if (file.size > MAX_XLSX_SIZE) {
-      throw new Error("File size too large. Maximum allowed size is 10MB.");
-    }
     const buffer = await file.arrayBuffer();
     await ensureXlsxLoaded();
     const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });

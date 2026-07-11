@@ -1,5 +1,5 @@
 // Downloads & stats: results CSV, no-match remediation export, AWS bulk
-// template, usage statistics, and the legacy integration hook.
+// template, and usage statistics.
 
 function downloadResults() {
   if (!processedResults || processedResults.length === 0) {
@@ -9,16 +9,6 @@ function downloadResults() {
 
   console.log("Downloading results with", processedResults.length, "rows");
 
-  // Use the file handler if available
-  if (
-    window.integrationManager &&
-    window.integrationManager.exportRecommendations
-  ) {
-    window.integrationManager.exportRecommendations(processedResults);
-    return;
-  }
-
-  // Fallback to simple CSV export
   const headers = Object.keys(processedResults[0]);
   const csvContent = [
     headers.map(escapeCsvCell).join(","),
@@ -555,44 +545,3 @@ function updateUsageCounters() {
   if (toolUsageElement) toolUsageElement.textContent = usageStats.toolUses;
   if (totalVMsElement) totalVMsElement.textContent = usageStats.totalVMs;
 }
-
-// Export function to get instance recommendation (for integration with file handler)
-window.getInstanceRecommendation = function (
-  provider,
-  cpu,
-  memory,
-  cpuUtil,
-  memoryUtil,
-  recommendationType,
-) {
-  let result = {
-    instanceType: "Not found",
-    status: "No match",
-    hourlyCost: "0",
-    vcpus: 0,
-    memory: 0,
-  };
-
-  // Try to use the modular selector system
-  if (typeof InstanceSelectorFactory !== "undefined") {
-    try {
-      const selector = InstanceSelectorFactory.createSelector(provider);
-      const options = {
-        currentGenerationOnly: true,
-      };
-
-      // This would need the selector to be initialized first
-      // For now, return the fallback result
-      console.log(
-        "Modular selector available but not initialized for single recommendation",
-      );
-    } catch (error) {
-      console.warn(
-        "Error using modular selector for single recommendation:",
-        error,
-      );
-    }
-  }
-
-  return result;
-};

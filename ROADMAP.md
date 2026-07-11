@@ -79,10 +79,6 @@ Meet users where their inventory actually comes from, and catch bad input early.
 - Column-mapping manager UI to view and edit the saved header-signature
   mappings that are invisible in localStorage today. (S)
 - Manual entry: bulk-add several similar VMs at once, and edit rows in place. (S)
-- Remove the dead legacy upload path (`window.integrationManager` guards, the
-  `getInstanceRecommendation` stub, and the superseded parts of
-  `file-handler.js`) so there is a single ingest pipeline. (M) _Best done first
-  in this release, before extending ingestion._
 
 ### 3.8 — Results, visualization & reporting
 

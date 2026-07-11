@@ -147,7 +147,8 @@ body {
   transition: all 0.3s ease;
 }
 
-.file-upload:hover .file-upload-label {
+.file-upload:hover .file-upload-label,
+.file-upload.dragover .file-upload-label {
   background: var(--surface-tint-strong);
   border-color: var(--primary-strong);
 }

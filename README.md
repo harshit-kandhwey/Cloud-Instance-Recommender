@@ -168,10 +168,9 @@ Cloud-Instance-Recommender/
     │   ├── instance-selector-factory.js    # Provider factory + recommendation orchestration
     │   ├── rule-engine.js                  # ENV/OS/Workload/Compliance/MinGen rule logic
     │   ├── recommendation-worker.js        # Web Worker running batches off the main thread
-    │   ├── file-handler.js                 # CSV parsing and validation
     │   ├── app-core.js                     # Shared state, mapping tables, data readiness, region validation
     │   ├── ui-shell.js                     # Page init, sticky button, accessibility
-    │   ├── ingest.js                       # Upload, parsing, column mapping, MB→GB
+    │   ├── ingest.js                       # Upload (incl. drag & drop), parsing, column mapping, MB→GB
     │   ├── manual-entry.js                 # Form-based VM entry
     │   ├── form-controls.js                # Filters, rule engine UI, option readers
     │   ├── generate.js                     # Option gathering + worker batch runner

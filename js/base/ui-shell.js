@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("csvFile");
   if (fileInput) {
     fileInput.addEventListener("change", handleFileUpload);
+    setupFileDragAndDrop(fileInput);
   }
 
   // Initialize range inputs

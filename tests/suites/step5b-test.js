@@ -1,5 +1,5 @@
 // Verification of the xlsx/CSV upload hardening: multi-sheet UI note,
-// size/empty guards, reader.onerror, and file-handler validator scoping.
+// size/empty guards, and reader.onerror.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -195,28 +195,22 @@ const AOA = [
     );
   }
 
-  console.log("[file-handler validator scoped to CSV]");
+  // Size and emptiness are checked for CSV too, not just xlsx — the legacy
+  // file handler used to be the only thing enforcing this on the CSV path
+  console.log("[csv size/emptiness validation]");
   {
-    const fhCtx = vm.createContext({
-      window: {},
-      console: { log: () => {}, warn: () => {}, error: () => {} },
-      document: undefined,
-      module: { exports: {} },
-      setTimeout,
-      clearTimeout,
-    });
-    fhCtx.window = fhCtx;
-    vm.runInContext(
-      fs.readFileSync(path.join(REPO, "js/base/file-handler.js"), "utf8"),
-      fhCtx,
-      { filename: "file-handler.js" },
-    );
-    const FileHandler = fhCtx.module.exports.FileHandler;
-    const fh = new FileHandler();
-    check("csv accepted", fh._isValidFileType({ name: "a.csv", type: "" }));
+    await ctx.ingestFile({ name: "big.csv", size: 11 * 1024 * 1024 });
     check(
-      "xlsx NOT advertised by text parser",
-      !fh._isValidFileType({ name: "a.xlsx", type: "" }),
+      "oversized csv rejected",
+      elements.fileStatus.innerHTML.includes("Maximum allowed size is 10MB"),
+      elements.fileStatus.innerHTML,
+    );
+
+    await ctx.ingestFile({ name: "zero.csv", size: 0 });
+    check(
+      "empty csv rejected",
+      elements.fileStatus.innerHTML.includes("File is empty"),
+      elements.fileStatus.innerHTML,
     );
   }
 
