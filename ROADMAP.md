@@ -46,11 +46,9 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 ### 3.6 — Output fidelity & UI polish
 
-Small, high-frequency wins that improve everyday use. **In progress** — see the
-[changelog](CHANGELOG.md) for what has already shipped.
-
-- Landing page feature-overview cards plus a "what's new" teaser linked to the
-  changelog. (S)
+Small, high-frequency wins that improve everyday use. **Feature work complete**
+— the line now closes with its bug-fix patches. See the
+[changelog](CHANGELOG.md) for what shipped.
 
 ### 3.7 — Ingestion & input quality
 

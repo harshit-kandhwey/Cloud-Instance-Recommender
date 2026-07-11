@@ -389,6 +389,73 @@ nav a.active {
   opacity: 0.8;
 }
 
+/* ─── Feature overview ─────────────────────────────────────────────────────── */
+.features {
+  margin-top: 60px;
+}
+
+.features-heading {
+  text-align: center;
+  margin: 0 0 24px;
+  color: var(--text);
+  font-size: 1.6rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+}
+
+.feature-icon {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.feature-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.feature-card code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  font-size: 0.85em;
+}
+
+.whats-new {
+  margin: 24px 0 0;
+  padding: 14px 18px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.whats-new a {
+  color: var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .privacy-note {
   max-width: 800px;
   margin: 40px auto 0;
