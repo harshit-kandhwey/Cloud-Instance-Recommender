@@ -389,6 +389,31 @@ nav a.active {
   opacity: 0.8;
 }
 
+.privacy-note {
+  max-width: 800px;
+  margin: 40px auto 0;
+  padding: 25px 30px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.privacy-title {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.privacy-note p {
+  margin: 0 0 10px;
+}
+
+.privacy-note p:last-child {
+  margin-bottom: 0;
+}
+
 /* Responsive Design for User Guide */
 @media (max-width: 768px) {
   .user-guide-section {
