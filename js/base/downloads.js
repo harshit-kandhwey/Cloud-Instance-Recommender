@@ -454,9 +454,12 @@ function downloadAWSBulkTemplate(type) {
   ].join("\n");
 
   const suffix = useL2L ? "like_to_like" : "optimized";
+  // No BOM: this file is fed to the AWS Pricing Calculator's bulk import, not
+  // opened in Excel, and a BOM would corrupt the first header it reads
   downloadCsv(
     csvContent,
     exportFilename(`aws_pricing_calculator_bulk_${suffix}`, "csv"),
+    { bom: false },
   );
 
   console.log(`AWS bulk template exported: ${rows.length} rows`);

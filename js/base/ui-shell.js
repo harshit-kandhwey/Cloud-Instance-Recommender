@@ -31,7 +31,11 @@ function setupStickyGenerate() {
 
 // ─── Back to top ──────────────────────────────────────────────────────────────
 // The tool pages run long once results are rendered, and the controls all live
-// at the top. Sits left of the sticky Generate bar so the two never overlap.
+// at the top.
+//
+// Bottom-LEFT on purpose. The three floating things each own a corner: the
+// toast stack is bottom-right, the sticky Generate bar is bottom-centre, and
+// toasts (z-index 9999) would otherwise cover this button (998).
 function setupBackToTop() {
   if (!document.body) return;
 
@@ -44,7 +48,7 @@ function setupBackToTop() {
   Object.assign(button.style, {
     position: "fixed",
     bottom: "20px",
-    right: "20px",
+    left: "20px",
     zIndex: "998",
     display: "none",
     width: "42px",

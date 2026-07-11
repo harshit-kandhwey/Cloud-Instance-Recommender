@@ -563,8 +563,13 @@ const UTF8_BOM = "﻿";
 
 // The one place a CSV becomes a download. Every CSV export goes through here so
 // they cannot drift apart on encoding or on the object-URL cleanup.
-function downloadCsv(csvContent, filename) {
-  const blob = new Blob([UTF8_BOM + csvContent], {
+//
+// `bom: false` for files another PROGRAM reads rather than a person: the AWS
+// Pricing Calculator's bulk import parses the header row, and a BOM turns the
+// first header into "﻿Service Name". The BOM exists for Excel's benefit,
+// and Excel is not the consumer there.
+function downloadCsv(csvContent, filename, { bom = true } = {}) {
+  const blob = new Blob([(bom ? UTF8_BOM : "") + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
   const url = window.URL.createObjectURL(blob);

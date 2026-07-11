@@ -268,6 +268,25 @@ check(
   read("user-guide.html").includes(":focus-visible"),
 );
 
+// ─── Floating controls don't overlap ──────────────────────────────────────────
+// Three things float at the bottom of a tool page. They must each own a corner:
+// toasts are bottom-right (z 9999), the sticky Generate bar is bottom-centre,
+// and back-to-top is bottom-left — put it bottom-right and a toast hides it.
+console.log("[floating controls]");
+{
+  const shell = read("js/base/ui-shell.js");
+  const backToTop = shell.slice(shell.indexOf("function setupBackToTop"));
+  check(
+    "back-to-top is bottom-left, clear of the toast stack",
+    /left: "20px"/.test(backToTop) && !/right: "20px"/.test(backToTop),
+  );
+  const toastStackMarkup = read("aws.html");
+  check(
+    "the toast stack owns bottom-right",
+    /id="toastStack"[\s\S]{0,400}right: 20px/.test(toastStackMarkup),
+  );
+}
+
 // ─── Section collapse state ───────────────────────────────────────────────────
 // Rarely-used sections start collapsed; every section then remembers what the
 // user last did with it.

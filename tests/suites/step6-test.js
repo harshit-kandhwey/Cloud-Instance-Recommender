@@ -355,7 +355,32 @@ function check(name, cond, detail) {
       out,
     );
 
+    // The AWS bulk template is parsed by the Pricing Calculator, not opened in
+    // Excel — a BOM would corrupt the first header it reads
+    captured.length = 0;
+    ctx.downloadCsv("Service Name,Region\nEC2,us-east-1", "bulk.csv", {
+      bom: false,
+    });
+    check(
+      "bom:false omits it, so a machine-read file starts at its header",
+      captured[0].startsWith("Service Name"),
+      JSON.stringify(captured[0].slice(0, 20)),
+    );
+
     ctx.document.createElement = realCreateElement;
+
+    // Round trip: users are told to fix the no-match export and re-upload it, so
+    // our own parser must cope with the BOM we now write
+    vm.runInContext(
+      'parseCSV("\\uFEFFVM Name,CPU Count,Memory (GB)\\nweb-1,2,8")',
+      ctx,
+    );
+    const reHeaders = vm.runInContext("columnHeaders", ctx);
+    check(
+      "re-uploading our own BOM'd CSV keeps the first header intact",
+      reHeaders[0] === "VM Name",
+      JSON.stringify(reHeaders),
+    );
   }
 
   // Copy-to-clipboard: must agree with the screen, like the exports do
