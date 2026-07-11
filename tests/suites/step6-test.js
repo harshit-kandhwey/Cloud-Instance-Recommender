@@ -358,6 +358,58 @@ function check(name, cond, detail) {
     ctx.document.createElement = realCreateElement;
   }
 
+  // Copy-to-clipboard: must agree with the screen, like the exports do
+  console.log("[copy to clipboard]");
+  {
+    let copied = null;
+    ctx.navigator = {
+      clipboard: {
+        writeText: (t) => {
+          copied = t;
+          return Promise.resolve();
+        },
+      },
+    };
+
+    // Filter to the 5 db rows, sorted descending by VM Name
+    ctx._previewFilterChanged("db-");
+    await new Promise((r) => setTimeout(r, 250));
+    ctx.copyPreviewToClipboard();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const lines = copied.split("\n");
+    check(
+      "tab-separated, so it pastes into spreadsheet cells",
+      lines[0].includes("\t") && !lines[0].includes(","),
+      lines[0],
+    );
+    check(
+      "copies every matching row, not just the 20 rendered",
+      lines.length === 6, // header + 5 db rows
+      `${lines.length} lines`,
+    );
+    check(
+      "respects the filter (no web- rows)",
+      !copied.includes("web-"),
+      copied.slice(0, 120),
+    );
+    check(
+      "follows the preview's sort order",
+      lines[1].startsWith("db-05") && lines[5].startsWith("db-01"),
+      `${lines[1].split("\t")[0]} … ${lines[5].split("\t")[0]}`,
+    );
+
+    ctx._previewFilterChanged("");
+    await new Promise((r) => setTimeout(r, 250));
+    ctx.copyPreviewToClipboard();
+    await new Promise((r) => setTimeout(r, 20));
+    check(
+      "unfiltered copy takes all 25 rows",
+      copied.split("\n").length === 26,
+      `${copied.split("\n").length} lines`,
+    );
+  }
+
   // What optimizing bought, per provider — never summed across providers, since
   // the same VM appears once per provider
   console.log("[sizing savings]");

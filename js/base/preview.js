@@ -227,9 +227,14 @@ function _renderPreviewTable(
   html += `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
-      <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
-        oninput="window._previewFilterChanged(this.value)"
-        style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
+      <span style="display:flex;align-items:center;gap:8px;">
+        <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
+          oninput="window._previewFilterChanged(this.value)"
+          style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
+        <button type="button" onclick="copyPreviewToClipboard()"
+          title="Copy every row shown (all ${rows.length}, not just the first 20) as tab-separated text, ready to paste into a spreadsheet"
+          style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:pointer;white-space:nowrap;">📋 Copy</button>
+      </span>
     </div>
     <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid var(--border-slate-light);border-radius:6px;">
       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
@@ -379,6 +384,79 @@ function updateStaleResultsNotice() {
   notice.className = "alert alert-warning";
   notice.innerHTML = `⚠️ These results were generated for <strong>${escapeHtml(named)}</strong>, which is no longer what you have selected. Click Generate to update them — the table and every download still describe the old selection.`;
   notice.classList.remove("hidden");
+}
+
+// Tab-separated, because that is what a spreadsheet expects from the clipboard:
+// paste lands in cells without an import step. Commas would arrive as one column.
+function buildPreviewTsv(rows, displayCols) {
+  const cell = (v) =>
+    String(v ?? "")
+      .replace(/[\t\r\n]+/g, " ")
+      .trim();
+  return [
+    displayCols.map(cell).join("\t"),
+    ...rows.map((row) => displayCols.map((c) => cell(row[c])).join("\t")),
+  ].join("\n");
+}
+
+// Copies every row the filter currently matches — not just the 20 rendered —
+// in the preview's sort order, so the clipboard agrees with the screen for the
+// same reason the exports do.
+function copyPreviewToClipboard() {
+  const state = window._previewState;
+  if (!state || !state.results || !state.results.length) return;
+
+  const needle = String(state.filter || "")
+    .trim()
+    .toLowerCase();
+  let rows = needle
+    ? state.results.filter((row) =>
+        state.displayCols.some((c) =>
+          String(row[c] ?? "")
+            .toLowerCase()
+            .includes(needle),
+        ),
+      )
+    : [...state.results];
+  if (state.sortCol !== null) {
+    sortResultRows(rows, state.displayCols[state.sortCol], state.sortDir);
+  }
+
+  const tsv = buildPreviewTsv(rows, state.displayCols);
+  const done = () =>
+    showToast(`Copied ${rows.length} row(s) to the clipboard`, "success", 3000);
+  const failed = () =>
+    showToast("Could not copy to the clipboard", "warning", 4000);
+
+  // navigator.clipboard needs a secure context; a page opened from file:// has
+  // none, so fall back to the old selection-based copy rather than doing nothing
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(tsv).then(done, () => {
+      if (!copyViaTextarea(tsv)) failed();
+      else done();
+    });
+    return;
+  }
+  if (copyViaTextarea(tsv)) done();
+  else failed();
+}
+window.copyPreviewToClipboard = copyPreviewToClipboard;
+
+function copyViaTextarea(text) {
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 // Offers the single filter change that rescues the most unmatched rows, so the
