@@ -441,16 +441,7 @@ microservice-06,Analytics,1,2,15,20,us-central1,Dev,Linux,General,,
 worker-node-07,Analytics,8,16,85,75,us-west1,Production,Linux,ML/AI,HIPAA,n4
 frontend-08,Storefront,2,4,40,50,europe-west1,Staging,Windows,Web Server,,`;
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = "GCP_sample_instance_data.csv";
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, "GCP_sample_instance_data.csv");
 }
 
 // GCP-specific cost optimization recommendations (ENHANCED with emojis)

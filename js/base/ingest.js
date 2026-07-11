@@ -13,16 +13,7 @@ microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,Ge
 worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
 frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,`;
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = "sample_instance_data.csv";
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, "sample_instance_data.csv");
 }
 
 // Handle file upload

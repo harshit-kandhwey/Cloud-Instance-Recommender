@@ -38,7 +38,8 @@ exactly one row (the current tip) ever carries the placeholder.
 
 | Version | Commit        | Date       | Change                                                                                                                                                                                                |
 | ------- | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.6.0   | _this commit_ | 2026-07-12 | Replaced every `alert()` with themed, dismissible toasts that respect the theme, announce themselves to a screen reader, and no longer freeze the page or print the site's address above the message. |
+| 3.6.1   | _this commit_ | 2026-07-12 | Added a UTF-8 BOM to every CSV download, so Excel stops turning non-ASCII VM and application names into mojibake, and routed all seven CSV exports through a single download helper.                  |
+| 3.6.0   | 7d04569       | 2026-07-12 | Replaced every `alert()` with themed, dismissible toasts that respect the theme, announce themselves to a screen reader, and no longer freeze the page or print the site's address above the message. |
 
 ### 3.5 — UI polish, preset export/import, offline banner, housekeeping (2026-07-10 → 2026-07-12)
 

@@ -555,6 +555,29 @@ function exportFilename(base, extension) {
   return `${base}_${exportDateStamp()}.${extension}`;
 }
 
+// Byte-order mark. Excel assumes a CSV is in the local ANSI codepage unless the
+// file starts with one, so without it a VM or application named "München" or
+// "日本" opens as mojibake — the single most common complaint about CSV exports.
+// Other tools ignore it.
+const UTF8_BOM = "﻿";
+
+// The one place a CSV becomes a download. Every CSV export goes through here so
+// they cannot drift apart on encoding or on the object-URL cleanup.
+function downloadCsv(csvContent, filename) {
+  const blob = new Blob([UTF8_BOM + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
 // ─── Shared result-set primitives ─────────────────────────────────────────────
 // Defined here (every page loads app-core.js first) so the stats bar, the
 // preview table, the CSV/no-match/app exports, and the App Portfolio page all

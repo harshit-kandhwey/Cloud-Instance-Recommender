@@ -329,6 +329,35 @@ function check(name, cond, detail) {
     })(),
   );
 
+  // Every CSV export goes through downloadCsv, which prepends a BOM so Excel
+  // reads the file as UTF-8 instead of the local ANSI codepage
+  console.log("[csv encoding]");
+  {
+    // This suite's fake DOM has no URL/Blob and its nodes have no click(),
+    // since nothing else here downloads anything
+    const captured = [];
+    const realCreateElement = ctx.document.createElement;
+    ctx.Blob = class {
+      constructor(parts) {
+        this.content = parts.join("");
+        captured.push(this.content);
+      }
+    };
+    ctx.URL = { createObjectURL: () => "blob:x", revokeObjectURL: () => {} };
+    ctx.document.createElement = (tag) => ({ tag, style: {}, click() {} });
+
+    ctx.downloadCsv("VM Name\nweb-münchen-01\n日本-db-02", "x.csv");
+    const out = captured[0];
+    check("BOM is the first character", out.charCodeAt(0) === 0xfeff);
+    check(
+      "non-ASCII names survive intact",
+      out.includes("web-münchen-01") && out.includes("日本-db-02"),
+      out,
+    );
+
+    ctx.document.createElement = realCreateElement;
+  }
+
   // Guard the migration: alert() blocks the page and ignores the theme
   const productSources = [
     "js/base/app-core.js",

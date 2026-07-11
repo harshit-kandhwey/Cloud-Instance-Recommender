@@ -49,8 +49,6 @@ Not tied to any release — adopted once, then maintained every cycle:
 Small, high-frequency wins that improve everyday use. **In progress** — see the
 [changelog](CHANGELOG.md) for what has already shipped.
 
-- Add a UTF-8 BOM to CSV downloads so Excel opens non-ASCII VM and application
-  names correctly. (S)
 - Nearest-miss **one-click relax** — apply the single filter change that
   rescues the most no-match rows (the data is already computed). (S)
 - Stats bar showing the total vCPU and RAM saved by optimized sizing. (S)

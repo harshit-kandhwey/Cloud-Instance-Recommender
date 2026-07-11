@@ -22,17 +22,7 @@ function downloadResults() {
     ),
   ].join("\n");
 
-  // Download
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = exportFilename("instance_recommendations", "csv");
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, exportFilename("instance_recommendations", "csv"));
 
   console.log("CSV download completed");
 }
@@ -78,16 +68,7 @@ function downloadNoMatchRows() {
     ),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = exportFilename("no_match_rows", "csv");
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, exportFilename("no_match_rows", "csv"));
 
   console.log(`No-match export completed: ${noMatch.length} rows`);
 }
@@ -202,16 +183,7 @@ function downloadAppSummary() {
     ),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = exportFilename("app_summary", "csv");
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, exportFilename("app_summary", "csv"));
 
   console.log(`App summary export completed: ${summary.length} apps`);
 }
@@ -481,17 +453,11 @@ function downloadAWSBulkTemplate(type) {
     ...rows.map((r) => r.map(escapeCell).join(",")),
   ].join("\n");
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
   const suffix = useL2L ? "like_to_like" : "optimized";
-  a.download = exportFilename(`aws_pricing_calculator_bulk_${suffix}`, "csv");
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(
+    csvContent,
+    exportFilename(`aws_pricing_calculator_bulk_${suffix}`, "csv"),
+  );
 
   console.log(`AWS bulk template exported: ${rows.length} rows`);
 }

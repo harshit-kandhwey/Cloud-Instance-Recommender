@@ -399,16 +399,7 @@ microservice-06,Analytics,1,2,15,20,East US,Dev,Linux,General,,
 worker-node-07,Analytics,8,16,85,75,West US 2,Production,Linux,ML/AI,HIPAA,4
 frontend-08,Storefront,2,4,40,50,North Europe,Staging,Windows,Web Server,,`;
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = "Azure_sample_instance_data.csv";
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, "Azure_sample_instance_data.csv");
 }
 
 // Azure-specific cost optimization recommendations

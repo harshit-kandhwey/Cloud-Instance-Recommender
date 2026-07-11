@@ -210,7 +210,10 @@ check(
     /^no_match_rows_\d{4}-\d{2}-\d{2}\.csv$/.test(downloads[0].name),
   JSON.stringify(downloads.map((d) => d.name)),
 );
-const csv = downloads[0].blob.content;
+const raw = downloads[0].blob.content;
+// Excel needs the BOM to read the file as UTF-8; everything else ignores it
+check("CSV starts with a UTF-8 BOM", raw.charCodeAt(0) === 0xfeff);
+const csv = raw.replace(/^﻿/, "");
 const lines = csv.split("\n");
 check(
   "header = input cols + diagnostics",

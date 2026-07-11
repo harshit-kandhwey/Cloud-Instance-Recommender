@@ -287,16 +287,7 @@ microservice-06,Analytics,1,2,15,20,us-east-1,Dev,Linux,General,,
 worker-node-07,Analytics,8,16,85,75,us-west-2,Production,Linux,ML/AI,HIPAA,7
 frontend-08,Storefront,2,4,40,50,eu-west-1,Staging,Windows,Web Server,,`;
 
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.style.display = "none";
-  a.href = url;
-  a.download = "AWS_sample_instance_data.csv";
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(a);
+  downloadCsv(csvContent, "AWS_sample_instance_data.csv");
 }
 
 // Export AWS-specific functions and data
