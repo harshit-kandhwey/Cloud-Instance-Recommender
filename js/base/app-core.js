@@ -211,6 +211,11 @@ function allDataReady(providers = getPageProviders()) {
   return providers.every((p) => window[DATA_READY_FLAGS[p]] === true);
 }
 
+// Deliberately NOT the toast stack below. This is a single, persistent status
+// pill for one thing — "the region data is still loading" — that stays up until
+// the data arrives and is then dismissed by code (hideDataToast). Toasts are
+// transient, stack, and are dismissed by the user or a timer. Folding this into
+// them would mean a message with no expiry sitting in a queue of ones that have.
 function showDataToast(msg) {
   let toast = document.getElementById("dataToast");
   if (!toast) {
@@ -579,8 +584,12 @@ function downloadCsv(csvContent, filename, { bom = true } = {}) {
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
+  // Revoking synchronously after click() intermittently kills the download in
+  // Firefox and WebKit — the browser hasn't finished reading the blob yet. Yield
+  // first. This is the single choke point for every CSV export, so one deferred
+  // revoke fixes them all.
+  setTimeout(() => window.URL.revokeObjectURL(url), 0);
 }
 
 // ─── Shared result-set primitives ─────────────────────────────────────────────

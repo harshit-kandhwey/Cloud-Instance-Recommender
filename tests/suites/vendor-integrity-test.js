@@ -24,9 +24,18 @@ function check(name, cond, detail) {
 
 const security = fs.readFileSync(path.join(REPO, "SECURITY.md"), "utf8");
 
+// Only the "Artifact integrity" table counts. Scanning the whole document would
+// let a stale table pass because some OTHER section happened to mention the same
+// path and hash.
+const integrity =
+  security.match(/### Artifact integrity([\s\S]*?)(?=\n#{1,3} |$)/)?.[1] ?? "";
+
+console.log("[the integrity table exists and is parseable]");
+check("SECURITY.md has an Artifact integrity section", integrity.length > 0);
+
 // `| js/vendor/x.min.js | <64 hex> |` — however the table happens to be padded
 const recorded = new Map();
-for (const m of security.matchAll(
+for (const m of integrity.matchAll(
   /`(js\/vendor\/[\w.-]+\.js)`\s*\|\s*`([a-f0-9]{64})`/g,
 )) {
   recorded.set(m[1], m[2]);
@@ -36,12 +45,21 @@ const bundles = fs
   .readdirSync(VENDOR_DIR)
   .filter((f) => f.endsWith(".js"))
   .map((f) => `js/vendor/${f}`);
+const present = new Set(bundles);
 
-console.log("[vendored bundles are all accounted for]");
+console.log("[the table and the directory agree, both ways]");
 check(
-  "SECURITY.md records a checksum for every vendored bundle",
+  "every vendored bundle has a recorded checksum",
   bundles.every((b) => recorded.has(b)),
-  `missing: ${bundles.filter((b) => !recorded.has(b)).join(", ")}`,
+  `unrecorded: ${bundles.filter((b) => !recorded.has(b)).join(", ")}`,
+);
+// The reverse: a row for a file that was renamed or deleted is stale, and a
+// one-way check would happily leave it there forever
+const stale = [...recorded.keys()].filter((b) => !present.has(b));
+check(
+  "no checksum rows for bundles that no longer exist",
+  stale.length === 0,
+  `stale rows: ${stale.join(", ")}`,
 );
 
 console.log("[checksums match the committed files]");

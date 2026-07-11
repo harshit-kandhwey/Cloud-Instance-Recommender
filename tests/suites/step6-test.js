@@ -313,9 +313,11 @@ function check(name, cond, detail) {
   );
 
   // Auto-dismiss
-  const tempId = ctx.showToast("Briefly", "info", 30);
+  // Generous margin: a 30ms timeout with an 80ms wait is only 50ms of slack, and
+  // a loaded CI box will lose that
+  const tempId = ctx.showToast("Briefly", "info", 20);
   check("timed toast shown", stack.innerHTML.includes("Briefly"));
-  await new Promise((r) => setTimeout(r, 80));
+  await new Promise((r) => setTimeout(r, 250));
   check(
     "timed toast auto-dismisses",
     !stack.innerHTML.includes("Briefly"),
@@ -433,6 +435,23 @@ function check(name, cond, detail) {
       copied.split("\n").length === 26,
       `${copied.split("\n").length} lines`,
     );
+
+    // A pasted cell lands in a spreadsheet exactly like a downloaded one, so the
+    // clipboard needs the same formula-injection guard the CSV export has. The
+    // value comes from an uploaded file.
+    const evil = [
+      { "VM Name": "=cmd|'/c calc'!A1", "CPU Count": "2" },
+      { "VM Name": "+1+1", "CPU Count": "2" },
+      { "VM Name": "safe-01", "CPU Count": "2" },
+    ];
+    const tsv = ctx.buildPreviewTsv(evil, ["VM Name", "CPU Count"]);
+    const cells = tsv.split("\n").map((l) => l.split("\t")[0]);
+    check(
+      "a formula cell is neutralised in the clipboard, not just in the CSV",
+      cells[1] === "'=cmd|'/c calc'!A1" && cells[2] === "'+1+1",
+      JSON.stringify(cells),
+    );
+    check("an ordinary name is left alone", cells[3] === "safe-01");
   }
 
   // What optimizing bought, per provider — never summed across providers, since

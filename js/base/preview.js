@@ -13,7 +13,16 @@ function escapeCsvCell(val) {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
+// The stats bar describes the whole result set, so it does not change when the
+// preview is filtered or re-sorted — but it was being rebuilt on every debounced
+// keystroke and every sort click, rescanning every row for rules, matches and
+// sizing savings each time. Cached against the results array itself, which is
+// replaced (never mutated) on each run, so a new run always recomputes.
+let _statsCache = { results: null, html: "" };
+
 function _buildStatsHtml(results) {
+  if (_statsCache.results === results) return _statsCache.html;
+
   const allKeys = Object.keys(results[0] || {});
   const isNoMatch = isNoMatchValue;
 
@@ -86,7 +95,7 @@ function _buildStatsHtml(results) {
     ? `<span style="color:var(--text-faint);font-size:0.8em;">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
     : "";
 
-  return `
+  const html = `
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:8px;font-size:0.875em;">
       <span style="font-weight:700;color:var(--good-strong);">✅ Generation complete</span>
       <span style="color:var(--text-body);">📊 <strong>${results.length}</strong> rows</span>
@@ -97,6 +106,9 @@ function _buildStatsHtml(results) {
       ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;
+
+  _statsCache = { results, html };
+  return html;
 }
 
 // ─── Show in-browser results preview ──────────────────────────────────────────
@@ -405,10 +417,16 @@ function updateStaleResultsNotice() {
 // Tab-separated, because that is what a spreadsheet expects from the clipboard:
 // paste lands in cells without an import step. Commas would arrive as one column.
 function buildPreviewTsv(rows, displayCols) {
-  const cell = (v) =>
-    String(v ?? "")
+  const cell = (v) => {
+    const s = String(v ?? "")
       .replace(/[\t\r\n]+/g, " ")
       .trim();
+    // The same formula-injection guard escapeCsvCell applies to downloads. The
+    // clipboard lands in a spreadsheet exactly like a CSV does, and these values
+    // come from an uploaded file — a VM named `=cmd|'…'!A1` must not execute
+    // just because it was copied instead of downloaded.
+    return /^[=+\-@|]/.test(s) ? `'${s}` : s;
+  };
   return [
     displayCols.map(cell).join("\t"),
     ...rows.map((row) => displayCols.map((c) => cell(row[c])).join("\t")),
@@ -506,7 +524,15 @@ function applyRelaxSuggestion() {
   if (!suggestion) return;
 
   const checkbox = document.getElementById(suggestion.control.id);
-  if (!checkbox) return;
+  if (!checkbox) {
+    // The page doesn't render this filter's control. Say so rather than making
+    // the button do nothing at all when clicked.
+    showToast(
+      `Can't relax "${suggestion.label}" from this page — turn the filter off manually and regenerate.`,
+      "warning",
+    );
+    return;
+  }
   checkbox.checked = false;
 
   // Let the control's own handler hide its sub-panel, so the form doesn't keep

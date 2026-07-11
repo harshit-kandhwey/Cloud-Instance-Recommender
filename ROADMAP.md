@@ -142,9 +142,13 @@ Changes that redefine what the tool does or how it is built.
 
 ## Known issues (patch-level)
 
-Tracked and fixed continuously rather than scheduled into a release. **The list
-is currently empty** — everything on it has shipped (see the changelog for what
-each fix did).
+Tracked and fixed continuously rather than scheduled into a release.
+
+- The **instance-family-name filter is unreachable**. `restrictInstanceFamilyNames`
+  is read by the engine, the option gatherer, the presets, and the scenario diff,
+  but no page renders its checkbox — so the filter can never be switched on, and
+  its nearest-miss probe can never fire. Either give it the UI the rest of the
+  code already expects, or remove it from all of them.
 
 ## Suggesting an item
 

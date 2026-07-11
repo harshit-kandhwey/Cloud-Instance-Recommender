@@ -337,11 +337,29 @@ console.log("[section collapse state]");
     ctx.sectionKey(makeSection(null, "\n  Some Section\n").header) ===
       "Some Section",
   );
-  check(
-    "every collapsible header in the markup carries an id",
-    (read("aws.html").match(/data-section-id="/g) || []).length ===
-      (read("aws.html").match(/onclick="toggleSection\(this\)"/g) || []).length,
-  );
+  // Per element, not per count: equal totals would still pass if one header had
+  // an onclick with no id and another had an id with no onclick
+  for (const page of [
+    "aws.html",
+    "azure.html",
+    "gcp.html",
+    "multicloud.html",
+  ]) {
+    // \s+, not a literal space: Prettier reflows a header with several
+    // attributes onto separate lines
+    const headers = [
+      ...read(page).matchAll(/<div\s+class="section-header"([^>]*)>/g),
+    ].map((m) => m[1]);
+    const collapsible = headers.filter((a) =>
+      a.includes('onclick="toggleSection(this)"'),
+    );
+    check(
+      `${page}: every collapsible header carries its own data-section-id`,
+      collapsible.length > 0 &&
+        collapsible.every((a) => /data-section-id="[^"]+"/.test(a)),
+      `${collapsible.filter((a) => !/data-section-id="/.test(a)).length} without an id`,
+    );
+  }
   check(
     "aria-expanded matches the collapsed state",
     sample.header.attrs["aria-expanded"] === "false" &&

@@ -86,8 +86,11 @@ where the CSP trusts it from. The checksums of what is committed:
 Verify at any time:
 
 ```bash
-sha256sum js/vendor/*.min.js          # macOS: shasum -a 256
+sha256sum js/vendor/*.js              # macOS: shasum -a 256 js/vendor/*.js
 ```
+
+(Every `.js` under `js/vendor/`, not just `*.min.js` — the integrity test checks
+them all, and a future unminified bundle must not slip past the manual check.)
 
 **Replacing a vendored bundle** — never skip a step:
 

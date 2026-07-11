@@ -9,6 +9,9 @@
 // exercised end-to-end by the golden suites. A source-scan section at the end
 // enforces the probe coupling: every `options.<key>` a provider's applyFilters
 // reads must have a matching probe group in `_nearestMissProbes`.
+// Note: the relax feature is provider-agnostic on purpose. The probe labels are
+// shared across providers — each probe's pick() folds the Azure and GCP option
+// keys in under the SAME label — so one RELAX_CONTROLS entry serves all three.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -285,6 +288,47 @@ for (const scan of filterScans) {
     `${scan.name}: every applyFilters option read has a nearest-miss probe`,
     unprobed.length === 0,
     unprobed.length ? `missing probe for: ${unprobed.join(", ")}` : "",
+  );
+}
+
+// ─── Relax suggestion is coupled to the probe labels ──────────────────────────
+// The one-click relax maps each probe LABEL to the checkbox that turns that
+// filter off. Rename a label in _nearestMissProbes and the map silently stops
+// matching — computeRelaxSuggestion would just never suggest anything, with no
+// error anywhere. The labels are shared across providers (each probe's pick()
+// folds the Azure/GCP option keys in under the same label), so this is not an
+// AWS-only feature.
+console.log("[relax controls cover every probe label]");
+{
+  const selectorSrc = fs.readFileSync(
+    path.join(REPO, "js/base/base-instance-selector.js"),
+    "utf8",
+  );
+  // `label:` appears only inside _nearestMissProbes, so no slicing games
+  const probeLabels = [...selectorSrc.matchAll(/^\s+label: "([^"]+)"/gm)].map(
+    (m) => m[1],
+  );
+
+  const coreSrc = fs.readFileSync(
+    path.join(REPO, "js/base/app-core.js"),
+    "utf8",
+  );
+  const mapSrc = coreSrc.slice(
+    coreSrc.indexOf("const RELAX_CONTROLS"),
+    coreSrc.indexOf("function parseRelaxLabels"),
+  );
+
+  check(
+    "every probe label has a relax control",
+    probeLabels.length > 0 &&
+      probeLabels.every((l) => mapSrc.includes(`"${l}"`)),
+    `labels=${JSON.stringify(probeLabels)}`,
+  );
+  check(
+    "the relax map invents no label the engine never emits",
+    [...mapSrc.matchAll(/^\s{2}"([^"]+)":/gm)].every(([, label]) =>
+      probeLabels.includes(label),
+    ),
   );
 }
 
