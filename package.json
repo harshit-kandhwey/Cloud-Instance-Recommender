@@ -7,9 +7,12 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node tests/run-all.js",
-    "syntax-check": "node tests/syntax-check.js"
+    "syntax-check": "node tests/syntax-check.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "prettier": "3.9.5",
     "typescript": "5.7.3"
   }
 }
