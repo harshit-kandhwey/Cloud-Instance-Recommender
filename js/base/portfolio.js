@@ -1293,7 +1293,7 @@ function exportPortfolioWorkbook() {
         buildPortfolioWorkbookModel(portfolioModel),
         !!info.styled,
       );
-      const fname = `app-portfolio_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const fname = exportFilename("app_portfolio", "xlsx");
       window.XLSX.writeFile(wb, fname);
     })
     .catch((e) => {

@@ -23,9 +23,7 @@ function downloadResults() {
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = `instance_recommendations_${
-    new Date().toISOString().split("T")[0]
-  }.csv`;
+  a.download = exportFilename("instance_recommendations", "csv");
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
@@ -79,7 +77,7 @@ function downloadNoMatchRows() {
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = "no-match-rows.csv";
+  a.download = exportFilename("no_match_rows", "csv");
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
@@ -202,7 +200,7 @@ function downloadAppSummary() {
   const a = document.createElement("a");
   a.style.display = "none";
   a.href = url;
-  a.download = "app-summary.csv";
+  a.download = exportFilename("app_summary", "csv");
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
@@ -473,7 +471,7 @@ function downloadAWSBulkTemplate(type) {
   a.style.display = "none";
   a.href = url;
   const suffix = useL2L ? "like_to_like" : "optimized";
-  a.download = `aws_pricing_calculator_bulk_${suffix}_${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = exportFilename(`aws_pricing_calculator_bulk_${suffix}`, "csv");
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);

@@ -110,6 +110,13 @@ const sandbox = {
 };
 sandbox.window = sandbox;
 sandbox.currentSourcePage = () => sandbox.__page;
+// Provided by app-core.js on a real page. Stubbed rather than loaded, because
+// app-core's `let selectedProviders` would shadow the sandbox array these tests
+// assert against. The real helper is covered by the suites that do load
+// app-core.js (step7, app-summary, portfolio).
+sandbox.exportFilename = (base, extension) =>
+  `${base}_${new Date().toISOString().slice(0, 10)}.${extension}`;
+
 const ctx = vm.createContext(sandbox);
 const run = (expr) => vm.runInContext(expr, ctx, { filename: "presets-test" });
 
@@ -592,9 +599,9 @@ run(
 );
 run("exportPresets()");
 check(
-  "export downloads cloud-recommender-presets-{page}.json",
+  "export downloads filter_presets_{page}_<date>.json",
   downloads.length === 1 &&
-    downloads[0].name === "cloud-recommender-presets-aws.json",
+    /^filter_presets_aws_\d{4}-\d{2}-\d{2}\.json$/.test(downloads[0].name),
   JSON.stringify(downloads.map((d) => d.name)),
 );
 const exported = JSON.parse(downloads[0].blob.content);

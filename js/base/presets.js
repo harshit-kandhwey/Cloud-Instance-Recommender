@@ -313,7 +313,7 @@ function exportPresets() {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `cloud-recommender-presets-${page}.json`;
+  a.download = exportFilename(`filter_presets_${page}`, "json");
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);

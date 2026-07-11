@@ -242,8 +242,9 @@ check(
 console.log("[export content]");
 vm.runInContext("downloadAppSummary()", ctx);
 check(
-  "file named app-summary.csv",
-  downloads.length === 1 && downloads[0].name === "app-summary.csv",
+  "file named app_summary_<date>.csv",
+  downloads.length === 1 &&
+    /^app_summary_\d{4}-\d{2}-\d{2}\.csv$/.test(downloads[0].name),
   JSON.stringify(downloads.map((d) => d.name)),
 );
 const lines = downloads[0].blob.content.split("\n");

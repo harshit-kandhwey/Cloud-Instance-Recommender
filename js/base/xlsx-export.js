@@ -143,7 +143,7 @@ function downloadResultsXlsx() {
         !!info.styled,
         window.XLSX,
       );
-      const fname = `instance_recommendations_${new Date().toISOString().split("T")[0]}.xlsx`;
+      const fname = exportFilename("instance_recommendations", "xlsx");
       window.XLSX.writeFile(wb, fname);
     })
     .catch((e) => {

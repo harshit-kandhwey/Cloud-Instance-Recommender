@@ -479,6 +479,20 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+// ─── Export filenames ─────────────────────────────────────────────────────────
+// Every generated download is named `<base>_<YYYY-MM-DD>.<ext>` so a folder of
+// them sorts and dedupes sensibly. The stamp is the user's LOCAL date: an
+// evening export in a UTC+ timezone would otherwise be labelled tomorrow.
+// (Sample templates are inputs, not outputs, and keep their fixed names.)
+function exportDateStamp(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function exportFilename(base, extension) {
+  return `${base}_${exportDateStamp()}.${extension}`;
+}
+
 // ─── Shared result-set primitives ─────────────────────────────────────────────
 // Defined here (every page loads app-core.js first) so the stats bar, the
 // preview table, the CSV/no-match/app exports, and the App Portfolio page all
