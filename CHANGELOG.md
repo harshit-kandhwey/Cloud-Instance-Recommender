@@ -34,11 +34,12 @@ exactly one row (the current tip) ever carries the placeholder.
 
 ## Version map
 
-### 3.6 — Output fidelity & UI polish (2026-07-12 → in progress)
+### 3.6 — Output fidelity & UI polish (2026-07-12 → 2026-07-12)
 
 | Version | Commit        | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------- | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.6.14  | _this commit_ | 2026-07-12 | Tightened the check added in 3.6.13: it read `.gitattributes` as text and would have accepted a rule that did not actually cover the vendored bundles. It now asks git for each bundle's effective attribute, so it tests whether the files are really protected rather than how the rule is phrased.                                                                                                                                                                                                                                                                           |
+| 3.6.15  | _this commit_ | 2026-07-12 | Closed the 3.6 line for release and wrote its release notes. Also completed 3.5's notes, which stopped at 3.5.10 and so omitted sixteen commits — the single upload pipeline, content-sniffed uploads, exports that agree with the preview, and the project foundations — and corrected its end date.                                                                                                                                                                                                                                                                           |
+| 3.6.14  | e5e89d2       | 2026-07-12 | Tightened the check added in 3.6.13: it read `.gitattributes` as text and would have accepted a rule that did not actually cover the vendored bundles. It now asks git for each bundle's effective attribute, so it tests whether the files are really protected rather than how the rule is phrased.                                                                                                                                                                                                                                                                           |
 | 3.6.13  | 0f2992b       | 2026-07-12 | Pinned the vendored spreadsheet bundles against git's line-ending translation, which was rewriting one of them on Windows checkouts. Its recorded checksum had been taken from such a working copy, so it matched on no other machine and failed CI. The checksum is corrected to the committed bytes, and the integrity test now also fails if the protection is removed.                                                                                                                                                                                                      |
 | 3.6.12  | 64b9498       | 2026-07-12 | Fixed a test that could miss the bug it was written to catch: the check that every collapsible section header carries a stable id only recognised headers whose `class` came first and stood alone, so a header with a second class or reordered attributes was skipped rather than checked.                                                                                                                                                                                                                                                                                    |
 | 3.6.11  | 90eae53       | 2026-07-12 | Addressed a second review round. The important one: copying results to the clipboard skipped the formula-injection guard the CSV download applies, so a VM named `=cmd…` could execute on paste. Also: object URLs are revoked after a yield (revoking immediately intermittently kills downloads in Firefox and WebKit), the stats bar is no longer rebuilt on every filter keystroke, the relax button explains itself when a page lacks the filter's control, and the vendored-checksum test reads only the integrity table and rejects rows for files that no longer exist. |
@@ -243,9 +244,43 @@ exactly one row (the current tip) ever carries the placeholder.
 Newest first. Readable summaries of each feature release; per-commit detail is
 in the version map above.
 
-### 3.5 — 2026-07-10 → 2026-07-11
+### 3.6 — 2026-07-12
 
-UI polish and housekeeping.
+Output fidelity and UI polish: what you see on screen and what lands in the
+downloaded file now agree, and the interface stops interrupting you.
+
+- **Toasts instead of `alert()`** — every blocking browser dialog is gone,
+  replaced by a themed, dismissible toast stack that respects dark mode and
+  never freezes the page.
+- **Spreadsheet-safe CSV exports** — every download goes through one helper that
+  writes a UTF-8 BOM, so accented and non-Latin VM names survive the trip into
+  Excel. The AWS bulk template is deliberately exempt: the Pricing Calculator
+  parses that file, and a BOM corrupts its first header.
+- **Copy to clipboard** — the results table, or any single row, can be copied as
+  TSV and pasted straight into a spreadsheet. What you copy is exactly what the
+  preview is showing, filter and sort included.
+- **One-click filter relaxation** — when rows fail only because of a single
+  filter, the nearest-miss analysis now offers a button that turns that one
+  filter off.
+- **Per-provider sizing savings** — a chip summarising how much smaller the
+  recommended instances are than the source VMs, per provider (never summed
+  across providers, which would be meaningless).
+- **Sections remember themselves** — the sample template and advanced filtering
+  start collapsed and each page remembers what you opened or closed. A
+  back-to-top button appears on long pages.
+- **A landing page that explains the tool** — a feature overview and a
+  what's-new teaser, so a first-time visitor can tell what this does without
+  opening it.
+
+Hardening, from this release's own review rounds: copying to the clipboard was
+missing the formula-injection guard the CSV export already applied, so a VM
+named `=cmd…` could have executed on paste. The vendored spreadsheet bundles now
+carry recorded SHA-256 checksums, pinned against git's line-ending translation
+so they are byte-identical to upstream on every platform.
+
+### 3.5 — 2026-07-10 → 2026-07-12
+
+UI polish, project foundations, and the patch-level known issues.
 
 - **Download section grouping** — the post-generation buttons now sit in
   labeled clusters (Results / AWS Pricing Calculator / Analysis) instead of a
@@ -274,6 +309,32 @@ UI polish and housekeeping.
   version map; a roadmap was added; hardcoded versions were removed from the
   README and user guide (versions now live only in the changelog and git tags);
   the unused `docs/user-guide.pdf` was removed; SemVer git tagging was adopted.
+- **One upload pipeline** — the legacy file handler is gone. It was not merely
+  dead code: it attached a second listener to the file input and raced the real
+  one for the status, statistics, and preview panels, rendering them in
+  hardcoded light-mode colours. Drag-and-drop and the size/empty guards, which
+  existed only there, moved into the surviving path.
+- **Uploads are routed by content, not by file extension** — a workbook renamed
+  `.csv` used to be read as text and parsed into garbage rows; it now reads
+  correctly, while images, PDFs, and other binaries are refused instead of being
+  fed to the CSV parser.
+- **Exports agree with the preview** — a download now follows the sort order on
+  screen, still contains every row while the preview is filtered (and says so),
+  and every generated file has a consistent, dated filename in the user's local
+  day.
+- **Stale-results notice** — changing the provider selection after a run marks
+  the table and downloads as stale, since they still describe the providers that
+  were selected when Generate was clicked.
+- **Project foundations** — Prettier pinned with a CI formatting gate (and a
+  `.prettierignore` shielding the vendored builds, generated region data, and
+  golden fixtures); a security policy documenting the vendored libraries and a
+  CVE-watch routine; a "nothing leaves your browser" privacy statement on the
+  landing page; `RELEASING.md`; and a rule for when a data refresh requires a
+  service-worker cache bump (only when region files are removed, since a deleted
+  file would otherwise be served from cache forever).
+- **Coupling tests** — a pinned scenario must survive a later run and a preview
+  sort, and the manual-entry region autocomplete must offer every region the
+  upload's chips accept.
 
 ### 3.4 — 2026-07-05 → 2026-07-10
 
