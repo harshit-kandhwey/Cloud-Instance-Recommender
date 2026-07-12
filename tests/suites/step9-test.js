@@ -338,26 +338,37 @@ console.log("[section collapse state]");
       "Some Section",
   );
   // Per element, not per count: equal totals would still pass if one header had
-  // an onclick with no id and another had an id with no onclick
+  // an onclick with no id and another had an id with no onclick.
+  //
+  // Match every <div> and interrogate its attributes, rather than pinning the
+  // shape of the tag. A header that reorders its attributes or carries a second
+  // class is still a header, and a matcher that skipped it would report success
+  // by never looking at it. The attribute run tolerates quoted ">" and, since
+  // Prettier reflows multi-attribute tags, arbitrary whitespace.
+  const OPEN_DIV = /<div\b((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+  const attr = (attrs, name) =>
+    (attrs.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`, "i")) || [])[1] ??
+    "";
+  const hasClass = (attrs, cls) =>
+    attr(attrs, "class").split(/\s+/).includes(cls);
+
   for (const page of [
     "aws.html",
     "azure.html",
     "gcp.html",
     "multicloud.html",
   ]) {
-    // \s+, not a literal space: Prettier reflows a header with several
-    // attributes onto separate lines
-    const headers = [
-      ...read(page).matchAll(/<div\s+class="section-header"([^>]*)>/g),
-    ].map((m) => m[1]);
+    const headers = [...read(page).matchAll(OPEN_DIV)]
+      .map((m) => m[1])
+      .filter((a) => hasClass(a, "section-header"));
     const collapsible = headers.filter((a) =>
-      a.includes('onclick="toggleSection(this)"'),
+      /\btoggleSection\s*\(/.test(attr(a, "onclick")),
     );
+    const idless = collapsible.filter((a) => !attr(a, "data-section-id"));
     check(
       `${page}: every collapsible header carries its own data-section-id`,
-      collapsible.length > 0 &&
-        collapsible.every((a) => /data-section-id="[^"]+"/.test(a)),
-      `${collapsible.filter((a) => !/data-section-id="/.test(a)).length} without an id`,
+      collapsible.length > 0 && idless.length === 0,
+      `${idless.length} of ${collapsible.length} collapsible headers without an id`,
     );
   }
   check(
