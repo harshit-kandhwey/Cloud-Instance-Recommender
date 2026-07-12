@@ -9,6 +9,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { execFileSync } = require("child_process");
 
 const REPO = path.resolve(__dirname, "..", "..");
 const VENDOR_DIR = path.join(REPO, "js", "vendor");
@@ -66,16 +67,40 @@ check(
 // git's line-ending translation on (the Windows default) it does not: a bundle
 // containing even one newline is rewritten on checkout, and a checksum recorded
 // from that working copy matches on no other machine — which is exactly how this
-// table first went wrong. `-text` pins the bytes; assert it stays pinned.
+// table first went wrong.
+//
+// Ask git for the EFFECTIVE attribute rather than pattern-matching .gitattributes.
+// Several spellings satisfy this invariant (`**` vs `*`, a leading slash, `-text`,
+// or `binary` — which is git's macro for `-text -diff`), and several that look
+// right cover only some of the bundles. `check-attr` answers the one question that
+// matters, per file: will git rewrite this file's bytes on checkout?
 console.log("[git will not rewrite the bytes these checksums describe]");
-const attributes = fs.existsSync(path.join(REPO, ".gitattributes"))
-  ? fs.readFileSync(path.join(REPO, ".gitattributes"), "utf8")
-  : "";
-check(
-  ".gitattributes exempts js/vendor from line-ending translation",
-  /^\s*js\/vendor\/\S*\s+.*-text\b/m.test(attributes),
-  "without `js/vendor/** -text` these checksums are platform-dependent",
-);
+let attrOut = null;
+try {
+  attrOut = execFileSync("git", ["check-attr", "text", "--", ...bundles], {
+    cwd: REPO,
+    encoding: "utf8",
+  });
+} catch {
+  attrOut = null; // no git on PATH, or this is not a checkout
+}
+if (attrOut === null) {
+  console.log(
+    "  skip: git unavailable — cannot verify line-ending attributes here",
+  );
+} else {
+  // `path: text: unset` is the only answer that means "hands off". `unspecified`
+  // leaves the file at the mercy of the local core.autocrlf setting.
+  const translated = attrOut
+    .split(/\r?\n/)
+    .filter((line) => line.trim() && !/:\s*text:\s*unset\s*$/.test(line))
+    .map((line) => line.split(":")[0]);
+  check(
+    "git performs no line-ending translation on any vendored bundle",
+    translated.length === 0,
+    `still translated: ${translated.join(", ")} — mark js/vendor/** as -text in .gitattributes, or these checksums only hold on the machine that recorded them`,
+  );
+}
 
 console.log("[checksums match the committed files]");
 for (const bundle of bundles) {
