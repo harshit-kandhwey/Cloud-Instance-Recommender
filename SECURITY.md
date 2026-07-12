@@ -81,7 +81,12 @@ where the CSP trusts it from. The checksums of what is committed:
 | File                             | SHA-256                                                            |
 | -------------------------------- | ------------------------------------------------------------------ |
 | `js/vendor/xlsx.full.min.js`     | `cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41` |
-| `js/vendor/xlsx-js-style.min.js` | `ea81a0d4747f3c9daa52612e770ec183f580d19e32024ce0a6df4f794677b83e` |
+| `js/vendor/xlsx-js-style.min.js` | `af16b32bf790003c0a6bc912c70706396ec495cf64dfa144c607e7b705bd12c0` |
+
+These are the checksums of the bytes **as committed**. `.gitattributes` marks
+`js/vendor/**` as `-text`, so git performs no line-ending translation on these
+files. Without that, a checkout on Windows rewrites their newlines, and a
+checksum recorded from such a working copy matches on no other machine.
 
 Verify at any time:
 

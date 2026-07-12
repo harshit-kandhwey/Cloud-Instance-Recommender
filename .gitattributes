@@ -1,0 +1,10 @@
+# Vendored bundles must be byte-identical to upstream on every platform. With
+# core.autocrlf enabled (the Windows default), git rewrites their line endings
+# on checkout, so the SHA-256 checksums recorded in SECURITY.md would only ever
+# match on the machine that produced them. -text disables that translation in
+# both directions: the bytes on disk are the bytes in the commit, everywhere.
+js/vendor/** -text
+
+# Goldens are compared byte-for-byte against freshly generated output. Line
+# ending translation would make that comparison platform-dependent.
+tests/golden/** -text

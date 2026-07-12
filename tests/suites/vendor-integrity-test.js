@@ -62,6 +62,21 @@ check(
   `stale rows: ${stale.join(", ")}`,
 );
 
+// A checksum is only meaningful if every checkout produces the same bytes. With
+// git's line-ending translation on (the Windows default) it does not: a bundle
+// containing even one newline is rewritten on checkout, and a checksum recorded
+// from that working copy matches on no other machine — which is exactly how this
+// table first went wrong. `-text` pins the bytes; assert it stays pinned.
+console.log("[git will not rewrite the bytes these checksums describe]");
+const attributes = fs.existsSync(path.join(REPO, ".gitattributes"))
+  ? fs.readFileSync(path.join(REPO, ".gitattributes"), "utf8")
+  : "";
+check(
+  ".gitattributes exempts js/vendor from line-ending translation",
+  /^\s*js\/vendor\/\S*\s+.*-text\b/m.test(attributes),
+  "without `js/vendor/** -text` these checksums are platform-dependent",
+);
+
 console.log("[checksums match the committed files]");
 for (const bundle of bundles) {
   const expected = recorded.get(bundle);
