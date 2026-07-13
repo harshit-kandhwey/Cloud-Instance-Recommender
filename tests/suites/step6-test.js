@@ -4,6 +4,64 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
+// Remove comments the way JavaScript actually reads them, tracking string and
+// template literals as it goes.
+//
+// A regex cannot do this, and failing at it is not academic: `.replace(/\/\/.*$/gm, "")`
+// also fires on the "//" inside a URL, so
+//
+//     const help = "https://example.test"; alert("boom");
+//
+// is truncated at the URL and the banned call disappears from the scan. The
+// guard then PASSES — because the file contains a URL. A scanner that only
+// pretends to understand the language is worse than no scanner: it reports
+// safety it never checked.
+function stripComments(source) {
+  let out = "";
+  let i = 0;
+
+  while (i < source.length) {
+    const c = source[i];
+    const next = source[i + 1];
+
+    if (c === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") i++;
+      continue;
+    }
+    if (c === "/" && next === "*") {
+      i += 2;
+      while (i < source.length && !(source[i] === "*" && source[i + 1] === "/"))
+        i++;
+      i += 2;
+      out += " "; // keep tokens either side apart
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < source.length) {
+        if (source[i] === "\\") {
+          // An escape consumes the next character, whatever it is — including a
+          // quote, which would otherwise look like the end of the string.
+          out += source[i] + (source[i + 1] || "");
+          i += 2;
+          continue;
+        }
+        out += source[i];
+        const ended = source[i] === quote;
+        i++;
+        if (ended) break;
+      }
+      continue;
+    }
+
+    out += c;
+    i++;
+  }
+  return out;
+}
+
 const REPO = path.resolve(__dirname, "..", "..");
 
 const elements = {};
@@ -645,19 +703,46 @@ function check(name, cond, detail) {
       }
     }
   }
+  // The guard is only as honest as its stripper, so test the stripper. Each of
+  // these is a way the previous regex version reported safety it had not checked
+  // — or condemned code that was never there.
+  const sees = (src) => /\balert\s*\(/.test(stripComments(src));
+  check(
+    "a URL in a string does not hide a call on the same line",
+    sees(`const help = "https://example.test"; alert("boom");`),
+  );
+  check(
+    "nor does a URL in a template literal",
+    sees("const help = `https://example.test`; alert('boom');"),
+  );
+  check(
+    "comment-like text inside a string is not treated as a comment",
+    sees(`const s = "/* not a comment */"; alert(1);`),
+  );
+  check(
+    "an escaped quote does not end the string early",
+    sees(`const s = "he said \\"//\\""; alert(1);`),
+  );
+  check(
+    "a line comment is still removed",
+    !sees(`// alert(1) — removed in 3.6\nconst x = 1;`),
+  );
+  check(
+    "a block comment is still removed",
+    !sees(`/* alert(1) lived here once */\nconst x = 1;`),
+  );
+  check(
+    "and a call mentioned only in a comment is not condemned",
+    !sees(`/*\n * Do not use alert( — see showToast.\n */\nshowToast("hi");`),
+  );
+
   for (const dialog of ["alert", "confirm", "prompt"]) {
     // \b, not [^.\w]: the latter treats the dot as a word character, so
     // `window.alert(` — the very thing being banned — would slip through.
     const pattern = new RegExp(`\\b${dialog}\\s*\\(`);
     const offenders = productSources.filter((rel) => {
       const src = fs.readFileSync(path.join(REPO, rel), "utf8");
-      // Both comment forms. Stripping only // means a block comment that names
-      // one of these — explaining why it was removed, say — fails the build for
-      // the thing it is documenting, which teaches people not to write it down.
-      const code = src
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/\/\/.*$/gm, "");
-      return pattern.test(code);
+      return pattern.test(stripComments(src));
     });
     check(
       `no window.${dialog}() left in the product`,
