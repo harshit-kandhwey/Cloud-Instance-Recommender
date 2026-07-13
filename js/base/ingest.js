@@ -151,6 +151,16 @@ async function ingestFile(file) {
   window._uploadNote = null;
   window._ingestLabel = null;
 
+  // Every upload starts from no workbook: a CSV after a workbook must not leave
+  // the previous file's sheet picker on screen, still offering its sheets.
+  window._uploadedSheets = null;
+  window._uploadFileNote = null;
+  const picker = document.getElementById("sheetPickerSection");
+  if (picker) {
+    picker.classList.add("hidden");
+    picker.innerHTML = "";
+  }
+
   // Applies to both branches — an empty or oversized CSV used to be caught
   // only by the legacy handler, which no longer exists
   if (file.size === 0) {
@@ -209,39 +219,28 @@ async function ingestFile(file) {
     const buffer = await file.arrayBuffer();
     await ensureXlsxLoaded();
     const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    if (!sheet) throw new Error("The workbook has no sheets");
 
-    // raw:false → formatted strings, matching what CSV parsing produces
-    const rows2d = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      raw: false,
-      defval: "",
-    });
-    if (!rows2d.length) throw new Error(`Sheet "${sheetName}" is empty`);
+    const sheets = workbook.SheetNames.map((name) =>
+      readWorkbookSheet(workbook, name),
+    ).filter(Boolean);
+    if (!sheets.length) throw new Error("The workbook has no sheets with data");
 
-    const headers = rows2d[0].map((h) => String(h).trim());
-    const rows = rows2d
-      .slice(1)
-      .map((values) => {
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header] = String(values[index] ?? "").trim();
-        });
-        return row;
-      })
-      .filter((row) => Object.values(row).some((v) => v !== ""));
+    const chosen = pickBestSheet(sheets);
+    window._uploadedSheets = sheets;
+    // The file-level note ("named .csv but is a workbook") stays true across a
+    // sheet switch, so keep it to re-apply — _uploadNote is consumed per ingest.
+    window._uploadFileNote = window._uploadNote;
 
-    if (workbook.SheetNames.length > 1) {
-      // Surfaced in the file status by applyIngest — not just the console.
-      // Appended, so it cannot swallow a mis-named-file note set above.
-      const sheetNote = `Workbook has ${workbook.SheetNames.length} sheets — only the first ("${sheetName}") was used`;
+    // A page with no picker gives the user no way to see or change the choice,
+    // so there it must at least say what it opened.
+    if (!renderSheetPicker(sheets, chosen.name) && sheets.length > 1) {
+      const sheetNote = `Workbook has ${sheets.length} sheets — read "${chosen.name}"`;
       window._uploadNote = window._uploadNote
         ? `${window._uploadNote}. ${sheetNote}`
         : sheetNote;
     }
-    ingestRows(headers, rows);
+
+    ingestRows(chosen.headers, chosen.rows);
   } catch (error) {
     console.error("Excel parsing failed:", error);
     const fileStatus = document.getElementById("fileStatus");
@@ -251,6 +250,107 @@ async function ingestFile(file) {
       fileStatus.classList.remove("hidden");
     }
   }
+}
+
+// ─── Workbook sheets ─────────────────────────────────────────────────────────
+// Workbooks are rarely single-sheet. An RVTools export keeps the VM inventory in
+// a "vInfo" tab behind other tabs; a hand-kept spreadsheet often leads with a
+// cover note or a pivot. Reading SheetNames[0] gets those files quietly wrong,
+// so read every sheet, open the one that most looks like an inventory, and leave
+// the choice visible and changeable.
+
+// Returns null for a sheet with no data or no header row — an empty tab and a
+// notes tab are not candidates, and must not be offered as one.
+function readWorkbookSheet(workbook, name) {
+  const sheet = workbook.Sheets[name];
+  if (!sheet) return null;
+
+  // raw:false → formatted strings, matching what CSV parsing produces
+  const rows2d = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    raw: false,
+    defval: "",
+  });
+  if (!rows2d.length) return null;
+
+  const headers = rows2d[0].map((h) => String(h).trim());
+  if (!headers.some((h) => h !== "")) return null;
+
+  const rows = rows2d
+    .slice(1)
+    .map((values) => {
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = String(values[index] ?? "").trim();
+      });
+      return row;
+    })
+    .filter((row) => Object.values(row).some((v) => v !== ""));
+
+  return { name, headers, rows };
+}
+
+// The column matcher already knows what an inventory looks like, so ask it: a
+// sheet it can map every required column from is one, and among those the sheet
+// it recognises most of wins.
+function scoreSheet(sheet) {
+  const match = autoMatchHeaders(sheet.headers);
+  return {
+    hasRequired: match.unmatchedRequired.length === 0,
+    mapped: Object.keys(match.mapping).length,
+    rows: sheet.rows.length,
+  };
+}
+
+// Ties fall back to workbook order, so a workbook whose sheets look alike still
+// opens its first — the behaviour from before there was a choice to make.
+function pickBestSheet(sheets) {
+  const scored = sheets.map((sheet) => ({ sheet, ...scoreSheet(sheet) }));
+  return scored.reduce((best, s) => {
+    if (s.hasRequired !== best.hasRequired) return s.hasRequired ? s : best;
+    if (s.mapped !== best.mapped) return s.mapped > best.mapped ? s : best;
+    return s.rows > best.rows ? s : best;
+  }).sheet;
+}
+
+// Returns false when the page has no picker element, so the caller can fall back
+// to explaining the choice in the status line instead.
+function renderSheetPicker(sheets, activeName) {
+  const el = document.getElementById("sheetPickerSection");
+  if (!el) return false;
+
+  if (sheets.length < 2) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return true;
+  }
+
+  const options = sheets
+    .map((s) => {
+      const count = `${s.rows.length} row${s.rows.length === 1 ? "" : "s"}`;
+      const selected = s.name === activeName ? " selected" : "";
+      return `<option value="${escapeHtml(s.name)}"${selected}>${escapeHtml(s.name)} — ${count}</option>`;
+    })
+    .join("");
+
+  el.innerHTML = `
+    <div class="alert alert-info">
+      <label for="sheetPicker"><strong>📑 Sheet to read:</strong></label>
+      <select id="sheetPicker" onchange="selectSheet(this.value)" aria-label="Which sheet of the workbook to read" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);">${options}</select>
+      <br>This workbook has ${sheets.length} sheets. “${escapeHtml(activeName)}” best matches the expected columns — switch if that is the wrong one.
+    </div>`;
+  el.classList.remove("hidden");
+  return true;
+}
+
+function selectSheet(name) {
+  const sheets = window._uploadedSheets || [];
+  const sheet = sheets.find((s) => s.name === name);
+  if (!sheet) return;
+
+  window._uploadNote = window._uploadFileNote;
+  renderSheetPicker(sheets, name);
+  ingestRows(sheet.headers, sheet.rows);
 }
 
 // Parse CSV text into headers + row objects, then hand off to ingestRows

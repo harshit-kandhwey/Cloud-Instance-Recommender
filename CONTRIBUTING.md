@@ -156,7 +156,7 @@ The accepted input format includes these optional columns:
 
 `App Name` groups VMs by application (App Summary CSV + App Portfolio) and lets VMs inherit a workload from the app→workload mapping panel.
 
-Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads (first sheet) are also accepted, and common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/app-core.js`.
+Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads are also accepted — a multi-sheet workbook opens the sheet whose headers best match an inventory (scored with `autoMatchHeaders`, see `pickBestSheet` in `js/base/ingest.js`), with a picker to switch — and common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/app-core.js`.
 
 ## Reporting Bugs
 

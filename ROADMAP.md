@@ -53,7 +53,6 @@ Meet users where their inventory actually comes from, and catch bad input early.
 - **Input hygiene report** after upload: duplicate VM names, zero or absurd
   values, and unit sniffing, each with row numbers. Duplicates prompt the user
   to decide whether same-named rows are distinct VMs or a single VM. (M)
-- Multi-sheet `.xlsx` picker (today only the first sheet is read). (M)
 - "Current instance type" input column, so a row can carry the size it runs on
   today. (M) _Foundation for cloud-to-cloud mode in 4.0._
 - Paste-from-clipboard input, routed through the same pipeline as file upload. (S)

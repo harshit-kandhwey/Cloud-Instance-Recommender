@@ -80,7 +80,7 @@ Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the cano
 
 ### 📗 Excel Upload
 
-Upload `.xlsx` files directly (first sheet is used). Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
+Upload `.xlsx` files directly. In a multi-sheet workbook the sheet whose columns best match an inventory is opened, and a picker lets you switch. Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
 
 Uploads are routed by their **content**, not their file extension: a workbook saved as `.csv` (or a CSV saved as `.xlsx`) is still read correctly, and you are told it happened. A legacy `.xls` or a file that is neither is rejected with an explanation rather than parsed into nonsense.
 
@@ -231,7 +231,7 @@ python -m http.server 8080
 
 ### 2. Prepare Your CSV (or Excel file)
 
-Download the sample CSV from any provider page and fill in your VM inventory. `.xlsx` workbooks are also accepted (the first sheet is used). Column names don't have to match exactly — common variants like `vCPUs`, `RAM`, or `Hostname` are auto-mapped, and anything ambiguous opens a mapping panel.
+Download the sample CSV from any provider page and fill in your VM inventory. `.xlsx` workbooks are also accepted, and a multi-sheet workbook opens the sheet that looks most like an inventory, with a picker to switch. Column names don't have to match exactly — common variants like `vCPUs`, `RAM`, or `Hostname` are auto-mapped, and anything ambiguous opens a mapping panel.
 
 **Required columns:**
 

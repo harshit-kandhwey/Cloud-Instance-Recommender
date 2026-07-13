@@ -116,7 +116,7 @@ const AOA = [
 ];
 
 (async () => {
-  console.log("[multi-sheet note surfaces in fileStatus]");
+  console.log("[a multi-sheet workbook offers the choice]");
   {
     const buf = makeXlsx([
       { name: "Data", aoa: AOA },
@@ -128,12 +128,13 @@ const AOA = [
       size: buf.byteLength,
       arrayBuffer: async () => buf,
     });
+    // The sheets are offered, not silently reduced to the first one. Which sheet
+    // wins, and what switching does, belong to sheet-picker-test.
     check(
-      "note in fileStatus",
-      elements.fileStatus.innerHTML.includes(
-        "3 sheets — only the first (&quot;Data&quot;) was used",
-      ),
-      elements.fileStatus.innerHTML,
+      "the sheet picker is shown",
+      !elements.sheetPickerSection.classes.has("hidden") &&
+        elements.sheetPickerSection.innerHTML.includes("3 sheets"),
+      elements.sheetPickerSection.innerHTML,
     );
     check(
       "still success status",

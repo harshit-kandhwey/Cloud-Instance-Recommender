@@ -54,7 +54,10 @@ So every commit on `main` gets a version, a changelog row, and an annotated tag.
    git tag -a v<next-version> -m "<next-version> — short description"
    ```
 
-4. **Push** when you mean to publish:
+4. **Push and release at the end of the line, not as you go.** Commits and tags
+   accumulate locally while a minor is open. When every item in the minor is
+   closed — its features, its review rounds, and its fixes — push once and
+   publish once:
 
    ```bash
    git push origin main --tags
@@ -63,16 +66,28 @@ So every commit on `main` gets a version, a changelog row, and an annotated tag.
 ## Cutting a minor release
 
 Releases are published per **minor line**, not per commit — a `3.6` release, not
-twelve `3.6.x` releases. When a minor line is finished, publish its highest tag:
+fifteen `3.6.x` releases.
+
+**Publish only once the line is closed.** A release points at one tag and
+nothing moves it afterwards, so a release cut while its line is still open goes
+stale the moment the next patch lands: it keeps advertising a fraction of the
+work, and readers of the releases page never see the rest. (This is not
+hypothetical — `3.5` was published at `v3.5.10`, ran on to `v3.5.26`, and spent
+a day claiming sixteen fewer commits than it shipped.)
+
+Closing a line means, in its final commit: set the end date on the minor's
+version-map heading, and write its section under **Release notes**. Then publish
+its highest tag, with the notes drawn from that section:
 
 ```bash
-gh release create v3.6.11 --verify-tag --latest \
+gh release create <highest-tag-of-the-line> --verify-tag --latest \
   --title "3.6" \
-  --notes "..."   # the minor's story, drawn from its changelog section
+  --notes-file <notes>   # the minor's story, from its changelog section
 ```
 
-Point `--latest` at the newest line only. The tag must already be on `origin` —
-`--verify-tag` will refuse otherwise.
+Title the release with the bare minor number. Point `--latest` at the newest
+line only. The tag must already be on `origin` — `--verify-tag` will refuse
+otherwise.
 
 ## Before you publish
 
