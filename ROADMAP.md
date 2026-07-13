@@ -54,7 +54,6 @@ Meet users where their inventory actually comes from, and catch bad input early.
   they need a real header row from an actual export first — a mapping table
   written from memory would mis-map silently, which is worse than falling back
   to the mapping panel. (M)
-- Manual entry: bulk-add several similar VMs at once, and edit rows in place. (S)
 
 ### 3.8 — Results, visualization & reporting
 
