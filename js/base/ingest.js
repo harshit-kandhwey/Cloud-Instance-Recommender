@@ -134,6 +134,27 @@ function sniffFileKind(head) {
   return "text";
 }
 
+// A spreadsheet writes 16384 as "16,384" when the cell carries a thousands
+// separator — and RVTools does exactly that for Memory, in every export I have
+// seen, across versions.
+//
+// `parseFloat("16,384")` is **16**. Not NaN, not an error: a wrong answer, and a
+// plausible-looking one. A 16 GiB VM then had its MiB divided by 1024 and arrived
+// as 0.02 GB, and every machine in the file sized to the smallest instance on
+// offer. Nothing caught it — 0.02 is not zero, so the input check stayed quiet,
+// and the median was far below the MiB threshold, so that question never fired.
+// The report came out looking entirely normal and was entirely wrong.
+//
+// Only strictly grouped thousands are stripped. `1,234` and `1,234,567.8` are
+// unambiguous; `3,5` is left alone, because in much of the world that is three
+// and a half, and guessing at a locale is how this class of bug starts.
+const GROUPED_THOUSANDS = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
+
+function normalizeCellValue(value) {
+  const text = String(value ?? "").trim();
+  return GROUPED_THOUSANDS.test(text) ? text.replace(/,/g, "") : text;
+}
+
 async function readFileHead(file, bytes = 8) {
   if (typeof file.slice !== "function") return null;
   try {
@@ -287,7 +308,7 @@ function readWorkbookSheet(workbook, name) {
     .map((values) => {
       const row = {};
       headers.forEach((header, index) => {
-        row[header] = String(values[index] ?? "").trim();
+        row[header] = normalizeCellValue(values[index]);
       });
       return row;
     })
@@ -302,23 +323,32 @@ function readWorkbookSheet(workbook, name) {
   return { name, headers, rows };
 }
 
-// The column matcher already knows what an inventory looks like, so ask it: a
-// sheet it can map every required column from is one, and among those the sheet
-// it recognises most of wins.
+// A sheet an import preset RECOGNISES is the inventory — that beats any amount
+// of generic column counting, and it must, because generic counting gets real
+// files wrong. An RVTools workbook has 28 tabs, and `vHost` (the ESXi servers
+// the VMs run ON) can map more canonical-looking columns than `vInfo` (the VMs
+// themselves). The picker duly opened `vHost` on a real export: the wrong
+// machines entirely, and with no `VM`/`Powerstate` column the RVTools preset
+// then did not fire either. The preset knows which sheet is the inventory. Ask
+// it first, and only fall back to counting columns when nothing is recognised.
 function scoreSheet(sheet) {
   const match = autoMatchHeaders(sheet.headers);
   return {
+    recognised: !!match.preset,
     hasRequired: match.unmatchedRequired.length === 0,
     mapped: Object.keys(match.mapping).length,
     rows: sheet.rows.length,
   };
 }
 
-// Ties fall back to workbook order, so a workbook whose sheets look alike still
-// opens its first — the behaviour from before there was a choice to make.
+// In order: a sheet a preset recognises, then one with every required column,
+// then the one with the most recognised columns, then the biggest. Ties fall
+// back to workbook order, so a workbook whose sheets look alike still opens its
+// first — the behaviour from before there was a choice to make.
 function pickBestSheet(sheets) {
   const scored = sheets.map((sheet) => ({ sheet, ...scoreSheet(sheet) }));
   return scored.reduce((best, s) => {
+    if (s.recognised !== best.recognised) return s.recognised ? s : best;
     if (s.hasRequired !== best.hasRequired) return s.hasRequired ? s : best;
     if (s.mapped !== best.mapped) return s.mapped > best.mapped ? s : best;
     return s.rows > best.rows ? s : best;
@@ -2000,7 +2030,9 @@ function parseDelimitedText(text) {
     const values = parseCSVLine(line, delimiter);
     const row = {};
     headers.forEach((header, index) => {
-      row[header] = values[index] || "";
+      // Same normalization as the workbook path: a CSV exported from a
+      // spreadsheet carries the same "16,384" cells, quoted.
+      row[header] = normalizeCellValue(values[index]);
     });
     return row;
   });

@@ -454,6 +454,134 @@ const RVTOOLS = [
     );
   }
 
+  // ── Shapes taken from two REAL RVTools exports (104 and 77 columns, 153 and
+  // 875 VMs). Both of the bugs below were found by running those files through
+  // this pipeline; neither was reachable by reasoning about the format.
+  console.log(
+    "[a spreadsheet's thousands separator does not destroy the value]",
+  );
+  {
+    // RVTools writes Memory as "16,384" — the cell is formatted with a thousands
+    // separator, in every export seen, across versions. parseFloat("16,384") is
+    // 16: not an error, a WRONG ANSWER. Divided by 1024 as MiB, a 16 GiB VM
+    // arrived as 0.02 GB and sized to the smallest instance on offer. Nothing
+    // caught it: 0.02 is not zero, and the median was far below the MiB
+    // threshold, so the unit question never fired either.
+    const { ctx } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "rvtools.xlsx",
+        makeXlsx([
+          {
+            name: "vInfo",
+            aoa: [
+              ["VM", "Powerstate", "CPUs", "Memory", "Provisioned MiB", "Host"],
+              ["web-01", "poweredOn", 2, "4,096", "102,400", "esxi-07"],
+              ["db-02", "poweredOn", 4, "8,192", "204,800", "esxi-07"],
+              ["app-03", "poweredOn", 8, "16,384", "409,600", "esxi-09"],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "the grouped thousands are read as the number they are",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "4,8,16",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+  }
+  {
+    // The other side of it: a comma that is NOT a thousands separator must be
+    // left alone. In much of the world "3,5" is three and a half, and guessing
+    // at a locale is how this class of bug starts.
+    const { ctx } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "decimals.xlsx",
+        makeXlsx([
+          {
+            name: "Sheet1",
+            aoa: [
+              ["VM Name", "CPU Count", "Memory (GB)"],
+              ["odd-01", 2, "3,5"],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "an ambiguous comma is not silently rewritten",
+      rowsOf(ctx)[0]["Memory (GB)"] === "3,5",
+      JSON.stringify(rowsOf(ctx)[0]),
+    );
+  }
+
+  console.log("[a recognised format decides which sheet is the inventory]");
+  {
+    // A real RVTools workbook has ~28 tabs, and vHost — the ESXi servers the VMs
+    // run ON — can map MORE canonical-looking columns than vInfo, the VMs
+    // themselves. Generic column counting duly opened vHost on a real export:
+    // the wrong machines entirely. And with no VM/Powerstate column there, the
+    // RVTools preset did not fire either, so it fell through to the mapping
+    // panel. A sheet the preset RECOGNISES is the inventory; that must outrank
+    // any amount of counting.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "rvtools-28-tabs.xlsx",
+        makeXlsx([
+          {
+            // Richer in mappable columns than vInfo: name, cpu, memory AND both
+            // utilizations. It wins on generic score, and it is the wrong sheet.
+            name: "vHost",
+            aoa: [
+              [
+                "Host",
+                "CPU Count",
+                "Memory (GB)",
+                "CPU Utilization",
+                "Memory Utilization",
+                "Datacenter",
+              ],
+              ["esxi-07", 64, 512, 40, 55, "DC1"],
+              ["esxi-09", 64, 512, 35, 60, "DC1"],
+            ],
+          },
+          {
+            name: "vInfo",
+            aoa: [
+              ["VM", "Powerstate", "CPUs", "Memory", "Provisioned MiB", "Host"],
+              ["web-01", "poweredOn", 2, "4,096", "102,400", "esxi-07"],
+              ["db-02", "poweredOn", 4, "8,192", "204,800", "esxi-09"],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "vInfo is opened, not vHost",
+      /<option value="vInfo" selected>/.test(
+        elements.sheetPickerSection.innerHTML,
+      ),
+      elements.sheetPickerSection.innerHTML,
+    );
+    check(
+      "so the VMs are loaded, not the servers they run on",
+      rowsOf(ctx).length === 2 && rowsOf(ctx)[0]["VM Name"] === "web-01",
+      JSON.stringify(rowsOf(ctx).map((r) => r["VM Name"])),
+    );
+    check(
+      "the preset fires, so nothing is asked and the MiB is converted",
+      elements.columnMappingSection.classes.has("hidden") &&
+        rowsOf(ctx)
+          .map((r) => r["Memory (GB)"])
+          .join(",") === "4,8",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+  }
+
   console.log("[an empty template sheet cannot beat the real inventory]");
   {
     // The template has MORE recognised columns than the populated sheet, and

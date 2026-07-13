@@ -391,14 +391,23 @@ console.log("[section collapse state]");
     "appMappingSection",
     "dataPreviewSection",
   ];
-  // A substring search would also match the id inside an HTML comment, a script,
-  // or any string literal — so a panel that had been commented out would still
-  // "pass", which is the one state this guard exists to catch. Strip comments and
-  // require a real element attribute.
-  const hasPanel = (page, panel) => {
-    const markup = read(page).replace(/<!--[\s\S]*?-->/g, "");
-    return new RegExp(`<[^>]*\\bid=["']${panel}["']`, "i").test(markup);
-  };
+  // The id has to be found on a real ELEMENT in the document body, not merely
+  // somewhere in the file's bytes. A substring search would be satisfied by the
+  // id appearing inside an HTML comment — so a panel commented OUT of a page
+  // would still "pass", which is the one state this guard exists to catch — or
+  // inside a <script>, where `getElementById("sheetPickerSection")` names every
+  // one of these panels without any of them existing.
+  //
+  // So: drop the parts of the file that are not markup, then require an element
+  // that actually carries the attribute.
+  const elementsOf = (page) =>
+    read(page)
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+      .replace(/<style\b[\s\S]*?<\/style>/gi, "");
+
+  const hasPanel = (page, panel) =>
+    new RegExp(`<[a-z][^>]*\\bid=["']${panel}["']`, "i").test(elementsOf(page));
   for (const panel of REQUIRED_PANELS) {
     const missing = TOOL_PAGES.filter((page) => !hasPanel(page, panel));
     check(
