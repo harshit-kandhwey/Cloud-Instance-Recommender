@@ -371,6 +371,37 @@ console.log("[section collapse state]");
       `${idless.length} of ${collapsible.length} collapsible headers without an id`,
     );
   }
+  // The four tool pages are four separate files, and every panel added since the
+  // upload section was written had to be pasted into each of them by hand. A
+  // panel missing from one page does not throw: the renderer looks its element
+  // up, does not find it, and returns — so that page quietly loses the feature.
+  // 3.7 alone added five of these.
+  const TOOL_PAGES = ["aws.html", "azure.html", "gcp.html", "multicloud.html"];
+  const REQUIRED_PANELS = [
+    "manualEntrySection",
+    "pasteDataSection",
+    "savedMappingsSection",
+    "sampleGallery",
+    "fileStatus",
+    "sheetPickerSection",
+    "columnMappingSection",
+    "fileStatsSection",
+    "inputHygieneSection",
+    "regionValidationSection",
+    "appMappingSection",
+    "dataPreviewSection",
+  ];
+  for (const panel of REQUIRED_PANELS) {
+    const missing = TOOL_PAGES.filter(
+      (page) => !read(page).includes(`id="${panel}"`),
+    );
+    check(
+      `every tool page has #${panel}`,
+      missing.length === 0,
+      `missing from ${missing.join(", ")}`,
+    );
+  }
+
   check(
     "aria-expanded matches the collapsed state",
     sample.header.attrs["aria-expanded"] === "false" &&

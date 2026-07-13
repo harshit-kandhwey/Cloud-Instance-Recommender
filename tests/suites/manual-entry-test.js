@@ -207,4 +207,74 @@ console.log("[the rows still feed the normal pipeline]");
   );
 }
 
-process.exit(state.failures ? 1 : 0);
+// Every route into the data must clear what the previous route left behind.
+// There are four of them now — upload, paste, sample, manual — and each was added
+// separately; manual entry predated the sheet picker and never learned about it,
+// so applying manual rows after a workbook left that workbook's picker on screen
+// still offering its sheets. Picking one would have silently replaced the manual
+// rows with a sheet the user had already moved on from.
+(async () => {
+  console.log("[manual entry clears what the previous input left behind]");
+
+  const path = require("path");
+  const { REPO } = require("./harness");
+  const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
+
+  const wb = XLSX.utils.book_new();
+  for (const [name, aoa] of [
+    [
+      "First",
+      [
+        ["VM Name", "CPU Count", "Memory (GB)"],
+        ["from-sheet", 4, 16],
+      ],
+    ],
+    [
+      "Second",
+      [
+        ["VM Name", "CPU Count", "Memory (GB)"],
+        ["other", 8, 32],
+      ],
+    ],
+  ]) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), name);
+  }
+  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  const bytes = buf.buffer.slice(
+    buf.byteOffset,
+    buf.byteOffset + buf.byteLength,
+  );
+
+  const { ctx, elements } = buildContext();
+  await ctx.ingestFile({
+    name: "book.xlsx",
+    size: bytes.byteLength,
+    arrayBuffer: async () => bytes,
+    text: async () => "",
+    slice: (a, b) => ({ arrayBuffer: async () => bytes.slice(a, b) }),
+  });
+  check(
+    "a workbook is loaded, and its picker is showing",
+    !elements.sheetPickerSection.classes.has("hidden") &&
+      rowsOf(ctx)[0]["VM Name"] === "from-sheet",
+    elements.sheetPickerSection.innerHTML,
+  );
+
+  fill(ctx, { "VM Name": "typed-01", "CPU Count": "2", "Memory (GB)": "8" }, 1);
+  ctx.manualAddVM();
+  ctx.manualApplyVMs();
+
+  check(
+    "the manual rows are what is loaded",
+    rowsOf(ctx).length === 1 && rowsOf(ctx)[0]["VM Name"] === "typed-01",
+    JSON.stringify(rowsOf(ctx)),
+  );
+  check(
+    "and the old workbook's sheet picker is gone with it",
+    elements.sheetPickerSection.classes.has("hidden") &&
+      ctx.window._uploadedSheets === null,
+    elements.sheetPickerSection.innerHTML,
+  );
+
+  process.exit(state.failures ? 1 : 0);
+})();

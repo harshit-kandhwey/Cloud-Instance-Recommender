@@ -627,10 +627,16 @@ function check(name, cond, detail) {
     );
   }
 
-  // Guard the migration: alert() blocks the page and ignores the theme
+  // Guard the migration away from native dialogs: they block the page, ignore
+  // the theme, and cannot be styled or dismissed by code.
+  //
   // Every first-party module, discovered rather than listed — a hand-written list
   // silently stops covering whatever is added next (it had already missed the
   // three provider-specific files, which is exactly where alert() lived).
+  //
+  // ALL THREE are banned, not just alert(). Banning only alert() is how a
+  // confirm() in the manual-entry list survived the 3.5 migration and lived
+  // until 3.7: the guard was never looking for it.
   const productSources = [];
   for (const dir of ["js/base", "js/aws", "js/azure", "js/gcp"]) {
     for (const file of fs.readdirSync(path.join(REPO, dir))) {
@@ -639,17 +645,20 @@ function check(name, cond, detail) {
       }
     }
   }
-  const offenders = productSources.filter((rel) => {
-    const src = fs.readFileSync(path.join(REPO, rel), "utf8");
+  for (const dialog of ["alert", "confirm", "prompt"]) {
     // \b, not [^.\w]: the latter treats the dot as a word character, so
-    // `window.alert(` — the very thing being banned — would slip through
-    return /\balert\s*\(/.test(src.replace(/\/\/.*$/gm, ""));
-  });
-  check(
-    "no window.alert left in the product",
-    offenders.length === 0,
-    `still calling alert(): ${offenders.join(", ")}`,
-  );
+    // `window.alert(` — the very thing being banned — would slip through.
+    const pattern = new RegExp(`\\b${dialog}\\s*\\(`);
+    const offenders = productSources.filter((rel) => {
+      const src = fs.readFileSync(path.join(REPO, rel), "utf8");
+      return pattern.test(src.replace(/\/\/.*$/gm, ""));
+    });
+    check(
+      `no window.${dialog}() left in the product`,
+      offenders.length === 0,
+      `still calling ${dialog}(): ${offenders.join(", ")}`,
+    );
+  }
 
   process.exit(failures ? 1 : 0);
 })().catch((e) => {

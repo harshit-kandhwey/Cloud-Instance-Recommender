@@ -359,8 +359,16 @@ function manualApplyVMs() {
     showToast("Add at least one VM first.", "warning");
     return;
   }
-  window._uploadNote = null;
+
+  // Every route into the data clears what the previous one left behind. Without
+  // this, applying manual rows after a workbook left that workbook's sheet
+  // picker on screen, still offering its sheets — and picking one would silently
+  // replace the manual rows with a sheet the user had already moved on from.
+  resetIngestState();
   window._ingestLabel = "Manual entry applied";
+
+  const fileInput = document.getElementById("csvFile");
+  if (fileInput) fileInput.value = "";
   const headers = manualFieldDefs().map((d) => d.key);
   ingestRows(
     headers,
