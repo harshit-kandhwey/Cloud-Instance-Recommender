@@ -787,6 +787,7 @@
             <a href="#optional-cols"
               >Optional Columns (ENV, OS, Workload, Compliance, Min Gen)</a
             >
+            <a href="#current-instance-col">Current Instance Type (optional)</a>
             <a href="#sample-csv">Sample CSV Structure</a>
             <a href="#data-tips">Data Collection Tips</a>
           </div>
@@ -1124,17 +1125,6 @@
               </td>
               <td>60</td>
             </tr>
-            <tr>
-              <td><span class="col-pill">Current Instance Type</span></td>
-              <td>
-                Optional. The size the VM runs on today, if it already runs in a
-                cloud. It is carried through to the preview and every export
-                untouched, so a recommendation can be read directly against what
-                it replaces. Sizing is still driven by CPU Count and Memory (GB)
-                — this column is not used to derive them.
-              </td>
-              <td>m5.xlarge / Standard_D4s_v3 / n2-standard-4</td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -1226,6 +1216,27 @@
           <strong>Rules Applied</strong> column in the output CSV documents
           exactly which rules fired for each VM.
         </div>
+      </div>
+
+      <div id="current-instance-col">
+        <h3>🏷 Current Instance Type (optional)</h3>
+        <p>
+          Not a rule-engine column, and not required — but if your VMs already
+          run in a cloud, a
+          <span class="col-pill">Current Instance Type</span> column lets the
+          recommendation be read directly against what it replaces. Also
+          recognised as <code>Instance Type</code>, <code>VM Size</code>,
+          <code>Machine Type</code>, or <code>Current Size</code>. Examples:
+          <code>m5.xlarge</code>, <code>Standard_D4s_v3</code>,
+          <code>n2-standard-4</code>.
+        </p>
+        <p>
+          It is carried through to the preview and every export untouched, and
+          sits immediately left of the recommended instances.
+          <strong>It does not affect sizing</strong> — CPU Count and Memory (GB)
+          still drive that, and two VMs with the same CPU and memory get the
+          same recommendation however different the machines they run on today.
+        </p>
       </div>
 
       <div id="sample-csv">

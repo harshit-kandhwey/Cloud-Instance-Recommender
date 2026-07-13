@@ -185,6 +185,81 @@ web-01,4,16,us-west-2`;
   );
 }
 
+console.log("[fixing one thing does not re-ask about another]");
+{
+  // A file with BOTH questions open: a repeated name, and memory that looks like
+  // MiB. The user answers the duplicate question, then converts the units.
+  //
+  // The conversion re-derives from source through applyIngest, which clears the
+  // per-file acknowledgements because it is normally the arrival of a NEW file.
+  // This is not that — it is a remediation of the file already loaded, and
+  // dividing memory by 1024 cannot change which VM names repeat. Re-asking would
+  // look to the user like their answer had not registered.
+  const { ctx, elements } = buildContext();
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory,AWS Region
+web-01,4,16384,us-east-1
+web-01,4,16384,us-west-2
+db-02,8,65536,us-east-1`,
+  );
+  const opening = panel(elements).innerHTML;
+  check(
+    "both questions are open",
+    /used more than once/.test(opening) &&
+      /Is the memory column in MB\?/.test(opening),
+    opening,
+  );
+
+  ctx.keepDuplicateVmNames(); // "they are different VMs"
+  ctx.convertMemoryToGb(); // "and the memory really is MiB"
+
+  const after = panel(elements).innerHTML;
+  check(
+    "the memory is converted",
+    rows(ctx)
+      .map((r) => r["Memory (GB)"])
+      .join(",") === "16,16,64",
+    JSON.stringify(rows(ctx).map((r) => r["Memory (GB)"])),
+  );
+  check(
+    "and the duplicate question is NOT asked again",
+    !/used more than once/.test(after),
+    after,
+  );
+  check(
+    "with all three rows still present, as the user asked",
+    rows(ctx).length === 3,
+    String(rows(ctx).length),
+  );
+}
+{
+  // The inverse, which must keep working: re-mapping the columns DOES re-ask.
+  // Choosing a different column as the VM name genuinely changes which rows are
+  // duplicates, so a previous answer no longer means anything.
+  const { ctx, elements } = buildContext();
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region
+web-01,4,16,us-east-1
+web-01,4,16,us-west-2`,
+  );
+  ctx.keepDuplicateVmNames();
+  check(
+    "the question is put away",
+    panel(elements).classes.has("hidden"),
+    panel(elements).innerHTML,
+  );
+
+  const last = ctx.window._lastIngest;
+  ctx.applyIngest(last.headers, last.rows, last.mapping, last.units);
+  check(
+    "but re-applying a mapping asks again, because the rows may now differ",
+    /used more than once/.test(panel(elements).innerHTML),
+    panel(elements).innerHTML,
+  );
+}
+
 console.log("[a long list of bad rows is summarised, not dumped]");
 {
   const { ctx, elements } = buildContext();

@@ -1444,10 +1444,24 @@ function analyzeInputHygiene(rows) {
 function convertMemoryToGb() {
   const last = window._lastIngest;
   if (!last) return;
+
+  // applyIngest clears the per-file acknowledgements, because it is normally the
+  // arrival of a NEW file. This is not that: it is a remediation of the file
+  // already loaded. Dividing a memory column by 1024 cannot change which VM
+  // names repeat, so an answer already given to the duplicate question still
+  // holds — and re-asking it would look like the answer had not registered.
+  //
+  // Re-mapping columns is different and correctly does reset it: choosing a
+  // different column as the VM name genuinely changes which rows are duplicates.
+  const duplicatesAnswered = window._duplicatesAcknowledged;
+
   applyIngest(last.headers, last.rows, last.mapping, {
     ...(last.units || {}),
     [COLUMN_MAPPINGS.memory]: "MB",
   });
+
+  window._duplicatesAcknowledged = duplicatesAnswered;
+  reportInputHygiene();
   showToast("Memory values converted from MB to GB", "success");
 }
 

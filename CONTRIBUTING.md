@@ -156,7 +156,17 @@ The accepted input format includes these optional columns:
 
 `App Name` groups VMs by application (App Summary CSV + App Portfolio) and lets VMs inherit a workload from the app→workload mapping panel.
 
-Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns. `.xlsx` uploads are also accepted — a multi-sheet workbook opens the sheet whose headers best match an inventory (scored with `autoMatchHeaders`, see `pickBestSheet` in `js/base/ingest.js`), with a picker to switch — and known tool exports are auto-mapped by an entry in `IMPORT_PRESETS` (`js/base/ingest.js`) — a preset detects a format from headers only that tool ships, then names just the columns the generic matcher cannot settle, and the units the header hides. Memory units are **converted only on explicit evidence**: a header that says so (`Memory (MB)`), or an import preset that knows the format's convention. When neither does, the values can only raise the question — a fleet whose _median_ memory is implausible as GB is reported in the input check with both answers offered (`convertMemoryToGb` / `keepMemoryAsGb`), and nothing is touched until one is given. Do not add a code path that converts on the values alone: a real fleet of 512 GB–1 TB machines exists, and dividing it by 1024 corrupts it exactly as badly as leaving RVTools' MiB alone. Common header variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names — the synonym table lives in `COLUMN_SYNONYMS` in `js/base/app-core.js`.
+Any sample CSV templates in the repo or in the HTML `<pre>` previews should include all columns.
+
+**Header matching.** Common variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names; the synonym table is `COLUMN_SYNONYMS` in `js/base/app-core.js`. Anything ambiguous or missing opens the mapping panel rather than being guessed at.
+
+**Excel.** A multi-sheet workbook opens the sheet whose headers best look like an inventory — scored with `autoMatchHeaders`, see `pickBestSheet` in `js/base/ingest.js` — and a picker lets the user switch.
+
+**Import presets** (`IMPORT_PRESETS`, `js/base/ingest.js`) auto-map a known tool's export. A preset identifies the format by headers that _only_ that tool ships, then names just the two things the generic matcher cannot work out for itself: the columns it would otherwise find ambiguous, and the units the header hides. Keep presets that narrow — a preset that claims a file it has not really recognised will mis-map it silently, which is worse than falling back to the mapping panel.
+
+**Memory units are converted only on explicit evidence:** a header that says so (`Memory (MB)`), or an import preset that knows the format's convention. When neither does, the values may only raise the _question_ — a fleet whose median memory is implausible as GB is reported in the input check with both answers offered (`convertMemoryToGb` / `keepMemoryAsGb`), and nothing is touched until one is given.
+
+Do not add a code path that converts on the values alone. A real fleet of 512 GB–1 TB machines exists, and dividing it by 1024 corrupts it exactly as badly as leaving RVTools' MiB alone.
 
 ## Reporting Bugs
 

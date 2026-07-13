@@ -117,6 +117,81 @@ console.log("[the provider case still works, and is worded for itself]");
   );
 }
 
+console.log("[data replaced WHILE the run is in flight]");
+{
+  // The token must be snapshotted when the run starts, not read when it ends.
+  // Reading it at the end stamps the finished batch with the token of data that
+  // landed DURING the run — so results computed from the old rows would present
+  // themselves as describing the new ones. That is the precise case the token
+  // exists for, and it is the one it would have got wrong.
+  //
+  // Modelled at the seam: take the snapshot, ingest mid-flight, then record.
+  const { ctx, elements } = buildContext();
+  parse(ctx, FILE_A);
+  vm.runInContext(
+    `selectedProviders = ["aws"];
+     processedResults = [{ "VM Name": "web-01" }];`,
+    ctx,
+  );
+
+  const ingestTokenForRun = ctx.window._ingestToken; // start of run
+  parse(ctx, FILE_B); // …the user loads a new file while it runs…
+  ctx.window._resultsProviders = ["aws"];
+  ctx.window._resultsIngestToken = ingestTokenForRun; // end of run
+  ctx.updateStaleResultsNotice();
+
+  check(
+    "the results are stale, because they describe the file that was replaced",
+    !notice(elements).classes.has("hidden") &&
+      /data you have since replaced/.test(notice(elements).innerHTML),
+    notice(elements).innerHTML,
+  );
+}
+{
+  // And the same seam, done the wrong way: recording the LIVE token at the end.
+  // If this ever passes, generate.js has gone back to reading window._ingestToken
+  // after the await.
+  const { ctx, elements } = buildContext();
+  parse(ctx, FILE_A);
+  vm.runInContext(
+    `selectedProviders = ["aws"];
+     processedResults = [{ "VM Name": "web-01" }];`,
+    ctx,
+  );
+  parse(ctx, FILE_B);
+  ctx.window._resultsProviders = ["aws"];
+  ctx.window._resultsIngestToken = ctx.window._ingestToken; // read too late
+  ctx.updateStaleResultsNotice();
+  check(
+    "reading the token after the run would hide the staleness (the bug)",
+    notice(elements).classes.has("hidden"),
+    "if this fails the model is wrong, not the code",
+  );
+}
+{
+  // The guard that keeps the two above honest: generate.js must take the
+  // snapshot BEFORE it awaits the batch, which is a fact about the source.
+  const fs = require("fs");
+  const path = require("path");
+  const { REPO } = require("./harness");
+  const src = fs.readFileSync(path.join(REPO, "js/base/generate.js"), "utf8");
+  const snapshot = src.indexOf("const ingestTokenForRun = window._ingestToken");
+  const awaited = src.indexOf("await runRecommendationBatch");
+  const recorded = src.indexOf(
+    "window._resultsIngestToken = ingestTokenForRun",
+  );
+  check(
+    "generate.js snapshots the ingest token before awaiting the batch",
+    snapshot !== -1 && awaited !== -1 && snapshot < awaited,
+    `snapshot@${snapshot} await@${awaited}`,
+  );
+  check(
+    "and records that snapshot, not the live value",
+    recorded !== -1 && !/_resultsIngestToken = window\._ingestToken/.test(src),
+    "still reading window._ingestToken after the await",
+  );
+}
+
 console.log("[no results, nothing to be stale about]");
 {
   const { ctx, elements } = buildContext();

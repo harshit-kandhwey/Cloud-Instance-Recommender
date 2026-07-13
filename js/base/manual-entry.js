@@ -198,10 +198,15 @@ function renderManualEntry() {
        <button class="btn btn-secondary" onclick="manualCancelClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">Keep them</button>`
     : `<button class="btn btn-secondary" onclick="manualConfirmClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`;
 
-  const applyButtons = manualVMs.length
-    ? `<button class="btn btn-primary" onclick="manualApplyVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
+  // Apply is withheld mid-edit. It reads the saved list, so pressing it with an
+  // unsaved edit in the form would quietly ingest the row's OLD values — the
+  // change would simply vanish, with the form still showing it. Save or Cancel
+  // first; both are one click away.
+  const applyButtons =
+    manualVMs.length && !editing
+      ? `<button class="btn btn-primary" onclick="manualApplyVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
        ${clearButton}`
-    : "";
+      : "";
 
   section.innerHTML = `
     <div class="stats-info">
@@ -357,6 +362,15 @@ function manualClearVMs() {
 function manualApplyVMs() {
   if (!manualVMs.length) {
     showToast("Add at least one VM first.", "warning");
+    return;
+  }
+  // The button is withheld mid-edit, but say so rather than relying on that:
+  // this reads the SAVED list, so an unsaved edit would be silently discarded.
+  if (manualEditingRow()) {
+    showToast(
+      "Save or cancel the row you are editing first — its changes are not in the list yet.",
+      "warning",
+    );
     return;
   }
 

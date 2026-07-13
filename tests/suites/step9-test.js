@@ -391,10 +391,16 @@ console.log("[section collapse state]");
     "appMappingSection",
     "dataPreviewSection",
   ];
+  // A substring search would also match the id inside an HTML comment, a script,
+  // or any string literal — so a panel that had been commented out would still
+  // "pass", which is the one state this guard exists to catch. Strip comments and
+  // require a real element attribute.
+  const hasPanel = (page, panel) => {
+    const markup = read(page).replace(/<!--[\s\S]*?-->/g, "");
+    return new RegExp(`<[^>]*\\bid=["']${panel}["']`, "i").test(markup);
+  };
   for (const panel of REQUIRED_PANELS) {
-    const missing = TOOL_PAGES.filter(
-      (page) => !read(page).includes(`id="${panel}"`),
-    );
+    const missing = TOOL_PAGES.filter((page) => !hasPanel(page, panel));
     check(
       `every tool page has #${panel}`,
       missing.length === 0,

@@ -117,11 +117,18 @@ async function processRecommendations() {
     "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
   );
 
-  // Pin the selection for the whole run. The batch below is awaited, so a
-  // checkbox toggled while it is in flight would otherwise leave the results
-  // describing one selection and _resultsProviders recording another — making
-  // the stale-results notice wrong in exactly the case it exists for.
+  // Pin what this run describes — BOTH the selection and the data — for its
+  // whole duration. The batch below is awaited, so anything changed while it is
+  // in flight would otherwise be recorded as what the results ran against,
+  // making the stale-results notice wrong in exactly the case it exists for.
+  //
+  // The token is every bit as racy as the selection: an upload, paste, sample or
+  // manual apply landing mid-run would stamp the finished batch with the NEW
+  // token, and the results would then present themselves as describing data they
+  // were never computed from. Snapshot it here, next to the selection, for the
+  // same reason and at the same moment.
   const providersForRun = selectedProviders.slice();
+  const ingestTokenForRun = window._ingestToken;
 
   const recommendationType = document.querySelector(
     'input[name="recommendationType"]:checked',
@@ -266,7 +273,7 @@ async function processRecommendations() {
     // loading a new file, paste or sample does not clear the results, and a
     // replacement of the same shape looks like nothing happened.
     window._resultsProviders = providersForRun;
-    window._resultsIngestToken = window._ingestToken;
+    window._resultsIngestToken = ingestTokenForRun;
     updateStaleResultsNotice();
 
     // Update usage statistics and show download section

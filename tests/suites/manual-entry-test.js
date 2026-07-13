@@ -196,6 +196,53 @@ console.log("[clearing everything asks first, without a browser dialog]");
   check("confirming clears them", list(ctx).length === 0);
 }
 
+console.log("[an unsaved edit cannot be applied out from under the user]");
+{
+  // Apply reads the SAVED list. Pressing it with an unsaved edit in the form
+  // would ingest the row's old values — the change would simply vanish, with the
+  // form still showing it on screen.
+  const { ctx, elements, toasts } = buildContext();
+  fill(ctx, { "VM Name": "web-01", "CPU Count": "4", "Memory (GB)": "16" }, 1);
+  ctx.manualAddVM();
+
+  ctx.manualEditVM(0);
+  ctx.manualFieldDefs().forEach((d, i) => {
+    if (d.key === "CPU Count") {
+      ctx.document.getElementById(`manual_${i}`).value = "32";
+    }
+  });
+
+  check(
+    "the Apply button is withheld while a row is being edited",
+    !elements.manualEntrySection.innerHTML.includes("manualApplyVMs()"),
+    elements.manualEntrySection.innerHTML.slice(0, 400),
+  );
+
+  // And the function refuses too — the hidden button is not the only way in.
+  ctx.manualApplyVMs();
+  check(
+    "and calling it anyway ingests nothing",
+    rowsOf(ctx).length === 0,
+    JSON.stringify(rowsOf(ctx)),
+  );
+  check(
+    "saying why, rather than silently dropping the change",
+    toasts.some((t) =>
+      /Save or cancel the row you are editing/.test(t.message),
+    ),
+    JSON.stringify(toasts),
+  );
+
+  // Saving makes it applicable, with the edit included.
+  ctx.manualSaveEdit();
+  ctx.manualApplyVMs();
+  check(
+    "once saved, Apply carries the edited value",
+    rowsOf(ctx).length === 1 && rowsOf(ctx)[0]["CPU Count"] === "32",
+    JSON.stringify(rowsOf(ctx)),
+  );
+}
+
 console.log("[the rows still feed the normal pipeline]");
 {
   const { ctx } = buildContext();
