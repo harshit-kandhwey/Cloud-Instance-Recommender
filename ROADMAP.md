@@ -48,8 +48,12 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 Meet users where their inventory actually comes from, and catch bad input early.
 
-- Import presets for the formats target users already have — **RVTools**
-  (auto-map vInfo headers), **Azure Migrate**, and **AWS ADS** exports. (L)
+- Import presets for the formats target users already have. **RVTools** is done
+  (its vInfo sheet is detected, `VM` is resolved against `Host`, and its MiB
+  memory column is converted). **Azure Migrate** and **AWS ADS** are still open:
+  they need a real header row from an actual export first — a mapping table
+  written from memory would mis-map silently, which is worse than falling back
+  to the mapping panel. (M)
 - **Input hygiene report** after upload: duplicate VM names, zero or absurd
   values, and unit sniffing, each with row numbers. Duplicates prompt the user
   to decide whether same-named rows are distinct VMs or a single VM. (M)

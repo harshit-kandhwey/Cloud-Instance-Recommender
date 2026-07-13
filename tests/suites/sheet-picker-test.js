@@ -337,5 +337,194 @@ const RVTOOLS = [
     check("and it still reads the right sheet", rowsOf(ctx).length === 3);
   }
 
+  // ── Import presets ─────────────────────────────────────────────────────────
+  // A real RVTools vInfo header row: "VM" is the guest, "Host" is the ESXi box
+  // it runs on, and "Memory" is MiB with nothing in the name to say so.
+  const VINFO = [
+    [
+      "VM",
+      "Powerstate",
+      "DNS Name",
+      "CPUs",
+      "Memory",
+      "Provisioned MiB",
+      "Host",
+      "Datacenter",
+      "Cluster",
+    ],
+    [
+      "web-01",
+      "poweredOn",
+      "web-01.corp",
+      4,
+      16384,
+      102400,
+      "esxi-07.corp",
+      "DC1",
+      "Prod",
+    ],
+    [
+      "db-02",
+      "poweredOn",
+      "db-02.corp",
+      8,
+      65536,
+      512000,
+      "esxi-09.corp",
+      "DC1",
+      "Prod",
+    ],
+  ];
+
+  console.log("[an RVTools export loads without being asked to map anything]");
+  {
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "rvtools-export.xlsx",
+        makeXlsx([
+          {
+            name: "vMetaData",
+            aoa: [
+              ["Metadata item", "Value"],
+              ["Author", "RVTools"],
+            ],
+          },
+          { name: "vInfo", aoa: VINFO },
+          {
+            name: "vCPU",
+            aoa: [
+              ["VM", "Sockets"],
+              ["web-01", 2],
+            ],
+          },
+        ]),
+      ),
+    );
+    const rows = rowsOf(ctx);
+
+    // "VM" and "Host" are both VM-name synonyms, so an RVTools file is ambiguous
+    // to the generic matcher and would stop to ask on every export. The preset
+    // settles it without a prompt.
+    check(
+      "it does not stop to ask (the preset settles VM over Host)",
+      elements.columnMappingSection.classes.has("hidden") && rows.length === 2,
+      `rows=${rows.length}`,
+    );
+    check(
+      "the guest is the VM, not the ESXi host it runs on",
+      rows[0]["VM Name"] === "web-01",
+      JSON.stringify(rows[0]),
+    );
+    // The bug this preset exists to prevent: "Memory" is MiB, and read as GB a
+    // 16 GiB VM becomes a 16,384 GB VM that matches no instance anywhere.
+    check(
+      "MiB memory is converted, though the header never says MiB",
+      rows[0]["Memory (GB)"] === "16" && rows[1]["Memory (GB)"] === "64",
+      JSON.stringify(rows.map((r) => r["Memory (GB)"])),
+    );
+    check(
+      "CPUs is read",
+      rows[0]["CPU Count"] === "4" && rows[1]["CPU Count"] === "8",
+    );
+    check(
+      "and the file says it was recognised, rather than reinterpreting silently",
+      /Recognised as a RVTools export/.test(elements.fileStatus.innerHTML),
+      elements.fileStatus.innerHTML,
+    );
+  }
+
+  console.log("[a VM column is never silently mistaken for its hypervisor]");
+  {
+    // Same VM/Host collision, but nothing marks it as RVTools, so no preset can
+    // settle it. It must ASK. The bug this guards: "host" was a VM-name synonym
+    // and "vm" was not, so the ESXi box won unopposed and every guest on a
+    // hypervisor took that hypervisor's name, silently.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "unknown-tool.xlsx",
+        makeXlsx([
+          {
+            name: "Sheet1",
+            aoa: [
+              ["VM", "CPUs", "Memory (GB)", "Host"],
+              ["web-01", 4, 16, "esxi-07"],
+              ["web-02", 4, 16, "esxi-07"],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "an unrecognised file with both columns asks instead of guessing",
+      !elements.columnMappingSection.classes.has("hidden") &&
+        rowsOf(ctx).length === 0,
+      `rows=${JSON.stringify(rowsOf(ctx))}`,
+    );
+    check(
+      "and it asks about the VM name specifically",
+      /VM Name/.test(elements.columnMappingSection.innerHTML),
+    );
+  }
+
+  console.log("[units are read from the values when no preset and no header]");
+  {
+    // Not RVTools — no Powerstate — so nothing identifies the format. The only
+    // evidence that "Memory" is MiB is that the numbers are absurd as GB.
+    const { ctx } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "generic.xlsx",
+        makeXlsx([
+          {
+            name: "Sheet1",
+            aoa: [
+              ["VM Name", "CPU Count", "Memory"],
+              ["web-01", 4, 16384],
+              ["db-02", 8, 32768],
+              ["app-03", 2, 8192],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "an implausible-as-GB fleet is treated as MiB",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "16,32,8",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+  }
+  {
+    // The guard on the guard: real GB values must survive untouched, including
+    // one genuinely enormous machine, which is why the sniffer uses the median.
+    const { ctx } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "real-gb.xlsx",
+        makeXlsx([
+          {
+            name: "Sheet1",
+            aoa: [
+              ["VM Name", "CPU Count", "Memory"],
+              ["web-01", 4, 16],
+              ["db-02", 8, 64],
+              ["mainframe", 128, 4096], // a real 4 TB box
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "one huge machine does not drag a GB fleet into a conversion",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "16,64,4096",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+  }
+
   process.exit(failures ? 1 : 0);
 })();

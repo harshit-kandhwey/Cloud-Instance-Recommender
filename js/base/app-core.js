@@ -103,6 +103,11 @@ const COLUMN_SYNONYMS = {
   ],
   "VM Name": [
     "vmname",
+    // "vm" is what RVTools calls the guest. Without it, a vInfo sheet matched
+    // only "Host" — the ESXi box — and every guest on a hypervisor silently
+    // took that hypervisor's name. With both present the match is ambiguous
+    // and the file stops to ask, unless an import preset settles it.
+    "vm",
     "servername",
     "hostname",
     "host",

@@ -3034,6 +3034,25 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       </p>
 
       <p>
+        <strong>Q: Can I upload an RVTools export directly?</strong><br />
+        A: Yes. The <code>vInfo</code> sheet is found and read, its
+        <code>VM</code> column is used for the VM name — not <code>Host</code>,
+        which is the ESXi server the VM runs on — and its <code>Memory</code>
+        column, which holds MiB although the header does not say so, is
+        converted to GB. The file status confirms it was recognised as an
+        RVTools export.
+      </p>
+
+      <p>
+        <strong>Q: My memory column is in MB. Will that work?</strong><br />
+        A: Yes. A header that says so (<code>Memory (MB)</code>,
+        <code>RAM MiB</code>) is converted. When the header does not say, the
+        values decide: a fleet whose typical machine claims hundreds of
+        gigabytes is being measured in MiB, and is converted. You can always
+        override the unit in the column-mapping panel.
+      </p>
+
+      <p>
         <strong>Q: Can I save my filter configuration for next time?</strong
         ><br />
         A: Yes — use the ⭐ Filter presets bar above the Generate button to save

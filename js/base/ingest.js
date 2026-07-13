@@ -411,6 +411,43 @@ function saveAppWorkloadMap(map) {
   }
 }
 
+// ─── Import presets ──────────────────────────────────────────────────────────
+// Exports from the tools people actually inventory with. A preset exists only to
+// settle what the generic matcher cannot, and to name units a header hides.
+//
+// RVTools' vInfo sheet ships both "VM" (the guest) and "Host" (the ESXi box it
+// runs on), and both are VM-name synonyms — so the matcher finds two candidates
+// and stops to ask, on every RVTools file ever exported. The preset says which
+// one is the VM. (Before "vm" was a synonym at all it was worse than a stall:
+// only "Host" matched, so every guest on a hypervisor silently took that
+// hypervisor's name, and nothing anywhere said so.)
+//
+// `detect` must key on headers only that tool ships, so a preset never claims a
+// file it has not recognised, and it names as few columns as possible: anything
+// it stays silent about goes through the normal matcher and synonym table.
+// Keys are normalized (normalizeHeader), so casing and spacing do not matter.
+const IMPORT_PRESETS = [
+  {
+    name: "RVTools",
+    // "powerstate" is RVTools' own spelling; with "vm" and "cpus" alongside it,
+    // nothing else in the wild looks like this.
+    detect: (norm) =>
+      norm.has("vm") && norm.has("powerstate") && norm.has("cpus"),
+    columns: {
+      vm: COLUMN_MAPPINGS.vmName, // not "Host" (the ESXi host) or "DNS Name"
+      cpus: COLUMN_MAPPINGS.cpu,
+      memory: COLUMN_MAPPINGS.memory,
+    },
+    // vInfo's "Memory" is MiB, and says so nowhere in the header
+    memoryUnit: "MB",
+  },
+];
+
+function detectImportPreset(headers) {
+  const norm = new Set(headers.map(normalizeHeader));
+  return IMPORT_PRESETS.find((preset) => preset.detect(norm)) || null;
+}
+
 // Matches uploaded headers to the canonical COLUMN_MAPPINGS names.
 // Per canonical, candidates come from: exact (case-insensitive) → normalized
 // equality → synonym table. A bare "Region" column counts as the page's
@@ -418,7 +455,7 @@ function saveAppWorkloadMap(map) {
 // (GB) are required; the rest (VM Name, App Name, region cols) are optional.
 // Returns { mapping (source→canonical), renames, unmatchedRequired,
 // ambiguous, needsReview }.
-function autoMatchHeaders(headers) {
+function autoMatchHeaders(headers, preset = detectImportPreset(headers)) {
   const canonicals = pageCanonicals();
   const required = REQUIRED_CANONICALS;
   const providers = getPageProviders();
@@ -427,7 +464,21 @@ function autoMatchHeaders(headers) {
   const ambiguous = [];
   const unmatchedRequired = [];
 
+  // A preset's columns are settled before the matcher runs, and the headers it
+  // took are claimed — that is what stops RVTools' "Host" from competing for
+  // VM Name once "VM" has it.
+  if (preset) {
+    for (const [normSource, canonical] of Object.entries(preset.columns)) {
+      const header = headers.find((h) => normalizeHeader(h) === normSource);
+      if (header) {
+        mapping[header] = canonical;
+        claimed.add(header);
+      }
+    }
+  }
+
   for (const canonical of canonicals) {
+    if (Object.values(mapping).includes(canonical)) continue;
     const canonNorm = normalizeHeader(canonical);
     const synonyms = COLUMN_SYNONYMS[canonical] || [];
     const candidates = headers.filter((h) => {
@@ -469,6 +520,7 @@ function autoMatchHeaders(headers) {
     renames,
     unmatchedRequired,
     ambiguous,
+    preset,
     needsReview: ambiguous.length > 0 || unmatchedRequired.length > 0,
   };
 }
@@ -491,13 +543,39 @@ function isMbHeader(header) {
   return /(mb|mib)$/.test(normalizeHeader(header));
 }
 
-// Memory unit detection for a mapping: MB source → convert to GB on ingest
-function detectMemoryUnit(mapping) {
+// Above this, a memory figure is not plausibly gigabytes. The largest instances
+// any provider here offers are in the low thousands of GB and are rare; a fleet
+// whose MIDDLE machine claims 512 GB is not a fleet of 512 GB machines, it is a
+// fleet measured in MiB. The median (not the max, not the mean) is what makes
+// this safe: one genuine 1 TB outlier cannot drag the whole file into a
+// conversion, and it takes half the rows to be implausible before we act.
+const IMPLAUSIBLE_GB = 512;
+
+// Header names lie about units. RVTools' vInfo column is called plainly
+// "Memory" and holds MiB, so a 16 GiB VM arrives as 16384 and, read as GB,
+// matches nothing at all. Names are checked first — they are explicit when
+// present — and the values are the backstop for every tool that does not say.
+function looksLikeMbValues(rows, sourceHeader) {
+  const values = rows
+    .map((row) => parseFloat(row[sourceHeader]))
+    .filter((v) => !isNaN(v) && v > 0)
+    .sort((a, b) => a - b);
+  if (!values.length) return false;
+  const median = values[Math.floor(values.length / 2)];
+  return median >= IMPLAUSIBLE_GB;
+}
+
+// Memory unit detection for a mapping: MB source → convert to GB on ingest.
+// `rows` carry the ORIGINAL header keys (this runs before rewriteRowKeys), and
+// are optional — call sites that have no rows fall back to the header name.
+function detectMemoryUnit(mapping, rows = null) {
   const source = Object.keys(mapping).find(
     (s) => mapping[s] === COLUMN_MAPPINGS.memory,
   );
   if (!source) return {};
-  return isMbHeader(source) ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
+  const isMb =
+    isMbHeader(source) || (rows ? looksLikeMbValues(rows, source) : false);
+  return isMb ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
 }
 
 // Saved mappings: { headerSignature: { mapping: {source: canonical},
@@ -558,7 +636,30 @@ function ingestRows(headers, rows) {
     return;
   }
 
-  applyIngest(headers, rows, match.mapping, detectMemoryUnit(match.mapping));
+  if (match.preset) {
+    // Say so. A file that was silently reinterpreted is the thing the user goes
+    // looking for later when a number seems wrong.
+    const presetNote = `Recognised as a ${match.preset.name} export`;
+    window._uploadNote = window._uploadNote
+      ? `${window._uploadNote}. ${presetNote}`
+      : presetNote;
+  }
+
+  applyIngest(
+    headers,
+    rows,
+    match.mapping,
+    presetUnits(match.preset, match.mapping) ||
+      detectMemoryUnit(match.mapping, rows),
+  );
+}
+
+// A preset knows its own units; nothing needs to be inferred from a file whose
+// format we have already identified.
+function presetUnits(preset, mapping) {
+  if (!preset || !preset.memoryUnit) return null;
+  const hasMemory = Object.values(mapping).includes(COLUMN_MAPPINGS.memory);
+  return hasMemory ? { [COLUMN_MAPPINGS.memory]: preset.memoryUnit } : null;
 }
 
 // Applies a mapping and runs the normal post-upload pipeline
@@ -643,6 +744,14 @@ function applyIngest(headers, rows, mapping, units = {}) {
 // unless the user confirms, and Cancel simply closes the panel.
 function showColumnMappingPanel(headers, match, opts = {}) {
   const panel = document.getElementById("columnMappingSection");
+
+  // Source-keyed rows for the file under review — the unit sniffer reads values,
+  // so it needs them; in edit mode the applied ingest is the one being changed.
+  const panelRows =
+    (window._pendingIngest && window._pendingIngest.rows) ||
+    (window._lastIngest && window._lastIngest.rows) ||
+    null;
+
   if (!panel) {
     // Page has no panel placeholder — apply best-effort mapping instead
     if (!opts.isEdit) {
@@ -650,7 +759,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
         headers,
         window._pendingIngest.rows,
         match.mapping,
-        match.units || detectMemoryUnit(match.mapping),
+        match.units || detectMemoryUnit(match.mapping, panelRows),
       );
     }
     return;
@@ -672,8 +781,9 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   // Memory unit prefill: saved/applied units win (edit mode), else detect
   // from the guessed source header
   const memUnit =
-    (match.units || detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] ===
-    "MB"
+    (match.units || detectMemoryUnit(match.mapping, panelRows))[
+      COLUMN_MAPPINGS.memory
+    ] === "MB"
       ? "MB"
       : "GB";
 
@@ -824,7 +934,7 @@ function applyColumnMapping() {
     if (unitSelect && unitSelect.value === "MB") {
       units[COLUMN_MAPPINGS.memory] = "MB";
     } else if (!unitSelect || !unitSelect.value) {
-      Object.assign(units, detectMemoryUnit(mapping));
+      Object.assign(units, detectMemoryUnit(mapping, pending.rows));
     }
   }
 
