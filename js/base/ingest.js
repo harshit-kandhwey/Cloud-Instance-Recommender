@@ -680,6 +680,9 @@ function applyIngest(headers, rows, mapping, units = {}) {
   }
 
   window._pendingIngest = null;
+  // A dismissal belongs to the file it was made about: answering "different VMs"
+  // for one upload must not silence the question for the next.
+  window._duplicatesAcknowledged = false;
   // Keep the pre-rewrite originals so the mapping stays editable afterwards
   window._lastIngest = { headers, rows, mapping, units: units || {} };
 
@@ -728,6 +731,9 @@ function applyIngest(headers, rows, mapping, units = {}) {
   // Show file statistics
   showFileStatistics();
 
+  // Say what is wrong with the input before it is used, not after
+  reportInputHygiene();
+
   // Check region names against the manifests, then start loading the region
   // data this CSV needs in the background (skipping unknown regions)
   validateCsvRegions();
@@ -736,6 +742,225 @@ function applyIngest(headers, rows, mapping, units = {}) {
   // If the file groups VMs by application but has no per-row Workload, offer
   // the app→workload mapping panel so those VMs can inherit a workload.
   maybeShowAppMappingPanel();
+}
+
+// ─── Input hygiene ───────────────────────────────────────────────────────────
+// A bad row does not announce itself. A VM with no CPU count still gets a
+// recommendation, a VM listed twice is sized twice and counted twice in the
+// totals, and both come back looking as reasonable as everything else. So say
+// what is wrong with the input, with the row numbers, before the run — the
+// alternative is a report that is quietly wrong and gets forwarded.
+
+// Row numbers as a spreadsheet shows them: the header is row 1, so the first
+// data row is row 2. Anything else sends the user hunting in the wrong place.
+const dataRowNumber = (index) => index + 2;
+
+// Not "unusual" — impossible. These sit far above the largest instance any of
+// the three providers offers, so a row beyond them is a data-entry error (or a
+// unit that was never converted), not a very large machine.
+const IMPLAUSIBLE_CPU = 512;
+const IMPLAUSIBLE_MEMORY_GB = 24576; // 24 TB
+
+function analyzeInputHygiene(rows) {
+  const CPU = COLUMN_MAPPINGS.cpu;
+  const MEM = COLUMN_MAPPINGS.memory;
+  const NAME = COLUMN_MAPPINGS.vmName;
+
+  const present = (col) =>
+    rows.length > 0 && Object.prototype.hasOwnProperty.call(rows[0], col);
+
+  // Row numbers whose value in `col` satisfies `test(numeric, raw)`
+  const rowsWhere = (col, test) =>
+    rows.reduce((hits, row, i) => {
+      if (test(parseFloat(row[col]), String(row[col] ?? "").trim()))
+        hits.push(dataRowNumber(i));
+      return hits;
+    }, []);
+
+  const issues = [];
+  const note = (severity, label, rowNumbers) => {
+    if (rowNumbers.length) issues.push({ severity, label, rowNumbers });
+  };
+
+  if (present(CPU)) {
+    note(
+      "error",
+      "CPU count is missing or zero",
+      rowsWhere(CPU, (v) => isNaN(v) || v <= 0),
+    );
+    note(
+      "error",
+      `CPU count above ${IMPLAUSIBLE_CPU}`,
+      rowsWhere(CPU, (v) => v > IMPLAUSIBLE_CPU),
+    );
+    note(
+      "warning",
+      "CPU count is not a whole number",
+      rowsWhere(CPU, (v) => !isNaN(v) && v > 0 && !Number.isInteger(v)),
+    );
+  }
+  if (present(MEM)) {
+    note(
+      "error",
+      "Memory is missing or zero",
+      rowsWhere(MEM, (v) => isNaN(v) || v <= 0),
+    );
+    note(
+      "error",
+      `Memory above ${IMPLAUSIBLE_MEMORY_GB} GB — check the unit`,
+      rowsWhere(MEM, (v) => v > IMPLAUSIBLE_MEMORY_GB),
+    );
+  }
+  for (const [col, label] of [
+    [COLUMN_MAPPINGS.cpuUtilization, "CPU utilization"],
+    [COLUMN_MAPPINGS.memoryUtilization, "Memory utilization"],
+  ]) {
+    if (present(col)) {
+      note(
+        "warning",
+        `${label} outside 0–100%`,
+        rowsWhere(col, (v) => !isNaN(v) && (v < 0 || v > 100)),
+      );
+    }
+  }
+  if (present(NAME)) {
+    note(
+      "warning",
+      "VM name is blank",
+      rowsWhere(NAME, (_v, raw) => raw === ""),
+    );
+  }
+
+  // Duplicates are a question, not a defect: the same name twice may be one VM
+  // exported twice, or two VMs that genuinely share a name across clusters.
+  // Only the user knows, so ask instead of picking.
+  const duplicates = [];
+  if (present(NAME)) {
+    const byName = new Map();
+    rows.forEach((row, i) => {
+      const key = String(row[NAME] ?? "")
+        .trim()
+        .toLowerCase();
+      if (!key) return;
+      if (!byName.has(key)) byName.set(key, []);
+      byName.get(key).push(dataRowNumber(i));
+    });
+    for (const rowNumbers of byName.values()) {
+      if (rowNumbers.length > 1) {
+        duplicates.push({
+          name: String(rows[rowNumbers[0] - 2][NAME]).trim(),
+          rowNumbers,
+        });
+      }
+    }
+  }
+
+  return { issues, duplicates };
+}
+
+// At most a handful of row numbers inline — a list of four hundred is not a
+// message, it is a wall, and the user cannot act on it either way.
+function formatRowNumbers(rowNumbers, limit = 8) {
+  const shown = rowNumbers.slice(0, limit).join(", ");
+  const rest = rowNumbers.length - limit;
+  return rest > 0 ? `${shown} and ${rest} more` : shown;
+}
+
+function reportInputHygiene() {
+  const el = document.getElementById("inputHygieneSection");
+  if (!el) return;
+
+  const report = analyzeInputHygiene(csvData);
+  // The report is recomputed from the data every time, so a dismissal has to
+  // live outside it — clearing the list in place would just be regenerated.
+  if (window._duplicatesAcknowledged) report.duplicates = [];
+  window._inputHygiene = report;
+
+  if (!report.issues.length && !report.duplicates.length) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+
+  const errors = report.issues.filter((i) => i.severity === "error");
+  const lines = report.issues
+    .map(
+      (i) =>
+        `<li>${i.severity === "error" ? "❌" : "⚠️"} ${escapeHtml(i.label)} — ${
+          i.rowNumbers.length
+        } row${i.rowNumbers.length === 1 ? "" : "s"} (${escapeHtml(
+          formatRowNumbers(i.rowNumbers),
+        )})</li>`,
+    )
+    .join("");
+
+  let dupBlock = "";
+  if (report.duplicates.length) {
+    const total = report.duplicates.reduce(
+      (n, d) => n + d.rowNumbers.length - 1,
+      0,
+    );
+    const examples = report.duplicates
+      .slice(0, 5)
+      .map(
+        (d) =>
+          `<li>“${escapeHtml(d.name)}” — rows ${escapeHtml(formatRowNumbers(d.rowNumbers))}</li>`,
+      )
+      .join("");
+    const more =
+      report.duplicates.length > 5
+        ? `<li>…and ${report.duplicates.length - 5} more repeated names</li>`
+        : "";
+    dupBlock = `
+      <p style="margin-top: 10px;"><strong>🔁 ${report.duplicates.length} VM name${
+        report.duplicates.length === 1 ? " is" : "s are"
+      } used more than once</strong> (${total} extra row${total === 1 ? "" : "s"}).
+      Are these the same VM listed twice, or different VMs that share a name?</p>
+      <ul style="margin: 6px 0 10px 18px;">${examples}${more}</ul>
+      <button onclick="mergeDuplicateVmNames()" title="Keep the first row for each repeated name and drop the rest">🔗 Same VM — keep the first of each</button>
+      <button onclick="keepDuplicateVmNames()" title="Leave every row in place" style="margin-left: 8px;">↔️ Different VMs — keep them all</button>`;
+  }
+
+  el.className = `alert alert-${errors.length ? "warning" : "info"}`;
+  el.innerHTML = `
+    <strong>🩺 Input check</strong> — the file loaded, but some rows look wrong.
+    ${errors.length ? "Rows with a ❌ will not size sensibly." : ""}
+    <ul style="margin: 6px 0 0 18px;">${lines}</ul>
+    ${dupBlock}`;
+  el.classList.remove("hidden");
+}
+
+// Same VM listed twice: keep the first occurrence of each name.
+function mergeDuplicateVmNames() {
+  const NAME = COLUMN_MAPPINGS.vmName;
+  const seen = new Set();
+  const before = csvData.length;
+
+  csvData = csvData.filter((row) => {
+    const key = String(row[NAME] ?? "")
+      .trim()
+      .toLowerCase();
+    if (!key) return true; // blank names are reported separately, not merged
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const removed = before - csvData.length;
+  showToast(
+    `Removed ${removed} duplicate row${removed === 1 ? "" : "s"}`,
+    "success",
+  );
+  showFileStatistics();
+  reportInputHygiene();
+  updateStaleResultsNotice();
+}
+
+// Different VMs that share a name: leave the rows alone, and stop asking.
+function keepDuplicateVmNames() {
+  window._duplicatesAcknowledged = true;
+  reportInputHygiene();
+  showToast("Keeping every row — repeated names left as they are", "info");
 }
 
 // Renders the mapping panel: one dropdown per canonical column, prefilled

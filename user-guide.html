@@ -3034,6 +3034,21 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       </p>
 
       <p>
+        <strong
+          >Q: The tool says some of my rows look wrong. What is it
+          checking?</strong
+        ><br />
+        A: After an upload, the input check names rows that will not size
+        sensibly — a missing or zero CPU count or memory figure, a CPU count or
+        memory size no provider sells (usually a unit that was never converted),
+        a utilization outside 0–100%, or a blank VM name — and gives you the row
+        numbers as your spreadsheet shows them. It is a report, not a gate: the
+        file still loads and you can still generate. If the same VM name appears
+        more than once, it asks whether those are one VM listed twice or
+        different VMs that share a name, because only you know.
+      </p>
+
+      <p>
         <strong>Q: Can I upload an RVTools export directly?</strong><br />
         A: Yes. The <code>vInfo</code> sheet is found and read, its
         <code>VM</code> column is used for the VM name — not <code>Host</code>,
