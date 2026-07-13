@@ -60,6 +60,7 @@ function buildContext({
         checked: false,
         focused: false,
         classes: new Set(["hidden"]),
+        attrs: {},
         classList: {
           add: (c) => elements[id].classes.add(c),
           remove: (c) => elements[id].classes.delete(c),
@@ -78,8 +79,15 @@ function buildContext({
         querySelectorAll: () => [],
         setSelectionRange: () => {},
         scrollIntoView: () => {},
-        setAttribute: () => {},
-        getAttribute: () => null,
+        // Attributes are remembered, for the same reason classList.toggle and
+        // localStorage are real: a set that cannot be read back is a stub that
+        // would let an attribute assertion pass without ever testing anything.
+        // Named `attrs` to match the context step9-test builds for the pages.
+        setAttribute: (name, value) => {
+          elements[id].attrs[name] = String(value);
+        },
+        getAttribute: (name) =>
+          name in elements[id].attrs ? elements[id].attrs[name] : null,
       };
     }
     return elements[id];

@@ -275,6 +275,8 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 | `Min Gen`            | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4                              | Minimum instance generation to include                                                                    |
 | `Exclude`            | Comma-separated type names (e.g. `Burstable,GPU`)                   | Exclude specific instance types for this row only                                                         |
 
+**`Current Instance Type`** (optional, not a rule column) — if your VMs already run in a cloud, this carries what they run on today (`m5.xlarge`, `Standard_D4s_v3`, `n2-standard-4`) through the preview and every export untouched, sitting immediately left of the recommendations so each one can be read against what it replaces. Also recognised as `Instance Type`, `VM Size`, `Machine Type` or `Current Size`. **It does not affect sizing** — CPU Count and Memory (GB) still drive that.
+
 **Example (multi-cloud):**
 
 ```csv
