@@ -119,6 +119,10 @@ document.addEventListener("DOMContentLoaded", function () {
   // four pages cannot drift apart in what it offers
   renderPasteControl();
 
+  // Anything already remembered from a previous visit should be visible on
+  // arrival — it will be applied on the next matching upload either way
+  renderSavedMappings();
+
   // Initialize range inputs
   updateCpuRanges();
   updateMemoryRanges();

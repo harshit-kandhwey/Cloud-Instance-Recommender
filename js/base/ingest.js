@@ -672,6 +672,116 @@ function saveColumnMapping(signature, mapping, units) {
   } catch (e) {
     console.warn("Could not persist column mapping:", e);
   }
+  renderSavedMappings();
+}
+
+function writeColumnMappings(all) {
+  try {
+    localStorage.setItem(
+      "cloudInstanceRecommenderColumnMaps",
+      JSON.stringify(all),
+    );
+    return true;
+  } catch (e) {
+    console.warn("Could not persist column mappings:", e);
+    return false;
+  }
+}
+
+// ─── Saved-mapping manager ───────────────────────────────────────────────────
+// Confirming the mapping panel once saves that answer against the file's header
+// signature, and every later file with the same headers is mapped that way
+// without asking again. That is the point — but it also means a mistake made
+// once is repeated silently forever, and until now there was nowhere to see it,
+// let alone undo it. Show what is remembered, and allow forgetting it.
+
+function renderSavedMappings() {
+  const el = document.getElementById("savedMappingsSection");
+  if (!el) return;
+
+  const all = loadColumnMappings();
+  const signatures = Object.keys(all);
+
+  if (!signatures.length) {
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+
+  const entries = signatures
+    .map((signature) => {
+      const saved = readSavedMapping(all[signature]);
+      if (!saved) return "";
+
+      // The signature is a sorted, lowercased join of the headers — fine as a
+      // key, unreadable as a label. Show the renames, which is what the user
+      // actually agreed to; a mapping that renamed nothing is shown as such
+      // rather than as an empty row.
+      const renames = Object.entries(saved.mapping)
+        .filter(([source, canonical]) => source !== canonical)
+        .map(
+          ([source, canonical]) =>
+            `${escapeHtml(source)} → ${escapeHtml(canonical)}`,
+        );
+      const unit = saved.units && saved.units[COLUMN_MAPPINGS.memory];
+      const unitNote = unit === "MB" ? " · memory read as MB" : "";
+      const columnCount = signature.split("|").length;
+
+      return `
+        <li style="margin-bottom: 8px;">
+          <div style="font-size: 13px;">
+            <strong>${columnCount} columns</strong>${escapeHtml(unitNote)}<br>
+            <span style="color: var(--text-muted);">${
+              renames.length
+                ? renames.join(", ")
+                : "no columns renamed — the headers already matched"
+            }</span>
+          </div>
+          <button onclick="forgetColumnMapping(${JSON.stringify(signature).replace(/"/g, "&quot;")})"
+            title="Forget this mapping — the next file with these headers will ask again"
+            style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">🗑️ Forget</button>
+        </li>`;
+    })
+    .join("");
+
+  el.className = "alert alert-info";
+  el.innerHTML = `
+    <strong>💾 Remembered column mappings (${signatures.length})</strong><br>
+    <span style="font-size: 13px; color: var(--text-muted);">A file whose headers match one of these is mapped this way without asking.</span>
+    <ul style="margin: 8px 0 0 18px; list-style: none; padding: 0;">${entries}</ul>
+    <button onclick="forgetAllColumnMappings()" style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">Forget all</button>`;
+  el.classList.remove("hidden");
+}
+
+function forgetColumnMapping(signature) {
+  const all = loadColumnMappings();
+  if (!(signature in all)) return;
+  delete all[signature];
+
+  if (!writeColumnMappings(all)) {
+    showToast(
+      "Could not update saved mappings — storage is unavailable",
+      "warning",
+    );
+    return;
+  }
+  showToast(
+    "Mapping forgotten — a file with those headers will ask again",
+    "success",
+  );
+  renderSavedMappings();
+}
+
+function forgetAllColumnMappings() {
+  if (!writeColumnMappings({})) {
+    showToast(
+      "Could not clear saved mappings — storage is unavailable",
+      "warning",
+    );
+    return;
+  }
+  showToast("All remembered column mappings cleared", "success");
+  renderSavedMappings();
 }
 
 // Entry point for parsed uploads (CSV and, later, xlsx). Applies column
