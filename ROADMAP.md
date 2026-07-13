@@ -56,7 +56,6 @@ Meet users where their inventory actually comes from, and catch bad input early.
   to the mapping panel. (M)
 - "Current instance type" input column, so a row can carry the size it runs on
   today. (M) _Foundation for cloud-to-cloud mode in 4.0._
-- Paste-from-clipboard input, routed through the same pipeline as file upload. (S)
 - Sample dataset gallery — small, large, and deliberately messy examples. (S)
 - Column-mapping manager UI to view and edit the saved header-signature
   mappings that are invisible in localStorage today. (S)

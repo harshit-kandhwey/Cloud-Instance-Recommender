@@ -115,6 +115,10 @@ document.addEventListener("DOMContentLoaded", function () {
     setupFileDragAndDrop(fileInput);
   }
 
+  // The paste control is rendered rather than written into each page, so the
+  // four pages cannot drift apart in what it offers
+  renderPasteControl();
+
   // Initialize range inputs
   updateCpuRanges();
   updateMemoryRanges();

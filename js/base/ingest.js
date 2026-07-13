@@ -143,16 +143,11 @@ async function readFileHead(file, bytes = 8) {
   }
 }
 
-// Routes an uploaded file into the pipeline by its CONTENT: a ZIP goes to
-// SheetJS (first sheet only), text goes to the CSV parser, and anything else is
-// rejected with an explanation. The extension only decides when the bytes are
-// unavailable.
-async function ingestFile(file) {
+// Every new input starts from a clean slate: a CSV after a workbook must not
+// leave the previous file's sheet picker on screen, still offering its sheets.
+function resetIngestState() {
   window._uploadNote = null;
   window._ingestLabel = null;
-
-  // Every upload starts from no workbook: a CSV after a workbook must not leave
-  // the previous file's sheet picker on screen, still offering its sheets.
   window._uploadedSheets = null;
   window._uploadFileNote = null;
   const picker = document.getElementById("sheetPickerSection");
@@ -160,6 +155,14 @@ async function ingestFile(file) {
     picker.classList.add("hidden");
     picker.innerHTML = "";
   }
+}
+
+// Routes an uploaded file into the pipeline by its CONTENT: a ZIP goes to
+// SheetJS (which then picks the sheet that looks like an inventory), text goes
+// to the delimited-text parser, and anything else is rejected with an
+// explanation. The extension only decides when the bytes are unavailable.
+async function ingestFile(file) {
+  resetIngestState();
 
   // Applies to both branches — an empty or oversized CSV used to be caught
   // only by the legacy handler, which no longer exists
@@ -358,17 +361,77 @@ function selectSheet(name) {
 // feeds ingestRows directly)
 function parseCSV(csvText) {
   console.log("Parsing CSV data");
-  const lines = csvText.trim().split("\n");
-  const headers = lines[0].split(",").map((h) => h.trim());
-  const rows = lines.slice(1).map((line) => {
-    const values = parseCSVLine(line);
-    const row = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index] || "";
-    });
-    return row;
-  });
+  const { headers, rows } = parseDelimitedText(csvText);
   ingestRows(headers, rows);
+}
+
+// ─── Paste ───────────────────────────────────────────────────────────────────
+// Not everyone has a file. A few dozen rows selected in Excel and copied is the
+// shortest path from an inventory to an answer, and it goes through exactly the
+// same pipeline as an upload — the same mapping, hygiene check, and region
+// validation — because a second route into the data is a second route to get it
+// wrong.
+
+function renderPasteControl() {
+  const el = document.getElementById("pasteDataSection");
+  if (!el) return;
+  el.innerHTML = `
+    <button type="button" class="btn btn-secondary" onclick="togglePastePanel()" style="font-size: 13px; padding: 8px 16px;">📋 Or paste rows from a spreadsheet</button>
+    <div id="pastePanel" class="hidden" style="margin-top: 10px;">
+      <label for="pasteInput" style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted);">
+        Copy the rows from Excel, Google Sheets, or a CSV — <strong>including the header row</strong> — and paste them here.
+      </label>
+      <textarea id="pasteInput" rows="8" aria-label="Paste inventory rows, including the header row"
+        placeholder="VM Name&#9;CPU Count&#9;Memory (GB)&#10;web-01&#9;4&#9;16"
+        style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);"></textarea>
+      <div style="margin-top: 8px;">
+        <button type="button" class="btn btn-primary" onclick="ingestPastedData()" style="font-size: 13px; padding: 8px 16px;">Use this data</button>
+        <button type="button" class="btn btn-secondary" onclick="togglePastePanel()" style="font-size: 13px; padding: 8px 16px; margin-left: 8px;">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function togglePastePanel() {
+  const panel = document.getElementById("pastePanel");
+  if (!panel) return;
+  const opening = panel.classList.contains("hidden");
+  panel.classList.toggle("hidden");
+  if (opening) {
+    const input = document.getElementById("pasteInput");
+    if (input) input.focus();
+  }
+}
+
+function ingestPastedData() {
+  const input = document.getElementById("pasteInput");
+  const text = input ? input.value : "";
+
+  if (!text.trim()) {
+    showToast("Paste some rows first — including the header row", "warning");
+    return;
+  }
+
+  const { headers, rows } = parseDelimitedText(text);
+  if (!rows.length) {
+    // A header with nothing under it is the classic paste mistake: the header
+    // row was selected and the data was not.
+    showToast(
+      "That looks like a header row with no data under it — copy the rows too",
+      "warning",
+    );
+    return;
+  }
+
+  resetIngestState();
+  window._ingestLabel = "Pasted data loaded";
+
+  // A file name left in the picker would now be describing data that is not on
+  // screen. Clearing it also lets the same file be re-selected afterwards.
+  const fileInput = document.getElementById("csvFile");
+  if (fileInput) fileInput.value = "";
+
+  ingestRows(headers, rows);
+  togglePastePanel();
 }
 
 // ─── Column mapping ───────────────────────────────────────────────────────────
@@ -1260,7 +1323,7 @@ function applyAppMapping() {
 }
 
 // Parse CSV line handling quoted values
-function parseCSVLine(line) {
+function parseCSVLine(line, delimiter = ",") {
   const result = [];
   let current = "";
   let inQuotes = false;
@@ -1276,7 +1339,7 @@ function parseCSVLine(line) {
       } else {
         inQuotes = !inQuotes;
       }
-    } else if (char === "," && !inQuotes) {
+    } else if (char === delimiter && !inQuotes) {
       result.push(current.trim());
       current = "";
     } else {
@@ -1286,4 +1349,37 @@ function parseCSVLine(line) {
 
   result.push(current.trim());
   return result;
+}
+
+// Copying cells out of Excel or Google Sheets gives tab-separated text; copying
+// out of a CSV gives commas. Let the header line decide — whichever character
+// actually divides it is the delimiter. A single-column file has neither, and
+// falls to the comma, which splits it into the one column it has.
+function sniffDelimiter(headerLine) {
+  const count = (ch) => headerLine.split(ch).length - 1;
+  return count("\t") > count(",") ? "\t" : ",";
+}
+
+// Text (a file's contents, or a paste) → { headers, rows }. The one place that
+// turns delimited text into rows; both the upload and the paste path use it, so
+// they cannot drift apart in how they read a quoted field.
+function parseDelimitedText(text) {
+  const lines = text
+    .replace(/\r\n?/g, "\n")
+    .trim()
+    .split("\n")
+    .filter((line) => line.trim() !== "");
+  if (!lines.length) return { headers: [], rows: [] };
+
+  const delimiter = sniffDelimiter(lines[0]);
+  const headers = parseCSVLine(lines[0], delimiter);
+  const rows = lines.slice(1).map((line) => {
+    const values = parseCSVLine(line, delimiter);
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || "";
+    });
+    return row;
+  });
+  return { headers, rows };
 }
