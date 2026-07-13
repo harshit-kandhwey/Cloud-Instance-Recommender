@@ -374,6 +374,331 @@ function parseCSV(csvText) {
   ingestRows(headers, rows);
 }
 
+// ─── Sample datasets ─────────────────────────────────────────────────────────
+// The one sample file is a clean eight rows: it shows the format and nothing
+// else. It cannot show what a large run looks like, and it certainly cannot show
+// what the tool does with a file that is WRONG — which is most real inventories.
+// These load through the normal pipeline, so what they demonstrate is the actual
+// behaviour rather than a description of it.
+
+// Regions the page's own providers actually have, so a sample never arrives
+// carrying a region column the page cannot resolve.
+const SAMPLE_REGIONS = {
+  aws: ["us-east-1", "us-west-2", "eu-west-1"],
+  azure: ["East US", "West US 2", "North Europe"],
+  gcp: ["us-central1-a", "us-west1-b", "europe-west1-c"],
+};
+
+function sampleRegionColumns() {
+  return getPageProviders().map((provider) => ({
+    header: InstanceSelectorFactory.getProviderRegionColumn(provider),
+    values: SAMPLE_REGIONS[provider] || [""],
+  }));
+}
+
+function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
+  const regionCols = sampleRegionColumns();
+  const headers = [
+    "VM Name",
+    "App Name",
+    "CPU Count",
+    memoryHeader,
+    "CPU Utilization",
+    "Memory Utilization",
+    ...regionCols.map((c) => c.header),
+    "ENV",
+    "OS",
+    "Workload",
+  ];
+  const lines = rows.map((r) =>
+    [
+      r.name,
+      r.app,
+      r.cpu,
+      r.memory,
+      r.cpuUtil,
+      r.memUtil,
+      ...regionCols.map(
+        (c) => r.region ?? c.values[r.regionIndex % c.values.length],
+      ),
+      r.env,
+      r.os,
+      r.workload,
+    ].join(","),
+  );
+  return [headers.join(","), ...lines].join("\n");
+}
+
+const SAMPLE_DATASETS = [
+  {
+    id: "small",
+    label: "Small & clean",
+    blurb: "8 VMs, everything filled in. What a good file looks like.",
+    build: () =>
+      buildSampleCsv([
+        {
+          name: "web-01",
+          app: "Storefront",
+          cpu: 4,
+          memory: 16,
+          cpuUtil: 45,
+          memUtil: 60,
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "Web Server",
+        },
+        {
+          name: "web-02",
+          app: "Storefront",
+          cpu: 4,
+          memory: 16,
+          cpuUtil: 38,
+          memUtil: 55,
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "Web Server",
+        },
+        {
+          name: "db-01",
+          app: "Billing",
+          cpu: 8,
+          memory: 64,
+          cpuUtil: 72,
+          memUtil: 81,
+          regionIndex: 1,
+          env: "Production",
+          os: "Windows",
+          workload: "Database",
+        },
+        {
+          name: "db-02",
+          app: "Billing",
+          cpu: 8,
+          memory: 64,
+          cpuUtil: 30,
+          memUtil: 40,
+          regionIndex: 1,
+          env: "Staging",
+          os: "Windows",
+          workload: "Database",
+        },
+        {
+          name: "cache-01",
+          app: "Storefront",
+          cpu: 2,
+          memory: 8,
+          cpuUtil: 25,
+          memUtil: 70,
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "Cache",
+        },
+        {
+          name: "batch-01",
+          app: "Analytics",
+          cpu: 16,
+          memory: 32,
+          cpuUtil: 88,
+          memUtil: 45,
+          regionIndex: 2,
+          env: "Production",
+          os: "Linux",
+          workload: "General",
+        },
+        {
+          name: "dev-01",
+          app: "Analytics",
+          cpu: 2,
+          memory: 4,
+          cpuUtil: 12,
+          memUtil: 20,
+          regionIndex: 2,
+          env: "Dev",
+          os: "Linux",
+          workload: "General",
+        },
+        {
+          name: "api-01",
+          app: "Storefront",
+          cpu: 4,
+          memory: 8,
+          cpuUtil: 65,
+          memUtil: 52,
+          regionIndex: 1,
+          env: "Production",
+          os: "Linux",
+          workload: "Web Server",
+        },
+      ]),
+  },
+  {
+    id: "large",
+    label: "Large",
+    blurb:
+      "500 VMs. Shows the batch run, the progress bar, and a real preview.",
+    build: () => {
+      const apps = ["Storefront", "Billing", "Analytics", "Identity", "Search"];
+      const workloads = ["Web Server", "Database", "Cache", "General", "ML/AI"];
+      const envs = ["Production", "Staging", "Dev"];
+      const rows = [];
+      for (let i = 1; i <= 500; i++) {
+        // Deterministic, not random: two people loading "Large" should be
+        // looking at the same file.
+        const cpu = [1, 2, 4, 8, 16, 32][i % 6];
+        rows.push({
+          name: `vm-${String(i).padStart(3, "0")}`,
+          app: apps[i % apps.length],
+          cpu,
+          memory: cpu * [1, 2, 4][i % 3],
+          cpuUtil: 10 + ((i * 7) % 80),
+          memUtil: 15 + ((i * 11) % 75),
+          regionIndex: i % 3,
+          env: envs[i % envs.length],
+          os: i % 4 === 0 ? "Windows" : "Linux",
+          workload: workloads[i % workloads.length],
+        });
+      }
+      return buildSampleCsv(rows);
+    },
+  },
+  {
+    id: "messy",
+    label: "Deliberately messy",
+    blurb:
+      "Memory in MiB, a VM listed twice, a row with no CPU, an impossible utilization, a blank name, an unknown region. Shows what the input check catches.",
+    build: () => {
+      const known = sampleRegionColumns()[0].values[0];
+      const rows = [
+        // Every memory value is MiB under a header that does not say so — the
+        // median is what makes the unit question fire at all.
+        {
+          name: "web-01",
+          app: "Storefront",
+          cpu: 4,
+          memory: 16384,
+          cpuUtil: 45,
+          memUtil: 60,
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "Web Server",
+        },
+        {
+          name: "web-01",
+          app: "Storefront",
+          cpu: 4,
+          memory: 16384,
+          cpuUtil: 45,
+          memUtil: 60,
+          regionIndex: 1,
+          env: "Production",
+          os: "Linux",
+          workload: "Web Server",
+        },
+        {
+          name: "db-01",
+          app: "Billing",
+          cpu: 8,
+          memory: 65536,
+          cpuUtil: 72,
+          memUtil: 81,
+          regionIndex: 1,
+          env: "Production",
+          os: "Windows",
+          workload: "Database",
+        },
+        {
+          name: "no-cpu-01",
+          app: "Billing",
+          cpu: 0,
+          memory: 32768,
+          cpuUtil: 50,
+          memUtil: 50,
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "General",
+        },
+        {
+          name: "over-01",
+          app: "Analytics",
+          cpu: 2,
+          memory: 8192,
+          cpuUtil: 140,
+          memUtil: 60,
+          regionIndex: 0,
+          env: "Dev",
+          os: "Linux",
+          workload: "General",
+        },
+        {
+          name: "",
+          app: "Analytics",
+          cpu: 2,
+          memory: 8192,
+          cpuUtil: 30,
+          memUtil: 40,
+          regionIndex: 2,
+          env: "Dev",
+          os: "Linux",
+          workload: "General",
+        },
+        {
+          name: "lost-01",
+          app: "Search",
+          cpu: 4,
+          memory: 16384,
+          cpuUtil: 55,
+          memUtil: 65,
+          region: `${known}-99`,
+          env: "Production",
+          os: "Linux",
+          workload: "General",
+        },
+      ];
+      return buildSampleCsv(rows, { memoryHeader: "Memory" });
+    },
+  },
+];
+
+function renderSampleGallery() {
+  const el = document.getElementById("sampleGallery");
+  if (!el) return;
+
+  const cards = SAMPLE_DATASETS.map(
+    (dataset, index) => `
+      <li style="margin-bottom: 8px;">
+        <button onclick="loadSampleDataset(${index})" class="btn btn-secondary" style="font-size: 13px; padding: 6px 14px;">▶️ Load ${escapeHtml(dataset.label)}</button>
+        <span style="margin-left: 8px; font-size: 13px; color: var(--text-muted);">${escapeHtml(dataset.blurb)}</span>
+      </li>`,
+  ).join("");
+
+  el.innerHTML = `
+    <div style="margin-top: 14px;">
+      <strong style="font-size: 14px;">Or try one of these</strong>
+      <ul style="margin: 8px 0 0 0; padding: 0; list-style: none;">${cards}</ul>
+    </div>`;
+}
+
+// Loaded through parseCSV, exactly as an upload is — so the messy one really
+// does trip the input check, rather than being described as though it would.
+function loadSampleDataset(index) {
+  const dataset = SAMPLE_DATASETS[index];
+  if (!dataset) return;
+
+  resetIngestState();
+  window._ingestLabel = `Sample loaded (${dataset.label})`;
+
+  const fileInput = document.getElementById("csvFile");
+  if (fileInput) fileInput.value = "";
+
+  parseCSV(dataset.build());
+  showToast(`Loaded the “${dataset.label}” sample`, "success");
+}
+
 // ─── Paste ───────────────────────────────────────────────────────────────────
 // Not everyone has a file. A few dozen rows selected in Excel and copied is the
 // shortest path from an inventory to an answer, and it goes through exactly the

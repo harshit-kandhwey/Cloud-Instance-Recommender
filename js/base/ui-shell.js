@@ -123,6 +123,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // arrival — it will be applied on the next matching upload either way
   renderSavedMappings();
 
+  renderSampleGallery();
+
   // Initialize range inputs
   updateCpuRanges();
   updateMemoryRanges();
