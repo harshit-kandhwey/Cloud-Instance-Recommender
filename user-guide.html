@@ -3107,10 +3107,14 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       <p>
         <strong>Q: My memory column is in MB. Will that work?</strong><br />
         A: Yes. A header that says so (<code>Memory (MB)</code>,
-        <code>RAM MiB</code>) is converted. When the header does not say, the
-        values decide: a fleet whose typical machine claims hundreds of
-        gigabytes is being measured in MiB, and is converted. You can always
-        override the unit in the column-mapping panel.
+        <code>RAM MiB</code>) is converted, as is a format that is recognised —
+        an RVTools export reports MiB without saying so, and that is known. When
+        neither the header nor the format says, the values are not taken as
+        proof: if they look like MiB, the input check <em>asks</em>, and nothing
+        is converted until you answer. A fleet of genuine 512 GB machines is
+        unusual but real, and dividing it by 1024 would be its own kind of
+        corruption. You can also set the unit yourself in the column-mapping
+        panel.
       </p>
 
       <p>

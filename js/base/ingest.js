@@ -775,11 +775,17 @@ function normalizeHeader(header) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+// The separator is shared, not assumed. The saved-mapping manager counts a
+// signature's columns by splitting it back apart, and a header containing this
+// character would miscount — but so would changing the join here and leaving the
+// split behind, which is the failure that is easy to miss.
+const SIGNATURE_SEPARATOR = "|";
+
 function headerSignature(headers) {
   return headers
     .map((h) => String(h).trim().toLowerCase())
     .sort()
-    .join("|");
+    .join(SIGNATURE_SEPARATOR);
 }
 
 // App→workload map: { "<app name lowercased>": "<Workload>" }. Persisted
@@ -1047,11 +1053,28 @@ function writeColumnMappings(all) {
 // once is repeated silently forever, and until now there was nowhere to see it,
 // let alone undo it. Show what is remembered, and allow forgetting it.
 
+// Entries written by an older version are ignored on ingest (see
+// readSavedMapping), so they must be ignored here too — counting them in the
+// heading while rendering nothing for them would show "3 remembered" above a
+// list of one. Dropping them from storage as well means they stop being counted
+// by anything, ever, rather than lingering as invisible dead weight.
+function pruneLegacySavedMappings() {
+  const all = loadColumnMappings();
+  const live = {};
+  let dropped = 0;
+  for (const [signature, entry] of Object.entries(all)) {
+    if (readSavedMapping(entry)) live[signature] = entry;
+    else dropped++;
+  }
+  if (dropped) writeColumnMappings(live);
+  return live;
+}
+
 function renderSavedMappings() {
   const el = document.getElementById("savedMappingsSection");
   if (!el) return;
 
-  const all = loadColumnMappings();
+  const all = pruneLegacySavedMappings();
   const signatures = Object.keys(all);
 
   if (!signatures.length) {
@@ -1085,7 +1108,7 @@ function renderSavedMappings() {
         );
       const unit = saved.units && saved.units[COLUMN_MAPPINGS.memory];
       const unitNote = unit === "MB" ? " · memory read as MB" : "";
-      const columnCount = signature.split("|").length;
+      const columnCount = signature.split(SIGNATURE_SEPARATOR).length;
 
       return `
         <li style="margin-bottom: 8px;">

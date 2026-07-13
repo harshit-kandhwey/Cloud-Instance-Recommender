@@ -76,7 +76,21 @@ After upload, a Region Check panel shows one chip per unique region in your CSV:
 
 ### 🔗 Column Auto-Mapping
 
-Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. The applied mapping can be reviewed and changed anytime via the **✏️ Edit mapping** button. Memory columns in **MB/MiB** (common in RVTools-style exports) are converted to GB automatically — detected from the header name, or selectable in the mapping panel. Confirmed mappings (including the unit) are remembered per header set (localStorage) and replay automatically on re-upload.
+Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the canonical columns (`CPU Count`, `Memory (GB)`, `VM Name`, …) via exact, normalized, and synonym matching. Unambiguous matches apply silently with a note; ambiguous or missing required columns open a mapping panel with one dropdown per field. The applied mapping can be reviewed and changed anytime via the **✏️ Edit mapping** button.
+
+A confirmed mapping is remembered per header set and replayed on the next file with the same headers — so it is also **listed, with a Forget button**, because a mapping confirmed once would otherwise be reapplied silently forever.
+
+An **RVTools** export is recognised on sight: its `vInfo` sheet is found, its `VM` column is used for the VM name (not `Host`, which is the ESXi server), and its `Memory` column — MiB, though the header never says so — is converted.
+
+Memory in **MB/MiB** is converted when the header says so, or when a recognised format says so. When neither does but the values look like MiB, you are **asked** rather than second-guessed: a fleet of genuine 512 GB machines exists, and dividing it by 1024 would be its own kind of corruption.
+
+### 🩺 Input Check
+
+After the data loads, rows that will not size sensibly are named with the row numbers your spreadsheet shows: missing or zero CPU and memory, figures no provider sells, utilization outside 0–100%, blank names. A repeated VM name is a **question** — one VM listed twice, or two VMs sharing a name? — and nothing is dropped until you answer. It is a report, not a gate.
+
+### ⌨️ Four ways to get data in
+
+Upload a file, **paste rows straight from a spreadsheet**, **enter VMs by hand** (with a copies count for a row of near-identical machines, and in-place editing), or **load one of three sample datasets** — small, 500-VM, or deliberately messy. All four go through the same pipeline, so the mapping, the unit handling and the input check apply identically to each.
 
 ### 📗 Excel Upload
 

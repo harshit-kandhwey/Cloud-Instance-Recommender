@@ -651,7 +651,13 @@ function check(name, cond, detail) {
     const pattern = new RegExp(`\\b${dialog}\\s*\\(`);
     const offenders = productSources.filter((rel) => {
       const src = fs.readFileSync(path.join(REPO, rel), "utf8");
-      return pattern.test(src.replace(/\/\/.*$/gm, ""));
+      // Both comment forms. Stripping only // means a block comment that names
+      // one of these — explaining why it was removed, say — fails the build for
+      // the thing it is documenting, which teaches people not to write it down.
+      const code = src
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*$/gm, "");
+      return pattern.test(code);
     });
     check(
       `no window.${dialog}() left in the product`,

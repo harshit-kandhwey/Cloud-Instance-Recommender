@@ -80,14 +80,17 @@ version-map heading, and write its section under **Release notes**. Then publish
 its highest tag, with the notes drawn from that section:
 
 ```bash
-gh release create <highest-tag-of-the-line> --verify-tag --latest \
-  --title "3.6" \
+gh release create <highest-tag-of-the-line> --verify-tag \
+  --title "3.7" \
   --notes-file <notes>   # the minor's story, from its changelog section
+
+# --latest ONLY when this is the newest line. It is not a formality: passing it
+# while publishing, say, a late 3.6 patch would move "Latest" backwards off 3.7,
+# and the releases page would recommend the older line to everyone.
 ```
 
-Title the release with the bare minor number. Point `--latest` at the newest
-line only. The tag must already be on `origin` — `--verify-tag` will refuse
-otherwise.
+Title the release with the bare minor number. The tag must already be on
+`origin` — `--verify-tag` will refuse otherwise.
 
 ## Before you publish
 

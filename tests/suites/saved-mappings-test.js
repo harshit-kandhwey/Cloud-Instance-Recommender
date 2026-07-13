@@ -143,6 +143,60 @@ console.log("[forgetting means the next file asks again]");
   );
 }
 
+console.log("[entries from an older version are not counted or kept]");
+{
+  // What a real user upgrading actually has: storage holding a pre-3.7 entry
+  // that the ingest path now ignores. Counting it in the heading while rendering
+  // nothing for it would show "1 remembered" above an empty list.
+  const legacySignature = ["memory (gb)", "vcpu", "vm name"].sort().join("|");
+  const { ctx, elements, store } = buildContext({
+    seedStorage: {
+      [KEY]: JSON.stringify({
+        [legacySignature]: { "VM Name": "VM Name", vCPU: "CPU Count" },
+      }),
+    },
+  });
+
+  ctx.renderSavedMappings();
+  check(
+    "nothing is shown, because nothing is usable",
+    panel(elements).classes.has("hidden"),
+    panel(elements).innerHTML,
+  );
+  check(
+    "and the dead entry is dropped from storage rather than left invisible",
+    Object.keys(saved(store)).length === 0,
+    store.get(KEY),
+  );
+}
+{
+  // One live entry alongside one dead one: the heading must count the live one.
+  const { ctx, elements, store } = buildContext();
+  ingest(ctx, AMBIGUOUS);
+  confirmMapping(ctx, {
+    "VM Name": "VM",
+    "CPU Count": "CPUs",
+    "Memory (GB)": "Memory (GB)",
+  });
+
+  const withLegacy = saved(store);
+  withLegacy["old|headers|here"] = { "VM Name": "VM Name" }; // no v — pre-3.7
+  store.set(KEY, JSON.stringify(withLegacy));
+
+  ctx.renderSavedMappings();
+  const html = panel(elements).innerHTML;
+  check(
+    "the heading counts what is actually listed",
+    /Remembered column mappings \(1\)/.test(html),
+    html,
+  );
+  check(
+    "and the column count comes from the signature's own separator",
+    /<strong>4 columns<\/strong>/.test(html),
+    html,
+  );
+}
+
 console.log("[a header cannot smuggle script into the Forget button]");
 {
   // The signature is built from the file's own headers, so it is text an
