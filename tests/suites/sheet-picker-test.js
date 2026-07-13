@@ -401,6 +401,59 @@ const RVTOOLS = [
     );
   }
 
+  console.log(
+    "[a recognised format keeps its units even when review is needed]",
+  );
+  {
+    // A real RVTools export whose CPU and memory the preset settles — but with a
+    // second app-ish column added by whoever exported it, so App Name is
+    // ambiguous and the file stops at the mapping panel on the way in.
+    //
+    // The preset's knowledge that "Memory" is MiB has to survive that detour. It
+    // was consulted only on the silent path, so the panel prefilled its unit from
+    // the header instead — which says "Memory", and means GB — inviting the user
+    // to confirm a 1024x error on a file already identified as MiB.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "rvtools-custom.xlsx",
+        makeXlsx([
+          {
+            name: "vInfo",
+            aoa: [
+              [
+                "VM",
+                "Powerstate",
+                "CPUs",
+                "Memory",
+                "Provisioned MiB",
+                "Application",
+                "App",
+              ],
+              ["web-01", "poweredOn", 4, 16384, 102400, "Storefront", "SF"],
+            ],
+          },
+        ]),
+      ),
+    );
+
+    check(
+      "the file does stop to ask (App Name is ambiguous)",
+      !elements.columnMappingSection.classes.has("hidden") &&
+        rowsOf(ctx).length === 0,
+      `rows=${rowsOf(ctx).length}`,
+    );
+    check(
+      "and the memory unit is prefilled MB from the recognised format",
+      /<option value="MB" selected>/.test(
+        elements.columnMappingSection.innerHTML,
+      ),
+      (elements.columnMappingSection.innerHTML.match(
+        /colmap_unit_mem[\s\S]{0,240}/,
+      ) || [])[0],
+    );
+  }
+
   console.log("[an empty template sheet cannot beat the real inventory]");
   {
     // The template has MORE recognised columns than the populated sheet, and
@@ -594,4 +647,7 @@ const RVTOOLS = [
   }
 
   process.exit(state.failures ? 1 : 0);
-})();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

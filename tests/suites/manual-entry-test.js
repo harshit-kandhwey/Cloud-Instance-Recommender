@@ -1,8 +1,10 @@
 // Manual entry: adding several similar VMs at once, and editing a row after the
 // fact instead of deleting it and retyping it.
 const vm = require("vm");
-const { buildContext, makeChecker, rowsOf } = require("./harness");
+const path = require("path");
+const { REPO, buildContext, makeChecker, rowsOf } = require("./harness");
 
+const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
 const { check, state } = makeChecker();
 
 const list = (ctx) => vm.runInContext("manualVMs", ctx);
@@ -216,10 +218,6 @@ console.log("[the rows still feed the normal pipeline]");
 (async () => {
   console.log("[manual entry clears what the previous input left behind]");
 
-  const path = require("path");
-  const { REPO } = require("./harness");
-  const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
-
   const wb = XLSX.utils.book_new();
   for (const [name, aoa] of [
     [
@@ -277,4 +275,7 @@ console.log("[the rows still feed the normal pipeline]");
   );
 
   process.exit(state.failures ? 1 : 0);
-})();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

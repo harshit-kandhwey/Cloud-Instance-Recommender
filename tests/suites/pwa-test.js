@@ -395,4 +395,7 @@ const req = (url, extra) =>
     process.exit(1);
   }
   console.log("pwa-test: all checks passed");
-})();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

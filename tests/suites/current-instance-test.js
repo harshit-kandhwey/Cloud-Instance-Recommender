@@ -188,4 +188,7 @@ same-b,4,16,x1e.32xlarge,us-east-1`,
   );
 
   process.exit(state.failures ? 1 : 0);
-})();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

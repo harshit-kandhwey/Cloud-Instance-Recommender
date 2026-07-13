@@ -4,18 +4,63 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-// Remove comments the way JavaScript actually reads them, tracking string and
-// template literals as it goes.
+// Remove comments the way JavaScript actually reads them, tracking strings,
+// template literals AND regex literals as it goes.
 //
-// A regex cannot do this, and failing at it is not academic: `.replace(/\/\/.*$/gm, "")`
-// also fires on the "//" inside a URL, so
+// A regex-based stripper cannot do this, and failing at it is not academic. Two
+// ways it reports safety it never checked:
 //
-//     const help = "https://example.test"; alert("boom");
+//   const help = "https://example.test"; alert("boom");
+//     — `.replace(/\/\/.*$/gm, "")` fires on the "//" inside the URL, truncates
+//       the line there, and the banned call disappears from the scan.
 //
-// is truncated at the URL and the banned call disappears from the scan. The
-// guard then PASSES — because the file contains a URL. A scanner that only
-// pretends to understand the language is worse than no scanner: it reports
-// safety it never checked.
+//   const s = url.replace(/\/\//g, "/"); alert(1);
+//     — the regex literal's own slashes sit next to each other outside any
+//       string, so even a string-aware scanner reads them as a line comment and
+//       eats the rest of the line.
+//
+// In both cases the guard PASSES, and passes *because* of the very thing it
+// failed to parse. A scanner that only half-understands the language is worse
+// than no scanner at all.
+
+// Whether a "/" here opens a regex literal or is a division sign. Decided by the
+// last significant character, which is what the language itself does.
+const KEYWORDS_BEFORE_REGEX = new Set([
+  "return",
+  "typeof",
+  "instanceof",
+  "in",
+  "of",
+  "new",
+  "delete",
+  "void",
+  "throw",
+  "case",
+  "do",
+  "else",
+  "yield",
+  "await",
+]);
+
+function regexCanStartHere(emitted) {
+  let i = emitted.length - 1;
+  while (i >= 0 && /\s/.test(emitted[i])) i--;
+  if (i < 0) return true; // start of file
+
+  const c = emitted[i];
+  if (/[\w$]/.test(c)) {
+    // An identifier or number means division (`a / b`) — unless it is one of the
+    // keywords a regex may follow (`return /x/.test(s)`).
+    let j = i;
+    while (j >= 0 && /[\w$]/.test(emitted[j])) j--;
+    return KEYWORDS_BEFORE_REGEX.has(emitted.slice(j + 1, i + 1));
+  }
+  // `)` and `]` close a value, so what follows divides it. Everything else —
+  // `(`, `,`, `=`, `:`, `!`, `&`, `|`, `?`, `{`, `;`, an operator — is a place a
+  // value may begin, so a regex may begin there.
+  return c !== ")" && c !== "]";
+}
+
 function stripComments(source) {
   let out = "";
   let i = 0;
@@ -24,6 +69,8 @@ function stripComments(source) {
     const c = source[i];
     const next = source[i + 1];
 
+    // Comments first: "//" is always a comment (an empty regex is not legal) and
+    // "/*" cannot open a regex either, so neither can be mistaken for one.
     if (c === "/" && next === "/") {
       while (i < source.length && source[i] !== "\n") i++;
       continue;
@@ -33,9 +80,31 @@ function stripComments(source) {
       while (i < source.length && !(source[i] === "*" && source[i + 1] === "/"))
         i++;
       i += 2;
-      out += " "; // keep tokens either side apart
+      out += " "; // keep the tokens either side apart
       continue;
     }
+
+    if (c === "/" && regexCanStartHere(out)) {
+      out += c;
+      i++;
+      let inCharClass = false;
+      while (i < source.length) {
+        const ch = source[i];
+        if (ch === "\\") {
+          out += ch + (source[i + 1] || "");
+          i += 2;
+          continue;
+        }
+        if (ch === "\n") break; // unterminated — do not eat the rest of the file
+        out += ch;
+        i++;
+        if (ch === "[") inCharClass = true;
+        else if (ch === "]") inCharClass = false;
+        else if (ch === "/" && !inCharClass) break; // a "/" inside [...] is literal
+      }
+      continue;
+    }
+
     if (c === '"' || c === "'" || c === "`") {
       const quote = c;
       out += c;
@@ -734,6 +803,31 @@ function check(name, cond, detail) {
   check(
     "and a call mentioned only in a comment is not condemned",
     !sees(`/*\n * Do not use alert( — see showToast.\n */\nshowToast("hi");`),
+  );
+  // A regex literal's own slashes sit next to each other outside any string, so
+  // a string-aware-but-regex-blind scanner reads them as a line comment and eats
+  // the rest of the line — taking the banned call with it.
+  check(
+    "a regex literal containing slashes does not hide a call after it",
+    sees(`const s = url.replace(/\\/\\//g, "/"); alert(1);`),
+  );
+  check(
+    "nor does a slash inside a character class",
+    sees(`const s = url.split(/[/]/); alert(1);`),
+  );
+  check(
+    "a regex is still recognised after a keyword",
+    sees(`function f(s) { return /x/.test(s); } alert(1);`),
+  );
+  // The other half of the judgement: division must NOT be read as a regex, or
+  // the scanner swallows real code looking for a closing slash that never comes.
+  check(
+    "division is not mistaken for a regex",
+    sees(`const half = total / 2; const q = a / b; alert(1);`),
+  );
+  check(
+    "and a comment after a division is still stripped",
+    !sees(`const half = total / 2; // alert(1)\nconst x = 1;`),
   );
 
   for (const dialog of ["alert", "confirm", "prompt"]) {

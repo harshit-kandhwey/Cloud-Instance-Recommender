@@ -1641,11 +1641,19 @@ function showColumnMappingPanel(headers, match, opts = {}) {
     ambiguousByCanonical[a.canonical] = a.candidates;
   });
 
-  // Memory unit prefill: saved/applied units win (edit mode), else detect
-  // from the guessed source header
+  // Memory unit prefill, in order of authority: units already applied (edit
+  // mode), then the recognised format, then the header name.
+  //
+  // The preset must be consulted HERE, not only on the silent path. A recognised
+  // RVTools file can still need review — some other column is ambiguous — and it
+  // then arrives at this panel, where the header alone says "Memory" and means
+  // GB. Prefilling GB for a file we have already identified as MiB invites the
+  // user to confirm a 1024x error, with only the median-based hygiene question
+  // left to catch it.
   const memUnit =
-    (match.units || detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] ===
-    "MB"
+    (match.units ||
+      presetUnits(match.preset, match.mapping) ||
+      detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] === "MB"
       ? "MB"
       : "GB";
 
@@ -1796,7 +1804,14 @@ function applyColumnMapping() {
     if (unitSelect && unitSelect.value === "MB") {
       units[COLUMN_MAPPINGS.memory] = "MB";
     } else if (!unitSelect || !unitSelect.value) {
-      Object.assign(units, detectMemoryUnit(mapping));
+      // No dropdown to speak for the user (a page without the panel): fall back
+      // to the recognised format before the header name, for the same reason the
+      // prefill does.
+      const preset = pending.match && pending.match.preset;
+      Object.assign(
+        units,
+        presetUnits(preset, mapping) || detectMemoryUnit(mapping),
+      );
     }
   }
 
