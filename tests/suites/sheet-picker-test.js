@@ -1,14 +1,14 @@
 // Multi-sheet .xlsx: the inventory sheet is opened, not merely the first one,
-// and the choice stays visible and changeable.
+// the choice stays visible and changeable, and a workbook that identifies itself
+// as an RVTools export is read on its own terms.
 //
-// Builds real workbooks with the vendored SheetJS and drives ingestFile() in the
-// simulated-DOM context, the same way step5-test does.
-const fs = require("fs");
+// Builds real workbooks with the vendored SheetJS and drives ingestFile().
 const path = require("path");
-const vm = require("vm");
+const { REPO, buildContext, makeChecker, rowsOf } = require("./harness");
 
-const REPO = path.resolve(__dirname, "..", "..");
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
+
+const { check, state } = makeChecker();
 
 function makeXlsx(sheets) {
   const wb = XLSX.utils.book_new();
@@ -24,115 +24,9 @@ const fakeFile = (name, arrayBuffer) => ({
   size: arrayBuffer.byteLength,
   arrayBuffer: async () => arrayBuffer,
   text: async () => Buffer.from(arrayBuffer).toString("utf8"),
+  slice: (a, b) => ({ arrayBuffer: async () => arrayBuffer.slice(a, b) }),
 });
 
-// `hidePicker` drops the picker element, to exercise the fallback on a page that
-// has none — the harness's getElementById otherwise conjures every id asked for.
-function buildContext({ hidePicker = false } = {}) {
-  const elements = {};
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    localStorage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    },
-    // The CSV branch of ingestFile goes through FileReader, which Node has not
-    FileReader: class {
-      readAsText(file) {
-        file.text().then((t) => {
-          this.onload && this.onload({ target: { result: t } });
-        });
-      }
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) =>
-      hidePicker && id === "sheetPickerSection" ? null : fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: {
-      appendChild(script) {
-        if (script.tag !== "script") return;
-        setTimeout(() => {
-          try {
-            const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-            vm.runInContext(code, ctx, { filename: script.src });
-            script.onload && script.onload();
-          } catch (e) {
-            script.onerror && script.onerror(e);
-          }
-        }, 0);
-      },
-    },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  return { ctx, elements };
-}
-
-let failures = 0;
-function check(name, cond, detail) {
-  if (cond) console.log(`  ok: ${name}`);
-  else {
-    failures++;
-    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
-  }
-}
-
-const rowsOf = (ctx) => vm.runInContext("csvData", ctx);
 const INVENTORY_HEADERS = ["VM Name", "CPU Count", "Memory (GB)", "AWS Region"];
 const inventory = (...names) => [
   INVENTORY_HEADERS,
@@ -310,9 +204,8 @@ const RVTOOLS = [
     await ctx.ingestFile(
       fakeFile(
         "plain.csv",
-        // A CSV goes down the FileReader path, which the harness has no stub
-        // for; ingestFile still has to clear the workbook state before it gets
-        // there, which is what this asserts.
+        // A CSV goes down the FileReader path, not the workbook path — so the
+        // workbook state must be cleared on the way, not by the sheet reader.
         new TextEncoder().encode("VM Name,CPU Count\nweb-01,4\n").buffer,
       ),
     );
@@ -326,7 +219,9 @@ const RVTOOLS = [
 
   console.log("[a page without a picker still says what it opened]");
   {
-    const { ctx, elements } = buildContext({ hidePicker: true });
+    const { ctx, elements } = buildContext({
+      missingElements: ["sheetPickerSection"],
+    });
     await ctx.ingestFile(fakeFile("rvtools.xlsx", makeXlsx(RVTOOLS)));
     check(
       "the status line names the sheet, rather than reading one invisibly",
@@ -468,11 +363,127 @@ const RVTOOLS = [
     );
   }
 
-  console.log("[units are read from the values when no preset and no header]");
+  console.log(
+    "[the RVTools preset does not claim files it has not recognised]",
+  );
   {
-    // Not RVTools — no Powerstate — so nothing identifies the format. The only
-    // evidence that "Memory" is MiB is that the numbers are absurd as GB.
-    const { ctx } = buildContext();
+    // A hand-rolled vSphere export: VM, Powerstate and CPUs are all present —
+    // but none of RVTools' MiB-suffixed sizing columns are, and its Memory
+    // really is GB. The preset divides memory by 1024, so claiming this file
+    // would corrupt every row of it.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "custom-vsphere.xlsx",
+        makeXlsx([
+          {
+            name: "VMs",
+            aoa: [
+              ["VM", "Powerstate", "CPUs", "Memory", "Cluster"],
+              ["web-01", "poweredOn", 4, 16, "Prod"],
+              ["db-02", "poweredOn", 8, 32, "Prod"],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "it is not announced as an RVTools export",
+      !/Recognised as a RVTools export/.test(elements.fileStatus.innerHTML),
+      elements.fileStatus.innerHTML,
+    );
+    check(
+      "and its GB memory is left alone, not divided by 1024",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "16,32",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+  }
+
+  console.log("[an empty template sheet cannot beat the real inventory]");
+  {
+    // The template has MORE recognised columns than the populated sheet, and
+    // scoring weighs recognised columns above row count — so a template merely
+    // ranked low would still win, and the workbook would open empty.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "with-template.xlsx",
+        makeXlsx([
+          {
+            name: "Template",
+            aoa: [
+              [
+                "VM Name",
+                "CPU Count",
+                "Memory (GB)",
+                "AWS Region",
+                "CPU Utilization",
+                "Memory Utilization",
+              ],
+            ],
+          },
+          {
+            name: "Inventory",
+            aoa: [
+              ["VM Name", "CPU Count", "Memory (GB)"],
+              ["web-01", 4, 16],
+              ["db-02", 8, 32],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "the populated sheet is opened",
+      rowsOf(ctx).length === 2 && rowsOf(ctx)[0]["VM Name"] === "web-01",
+      JSON.stringify(rowsOf(ctx)),
+    );
+    check(
+      "and the empty template is not even offered",
+      !elements.sheetPickerSection.innerHTML.includes("Template"),
+      elements.sheetPickerSection.innerHTML,
+    );
+  }
+
+  console.log("[a rejected upload does not disturb the data already loaded]");
+  {
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(fakeFile("rvtools.xlsx", makeXlsx(RVTOOLS)));
+    check("a workbook is loaded, with its picker", rowsOf(ctx).length === 3);
+
+    // Tearing state down BEFORE validating left a refused upload having already
+    // removed the picker while the previous rows stayed loaded and generatable:
+    // the controls that produced the data on screen would be gone, and the data
+    // would not.
+    await ctx.ingestFile(fakeFile("empty.csv", new ArrayBuffer(0)));
+    check(
+      "the rejection is explained",
+      /File is empty/.test(elements.fileStatus.innerHTML),
+      elements.fileStatus.innerHTML,
+    );
+    check(
+      "the previous rows survive it",
+      rowsOf(ctx).length === 3,
+      String(rowsOf(ctx).length),
+    );
+    check(
+      "and so does the sheet picker that produced them",
+      !elements.sheetPickerSection.classes.has("hidden") &&
+        /<option value="vInfo" selected>/.test(
+          elements.sheetPickerSection.innerHTML,
+        ),
+      elements.sheetPickerSection.innerHTML,
+    );
+  }
+
+  console.log("[an unrecognised MiB column is questioned, never converted]");
+  {
+    // Not RVTools, so nothing identifies the format and nothing in the header
+    // says MB. The values look like MiB — but a fleet of 16 TB machines is not
+    // impossible, only unlikely, so the file must ASK rather than divide.
+    const { ctx, elements } = buildContext();
     await ctx.ingestFile(
       fakeFile(
         "generic.xlsx",
@@ -490,7 +501,23 @@ const RVTOOLS = [
       ),
     );
     check(
-      "an implausible-as-GB fleet is treated as MiB",
+      "the values are left exactly as they were",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "16384,32768,8192",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+    check(
+      "and the question is put to the user",
+      /Is the memory column in MB\?/.test(
+        elements.inputHygieneSection.innerHTML,
+      ) && /convertMemoryToGb\(\)/.test(elements.inputHygieneSection.innerHTML),
+      elements.inputHygieneSection.innerHTML,
+    );
+
+    ctx.convertMemoryToGb();
+    check(
+      "answering MB converts, from the untouched source rows",
       rowsOf(ctx)
         .map((r) => r["Memory (GB)"])
         .join(",") === "16,32,8",
@@ -498,9 +525,46 @@ const RVTOOLS = [
     );
   }
   {
-    // The guard on the guard: real GB values must survive untouched, including
-    // one genuinely enormous machine, which is why the sniffer uses the median.
-    const { ctx } = buildContext();
+    // The reason this is a question and not a rule. A 512 GB–1 TB fleet is real,
+    // and silently dividing it by 1024 would be the very corruption the MiB
+    // handling exists to prevent, in the other direction.
+    const { ctx, elements } = buildContext();
+    await ctx.ingestFile(
+      fakeFile(
+        "big-iron.xlsx",
+        makeXlsx([
+          {
+            name: "Sheet1",
+            aoa: [
+              ["VM Name", "CPU Count", "Memory"],
+              ["sap-01", 64, 512],
+              ["sap-02", 96, 768],
+              ["sap-03", 128, 1024],
+            ],
+          },
+        ]),
+      ),
+    );
+    check(
+      "a genuine high-memory fleet is not converted behind the user's back",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "512,768,1024",
+      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+    );
+    ctx.keepMemoryAsGb();
+    check(
+      "and saying they are GB puts the question away",
+      elements.inputHygieneSection.classes.has("hidden") &&
+        rowsOf(ctx)
+          .map((r) => r["Memory (GB)"])
+          .join(",") === "512,768,1024",
+      elements.inputHygieneSection.innerHTML,
+    );
+  }
+  {
+    // Ordinary GB values raise nothing at all.
+    const { ctx, elements } = buildContext();
     await ctx.ingestFile(
       fakeFile(
         "real-gb.xlsx",
@@ -511,20 +575,23 @@ const RVTOOLS = [
               ["VM Name", "CPU Count", "Memory"],
               ["web-01", 4, 16],
               ["db-02", 8, 64],
-              ["mainframe", 128, 4096], // a real 4 TB box
+              ["mainframe", 128, 4096], // one real 4 TB box
             ],
           },
         ]),
       ),
     );
     check(
-      "one huge machine does not drag a GB fleet into a conversion",
+      "one huge machine does not make the whole file suspect — the median decides",
       rowsOf(ctx)
         .map((r) => r["Memory (GB)"])
-        .join(",") === "16,64,4096",
-      JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"])),
+        .join(",") === "16,64,4096" &&
+        !/Is the memory column in MB/.test(
+          elements.inputHygieneSection.innerHTML,
+        ),
+      elements.inputHygieneSection.innerHTML,
     );
   }
 
-  process.exit(failures ? 1 : 0);
+  process.exit(state.failures ? 1 : 0);
 })();

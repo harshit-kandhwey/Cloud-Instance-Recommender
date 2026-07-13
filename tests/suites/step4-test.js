@@ -232,8 +232,14 @@ function getHeaders(ctx) {
   console.log("[4. saved mapping replays without panel]");
   {
     const { ctx, elements, storage } = buildContext();
-    // Seed storage as if the user confirmed before: same signature as below
-    const saved = { Puestos: "CPU Count", Memoria: "Memory (GB)" };
+    // Seed storage as if the user confirmed before: same signature as below.
+    // v:2 is required — entries without it were written by a version whose
+    // mapping rules have since been fixed, and are dropped rather than replayed.
+    const saved = {
+      v: 2,
+      mapping: { Puestos: "CPU Count", Memoria: "Memory (GB)" },
+      units: { "Memory (GB)": "GB" },
+    };
     const sig = ["puestos", "memoria", "vm name"].sort().join("|");
     storage["cloudInstanceRecommenderColumnMaps"] = JSON.stringify({
       [sig]: saved,

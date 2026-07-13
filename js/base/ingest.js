@@ -162,10 +162,10 @@ function resetIngestState() {
 // to the delimited-text parser, and anything else is rejected with an
 // explanation. The extension only decides when the bytes are unavailable.
 async function ingestFile(file) {
-  resetIngestState();
-
-  // Applies to both branches — an empty or oversized CSV used to be caught
-  // only by the legacy handler, which no longer exists
+  // Nothing is torn down until the new file is known to be usable. Resetting
+  // first left a rejected upload having already removed the previous workbook's
+  // sheet picker while its rows were still loaded and generatable — the controls
+  // that produced the data on screen would be gone, and the data would not be.
   if (file.size === 0) {
     showUploadError("File is empty");
     return;
@@ -190,6 +190,9 @@ async function ingestFile(file) {
     );
     return;
   }
+
+  // Past the gates: this file is going to be read, so the old one can go.
+  resetIngestState();
 
   // Content wins over the name, but say so — a silently re-routed file would be
   // confusing when the user goes looking for why their ".csv" opened as Excel.
@@ -289,6 +292,12 @@ function readWorkbookSheet(workbook, name) {
       return row;
     })
     .filter((row) => Object.values(row).some((v) => v !== ""));
+
+  // A sheet with headers and no rows is a template, not an inventory. It has to
+  // be excluded here rather than merely ranked low: scoring weighs recognised
+  // columns above row count, so a blank template with a full set of canonical
+  // headers would outrank the populated sheet next to it and open empty.
+  if (!rows.length) return null;
 
   return { name, headers, rows };
 }
@@ -492,10 +501,20 @@ function saveAppWorkloadMap(map) {
 const IMPORT_PRESETS = [
   {
     name: "RVTools",
-    // "powerstate" is RVTools' own spelling; with "vm" and "cpus" alongside it,
-    // nothing else in the wild looks like this.
+    // A preset that claims a file it does not recognise is worse than no preset:
+    // this one divides memory by 1024, so a false positive corrupts every row.
+    // "VM", "Powerstate" and "CPUs" alone are not enough — any hand-rolled
+    // vSphere export could have those, with memory already in GB. RVTools' own
+    // MiB-suffixed sizing columns are the distinguishing mark, and they are also
+    // the evidence for the MiB convention this preset relies on: a file that
+    // reports provisioned storage in MiB reports memory in MiB too.
     detect: (norm) =>
-      norm.has("vm") && norm.has("powerstate") && norm.has("cpus"),
+      norm.has("vm") &&
+      norm.has("powerstate") &&
+      norm.has("cpus") &&
+      ["provisionedmib", "inusemib", "provisionedmb", "inusemb"].some((h) =>
+        norm.has(h),
+      ),
     columns: {
       vm: COLUMN_MAPPINGS.vmName, // not "Host" (the ESXi host) or "DNS Name"
       cpus: COLUMN_MAPPINGS.cpu,
@@ -606,43 +625,50 @@ function isMbHeader(header) {
   return /(mb|mib)$/.test(normalizeHeader(header));
 }
 
-// Above this, a memory figure is not plausibly gigabytes. The largest instances
-// any provider here offers are in the low thousands of GB and are rare; a fleet
-// whose MIDDLE machine claims 512 GB is not a fleet of 512 GB machines, it is a
-// fleet measured in MiB. The median (not the max, not the mean) is what makes
-// this safe: one genuine 1 TB outlier cannot drag the whole file into a
-// conversion, and it takes half the rows to be implausible before we act.
-const IMPLAUSIBLE_GB = 512;
+// Above this, a memory figure starts to look more like MiB than GB. It is NOT a
+// licence to convert: a real fleet of 512 GB–1 TB machines exists, and dividing
+// it by 1024 would be the same class of silent corruption as leaving RVTools'
+// MiB alone. So this only ever raises the question — see reportInputHygiene.
+// The median (not the max, not the mean) keeps one genuine outlier from
+// speaking for the file.
+const MEMORY_LOOKS_LIKE_MB = 1024;
 
-// Header names lie about units. RVTools' vInfo column is called plainly
-// "Memory" and holds MiB, so a 16 GiB VM arrives as 16384 and, read as GB,
-// matches nothing at all. Names are checked first — they are explicit when
-// present — and the values are the backstop for every tool that does not say.
-function looksLikeMbValues(rows, sourceHeader) {
+function medianMemory(rows, column) {
   const values = rows
-    .map((row) => parseFloat(row[sourceHeader]))
+    .map((row) => parseFloat(row[column]))
     .filter((v) => !isNaN(v) && v > 0)
     .sort((a, b) => a - b);
-  if (!values.length) return false;
-  const median = values[Math.floor(values.length / 2)];
-  return median >= IMPLAUSIBLE_GB;
+  if (!values.length) return null;
+  return values[Math.floor(values.length / 2)];
 }
 
-// Memory unit detection for a mapping: MB source → convert to GB on ingest.
-// `rows` carry the ORIGINAL header keys (this runs before rewriteRowKeys), and
-// are optional — call sites that have no rows fall back to the header name.
-function detectMemoryUnit(mapping, rows = null) {
+// Memory unit detection for a mapping: an MB source is converted to GB on
+// ingest. Only EXPLICIT evidence counts here — a header that says MB, or an
+// import preset that knows the format's convention. The values alone are never
+// enough to convert on: they are enough to ask, and asking is what the input
+// check does.
+function detectMemoryUnit(mapping) {
   const source = Object.keys(mapping).find(
     (s) => mapping[s] === COLUMN_MAPPINGS.memory,
   );
   if (!source) return {};
-  const isMb =
-    isMbHeader(source) || (rows ? looksLikeMbValues(rows, source) : false);
-  return isMb ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
+  return isMbHeader(source) ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
 }
 
-// Saved mappings: { headerSignature: { mapping: {source: canonical},
-// units: {canonical: "MB"} } }. Older entries were the flat mapping object.
+// Saved mappings: { headerSignature: { v: 2, mapping: {source: canonical},
+// units: {canonical: "MB"|"GB"} } }.
+//
+// A saved mapping short-circuits everything downstream — the preset, the synonym
+// table, the unit inference — because the user already answered for these exact
+// headers. That makes an entry saved by an OLDER version actively dangerous: one
+// written before 3.7 could name `Host` (the hypervisor) as the VM, or record no
+// unit for a MiB column, and it would keep reapplying that answer forever, past
+// the very fixes meant to prevent it. So entries are versioned, and anything
+// older is dropped rather than trusted: the file simply asks again, and now gets
+// the right answer. Units are recorded explicitly, GB included, so "no unit
+// recorded" can never again be mistaken for "GB".
+const SAVED_MAPPING_VERSION = 2;
+
 function loadColumnMappings() {
   try {
     return (
@@ -655,23 +681,24 @@ function loadColumnMappings() {
 }
 
 function readSavedMapping(entry) {
-  if (!entry) return null;
-  if (entry.mapping)
-    return { mapping: entry.mapping, units: entry.units || {} };
-  return { mapping: entry, units: detectMemoryUnit(entry) }; // legacy format
+  if (!entry || entry.v !== SAVED_MAPPING_VERSION || !entry.mapping)
+    return null;
+  return { mapping: entry.mapping, units: entry.units || {} };
 }
 
 function saveColumnMapping(signature, mapping, units) {
-  try {
-    const all = loadColumnMappings();
-    all[signature] = { mapping, units: units || {} };
-    localStorage.setItem(
-      "cloudInstanceRecommenderColumnMaps",
-      JSON.stringify(all),
-    );
-  } catch (e) {
-    console.warn("Could not persist column mapping:", e);
+  const recorded = { ...(units || {}) };
+  // Record the unit even when it is the default. An absent unit is ambiguous —
+  // it could mean "GB" or "nobody ever decided" — and that ambiguity is what let
+  // a MiB column be reapplied as GB.
+  if (Object.values(mapping).includes(COLUMN_MAPPINGS.memory)) {
+    recorded[COLUMN_MAPPINGS.memory] =
+      recorded[COLUMN_MAPPINGS.memory] === "MB" ? "MB" : "GB";
   }
+
+  const all = loadColumnMappings();
+  all[signature] = { v: SAVED_MAPPING_VERSION, mapping, units: recorded };
+  writeColumnMappings(all);
   renderSavedMappings();
 }
 
@@ -708,8 +735,16 @@ function renderSavedMappings() {
     return;
   }
 
+  // The signature is built from the file's own headers, so it is attacker-
+  // controlled text. It must never be interpolated into an inline handler:
+  // escapeHtml turns a quote into &quot;, which the HTML parser decodes back to
+  // a quote INSIDE the onclick attribute, closing the string and running
+  // whatever follows. Hand the handler an index instead — an integer we
+  // generated — and look the signature up here.
+  window._savedMappingSignatures = signatures;
+
   const entries = signatures
-    .map((signature) => {
+    .map((signature, index) => {
       const saved = readSavedMapping(all[signature]);
       if (!saved) return "";
 
@@ -737,7 +772,7 @@ function renderSavedMappings() {
                 : "no columns renamed — the headers already matched"
             }</span>
           </div>
-          <button onclick="forgetColumnMapping(${JSON.stringify(signature).replace(/"/g, "&quot;")})"
+          <button onclick="forgetColumnMapping(${index})"
             title="Forget this mapping — the next file with these headers will ask again"
             style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">🗑️ Forget</button>
         </li>`;
@@ -753,7 +788,12 @@ function renderSavedMappings() {
   el.classList.remove("hidden");
 }
 
-function forgetColumnMapping(signature) {
+// Takes the INDEX rendered into the button, not the signature itself — see
+// renderSavedMappings. The signature never crosses into markup.
+function forgetColumnMapping(index) {
+  const signature = (window._savedMappingSignatures || [])[index];
+  if (signature === undefined) return;
+
   const all = loadColumnMappings();
   if (!(signature in all)) return;
   delete all[signature];
@@ -822,8 +862,7 @@ function ingestRows(headers, rows) {
     headers,
     rows,
     match.mapping,
-    presetUnits(match.preset, match.mapping) ||
-      detectMemoryUnit(match.mapping, rows),
+    presetUnits(match.preset, match.mapping) || detectMemoryUnit(match.mapping),
   );
 }
 
@@ -854,8 +893,10 @@ function applyIngest(headers, rows, mapping, units = {}) {
 
   window._pendingIngest = null;
   // A dismissal belongs to the file it was made about: answering "different VMs"
-  // for one upload must not silence the question for the next.
+  // or "these really are GB" for one upload must not silence the question for
+  // the next.
   window._duplicatesAcknowledged = false;
+  window._memoryUnitAcknowledged = false;
   // Keep the pre-rewrite originals so the mapping stays editable afterwards
   window._lastIngest = { headers, rows, mapping, units: units || {} };
 
@@ -1028,7 +1069,35 @@ function analyzeInputHygiene(rows) {
     }
   }
 
-  return { issues, duplicates };
+  // Not a defect, and NOT something to act on unasked: a fleet of 512 GB–1 TB
+  // machines is real, and dividing it by 1024 would corrupt it exactly as surely
+  // as leaving a MiB column alone. Only the user knows which they have.
+  const memoryUnit =
+    present(MEM) && (medianMemory(rows, MEM) || 0) >= MEMORY_LOOKS_LIKE_MB
+      ? { median: medianMemory(rows, MEM) }
+      : null;
+
+  return { issues, duplicates, memoryUnit };
+}
+
+// The user confirmed the values are MiB. Re-derive from the untouched source
+// rows with the unit set, rather than dividing csvData in place — that way the
+// mapping, the region chips and everything else downstream are rebuilt from one
+// path, and the recorded unit survives a later edit of the mapping.
+function convertMemoryToGb() {
+  const last = window._lastIngest;
+  if (!last) return;
+  applyIngest(last.headers, last.rows, last.mapping, {
+    ...(last.units || {}),
+    [COLUMN_MAPPINGS.memory]: "MB",
+  });
+  showToast("Memory values converted from MB to GB", "success");
+}
+
+function keepMemoryAsGb() {
+  window._memoryUnitAcknowledged = true;
+  reportInputHygiene();
+  showToast("Leaving memory values as GB", "info");
 }
 
 // At most a handful of row numbers inline — a list of four hundred is not a
@@ -1047,9 +1116,14 @@ function reportInputHygiene() {
   // The report is recomputed from the data every time, so a dismissal has to
   // live outside it — clearing the list in place would just be regenerated.
   if (window._duplicatesAcknowledged) report.duplicates = [];
+  if (window._memoryUnitAcknowledged) report.memoryUnit = null;
   window._inputHygiene = report;
 
-  if (!report.issues.length && !report.duplicates.length) {
+  if (
+    !report.issues.length &&
+    !report.duplicates.length &&
+    !report.memoryUnit
+  ) {
     el.classList.add("hidden");
     el.innerHTML = "";
     return;
@@ -1094,38 +1168,79 @@ function reportInputHygiene() {
       <button onclick="keepDuplicateVmNames()" title="Leave every row in place" style="margin-left: 8px;">↔️ Different VMs — keep them all</button>`;
   }
 
+  let unitBlock = "";
+  if (report.memoryUnit) {
+    const median = report.memoryUnit.median;
+    unitBlock = `
+      <p style="margin-top: 10px;"><strong>📐 Is the memory column in MB?</strong>
+      The typical VM here reports ${escapeHtml(String(median))}, which is a lot of gigabytes
+      but an ordinary number of mebibytes. Some inventory tools report memory in MiB without
+      saying so in the header. If yours does, convert; if these really are ${escapeHtml(String(median))} GB
+      machines, leave them.</p>
+      <button onclick="convertMemoryToGb()" title="Divide the memory column by 1024">📐 They are MB — convert to GB</button>
+      <button onclick="keepMemoryAsGb()" title="Leave the memory values exactly as they are" style="margin-left: 8px;">✔️ They are GB — leave them</button>`;
+  }
+
   el.className = `alert alert-${errors.length ? "warning" : "info"}`;
   el.innerHTML = `
-    <strong>🩺 Input check</strong> — the file loaded, but some rows look wrong.
+    <strong>🩺 Input check</strong> — ${
+      lines
+        ? "the file loaded, but some rows look wrong."
+        : "the file loaded. One thing is worth confirming."
+    }
     ${errors.length ? "Rows with a ❌ will not size sensibly." : ""}
-    <ul style="margin: 6px 0 0 18px;">${lines}</ul>
+    ${lines ? `<ul style="margin: 6px 0 0 18px;">${lines}</ul>` : ""}
+    ${unitBlock}
     ${dupBlock}`;
   el.classList.remove("hidden");
 }
 
 // Same VM listed twice: keep the first occurrence of each name.
+//
+// csvData and _lastIngest.rows are parallel — the former is the latter with the
+// column mapping applied — so both must be pruned, by the same indexes. Pruning
+// only csvData left the source rows intact, and anything that re-derives from
+// them (editing the mapping, converting a unit) resurrected every duplicate.
 function mergeDuplicateVmNames() {
   const NAME = COLUMN_MAPPINGS.vmName;
   const seen = new Set();
-  const before = csvData.length;
+  const keep = [];
 
-  csvData = csvData.filter((row) => {
+  csvData.forEach((row, index) => {
     const key = String(row[NAME] ?? "")
       .trim()
       .toLowerCase();
-    if (!key) return true; // blank names are reported separately, not merged
-    if (seen.has(key)) return false;
+    if (!key) {
+      keep.push(index); // blank names are reported separately, not merged
+      return;
+    }
+    if (seen.has(key)) return;
     seen.add(key);
-    return true;
+    keep.push(index);
   });
 
-  const removed = before - csvData.length;
+  const removed = csvData.length - keep.length;
+  if (!removed) return;
+
+  const kept = new Set(keep);
+  csvData = csvData.filter((_row, index) => kept.has(index));
+  if (window._lastIngest && Array.isArray(window._lastIngest.rows)) {
+    window._lastIngest.rows = window._lastIngest.rows.filter((_row, index) =>
+      kept.has(index),
+    );
+  }
+
   showToast(
     `Removed ${removed} duplicate row${removed === 1 ? "" : "s"}`,
     "success",
   );
+
+  // The rows changed, so everything derived from them has to be redone — the
+  // region chips and the app→workload panel described the old set.
   showFileStatistics();
   reportInputHygiene();
+  validateCsvRegions();
+  maybeShowAppMappingPanel();
   updateStaleResultsNotice();
 }
 
@@ -1143,13 +1258,6 @@ function keepDuplicateVmNames() {
 function showColumnMappingPanel(headers, match, opts = {}) {
   const panel = document.getElementById("columnMappingSection");
 
-  // Source-keyed rows for the file under review — the unit sniffer reads values,
-  // so it needs them; in edit mode the applied ingest is the one being changed.
-  const panelRows =
-    (window._pendingIngest && window._pendingIngest.rows) ||
-    (window._lastIngest && window._lastIngest.rows) ||
-    null;
-
   if (!panel) {
     // Page has no panel placeholder — apply best-effort mapping instead
     if (!opts.isEdit) {
@@ -1157,7 +1265,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
         headers,
         window._pendingIngest.rows,
         match.mapping,
-        match.units || detectMemoryUnit(match.mapping, panelRows),
+        match.units || detectMemoryUnit(match.mapping),
       );
     }
     return;
@@ -1179,9 +1287,8 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   // Memory unit prefill: saved/applied units win (edit mode), else detect
   // from the guessed source header
   const memUnit =
-    (match.units || detectMemoryUnit(match.mapping, panelRows))[
-      COLUMN_MAPPINGS.memory
-    ] === "MB"
+    (match.units || detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] ===
+    "MB"
       ? "MB"
       : "GB";
 
@@ -1332,7 +1439,7 @@ function applyColumnMapping() {
     if (unitSelect && unitSelect.value === "MB") {
       units[COLUMN_MAPPINGS.memory] = "MB";
     } else if (!unitSelect || !unitSelect.value) {
-      Object.assign(units, detectMemoryUnit(mapping, pending.rows));
+      Object.assign(units, detectMemoryUnit(mapping));
     }
   }
 
@@ -1465,9 +1572,29 @@ function parseCSVLine(line, delimiter = ",") {
 // out of a CSV gives commas. Let the header line decide — whichever character
 // actually divides it is the delimiter. A single-column file has neither, and
 // falls to the comma, which splits it into the one column it has.
+//
+// Only delimiters OUTSIDE quotes are counted. A header like
+//   "VM, display name"<TAB>CPU Count
+// has one comma and one tab, and counting naively would call it comma-separated
+// and shred every row in the file — but the comma is inside a quoted cell and
+// divides nothing.
 function sniffDelimiter(headerLine) {
-  const count = (ch) => headerLine.split(ch).length - 1;
-  return count("\t") > count(",") ? "\t" : ",";
+  let tabs = 0;
+  let commas = 0;
+  let inQuotes = false;
+
+  for (let i = 0; i < headerLine.length; i++) {
+    const char = headerLine[i];
+    if (char === '"') {
+      // A doubled quote is an escaped literal, not a boundary
+      if (inQuotes && headerLine[i + 1] === '"') i++;
+      else inQuotes = !inQuotes;
+    } else if (!inQuotes) {
+      if (char === "\t") tabs++;
+      else if (char === ",") commas++;
+    }
+  }
+  return tabs > commas ? "\t" : ",";
 }
 
 // Text (a file's contents, or a paste) → { headers, rows }. The one place that

@@ -1,101 +1,11 @@
 // Input hygiene: bad rows are named, with the row numbers a spreadsheet shows,
 // before the run rather than after — and a clean file says nothing at all.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext, makeChecker, rowsOf, parse } = require("./harness");
 
-const REPO = path.resolve(__dirname, "..", "..");
-
-function buildContext() {
-  const elements = {};
-  const toasts = [];
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    localStorage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: { appendChild: () => {} },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  // Capture toasts rather than rendering them
-  ctx.showToast = (message, type) => toasts.push({ message, type });
-  return { ctx, elements, toasts };
-}
-
-let failures = 0;
-function check(name, cond, detail) {
-  if (cond) console.log(`  ok: ${name}`);
-  else {
-    failures++;
-    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
-  }
-}
-
-// Drive the real entry point, so the report is whatever a CSV upload produces.
-const ingest = (ctx, csv) =>
-  vm.runInContext(`parseCSV(${JSON.stringify(csv)})`, ctx);
+const { check, state } = makeChecker();
 const panel = (elements) => elements.inputHygieneSection;
-const rows = (ctx) => vm.runInContext("csvData", ctx);
+const ingest = parse;
+const rows = rowsOf;
 
 const CLEAN = `VM Name,CPU Count,Memory (GB),CPU Utilization,AWS Region
 web-01,4,16,45,us-east-1
@@ -205,6 +115,45 @@ web-01,4,16,us-west-2`,
   );
 }
 
+console.log("[removed duplicates stay removed]");
+{
+  // csvData is the mapped view of _lastIngest.rows. Pruning only the view left
+  // the source rows intact, so anything that re-derives from them — editing the
+  // mapping, answering the memory-unit question — brought every duplicate back.
+  const { ctx, elements } = buildContext();
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region
+web-01,4,16,us-east-1
+db-02,8,32,us-east-1
+web-01,4,16,us-west-2`,
+  );
+  ctx.mergeDuplicateVmNames();
+  check("merged down to two rows", rows(ctx).length === 2);
+  check(
+    "and the SOURCE rows were pruned too, not just the view",
+    ctx.window._lastIngest.rows.length === 2,
+    JSON.stringify(ctx.window._lastIngest.rows),
+  );
+
+  // Re-derive from source, the way editing the mapping does.
+  const last = ctx.window._lastIngest;
+  ctx.applyIngest(last.headers, last.rows, last.mapping, last.units);
+  check(
+    "re-deriving from source does not resurrect them",
+    rows(ctx).length === 2 &&
+      rows(ctx)
+        .map((r) => r["VM Name"])
+        .join(",") === "web-01,db-02",
+    JSON.stringify(rows(ctx).map((r) => r["VM Name"])),
+  );
+  check(
+    "and the panel stays quiet, because there is nothing left to ask",
+    panel(elements).classes.has("hidden"),
+    panel(elements).innerHTML,
+  );
+}
+
 console.log("[keeping duplicates stops the question being re-asked]");
 {
   const { ctx, elements } = buildContext();
@@ -249,4 +198,4 @@ console.log("[a long list of bad rows is summarised, not dumped]");
   );
 }
 
-process.exit(failures ? 1 : 0);
+process.exit(state.failures ? 1 : 0);

@@ -1,118 +1,24 @@
 // Paste-from-spreadsheet: tab-separated text goes through the same pipeline as
-// an upload — same column mapping, same unit sniffing, same hygiene check.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+// an upload — same column mapping, same unit handling, same hygiene check.
+const { buildContext, makeChecker, rowsOf, headersOf } = require("./harness");
 
-const REPO = path.resolve(__dirname, "..", "..");
+const { check, state } = makeChecker();
+const rows = rowsOf;
+const headers = headersOf;
 
-function buildContext() {
-  const elements = {};
-  const toasts = [];
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        focused: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: (c) =>
-            elements[id].classes.has(c)
-              ? elements[id].classes.delete(c)
-              : elements[id].classes.add(c),
-          contains: (c) => elements[id].classes.has(c),
-        },
-        focus: () => {
-          elements[id].focused = true;
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    localStorage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: { appendChild: () => {} },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  ctx.showToast = (message, type) => toasts.push({ message, type });
-  return { ctx, elements, toasts };
-}
-
-let failures = 0;
-function check(name, cond, detail) {
-  if (cond) console.log(`  ok: ${name}`);
-  else {
-    failures++;
-    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
-  }
-}
-
-const rows = (ctx) => vm.runInContext("csvData", ctx);
-const headers = (ctx) => vm.runInContext("columnHeaders", ctx);
-
-// Paste `text` as if typed into the textarea, then press "Use this data".
 // The stub only conjures an element once something asks for it by id, and
 // renderPasteControl writes innerHTML rather than looking the textarea up — so
 // ask for it here, the way a browser would already have it.
 const textarea = (ctx) => ctx.document.getElementById("pasteInput");
 
-function paste(ctx, ctxElements, text) {
+// Paste `text` as if typed into the textarea, then press "Use this data".
+function paste(ctx, _elements, text) {
   ctx.renderPasteControl();
   textarea(ctx).value = text;
   ctx.ingestPastedData();
 }
 
-const TAB = "\t";
+const TAB = "	";
 
 console.log("[a spreadsheet paste is tab-separated, and is read as such]");
 {
@@ -165,12 +71,64 @@ console.log("[a quoted field containing the delimiter survives]");
     JSON.stringify(rows(ctx)[0]),
   );
 }
+{
+  // The delimiter is decided by what actually DIVIDES the header. Two tabs
+  // divide this one; the two commas are inside quoted cells and divide nothing.
+  // Counting delimiters without regard to quotes sees 2 and 2, picks the comma,
+  // and shreds every row in the file.
+  //
+  // The counts have to TIE (or favour the comma) for this to bite — an earlier
+  // version of this fixture had two tabs and one comma, where naive counting
+  // still lands on the tab and the test passes without testing anything.
+  const { ctx, elements } = buildContext();
+  paste(
+    ctx,
+    elements,
+    [
+      `"VM, display name"${TAB}"CPU, count"${TAB}Memory (GB)`,
+      `"web-01, prod"${TAB}4${TAB}16`,
+    ].join("\n"),
+  );
+  check(
+    "quoted commas in the header do not turn a TSV into a CSV",
+    headers(ctx).length === 3 &&
+      rows(ctx)[0]["CPU Count"] === "4" &&
+      rows(ctx)[0]["VM, display name"] === "web-01, prod",
+    JSON.stringify({ headers: headers(ctx), row: rows(ctx)[0] }),
+  );
+}
 
 console.log("[the paste goes through the SAME pipeline as an upload]");
 {
-  // Not canonical headers, and memory in MiB with nothing in the name to say so
-  // — the mapping, the synonyms and the value-based unit sniffing must all apply
-  // to pasted rows exactly as they do to a file.
+  // Not canonical headers, and memory that looks like MiB with nothing in the
+  // name to say so — the synonyms and the unit question must reach pasted rows
+  // exactly as they reach a file's.
+  const { ctx, elements } = buildContext();
+  paste(
+    ctx,
+    elements,
+    [
+      ["Hostname", "vCPUs", "Memory (MB)"].join(TAB),
+      ["web-01", "4", "16384"].join(TAB),
+      ["db-02", "8", "65536"].join(TAB),
+    ].join("\n"),
+  );
+  check(
+    "synonyms are mapped (Hostname → VM Name, vCPUs → CPU Count)",
+    rows(ctx)[0]["VM Name"] === "web-01" && rows(ctx)[0]["CPU Count"] === "4",
+    JSON.stringify(rows(ctx)[0]),
+  );
+  check(
+    "and a header that says MB is converted, as it would be from a file",
+    rows(ctx)
+      .map((r) => r["Memory (GB)"])
+      .join(",") === "16,64",
+    JSON.stringify(rows(ctx).map((r) => r["Memory (GB)"])),
+  );
+}
+{
+  // Same values, but nothing says MB. Pasted rows get the same question a file
+  // would — and the same refusal to guess.
   const { ctx, elements } = buildContext();
   paste(
     ctx,
@@ -182,16 +140,14 @@ console.log("[the paste goes through the SAME pipeline as an upload]");
     ].join("\n"),
   );
   check(
-    "synonyms are mapped (Hostname → VM Name, vCPUs → CPU Count)",
-    rows(ctx)[0]["VM Name"] === "web-01" && rows(ctx)[0]["CPU Count"] === "4",
-    JSON.stringify(rows(ctx)[0]),
-  );
-  check(
-    "and MiB values are converted, as they would be from a file",
+    "an unlabelled MiB-looking column is questioned, not converted",
     rows(ctx)
       .map((r) => r["Memory (GB)"])
-      .join(",") === "16,64",
-    JSON.stringify(rows(ctx).map((r) => r["Memory (GB)"])),
+      .join(",") === "16384,65536" &&
+      /Is the memory column in MB\?/.test(
+        elements.inputHygieneSection.innerHTML,
+      ),
+    elements.inputHygieneSection.innerHTML,
   );
 }
 
@@ -267,4 +223,4 @@ console.log("[a paste replaces the file, and says nothing stale]");
   );
 }
 
-process.exit(failures ? 1 : 0);
+process.exit(state.failures ? 1 : 0);

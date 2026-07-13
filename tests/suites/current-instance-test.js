@@ -5,100 +5,13 @@
 // It must NOT change sizing: CPU Count and Memory (GB) still drive that. The day
 // it does is 4.0 (cloud-to-cloud), and it should be a deliberate change, not a
 // drift.
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
+const { buildContext, makeChecker, rowsOf, parse } = require("./harness");
 
-const REPO = path.resolve(__dirname, "..", "..");
 const CURRENT = "Current Instance Type";
-
-function buildContext() {
-  const elements = {};
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-        scrollIntoView: () => {},
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    localStorage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: { appendChild: () => {} },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  ctx.showToast = () => {};
-  return { ctx, elements };
-}
-
-let failures = 0;
-function check(name, cond, detail) {
-  if (cond) console.log(`  ok: ${name}`);
-  else {
-    failures++;
-    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
-  }
-}
-
-const ingest = (ctx, csv) =>
-  vm.runInContext(`parseCSV(${JSON.stringify(csv)})`, ctx);
-const rows = (ctx) => vm.runInContext("csvData", ctx);
+const { check, state } = makeChecker();
+const ingest = parse;
+const rows = rowsOf;
 
 console.log("[the column is recognised, however it is spelled]");
 {
@@ -152,28 +65,6 @@ db-02,8,32,r5.2xlarge,us-east-1`,
   );
 }
 
-console.log("[it does not change what is recommended]");
-{
-  // Same CPU and memory, wildly different current sizes. Sizing is driven by
-  // CPU Count and Memory (GB); if this column ever starts steering the engine,
-  // these two rows will stop agreeing and this will fail.
-  const { ctx } = buildContext();
-  ingest(
-    ctx,
-    `VM Name,CPU Count,Memory (GB),Current Instance Type,AWS Region
-same-a,4,16,t3.nano,us-east-1
-same-b,4,16,x1e.32xlarge,us-east-1`,
-  );
-  const [a, b] = rows(ctx);
-  check(
-    "two rows with identical CPU/memory still describe identical demand",
-    a["CPU Count"] === b["CPU Count"] &&
-      a["Memory (GB)"] === b["Memory (GB)"] &&
-      a[CURRENT] !== b[CURRENT],
-    JSON.stringify(rows(ctx)),
-  );
-}
-
 console.log("[the preview puts it next to the recommendation]");
 {
   const builtElements = buildContext();
@@ -220,4 +111,81 @@ console.log("[the preview puts it next to the recommendation]");
   check("with its value in the row", shown.includes("m5.xlarge"));
 }
 
-process.exit(failures ? 1 : 0);
+console.log(
+  "[it is an input, not an outcome — the no-match highlight survives]",
+);
+{
+  // The preview marks a row as "no match" when EVERY recommended-instance column
+  // is a no-match placeholder. A predicate of "any column containing Instance"
+  // also swallows this input column — whose value is a real instance name and so
+  // is never a placeholder — which makes "every one is a no match" almost never
+  // true, and silently disables the highlight on genuinely unmatched rows.
+  const { ctx, elements } = buildContext();
+  const NO_MATCH = "No Match";
+  const results = [
+    {
+      "VM Name": "unmatchable",
+      "CPU Count": "999",
+      "Memory (GB)": "9999",
+      [CURRENT]: "m5.xlarge", // a real size — never a placeholder
+      "AWS Like-to-Like Instance": NO_MATCH,
+      "AWS Optimized Instance": NO_MATCH,
+      "AWS No Match Reason": "Nothing that large",
+    },
+  ];
+  ctx.showResultsPreview(results);
+  const shown = elements.resultsPreviewSection.innerHTML;
+
+  // The highlight is the danger background on the row.
+  check(
+    "a row whose every RECOMMENDATION is a no match is still highlighted as one",
+    shown.includes("var(--danger-bg-soft)"),
+    shown.slice(0, 500),
+  );
+}
+
+// The central invariant, tested against the ENGINE. Asserting that parseCSV
+// leaves CPU and memory alone proves nothing about sizing — only running the
+// recommendation and comparing its output can catch this column leaking into
+// the decision, which is the exact regression this file exists to guard.
+(async () => {
+  console.log("[it does not change what is recommended]");
+
+  // Identical CPU and memory; current sizes at opposite extremes of the range.
+  const { ctx } = buildContext();
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),Current Instance Type,AWS Region
+same-a,4,16,t3.nano,us-east-1
+same-b,4,16,x1e.32xlarge,us-east-1`,
+  );
+
+  const results = await ctx.getInstanceRecommendationWithSelector(
+    rows(ctx),
+    ["aws"],
+    {},
+  );
+  const [a, b] = results;
+  const instanceCols = Object.keys(a || {}).filter(
+    (k) =>
+      k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
+  );
+
+  check(
+    "the engine ran and produced recommendations to compare",
+    results.length === 2 && instanceCols.length > 0,
+    JSON.stringify(Object.keys(a || {})),
+  );
+  check(
+    "the two rows really did differ in what they run on today",
+    a[CURRENT] === "t3.nano" && b[CURRENT] === "x1e.32xlarge",
+    `${a[CURRENT]} / ${b[CURRENT]}`,
+  );
+  check(
+    "identical demand gets identical recommendations, whatever it runs on today",
+    instanceCols.length > 0 && instanceCols.every((c) => a[c] === b[c]),
+    instanceCols.map((c) => `${c}: ${a[c]} vs ${b[c]}`).join(" | "),
+  );
+
+  process.exit(state.failures ? 1 : 0);
+})();

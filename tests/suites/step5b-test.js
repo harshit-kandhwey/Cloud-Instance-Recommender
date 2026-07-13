@@ -118,10 +118,12 @@ const AOA = [
 (async () => {
   console.log("[a multi-sheet workbook offers the choice]");
   {
+    // Every sheet here has data. A sheet with headers and no rows is a template,
+    // not a candidate, and is excluded — see sheet-picker-test.
     const buf = makeXlsx([
       { name: "Data", aoa: AOA },
-      { name: "Notes", aoa: [["x"]] },
-      { name: "More", aoa: [["y"]] },
+      { name: "Notes", aoa: [["x"], ["a note"]] },
+      { name: "More", aoa: [["y"], ["another"]] },
     ]);
     await ctx.ingestFile({
       name: "multi.xlsx",

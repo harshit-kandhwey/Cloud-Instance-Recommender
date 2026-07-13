@@ -203,8 +203,14 @@ function _renderPreviewTable(
   const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
   const isReasonCol = (c) => c.includes("No Match Reason");
+  // A RECOMMENDED instance, and only that. Matching any column containing
+  // "Instance" also swallowed the input column "Current Instance Type", whose
+  // value is a real instance name and so is never a no-match placeholder — which
+  // made "every instance column is a no match" almost never true, silently
+  // disabling the red highlight on genuinely unmatched rows, and formatted the
+  // input as if it were an outcome.
   const isInstanceCol = (c) =>
-    c.includes("Instance") && !c.includes("Rules") && !c.includes("Reason");
+    c.includes("Like-to-Like Instance") || c.includes("Optimized Instance");
   const isVcpuCol = (c) => c.includes("vCPUs");
   const isMemCol = (c) => c.includes("Memory (GiB)");
 

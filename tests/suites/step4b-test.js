@@ -236,8 +236,15 @@ function setSelects(ctx, values) {
     vm.runInContext("csvData", ctx)[0]["Memory (GB)"] === "16",
   );
 
-  console.log("[legacy flat saved mapping still works + auto-detects MB]");
+  console.log(
+    "[a saved mapping from an older version is dropped, not replayed]",
+  );
   {
+    // A saved mapping short-circuits the preset, the synonyms and the unit
+    // handling — the user already answered for these headers. So an entry
+    // written by a version whose mapping rules have since been FIXED would
+    // reapply the old bug forever, past the fix. Unversioned entries are
+    // therefore discarded: the file asks again, and gets the current answer.
     const sig = ["vm name", "vcpu", "memory", "memory (mb)", "aws region"]
       .sort()
       .join("|");
@@ -247,15 +254,22 @@ function setSelects(ctx, values) {
       "Memory (MB)": "Memory (GB)",
       "AWS Region": "AWS Region",
     };
-    const { ctx: c2 } = buildContext({
+    const { ctx: c2, elements: e2 } = buildContext({
       cloudInstanceRecommenderColumnMaps: JSON.stringify({ [sig]: legacy }),
     });
     vm.runInContext(`parseCSV(${JSON.stringify(CSV)})`, c2);
     const d2 = vm.runInContext("csvData", c2);
+    // This file has both "Memory" and "Memory (MB)" — genuinely ambiguous. With
+    // the stale entry ignored, it does what any unanswered ambiguous file does:
+    // it asks, rather than replaying an answer from a version that got it wrong.
     check(
-      "legacy entry applied with MB auto-detect",
-      d2.length === 1 && d2[0]["Memory (GB)"] === "16",
-      JSON.stringify(d2[0]),
+      "the stale answer is not replayed",
+      d2.length === 0,
+      JSON.stringify(d2),
+    );
+    check(
+      "and the file asks again",
+      !e2.columnMappingSection.classes.has("hidden"),
     );
   }
 

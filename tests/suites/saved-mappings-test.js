@@ -2,104 +2,12 @@
 // every later file with the same headers, silently. That is the point — and it
 // is also why a mistake made once repeats forever. It must be visible, and it
 // must be possible to forget.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext, makeChecker, rowsOf, parse } = require("./harness");
 
-const REPO = path.resolve(__dirname, "..", "..");
 const KEY = "cloudInstanceRecommenderColumnMaps";
-
-function buildContext() {
-  const elements = {};
-  const toasts = [];
-  const store = new Map();
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-        scrollIntoView: () => {},
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    // A REAL store — the feature is entirely about what survives, so a stub that
-    // forgets everything would let every assertion here pass vacuously.
-    localStorage: {
-      getItem: (k) => (store.has(k) ? store.get(k) : null),
-      setItem: (k, v) => store.set(k, String(v)),
-      removeItem: (k) => store.delete(k),
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: { appendChild: () => {} },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  ctx.showToast = (message, type) => toasts.push({ message, type });
-  return { ctx, elements, toasts, store };
-}
-
-let failures = 0;
-function check(name, cond, detail) {
-  if (cond) console.log(`  ok: ${name}`);
-  else {
-    failures++;
-    console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
-  }
-}
-
-const ingest = (ctx, csv) =>
-  vm.runInContext(`parseCSV(${JSON.stringify(csv)})`, ctx);
-const rows = (ctx) => vm.runInContext("csvData", ctx);
+const { check, state } = makeChecker();
+const ingest = parse;
+const rows = rowsOf;
 const panel = (elements) => elements.savedMappingsSection;
 const saved = (store) => JSON.parse(store.get(KEY) || "{}");
 
@@ -122,6 +30,11 @@ function confirmMapping(ctx, choices) {
     select.value = String(pending.headers.indexOf(source));
   }
   ctx.applyColumnMapping();
+}
+
+// A later visit: a fresh page that shares the same browser storage.
+function buildContextFrom(store) {
+  return buildContext({ seedStorage: Object.fromEntries(store) });
 }
 
 console.log("[nothing remembered, nothing shown]");
@@ -204,9 +117,10 @@ console.log("[forgetting means the next file asks again]");
     "CPU Count": "CPUs",
     "Memory (GB)": "Memory (GB)",
   });
-  const signature = Object.keys(saved(store))[0];
-
-  ctx.forgetColumnMapping(signature);
+  // Forget takes the rendered button's INDEX, not the signature: the signature
+  // is built from the file's own headers, so it is attacker-controlled text and
+  // must never be interpolated into an inline handler.
+  ctx.forgetColumnMapping(0);
   check("it is gone from storage", Object.keys(saved(store)).length === 0);
   check(
     "the panel goes away with it",
@@ -226,6 +140,45 @@ console.log("[forgetting means the next file asks again]");
     "the same file now stops to ask once more",
     !after.elements.columnMappingSection.classes.has("hidden") &&
       rows(after.ctx).length === 0,
+  );
+}
+
+console.log("[a header cannot smuggle script into the Forget button]");
+{
+  // The signature is built from the file's own headers, so it is text an
+  // attacker controls. escapeHtml is NOT enough inside an inline handler: it
+  // turns a quote into &quot;, which the HTML parser decodes back to a real
+  // quote INSIDE the onclick attribute, closing the string and running whatever
+  // follows. The handler must therefore never receive the signature at all.
+  const { ctx, elements, store } = buildContext();
+  ingest(
+    ctx,
+    `VM,CPUs,Memory (GB),Host,x&quot;);alert(1);//\nweb-01,4,16,esxi-07,y`,
+  );
+  confirmMapping(ctx, {
+    "VM Name": "VM",
+    "CPU Count": "CPUs",
+    "Memory (GB)": "Memory (GB)",
+  });
+
+  const html = panel(elements).innerHTML;
+  const handler = (html.match(/onclick="forgetColumnMapping\([^)]*\)"/) ||
+    [])[0];
+  check("the mapping was still saved", Object.keys(saved(store)).length === 1);
+  check(
+    "the handler is given an index, never the header text",
+    /onclick="forgetColumnMapping\(\d+\)"/.test(html),
+    handler,
+  );
+  check(
+    "no fragment of the hostile header reaches the handler",
+    !/forgetColumnMapping\([^)]*alert/.test(html),
+    handler,
+  );
+  ctx.forgetColumnMapping(0);
+  check(
+    "and the index still resolves to the right entry",
+    Object.keys(saved(store)).length === 0,
   );
 }
 
@@ -261,11 +214,4 @@ db-01,esxi-09,8,32`,
   check("and the panel is gone", panel(elements).classes.has("hidden"));
 }
 
-// Rebuild a context that shares an existing store, to model a later visit.
-function buildContextFrom(store) {
-  const built = buildContext();
-  for (const [k, v] of store) built.store.set(k, v);
-  return built;
-}
-
-process.exit(failures ? 1 : 0);
+process.exit(state.failures ? 1 : 0);
