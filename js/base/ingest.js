@@ -884,7 +884,85 @@ const IMPORT_PRESETS = [
     // vInfo's "Memory" is MiB, and says so nowhere in the header
     memoryUnit: "MB",
   },
+  {
+    name: "AWS Application Discovery Service",
+    // ADS namespaces its columns ("CPU.NumberOfLogicalCores", "RAM.TotalSizeInMB",
+    // "CPU.UsagePct.Avg"). Nothing else writes headers shaped like that, and the
+    // generic matcher recognises NONE of them — an ADS file otherwise stops at
+    // the mapping panel every single time, with both required columns unmatched.
+    detect: (norm) =>
+      norm.has("cpunumberoflogicalcores") &&
+      norm.has("ramtotalsizeinmb") &&
+      norm.has("cpuusagepctavg"),
+    columns: {
+      // Logical cores, not sockets ("NumberOfProcessors") and not physical cores
+      // ("NumberOfCores"): a cloud vCPU corresponds to what the guest OS sees,
+      // which is the logical count. The other two are still offered in the panel
+      // if a particular fleet needs them.
+      cpunumberoflogicalcores: COLUMN_MAPPINGS.cpu,
+      ramtotalsizeinmb: COLUMN_MAPPINGS.memory,
+      cpuusagepctavg: COLUMN_MAPPINGS.cpuUtilization,
+      // "HostName" already maps on its own, but naming it here keeps the VM name
+      // from drifting to some other column as the synonym table grows.
+      hostname: COLUMN_MAPPINGS.vmName,
+    },
+    memoryUnit: "MB",
+    derive: {
+      // ADS reports memory USED, in megabytes. The optimizer needs a percentage,
+      // and (used ÷ total) × 100 is that percentage. Without this an ADS file
+      // could only ever be CPU-optimized: memory would be left at its current
+      // size for every VM in the fleet, silently forgoing most of the saving.
+      //
+      // The source columns are found by NORMALIZED name, like everything else in
+      // this file. Reading them as literal strings would mean that an export
+      // varying only in case or punctuation — while still being detected as ADS —
+      // yielded NaN, and the derivation would return "" for every row: no error,
+      // no failing test, and memory-based right-sizing quietly switched off for
+      // the whole fleet. That is precisely the failure this preset exists to
+      // prevent, so it must not be reintroduced by the fix for it.
+      [COLUMN_MAPPINGS.memoryUtilization]: (row, headers) => {
+        const column = (normalized) =>
+          headers.find((h) => normalizeHeader(h) === normalized);
+
+        const total = parseFloat(row[column("ramtotalsizeinmb")]);
+        const used = parseFloat(row[column("ramusedsizeinmbavg")]);
+        if (!isFinite(total) || total <= 0 || !isFinite(used) || used < 0) {
+          return ""; // absent, not zero — a zero would read as "0% used"
+        }
+        return String(Math.round((used / total) * 1000) / 10);
+      },
+    },
+  },
 ];
+
+// A preset may DERIVE a canonical column the format does not carry directly.
+// Derived columns are added as ordinary columns before the mapping runs, so
+// everything downstream — the panel, the engine, the exports — sees them as if
+// the file had always had them.
+//
+// A column the file already provides is never overwritten: the user's own data
+// outranks anything computed from it.
+function applyPresetDerivations(headers, rows, preset) {
+  if (!preset || !preset.derive) return { headers, rows };
+
+  const derivations = Object.entries(preset.derive).filter(
+    ([canonical]) => !headers.includes(canonical),
+  );
+  if (!derivations.length) return { headers, rows };
+
+  return {
+    headers: [...headers, ...derivations.map(([canonical]) => canonical)],
+    rows: rows.map((row) => {
+      const derived = { ...row };
+      for (const [canonical, compute] of derivations) {
+        // The file's own headers are passed in so a derivation can find its
+        // source columns by normalized name rather than by literal string.
+        derived[canonical] = compute(row, headers);
+      }
+      return derived;
+    }),
+  };
+}
 
 function detectImportPreset(headers) {
   const norm = new Set(headers.map(normalizeHeader));
@@ -1208,21 +1286,42 @@ function forgetAllColumnMappings() {
 function ingestRows(headers, rows) {
   console.log(`Parsed ${rows.length} rows with ${headers.length} columns`);
 
-  // A mapping the user previously confirmed for this exact header set wins
-  const saved = readSavedMapping(
-    loadColumnMappings()[headerSignature(headers)],
-  );
+  // The signature identifies the FILE, so it is taken from the headers the file
+  // actually has — before anything is derived. Sign the derived headers instead
+  // and you save a mapping under a key no later upload of that same file can
+  // produce: saved, and never replayed.
+  //
+  // Kept on the window because every path that SAVES a mapping needs it, and the
+  // edit path rebuilds _pendingIngest from _lastIngest, whose headers are already
+  // post-derivation.
+  const signature = headerSignature(headers);
+  window._fileSignature = signature;
+
+  const preset = detectImportPreset(headers);
+
+  // A recognised format may carry a canonical column only implicitly: ADS reports
+  // memory used in megabytes, and the optimizer needs the percentage that is.
+  // Derive it BEFORE anything else looks at these rows — the matcher, the panel,
+  // the engine and the exports must all see the column as though the file had
+  // always had it. Doing this after the match left the match ignorant of a column
+  // that was about to exist, and doing it after the saved-mapping branch skipped
+  // it altogether for any file the user had already answered for.
+  ({ headers, rows } = applyPresetDerivations(headers, rows, preset));
+
+  // A mapping the user previously confirmed for this exact file wins
+  const saved = readSavedMapping(loadColumnMappings()[signature]);
   if (saved && Object.keys(saved.mapping).every((s) => headers.includes(s))) {
     console.log("Applying saved column mapping");
     applyIngest(headers, rows, saved.mapping, saved.units);
     return;
   }
 
-  const match = autoMatchHeaders(headers);
+  const match = autoMatchHeaders(headers, preset);
+
   if (match.needsReview) {
     csvData = [];
     columnHeaders = [];
-    window._pendingIngest = { headers, rows, match };
+    window._pendingIngest = { headers, rows, match, signature };
     showColumnMappingPanel(headers, match);
     return;
   }
@@ -1859,7 +1958,17 @@ function applyColumnMapping() {
     }
   }
 
-  saveColumnMapping(headerSignature(pending.headers), mapping, units);
+  // The signature of the FILE, captured before any derived column was added.
+  // Signing pending.headers would include the derived column and produce a key
+  // that no later upload of the same file could ever match — the mapping would be
+  // saved and never replayed.
+  saveColumnMapping(
+    pending.signature ||
+      window._fileSignature ||
+      headerSignature(pending.headers),
+    mapping,
+    units,
+  );
   applyIngest(pending.headers, pending.rows, mapping, units);
 }
 

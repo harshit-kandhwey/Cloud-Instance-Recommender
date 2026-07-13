@@ -48,12 +48,17 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 Meet users where their inventory actually comes from, and catch bad input early.
 
-- Import presets for the formats target users already have. **RVTools** is done
-  (its vInfo sheet is detected, `VM` is resolved against `Host`, and its MiB
-  memory column is converted). **Azure Migrate** and **AWS ADS** are still open:
-  they need a real header row from an actual export first — a mapping table
-  written from memory would mis-map silently, which is worse than falling back
-  to the mapping panel. (M)
+- Import presets for the formats target users already have. **RVTools** and
+  **AWS Application Discovery Service** are done — both built against real
+  exports, which is the only way they could have been: RVTools writes its memory
+  with a thousands separator, and ADS reports memory used in megabytes rather
+  than as the percentage the optimizer needs. Neither fact is discoverable from
+  documentation. **Azure Migrate is not done and is not scheduled**: it needs a
+  real export, and we have no subscription to produce one. A mapping table
+  written from memory would mis-map silently, which is worse than falling back to
+  the mapping panel — the panel already handles these files correctly, and 3.7
+  remembers the answer. Reopen this the day someone can supply a genuine Azure
+  Migrate export. (M)
 
 ### 3.8 — Results, visualization & reporting
 

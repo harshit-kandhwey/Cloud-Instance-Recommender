@@ -162,7 +162,11 @@ Any sample CSV templates in the repo or in the HTML `<pre>` previews should incl
 
 **Excel.** A multi-sheet workbook opens the sheet whose headers best look like an inventory — scored with `autoMatchHeaders`, see `pickBestSheet` in `js/base/ingest.js` — and a picker lets the user switch.
 
-**Import presets** (`IMPORT_PRESETS`, `js/base/ingest.js`) auto-map a known tool's export. A preset identifies the format by headers that _only_ that tool ships, then names just the two things the generic matcher cannot work out for itself: the columns it would otherwise find ambiguous, and the units the header hides. Keep presets that narrow — a preset that claims a file it has not really recognised will mis-map it silently, which is worse than falling back to the mapping panel.
+**Import presets** (`IMPORT_PRESETS`, `js/base/ingest.js`) auto-map a known tool's export — RVTools and AWS Application Discovery Service today. A preset identifies the format by headers that _only_ that tool ships, then names just what the generic matcher cannot work out for itself: the columns it would find ambiguous, the units the header hides, and (via `derive`) any canonical column the format carries only implicitly. ADS, for instance, reports memory _used_ in megabytes; the optimizer needs a percentage on a 0–100 scale, so the derivation is (used ÷ total) × 100.
+
+Keep presets narrow — a preset that claims a file it has not really recognised will mis-map it silently, which is worse than falling back to the mapping panel.
+
+**Build a preset against a real export, never against documentation.** Both existing presets exist because a real file contradicted what a specification would have told you: RVTools writes `Memory` with a thousands separator, so `parseFloat` silently returned a number 1000× too small; and its workbook's `vHost` sheet (the ESXi servers) outscored `vInfo` (the VMs) on generic column counting, so the wrong machines were loaded. Neither is discoverable by reasoning. If you cannot get a genuine export, do not write the preset.
 
 **Memory units are converted only on explicit evidence:** a header that says so (`Memory (MB)`), or an import preset that knows the format's convention. When neither does, the values may only raise the _question_ — a fleet whose median memory is implausible as GB is reported in the input check with both answers offered (`convertMemoryToGb` / `keepMemoryAsGb`), and nothing is touched until one is given.
 

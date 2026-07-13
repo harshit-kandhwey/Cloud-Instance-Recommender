@@ -80,7 +80,12 @@ Headers like `vCPUs`, `RAM`, or `Hostname` are automatically matched to the cano
 
 A confirmed mapping is remembered per header set and replayed on the next file with the same headers — so it is also **listed, with a Forget button**, because a mapping confirmed once would otherwise be reapplied silently forever.
 
-An **RVTools** export is recognised on sight: its `vInfo` sheet is found, its `VM` column is used for the VM name (not `Host`, which is the ESXi server), and its `Memory` column — MiB, though the header never says so — is converted.
+Two inventory-tool exports are recognised on sight and need no mapping at all:
+
+- **RVTools** — the `vInfo` sheet is found (not `vHost`, which lists the ESXi servers the VMs run _on_), `VM` is used for the VM name (not `Host`), and `Memory` — MiB, though the header never says so, and written with a thousands separator — is read and converted correctly.
+- **AWS Application Discovery Service** — its import template maps straight through: logical cores become the vCPU count, `RAM.TotalSizeInMB` becomes memory, and memory _utilization_, which ADS does not report, is worked out as (used ÷ total) × 100. Without that, an ADS file could only be sized on CPU.
+
+Both presets were built against real exports, because both formats hide something a specification would not tell you.
 
 Memory in **MB/MiB** is converted when the header says so, or when a recognised format says so. When neither does but the values look like MiB, you are **asked** rather than second-guessed: a fleet of genuine 512 GB machines exists, and dividing it by 1024 would be its own kind of corruption.
 

@@ -406,8 +406,14 @@ console.log("[section collapse state]");
       .replace(/<script\b[\s\S]*?<\/script>/gi, "")
       .replace(/<style\b[\s\S]*?<\/style>/gi, "");
 
+  // Escaped, though every id today is a plain identifier: an id containing a dot
+  // or a bracket would otherwise change what the pattern means, silently.
+  const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
   const hasPanel = (page, panel) =>
-    new RegExp(`<[a-z][^>]*\\bid=["']${panel}["']`, "i").test(elementsOf(page));
+    new RegExp(`<[a-z][^>]*\\bid=["']${escapeRegex(panel)}["']`, "i").test(
+      elementsOf(page),
+    );
   for (const panel of REQUIRED_PANELS) {
     const missing = TOOL_PAGES.filter((page) => !hasPanel(page, panel));
     check(

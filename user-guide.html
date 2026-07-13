@@ -3106,6 +3106,19 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       </p>
 
       <p>
+        <strong
+          >Q: Can I upload an AWS Application Discovery Service export?</strong
+        ><br />
+        A: Yes — the ADS <em>import template</em> is recognised and needs no
+        mapping. Its logical-core count becomes the vCPU count (not the socket
+        or physical-core count), <code>RAM.TotalSizeInMB</code> becomes memory,
+        and memory utilisation — which ADS does not report as a percentage — is
+        worked out from the memory used against the memory total. Without that
+        last step your VMs could only be sized on CPU, and their memory would be
+        left exactly as it is.
+      </p>
+
+      <p>
         <strong>Q: Can I upload an RVTools export directly?</strong><br />
         A: Yes. The <code>vInfo</code> sheet is found and read, its
         <code>VM</code> column is used for the VM name — not <code>Host</code>,
