@@ -33,6 +33,12 @@ const COLUMN_MAPPINGS = {
   memoryUtilization: "Memory Utilization",
   vmName: "VM Name",
   appName: "App Name",
+  // The size a VM runs on TODAY (m5.xlarge, Standard_D4s_v3, n2-standard-4).
+  // Optional, and carried through to the outputs untouched, so a recommendation
+  // can be read against what it replaces. Nothing is derived from it yet —
+  // deriving specs FROM this column, instead of from CPU/memory, is what makes
+  // cloud-to-cloud sizing possible, and that is a 4.0 change.
+  currentInstance: "Current Instance Type",
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",
   gcpRegion: "GCP Region",
@@ -128,6 +134,21 @@ const COLUMN_SYNONYMS = {
     "appid",
     "service",
     "servicename",
+  ],
+  // Deliberately narrow. A bare "Size", "Type" or "SKU" means too many things in
+  // an inventory export (disk size, VM type, licence SKU) to claim as the
+  // current instance; those can still be mapped by hand in the panel.
+  "Current Instance Type": [
+    "currentinstancetype",
+    "currentinstance",
+    "currentsize",
+    "currenttype",
+    "currentvmsize",
+    "instancetype",
+    "vmsize",
+    "machinetype",
+    "existinginstancetype",
+    "sourceinstancetype",
   ],
   "AWS Region": ["awsregion", "amazonregion"],
   "Azure Region": ["azureregion"],

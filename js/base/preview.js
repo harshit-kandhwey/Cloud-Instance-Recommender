@@ -131,6 +131,9 @@ function showResultsPreview(results) {
     "OS",
     "Workload",
     "Compliance",
+    // Last of the input columns, so it lands immediately left of the recommended
+    // instances: the point of the column is to read one against the other.
+    "Current Instance Type",
   ].filter((c) => allKeys.includes(c));
 
   const displayCols = [...inputCols];

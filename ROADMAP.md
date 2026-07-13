@@ -54,8 +54,6 @@ Meet users where their inventory actually comes from, and catch bad input early.
   they need a real header row from an actual export first — a mapping table
   written from memory would mis-map silently, which is worse than falling back
   to the mapping panel. (M)
-- "Current instance type" input column, so a row can carry the size it runs on
-  today. (M) _Foundation for cloud-to-cloud mode in 4.0._
 - Sample dataset gallery — small, large, and deliberately messy examples. (S)
 - Column-mapping manager UI to view and edit the saved header-signature
   mappings that are invisible in localStorage today. (S)
@@ -127,9 +125,11 @@ Broaden reach and shore up quality.
 
 Changes that redefine what the tool does or how it is built.
 
-- **Cloud-to-cloud mode** — accept a current instance type as input, derive its
-  specs from our own data, and right-size across providers. The biggest missing
-  use case. (L) _Needs the "current instance type" column from 3.7._
+- **Cloud-to-cloud mode** — derive a VM's specs from its current instance type
+  using our own data, instead of requiring CPU and memory columns, and right-size
+  across providers. The biggest missing use case. (L) _The `Current Instance
+Type` column landed in 3.7 and is carried through to the outputs; what remains
+  is deriving specs FROM it._
 - **GCP custom machine types** — recommend custom vCPU/RAM shapes when standard
   sizes waste resources. (L)
 - **User-defined rules UI** — "if ENV = X, exclude family Y", stored and
