@@ -1217,6 +1217,10 @@ function applyIngest(headers, rows, mapping, units = {}) {
   }
 
   window._pendingIngest = null;
+  // Bumped on every ingest, from any route. Results carry the token they ran
+  // against, so replacing the data under an existing set of results is visible
+  // even when the new data has the same shape as the old.
+  window._ingestToken = (window._ingestToken || 0) + 1;
   // A dismissal belongs to the file it was made about: answering "different VMs"
   // or "these really are GB" for one upload must not silence the question for
   // the next.
@@ -1281,6 +1285,11 @@ function applyIngest(headers, rows, mapping, units = {}) {
   // If the file groups VMs by application but has no per-row Workload, offer
   // the app→workload mapping panel so those VMs can inherit a workload.
   maybeShowAppMappingPanel();
+
+  // Any results still on screen were generated from the data this just replaced.
+  // They are not cleared — the user may want to look at them — but they must not
+  // go on presenting themselves as describing what is now loaded.
+  updateStaleResultsNotice();
 }
 
 // ─── Input hygiene ───────────────────────────────────────────────────────────

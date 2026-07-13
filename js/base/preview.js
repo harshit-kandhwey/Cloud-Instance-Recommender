@@ -392,10 +392,14 @@ function _renderPreviewTable(
 
 const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
 
-// The results on screen belong to the providers that were selected when Generate
-// ran. Changing the checkboxes afterwards does not re-run anything, so the
-// columns would quietly describe a selection the user no longer has. Say so
-// instead of letting them read a stale table (or export it).
+// The results on screen describe the providers AND the rows that were loaded
+// when Generate ran. Change either afterwards and nothing re-runs, so the table
+// and every download quietly go on describing something the user no longer has.
+//
+// The provider half was the original case. The data half matters more now that
+// there are four ways to load rows — upload, paste, sample, manual entry — and
+// three of them are a single click, so replacing the data under a set of results
+// is easy and looks like nothing happened.
 function updateStaleResultsNotice() {
   const notice = document.getElementById("resultsStaleNotice");
   if (!notice) return;
@@ -405,21 +409,38 @@ function updateStaleResultsNotice() {
     typeof processedResults !== "undefined" &&
     processedResults &&
     processedResults.length > 0;
-  const stale =
-    hasResults &&
-    Array.isArray(ranWith) &&
-    (ranWith.length !== selectedProviders.length ||
-      ranWith.some((p) => !selectedProviders.includes(p)));
-
-  if (!stale) {
+  if (!hasResults) {
     notice.classList.add("hidden");
     notice.innerHTML = "";
     return;
   }
 
-  const named = ranWith.map((p) => PROVIDER_LABELS[p] || p).join(", ");
+  const providersChanged =
+    Array.isArray(ranWith) &&
+    (ranWith.length !== selectedProviders.length ||
+      ranWith.some((p) => !selectedProviders.includes(p)));
+
+  // A counter bumped by every ingest. Comparing row counts would miss a file
+  // replaced by one of the same length, which is exactly the case a user is
+  // least likely to notice by eye.
+  const dataChanged =
+    typeof window._resultsIngestToken === "number" &&
+    window._resultsIngestToken !== window._ingestToken;
+
+  if (!providersChanged && !dataChanged) {
+    notice.classList.add("hidden");
+    notice.innerHTML = "";
+    return;
+  }
+
+  const reason = dataChanged
+    ? "were generated from data you have since replaced"
+    : `were generated for <strong>${escapeHtml(
+        (ranWith || []).map((p) => PROVIDER_LABELS[p] || p).join(", "),
+      )}</strong>, which is no longer what you have selected`;
+
   notice.className = "alert alert-warning";
-  notice.innerHTML = `⚠️ These results were generated for <strong>${escapeHtml(named)}</strong>, which is no longer what you have selected. Click Generate to update them — the table and every download still describe the old selection.`;
+  notice.innerHTML = `⚠️ These results ${reason}. Click Generate to update them — the table and every download still describe the old run.`;
   notice.classList.remove("hidden");
 }
 

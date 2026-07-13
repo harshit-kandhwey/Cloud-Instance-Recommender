@@ -260,9 +260,13 @@ async function processRecommendations() {
       ),
     });
 
-    // The selection these results describe — compared against the live
-    // checkboxes to warn when they drift apart (see updateStaleResultsNotice)
+    // What these results describe: the selection they ran with, and the ingest
+    // they ran against. Both are compared with the live state to warn when they
+    // drift apart (see updateStaleResultsNotice) — the data half matters because
+    // loading a new file, paste or sample does not clear the results, and a
+    // replacement of the same shape looks like nothing happened.
     window._resultsProviders = providersForRun;
+    window._resultsIngestToken = window._ingestToken;
     updateStaleResultsNotice();
 
     // Update usage statistics and show download section
