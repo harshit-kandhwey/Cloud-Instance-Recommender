@@ -280,10 +280,10 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 **Example (multi-cloud):**
 
 ```csv
-VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
-worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,m5.xlarge
+db-server-02,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
+worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7,,c5.2xlarge
 ```
 
 ### 3. Generate Recommendations

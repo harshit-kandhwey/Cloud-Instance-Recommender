@@ -3,15 +3,15 @@
 
 // Download sample CSV
 function downloadSampleCSV() {
-  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,
-cache-server-04,Storefront,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,
-api-server-05,Storefront,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6
-microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,
-worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7
-frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,,,t3.large
+cache-server-04,Storefront,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,,Burstable,t3.medium
+api-server-05,Storefront,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6,,c5.xlarge
+microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,,,t3.small
+worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7,,c5.2xlarge
+frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,,,t3.medium`;
 
   downloadCsv(csvContent, "sample_instance_data.csv");
 }
@@ -153,6 +153,30 @@ const GROUPED_THOUSANDS = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
 function normalizeCellValue(value) {
   const text = String(value ?? "").trim();
   return GROUPED_THOUSANDS.test(text) ? text.replace(/,/g, "") : text;
+}
+
+// Rows are built by header NAME, so two columns called the same thing collapse
+// into one: the earlier column's value is overwritten by the later one's, for
+// every row, with nothing said. Worse, the mapping panel then offers the user
+// two entries that are secretly the same column, whichever they pick.
+//
+// Give the repeats a distinct name instead. Nothing is lost, and the choice the
+// panel offers becomes a real one. Blank headers are left alone — they name no
+// column and cannot be mapped to anything.
+function dedupeHeaders(headers) {
+  const used = new Set();
+  return headers.map((header) => {
+    if (!header) return header;
+    if (!used.has(header)) {
+      used.add(header);
+      return header;
+    }
+    let n = 2;
+    while (used.has(`${header} (${n})`)) n++;
+    const unique = `${header} (${n})`;
+    used.add(unique);
+    return unique;
+  });
 }
 
 async function readFileHead(file, bytes = 8) {
@@ -300,7 +324,7 @@ function readWorkbookSheet(workbook, name) {
   });
   if (!rows2d.length) return null;
 
-  const headers = rows2d[0].map((h) => String(h).trim());
+  const headers = dedupeHeaders(rows2d[0].map((h) => String(h).trim()));
   if (!headers.some((h) => h !== "")) return null;
 
   const rows = rows2d
@@ -1759,13 +1783,19 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   const panel = document.getElementById("columnMappingSection");
 
   if (!panel) {
-    // Page has no panel placeholder — apply best-effort mapping instead
+    // Page has no panel placeholder — apply best-effort mapping instead. The
+    // preset is consulted for the same reason it is below: this file may be a
+    // recognised MiB format that needed review for some OTHER column, and there
+    // is no dropdown here for anyone to correct the unit with. Trusting the
+    // header name alone would divide nothing and call MiB "GB" — a silent 1024x.
     if (!opts.isEdit) {
       applyIngest(
         headers,
         window._pendingIngest.rows,
         match.mapping,
-        match.units || detectMemoryUnit(match.mapping),
+        match.units ||
+          presetUnits(match.preset, match.mapping) ||
+          detectMemoryUnit(match.mapping),
       );
     }
     return;
@@ -2134,7 +2164,7 @@ function parseDelimitedText(text) {
   if (!lines.length) return { headers: [], rows: [] };
 
   const delimiter = sniffDelimiter(lines[0]);
-  const headers = parseCSVLine(lines[0], delimiter);
+  const headers = dedupeHeaders(parseCSVLine(lines[0], delimiter));
   const rows = lines.slice(1).map((line) => {
     const values = parseCSVLine(line, delimiter);
     const row = {};

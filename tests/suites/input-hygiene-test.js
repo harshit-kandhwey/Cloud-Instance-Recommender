@@ -235,14 +235,25 @@ db-02,8,65536,us-east-1`,
 }
 {
   // The inverse, which must keep working: re-mapping the columns DOES re-ask.
-  // Choosing a different column as the VM name genuinely changes which rows are
-  // duplicates, so a previous answer no longer means anything.
+  // Choosing a different column as the VM name genuinely changes WHICH rows are
+  // duplicates, so the previous answer no longer means anything.
+  //
+  // Both columns here contain a repeat, but of different rows: by Name, rows 2
+  // and 3 are the pair; by Alias, rows 2 and 4 are. Re-applying the SAME mapping
+  // would only show that any applyIngest clears the acknowledgement — it would
+  // not show that the question is recomputed against the new columns.
   const { ctx, elements } = buildContext();
   ingest(
     ctx,
-    `VM Name,CPU Count,Memory (GB),AWS Region
-web-01,4,16,us-east-1
-web-01,4,16,us-west-2`,
+    `Name,Alias,CPU Count,Memory (GB),AWS Region
+web-01,alpha,4,16,us-east-1
+web-01,beta,4,16,us-west-2
+db-09,alpha,8,32,us-east-1`,
+  );
+  check(
+    "the duplicate is found under the mapped name column",
+    /web-01/.test(panel(elements).innerHTML),
+    panel(elements).innerHTML,
   );
   ctx.keepDuplicateVmNames();
   check(
@@ -252,11 +263,50 @@ web-01,4,16,us-west-2`,
   );
 
   const last = ctx.window._lastIngest;
-  ctx.applyIngest(last.headers, last.rows, last.mapping, last.units);
+  const remapped = Object.fromEntries(
+    Object.entries(last.mapping).filter(
+      ([, canonical]) => canonical !== "VM Name",
+    ),
+  );
+  remapped["Alias"] = "VM Name";
+  ctx.applyIngest(last.headers, last.rows, remapped, last.units);
+
+  const html = panel(elements).innerHTML;
   check(
-    "but re-applying a mapping asks again, because the rows may now differ",
-    /used more than once/.test(panel(elements).innerHTML),
-    panel(elements).innerHTML,
+    "re-mapping the VM name asks again, because the rows that repeat have changed",
+    /used more than once/.test(html),
+    html,
+  );
+  check(
+    "and it asks about the NEW duplicate, not a replay of the answered one",
+    /alpha/.test(html) && !/web-01/.test(html),
+    html,
+  );
+}
+
+console.log("[two columns with the same name do not become one]");
+{
+  // Rows are built by header name, so a repeated header used to overwrite the
+  // first column's value with the second's, for every row, silently — and the
+  // mapping panel then offered two entries that were secretly the same column.
+  // Here the two "Memory" columns hold DIFFERENT numbers on purpose: if they
+  // collapse, one of them is simply gone and no one is told.
+  const { ctx } = buildContext();
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory,Memory,AWS Region
+web-01,4,16,999,us-east-1`,
+  );
+  const row = rows(ctx)[0] || {};
+  check(
+    "the first column's values survive the second (and still map to the canonical)",
+    row["Memory (GB)"] === "16",
+    JSON.stringify(row),
+  );
+  check(
+    "and the repeat is kept under a name of its own, rather than discarded",
+    row["Memory (2)"] === "999",
+    JSON.stringify(row),
   );
 }
 

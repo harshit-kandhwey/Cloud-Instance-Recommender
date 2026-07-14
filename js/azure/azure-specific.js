@@ -389,15 +389,15 @@ function getAzurePricingZone(region) {
 
 // Download Azure sample CSV
 function downloadAzureSampleCSV() {
-  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,East US,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,West US 2,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,
-cache-server-04,Storefront,2,4,25,30,East US,Staging,Linux,Cache,,
-api-server-05,Storefront,4,8,65,55,West US,Production,Linux,Web Server,,5
-microservice-06,Analytics,1,2,15,20,East US,Dev,Linux,General,,
-worker-node-07,Analytics,8,16,85,75,West US 2,Production,Linux,ML/AI,HIPAA,4
-frontend-08,Storefront,2,4,40,50,North Europe,Staging,Windows,Web Server,,`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,East US,Production,Linux,Web Server,,,,Standard_D4s_v3
+db-server-02,Billing,8,32,70,80,West US 2,Production,Windows,Database,PCI,,"Burstable,GPU",Standard_D8s_v3
+app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v3
+cache-server-04,Storefront,2,4,25,30,East US,Staging,Linux,Cache,,,Burstable,Standard_B2s
+api-server-05,Storefront,4,8,65,55,West US,Production,Linux,Web Server,,5,,Standard_F4s_v2
+microservice-06,Analytics,1,2,15,20,East US,Dev,Linux,General,,,,Standard_B1ms
+worker-node-07,Analytics,8,16,85,75,West US 2,Production,Linux,ML/AI,HIPAA,4,,Standard_F8s_v2
+frontend-08,Storefront,2,4,40,50,North Europe,Staging,Windows,Web Server,,,,Standard_B2s`;
 
   downloadCsv(csvContent, "Azure_sample_instance_data.csv");
 }

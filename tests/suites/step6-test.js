@@ -65,7 +65,47 @@ function stripComments(source) {
   let out = "";
   let i = 0;
 
+  // Reading the literal text of a template, as opposed to code. A single flag is
+  // enough however deeply templates nest, because closing a template always
+  // returns to code and closing a substitution always returns to template text.
+  let inTemplate = false;
+  let braceDepth = 0;
+  // The brace depth each open "${" was seen at, innermost last.
+  const substitutions = [];
+
   while (i < source.length) {
+    if (inTemplate) {
+      const ch = source[i];
+      if (ch === "\\") {
+        out += ch + (source[i + 1] || "");
+        i += 2;
+        continue;
+      }
+      if (ch === "`") {
+        out += ch;
+        i++;
+        inTemplate = false; // back to code
+        continue;
+      }
+      if (ch === "$" && source[i + 1] === "{") {
+        // A substitution is code. Leaving it as opaque string content is how a
+        // scanner goes blind: `${cond ? `//` : `q`}` has a backtick inside it,
+        // which a scanner looking only for the next backtick reads as the END of
+        // the template — resuming at top level in the middle of a substitution,
+        // where a nested template's literal "//" then eats the rest of the line,
+        // banned call and all.
+        out += "${";
+        i += 2;
+        substitutions.push(braceDepth);
+        braceDepth++;
+        inTemplate = false;
+        continue;
+      }
+      out += ch;
+      i++;
+      continue;
+    }
+
     const c = source[i];
     const next = source[i + 1];
 
@@ -105,7 +145,7 @@ function stripComments(source) {
       continue;
     }
 
-    if (c === '"' || c === "'" || c === "`") {
+    if (c === '"' || c === "'") {
       const quote = c;
       out += c;
       i++;
@@ -122,6 +162,41 @@ function stripComments(source) {
         i++;
         if (ended) break;
       }
+      continue;
+    }
+
+    // A template opens literal text, which the block at the top of the loop
+    // reads. Its `${…}` substitutions are not part of that text: they are code,
+    // and they come back through this same loop.
+    if (c === "`") {
+      out += c;
+      i++;
+      inTemplate = true;
+      continue;
+    }
+
+    if (c === "{") {
+      braceDepth++;
+      out += c;
+      i++;
+      continue;
+    }
+    if (c === "}") {
+      // The "}" that returns brace depth to what it was when a "${" opened is
+      // that substitution's closer, and puts us back in template text — not in
+      // ordinary code, where a following "`" would look like an OPENING quote.
+      if (
+        substitutions.length &&
+        braceDepth - 1 === substitutions[substitutions.length - 1]
+      ) {
+        substitutions.pop();
+        braceDepth--;
+        inTemplate = true;
+      } else if (braceDepth > 0) {
+        braceDepth--;
+      }
+      out += c;
+      i++;
       continue;
     }
 
@@ -828,6 +903,28 @@ function check(name, cond, detail) {
   check(
     "and a comment after a division is still stripped",
     !sees(`const half = total / 2; // alert(1)\nconst x = 1;`),
+  );
+  // A template's ${…} is code, not string content — and code may contain another
+  // template. A scanner that ends the literal at the next backtick it sees ends
+  // it on the NESTED one, resumes at top level mid-substitution, and reads that
+  // template's text as source: a "//" in there then eats the rest of the line.
+  check(
+    "a template nested inside a substitution does not hide a call after it",
+    sees("const a = `${cond ? `//` : `q`}`; alert(1);"),
+  );
+  check(
+    "nor does a substitution nested two deep",
+    sees("const a = `${x ? `${y ? `//` : `z`}` : ``}`; alert(1);"),
+  );
+  check(
+    "an object literal inside a substitution does not end it early",
+    sees("const a = `${JSON.stringify({ u: `//` })}`; alert(1);"),
+  );
+  // The inverse: a substitution is real code, so a real comment inside one must
+  // still be stripped — otherwise the guard condemns a call that was commented out.
+  check(
+    "a comment inside a substitution is still stripped",
+    !sees("const a = `${/* alert(1) */ x}`;"),
   );
 
   for (const dialog of ["alert", "confirm", "prompt"]) {

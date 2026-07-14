@@ -3,7 +3,13 @@
 // Shape taken from a REAL ADS template. The generic matcher recognises exactly
 // one of its columns (HostName), so without a preset an ADS file stops at the
 // mapping panel every single time with both required columns unmatched.
-const { buildContext, makeChecker, rowsOf, parse } = require("./harness");
+const {
+  buildContext,
+  makeChecker,
+  rowsOf,
+  parse,
+  confirmMapping,
+} = require("./harness");
 
 const { check, state } = makeChecker();
 
@@ -219,19 +225,11 @@ console.log("[a mapping edited on a derived file can still be replayed]");
     !elements.columnMappingSection.classes.has("hidden"),
   );
 
-  const pending = ctx.window._pendingIngest;
-  const canonicals = ctx.pageCanonicals();
-  for (const [canonical, source] of Object.entries({
+  confirmMapping(ctx, {
     "VM Name": "HostName",
     "CPU Count": "CPU.NumberOfLogicalCores",
     "Memory (GB)": "RAM.TotalSizeInMB",
-  })) {
-    const select = ctx.document.getElementById(
-      `colmap_${canonicals.indexOf(canonical)}`,
-    );
-    select.value = String(pending.headers.indexOf(source));
-  }
-  ctx.applyColumnMapping();
+  });
 
   const saved = JSON.parse(
     store.get("cloudInstanceRecommenderColumnMaps") || "{}",

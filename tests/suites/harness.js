@@ -171,6 +171,23 @@ const headersOf = (ctx) => vm.runInContext("columnHeaders", ctx);
 const parse = (ctx, text) =>
   vm.runInContext(`parseCSV(${JSON.stringify(text)})`, ctx);
 
+// Answer an open mapping panel the way a user would: pick the source column for
+// each canonical, then confirm. Each select is keyed by the canonical's POSITION
+// and carries the source header's INDEX as its value, not its name — so a suite
+// that hard-codes either drifts the moment the panel changes. Shared, because it
+// was written twice and the two copies had already begun to differ.
+function confirmMapping(ctx, choices) {
+  const pending = ctx.window._pendingIngest;
+  const canonicals = ctx.pageCanonicals();
+  for (const [canonical, source] of Object.entries(choices)) {
+    const select = ctx.document.getElementById(
+      `colmap_${canonicals.indexOf(canonical)}`,
+    );
+    select.value = String(pending.headers.indexOf(source));
+  }
+  ctx.applyColumnMapping();
+}
+
 module.exports = {
   REPO,
   buildContext,
@@ -178,4 +195,5 @@ module.exports = {
   rowsOf,
   headersOf,
   parse,
+  confirmMapping,
 };

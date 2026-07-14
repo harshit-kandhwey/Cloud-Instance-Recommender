@@ -148,10 +148,10 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre>
             </div>
 
             <details style="margin-top: 10px">
@@ -317,11 +317,72 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,</pre>
                         required (AWS PCI/HIPAA)
                       </td>
                     </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        <strong>Min Gen</strong>
+                      </td>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        5 / 6 / 7 (generation number)
+                      </td>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        Excludes instance generations older than the one given
+                        (e.g. 7 → only m7i/c7i and newer)
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        <strong>Exclude</strong>
+                      </td>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        Comma-separated type names (e.g. Burstable,GPU)
+                      </td>
+                      <td
+                        style="
+                          padding: 4px 8px;
+                          border: 1px solid var(--border-mid);
+                        "
+                      >
+                        Excludes those instance types for this row only — quote
+                        the cell when it names more than one
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
                 <p style="margin-top: 6px; color: var(--text-muted)">
                   All columns are optional — blank cells use safe defaults
                   (Linux, General workload, no ENV restrictions).
+                </p>
+                <p style="margin-top: 6px; color: var(--text-muted)">
+                  <strong>Current Instance Type</strong> fires no rule and does
+                  not affect sizing. It records what the VM runs on today (e.g.
+                  <code>m5.xlarge</code>) and is carried through to the preview
+                  and every export, beside the recommendation that would replace
+                  it.
                 </p>
               </div>
             </details>

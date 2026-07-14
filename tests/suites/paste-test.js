@@ -18,7 +18,7 @@ function paste(ctx, _elements, text) {
   ctx.ingestPastedData();
 }
 
-const TAB = "	";
+const TAB = "\t";
 
 console.log("[a spreadsheet paste is tab-separated, and is read as such]");
 {

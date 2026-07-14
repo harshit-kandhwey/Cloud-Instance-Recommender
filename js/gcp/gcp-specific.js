@@ -431,15 +431,15 @@ function getGCPZones(region) {
 
 // Download GCP sample CSV
 function downloadGCPSampleCSV() {
-  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-central1,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west1,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,
-cache-server-04,Storefront,2,4,25,30,us-central1,Staging,Linux,Cache,,
-api-server-05,Storefront,4,8,65,55,us-west1,Production,Linux,Web Server,,n2
-microservice-06,Analytics,1,2,15,20,us-central1,Dev,Linux,General,,
-worker-node-07,Analytics,8,16,85,75,us-west1,Production,Linux,ML/AI,HIPAA,n4
-frontend-08,Storefront,2,4,40,50,europe-west1,Staging,Windows,Web Server,,`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-central1,Production,Linux,Web Server,,,,n2-standard-4
+db-server-02,Billing,8,32,70,80,us-west1,Production,Windows,Database,PCI,,"Burstable,GPU",n2-standard-8
+app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,e2-standard-2
+cache-server-04,Storefront,2,4,25,30,us-central1,Staging,Linux,Cache,,,Burstable,e2-medium
+api-server-05,Storefront,4,8,65,55,us-west1,Production,Linux,Web Server,,n2,,n2-highcpu-4
+microservice-06,Analytics,1,2,15,20,us-central1,Dev,Linux,General,,,,e2-small
+worker-node-07,Analytics,8,16,85,75,us-west1,Production,Linux,ML/AI,HIPAA,n4,,n2-highcpu-8
+frontend-08,Storefront,2,4,40,50,europe-west1,Staging,Windows,Web Server,,,,e2-medium`;
 
   downloadCsv(csvContent, "GCP_sample_instance_data.csv");
 }

@@ -2,7 +2,13 @@
 // every later file with the same headers, silently. That is the point — and it
 // is also why a mistake made once repeats forever. It must be visible, and it
 // must be possible to forget.
-const { buildContext, makeChecker, rowsOf, parse } = require("./harness");
+const {
+  buildContext,
+  makeChecker,
+  rowsOf,
+  parse,
+  confirmMapping,
+} = require("./harness");
 
 const KEY = "cloudInstanceRecommenderColumnMaps";
 const { check, state } = makeChecker();
@@ -16,21 +22,6 @@ const saved = (store) => JSON.parse(store.get(KEY) || "{}");
 const AMBIGUOUS = `VM,CPUs,Memory (GB),Host
 web-01,4,16,esxi-07
 web-02,8,32,esxi-07`;
-
-// Answer the open mapping panel the way a user would: pick the source column for
-// each canonical, then confirm. Each select is keyed by the canonical's position
-// and carries the source header's INDEX as its value, not its name.
-function confirmMapping(ctx, choices) {
-  const pending = ctx.window._pendingIngest;
-  const canonicals = ctx.pageCanonicals();
-  for (const [canonical, source] of Object.entries(choices)) {
-    const select = ctx.document.getElementById(
-      `colmap_${canonicals.indexOf(canonical)}`,
-    );
-    select.value = String(pending.headers.indexOf(source));
-  }
-  ctx.applyColumnMapping();
-}
 
 // A later visit: a fresh page that shares the same browser storage.
 function buildContextFrom(store) {

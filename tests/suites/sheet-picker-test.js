@@ -4,7 +4,7 @@
 //
 // Builds real workbooks with the vendored SheetJS and drives ingestFile().
 const path = require("path");
-const { REPO, buildContext, makeChecker, rowsOf } = require("./harness");
+const { REPO, buildContext, makeChecker, rowsOf, parse } = require("./harness");
 
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
 
@@ -621,10 +621,45 @@ const RVTOOLS = [
       rowsOf(ctx).length === 2 && rowsOf(ctx)[0]["VM Name"] === "web-01",
       JSON.stringify(rowsOf(ctx)),
     );
+    // Asserting only that "Template" is absent from the picker would pass for the
+    // wrong reason: an excluded sheet leaves one candidate, and a one-sheet
+    // workbook renders no picker at all, so the string is absent either way.
     check(
-      "and the empty template is not even offered",
-      !elements.sheetPickerSection.innerHTML.includes("Template"),
+      "the template is not a candidate, so there is no picker to switch with",
+      elements.sheetPickerSection.classes.has("hidden") &&
+        elements.sheetPickerSection.innerHTML === "",
       elements.sheetPickerSection.innerHTML,
+    );
+    // And this is what makes the exclusion necessary rather than belt-and-braces:
+    // given the choice, scoring PREFERS the template — it weighs recognised
+    // columns above row count, and the template has more of them. Were it merely
+    // ranked low it would still win, and the workbook would open empty.
+    const asCandidates = [
+      {
+        name: "Template",
+        headers: [
+          "VM Name",
+          "CPU Count",
+          "Memory (GB)",
+          "AWS Region",
+          "CPU Utilization",
+          "Memory Utilization",
+        ],
+        rows: [],
+      },
+      {
+        name: "Inventory",
+        headers: ["VM Name", "CPU Count", "Memory (GB)"],
+        rows: [
+          { "VM Name": "web-01", "CPU Count": "4", "Memory (GB)": "16" },
+          { "VM Name": "db-02", "CPU Count": "8", "Memory (GB)": "32" },
+        ],
+      },
+    ];
+    check(
+      "because scoring alone would choose the empty template over the real inventory",
+      ctx.pickBestSheet(asCandidates).name === "Template",
+      `scoring picked ${ctx.pickBestSheet(asCandidates).name} — if this is now "Inventory", the exclusion in readWorkbookSheet is no longer what protects this case`,
     );
   }
 
@@ -771,6 +806,47 @@ const RVTOOLS = [
           elements.inputHygieneSection.innerHTML,
         ),
       elements.inputHygieneSection.innerHTML,
+    );
+  }
+
+  console.log(
+    "[a recognised MiB file keeps its units even where there is no panel to say so]",
+  );
+  {
+    // A page without #columnMappingSection applies a best-effort mapping instead
+    // of asking. That path did not consult the preset — so a file we had ALREADY
+    // identified as RVTools, and which needed review only because some other
+    // column was ambiguous, had its memory read as GB. 16384 MiB arrived as
+    // 16384 GB: a 1024x error, on a page with no dropdown for anyone to correct
+    // it with, and a median far too high to trip the MiB question. Nothing would
+    // have failed. Every VM in the file would simply have been sized enormous.
+    //
+    // "CPU Utilization" and "CPU Util" are both synonyms of the same canonical,
+    // which is what makes the file need review despite being recognised.
+    const RVT = `VM,Powerstate,CPUs,Memory,Provisioned MiB,In Use MiB,CPU Utilization,CPU Util
+web-01,poweredOn,4,16384,20000,10000,45,45
+db-02,poweredOn,8,32768,40000,20000,70,70`;
+
+    const { ctx } = buildContext({ missingElements: ["columnMappingSection"] });
+    parse(ctx, RVT);
+    check(
+      "the preset's MiB is honoured, not the header's word for it",
+      rowsOf(ctx)
+        .map((r) => r["Memory (GB)"])
+        .join(",") === "16,32",
+      `got ${JSON.stringify(rowsOf(ctx).map((r) => r["Memory (GB)"]))} — 16384/32768 means the units were dropped`,
+    );
+
+    // And the page that DOES have the panel prefills MB for the same file, so
+    // the two paths cannot disagree about what the file is.
+    const withPanel = buildContext();
+    parse(withPanel.ctx, RVT);
+    check(
+      "and the page that asks prefills MB, so neither path can call it GB",
+      /value="MB" selected|selected[^>]*value="MB"/.test(
+        withPanel.elements.columnMappingSection.innerHTML,
+      ),
+      withPanel.elements.columnMappingSection.innerHTML.slice(0, 400),
     );
   }
 

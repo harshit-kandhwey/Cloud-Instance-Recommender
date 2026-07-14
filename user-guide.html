@@ -1242,12 +1242,12 @@
       <div id="sample-csv">
         <h3>📄 Sample CSV Structure</h3>
         <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,6
-db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,7
-app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,
-cache-server-04,Storefront,4,16,25,30,us-east-1,Staging,Linux,Cache,,6
-ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,6,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,7,"Burstable,GPU",m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large
+cache-server-04,Storefront,4,16,25,30,us-east-1,Staging,Linux,Cache,,6,Burstable,m5.xlarge
+ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2xlarge</pre>
 
         <div class="callout callout-warn">
           <strong>Formatting rules</strong>
@@ -2693,9 +2693,9 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7</pre>
       </p>
 
       <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge</pre>
 
       <h3>Regional Equivalents Reference</h3>
       <table class="avoid-break">

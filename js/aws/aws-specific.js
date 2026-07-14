@@ -277,15 +277,15 @@ function getAWSExcludeTypeDescription(type) {
 
 // Download AWS sample CSV
 function downloadAWSSampleCSV() {
-  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen
-web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,
-db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,
-app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,
-cache-server-04,Storefront,2,4,25,30,us-east-1,Staging,Linux,Cache,,
-api-server-05,Storefront,4,8,65,55,us-west-1,Production,Linux,Web Server,,6
-microservice-06,Analytics,1,2,15,20,us-east-1,Dev,Linux,General,,
-worker-node-07,Analytics,8,16,85,75,us-west-2,Production,Linux,ML/AI,HIPAA,7
-frontend-08,Storefront,2,4,40,50,eu-west-1,Staging,Windows,Web Server,,`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large
+cache-server-04,Storefront,2,4,25,30,us-east-1,Staging,Linux,Cache,,,Burstable,t3.medium
+api-server-05,Storefront,4,8,65,55,us-west-1,Production,Linux,Web Server,,6,,c5.xlarge
+microservice-06,Analytics,1,2,15,20,us-east-1,Dev,Linux,General,,,,t3.small
+worker-node-07,Analytics,8,16,85,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,c5.2xlarge
+frontend-08,Storefront,2,4,40,50,eu-west-1,Staging,Windows,Web Server,,,,t3.medium`;
 
   downloadCsv(csvContent, "AWS_sample_instance_data.csv");
 }
