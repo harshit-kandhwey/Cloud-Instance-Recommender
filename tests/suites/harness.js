@@ -180,10 +180,23 @@ function confirmMapping(ctx, choices) {
   const pending = ctx.window._pendingIngest;
   const canonicals = ctx.pageCanonicals();
   for (const [canonical, source] of Object.entries(choices)) {
-    const select = ctx.document.getElementById(
-      `colmap_${canonicals.indexOf(canonical)}`,
-    );
-    select.value = String(pending.headers.indexOf(source));
+    // Both lookups return -1 on a miss, and getElementById here fabricates any
+    // id it is asked for — so a typo would quietly drive a phantom "colmap_-1"
+    // and the suite would go green having mapped nothing. Refuse instead: a
+    // shared helper that absorbs its caller's mistakes hides the very mismatch
+    // the caller is testing for.
+    const canonicalIndex = canonicals.indexOf(canonical);
+    if (canonicalIndex === -1) {
+      throw new Error(
+        `confirmMapping: no such canonical column "${canonical}"`,
+      );
+    }
+    const sourceIndex = pending.headers.indexOf(source);
+    if (sourceIndex === -1) {
+      throw new Error(`confirmMapping: no such source header "${source}"`);
+    }
+    ctx.document.getElementById(`colmap_${canonicalIndex}`).value =
+      String(sourceIndex);
   }
   ctx.applyColumnMapping();
 }

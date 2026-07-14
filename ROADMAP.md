@@ -180,14 +180,27 @@ they are also where several of them hid. Their weaknesses are known and specific
   the theme-token guard and the page-parity guard all live in files whose names
   reveal none of that. Rename by subject, and give each module's behaviour a home
   a reader can find from the filename alone. (M)
-- **Coverage per function, not per feature.** Every exported function should have
-  a suite that pins its behaviour, so a regression fails a named check rather than
-  surfacing three modules downstream — or, as has happened here, not at all. (L)
+- **Coverage per function _and_ per feature.** Every exported function gets a
+  suite that pins its behaviour, so a regression fails a named check rather than
+  surfacing three modules downstream — or, as has happened here, not at all. And
+  every user-visible feature gets one that exercises it end to end, because a
+  feature can be broken while every function it is built from still passes: the
+  units were fine when a page's sample preview drifted from the file it previews,
+  when a panel was commented out of a page, and when the mapping panel offered two
+  choices that were secretly the same column. Both layers, not one. (L)
 - **Exhaustive cases, not happy paths.** General, edge, corner and — the ones most
   often missing — **negative** cases: the malformed file, the empty sheet, the
   header that repeats, the value that is absent rather than zero, the unit that is
   a lie, the row that cannot size. Nearly every defect this project has shipped
   lived in one of those and not in the happy path. (L)
+- **A coverage inventory, and a gate that enforces it.** Exhaustive is a claim,
+  and a claim needs a ledger. Enumerate every exported function, every page, every
+  documented column and input format, and every user-visible feature, and record
+  each as covered, not yet covered, or deliberately not covered _with the reason_.
+  CI fails on an export that no suite names. The point is not the paperwork: it is
+  that **nothing is ever skipped by accident — only by a decision someone wrote
+  down.** Every silent defect in this project's history got in through a gap
+  nobody knew was there. (M)
 - **Smoke and functional tiers.** A fast smoke pass over each page's critical
   path (load → ingest → generate → export), separable from the exhaustive suites,
   so the quick check stays quick and the thorough one stays thorough. (M)

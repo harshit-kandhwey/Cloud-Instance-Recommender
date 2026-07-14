@@ -96,15 +96,24 @@ function generateSample(sample) {
   return { ctx, elements, csv };
 }
 
-// The first line of the <pre> inside the page's .sample-csv block. Tolerant of
+// Every line of the <pre> inside the page's .sample-csv block. Tolerant of
 // attributes on either tag: a class added for styling must not fail this suite
-// for a reason that has nothing to do with the column drift it exists to catch.
-function previewHeaderLine(page) {
+// for a reason that has nothing to do with the drift it exists to catch.
+//
+// The whole block, not just the header row. Comparing headers alone let gcp.html
+// sit for a release showing a different OS, a different compliance value and
+// zone-suffixed regions its own download never produced — the columns matched,
+// so nothing looked.
+function previewLines(page) {
   const html = fs.readFileSync(path.join(REPO, page), "utf8");
   const block = html.match(
-    /<div[^>]*class="[^"]*\bsample-csv\b[^"]*"[^>]*>\s*<pre[^>]*>\s*([^\n]+)/,
+    /<div[^>]*class="[^"]*\bsample-csv\b[^"]*"[^>]*>\s*<pre[^>]*>\s*([\s\S]*?)<\/pre>/,
   );
-  return block ? block[1].trim() : null;
+  if (!block) return null;
+  return block[1]
+    .trim()
+    .split("\n")
+    .map((line) => line.trim());
 }
 
 for (const sample of SAMPLES) {
@@ -167,15 +176,27 @@ for (const sample of SAMPLES) {
     JSON.stringify(rows.map((r) => r["Current Instance Type"])),
   );
 
-  // The preview is what a user reads before deciding to download. If it shows
-  // different columns than the file does, it is simply a lie about the file.
-  const preview = previewHeaderLine(sample.page);
-  const generated = csv.split("\n")[0].trim();
+  // The preview is what a user reads before deciding to download. Every line of
+  // it must be a line of the actual file — not merely the same columns, the same
+  // DATA. A preview that shows a region or an OS the download does not contain is
+  // simply a lie about the download, and the user has no way to know.
+  const preview = previewLines(sample.page);
+  const downloaded = csv.split("\n").map((line) => line.trim());
   check(
-    `the <pre> preview on ${sample.page} shows the same columns as the download`,
-    preview === generated,
-    `preview : ${preview}\n     download: ${generated}`,
+    `the <pre> preview on ${sample.page} was found`,
+    Array.isArray(preview) && preview.length > 1,
+    String(preview),
   );
+  if (preview) {
+    const mismatch = preview.findIndex((line, i) => line !== downloaded[i]);
+    check(
+      `and every line of it is a line of the download`,
+      mismatch === -1,
+      mismatch === -1
+        ? ""
+        : `line ${mismatch + 1} differs\n     preview : ${preview[mismatch]}\n     download: ${downloaded[mismatch]}`,
+    );
+  }
 }
 
 process.exit(state.failures ? 1 : 0);
