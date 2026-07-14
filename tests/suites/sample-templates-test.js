@@ -181,16 +181,32 @@ for (const sample of SAMPLES) {
   // DATA. A preview that shows a region or an OS the download does not contain is
   // simply a lie about the download, and the user has no way to know.
   const preview = previewLines(sample.page);
-  const downloaded = csv.split("\n").map((line) => line.trim());
+  const downloaded = csv
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.trim());
   check(
     `the <pre> preview on ${sample.page} was found`,
     Array.isArray(preview) && preview.length > 1,
     String(preview),
   );
   if (preview) {
+    // The preview is an EXCERPT by design — a header and the first few rows of a
+    // longer file — so it is checked as a prefix, not for equality. Requiring the
+    // same line count would be wrong: it would fail every page, and it would
+    // force the page to inline the whole template.
+    //
+    // A prefix check still catches what matters, including a preview claiming
+    // MORE lines than the download has (downloaded[i] is then undefined, and the
+    // lines cannot match).
+    check(
+      "and it is an excerpt of that download, not the whole of it",
+      preview.length < downloaded.length,
+      `preview has ${preview.length} lines, download has ${downloaded.length}`,
+    );
     const mismatch = preview.findIndex((line, i) => line !== downloaded[i]);
     check(
-      `and every line of it is a line of the download`,
+      "and every line it does show is a line of the download",
       mismatch === -1,
       mismatch === -1
         ? ""
