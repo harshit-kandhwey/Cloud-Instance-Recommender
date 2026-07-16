@@ -158,7 +158,7 @@ function showResultsPreview(results) {
     if (!displayCols.includes(r)) displayCols.push(r);
   });
 
-  // Store state for sort + search filter + pagination
+  // Store state for sort + search filter + pagination + no-match-only view
   window._previewState = {
     results,
     displayCols,
@@ -167,6 +167,7 @@ function showResultsPreview(results) {
     filter: "",
     page: 0,
     pageSize: DEFAULT_PAGE_SIZE,
+    noMatchOnly: false,
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
@@ -177,24 +178,36 @@ function showResultsPreview(results) {
   scrollAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// The one definition of "what the preview is showing": filter first
-// (case-insensitive substring across the visible columns), then sort. The table
-// and the clipboard both go through this — two copies of it would be two chances
-// to drift, and "the clipboard agrees with the screen" is the whole guarantee.
-// Always returns a NEW array; `results` is never reordered in place.
-function filterAndSortRows(results, displayCols, filter, sortCol, sortDir) {
+// The one definition of "what the preview is showing": the no-match-only toggle
+// and the text filter (case-insensitive substring across the visible columns),
+// then sort. The table and the clipboard both go through this — two copies would
+// be two chances to drift, and "the clipboard agrees with the screen" is the
+// whole guarantee. Always returns a NEW array; `results` is never reordered.
+function filterAndSortRows(
+  results,
+  displayCols,
+  filter,
+  sortCol,
+  sortDir,
+  noMatchOnly = false,
+) {
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
-  const rows = needle
-    ? results.filter((row) =>
-        displayCols.some((c) =>
-          String(row[c] ?? "")
-            .toLowerCase()
-            .includes(needle),
-        ),
+  const instanceCols = noMatchOnly ? getInstanceColumns(results) : [];
+  const rows = results.filter((row) => {
+    if (noMatchOnly && !rowIsAllNoMatch(row, instanceCols)) return false;
+    if (
+      needle &&
+      !displayCols.some((c) =>
+        String(row[c] ?? "")
+          .toLowerCase()
+          .includes(needle),
       )
-    : [...results];
+    )
+      return false;
+    return true;
+  });
   if (sortCol !== null && sortCol !== undefined) {
     sortResultRows(rows, displayCols[sortCol], sortDir);
   }
@@ -212,6 +225,7 @@ function _renderPreviewTable(
     restoreFocus = false,
     page = 0,
     pageSize = DEFAULT_PAGE_SIZE,
+    noMatchOnly = false,
   } = {},
 ) {
   const isNoMatch = isNoMatchValue;
@@ -234,12 +248,19 @@ function _renderPreviewTable(
     filter,
     sortCol,
     sortDir,
+    noMatchOnly,
   );
   // Only for the wording below ("No rows match …", the count line); the
   // filtering itself is the helper's job
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
+  // Either narrowing is "filtered" for the count wording and the reminder that
+  // downloads still carry the whole set.
+  const filtered = !!needle || noMatchOnly;
+  // The instance columns once, so the row highlight below uses the SAME predicate
+  // the no-match-only filter does — a red row is exactly a row the filter keeps.
+  const instanceCols = getInstanceColumns(results);
 
   // Build L2L vCPU map per provider for diff view
   const l2lVcpuColMap = {};
@@ -288,10 +309,11 @@ function _renderPreviewTable(
   };
 
   const rangeLabel = `${pageStart + 1}–${pageEnd} of ${totalRows}`;
-  const countLabel = needle
+  const rowNoun = noMatchOnly ? "unmatched rows" : "matching rows";
+  const countLabel = filtered
     ? totalRows === 0
-      ? `no matching rows (${results.length} total)`
-      : `${rangeLabel} matching rows (${results.length} total)`
+      ? `no ${rowNoun} (${results.length} total)`
+      : `${rangeLabel} ${rowNoun} (${results.length} total)`
     : `${rangeLabel} rows`;
 
   const pageSizeSelect = `
@@ -325,6 +347,10 @@ function _renderPreviewTable(
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         ${pageSizeSelect}
+        <label style="font-size:12px;color:var(--text-soft);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;">
+          <input type="checkbox" id="previewNoMatchOnly"${noMatchOnly ? " checked" : ""} onchange="window._previewToggleNoMatch(this.checked)" aria-label="Show only rows with no matching instance" />
+          No-match only
+        </label>
         <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
           oninput="window._previewFilterChanged(this.value)"
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
@@ -354,9 +380,7 @@ function _renderPreviewTable(
     // the page — so "Copied row 47" stays true on page 2, and the zebra striping
     // does not flip when a page boundary falls mid-run.
     const absoluteRow = pageStart + ri + 1;
-    const instCols = displayCols.filter(isInstanceCol);
-    const allNoMatch =
-      instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
+    const allNoMatch = rowIsAllNoMatch(row, instanceCols);
     const bg = allNoMatch
       ? "var(--danger-bg-soft)"
       : absoluteRow % 2 === 1
@@ -416,16 +440,22 @@ function _renderPreviewTable(
     html += `</tr>`;
   });
 
-  if (previewRows.length === 0 && needle) {
-    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">No rows match "${escapeHtml(needle)}"</td></tr>`;
+  if (previewRows.length === 0 && filtered) {
+    const emptyMsg =
+      noMatchOnly && !needle
+        ? "No unmatched rows — every row found an instance."
+        : noMatchOnly && needle
+          ? `No unmatched rows match "${escapeHtml(needle)}"`
+          : `No rows match "${escapeHtml(needle)}"`;
+    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">${emptyMsg}</td></tr>`;
   }
 
   html += `</tbody></table></div>`;
   // A filter narrows only the preview; downloads always carry every row. Say so
   // whenever a filter is active — including when it narrows below 20 rows, where
   // the "showing first 20" line alone would leave the difference invisible.
-  if (needle) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Filter matches ${rows.length} of ${results.length} rows. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
+  if (filtered) {
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing ${rows.length} of ${results.length} rows${noMatchOnly ? " (no-match only)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
   } else if (pageCount > 1) {
     html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Download the CSV for the full ${results.length}-row dataset in a single file.</p>`;
   }
@@ -552,13 +582,16 @@ function copyPreviewToClipboard() {
   const state = window._previewState;
   if (!state || !state.results || !state.results.length) return;
 
-  // Same helper the table renders from, so the two cannot disagree
+  // Same helper the table renders from, so the two cannot disagree — including
+  // the no-match-only view, so a copy taken with it on carries those rows and
+  // only those.
   const rows = filterAndSortRows(
     state.results,
     state.displayCols,
     state.filter,
     state.sortCol,
     state.sortDir,
+    state.noMatchOnly,
   );
 
   copyTextToClipboard(
@@ -652,6 +685,7 @@ window._sortPreview = function (colIdx) {
       filter: s.filter,
       page: s.page,
       pageSize: s.pageSize,
+      noMatchOnly: s.noMatchOnly,
     });
 };
 
@@ -674,6 +708,7 @@ window._previewSetPageSize = function (value) {
         filter: s.filter,
         page: s.page,
         pageSize: s.pageSize,
+        noMatchOnly: s.noMatchOnly,
       },
     );
 };
@@ -697,6 +732,31 @@ window._previewGoToPage = function (index) {
         filter: s.filter,
         page: s.page,
         pageSize: s.pageSize,
+        noMatchOnly: s.noMatchOnly,
+      },
+    );
+};
+
+// Restrict the table to rows with no matching instance — exactly the rows the
+// red highlight marks. Changes which rows exist, so start at the first page.
+window._previewToggleNoMatch = function (checked) {
+  const s = window._previewState;
+  if (!s) return;
+  s.noMatchOnly = !!checked;
+  s.page = 0;
+  const container = document.getElementById("resultsPreviewSection");
+  if (container)
+    _renderPreviewTable(
+      container,
+      s.results,
+      s.displayCols,
+      s.sortCol,
+      s.sortDir,
+      {
+        filter: s.filter,
+        page: s.page,
+        pageSize: s.pageSize,
+        noMatchOnly: s.noMatchOnly,
       },
     );
 };
@@ -729,6 +789,7 @@ window._previewFilterChanged = function (value) {
           restoreFocus: true,
           page: s.page,
           pageSize: s.pageSize,
+          noMatchOnly: s.noMatchOnly,
         },
       );
     }

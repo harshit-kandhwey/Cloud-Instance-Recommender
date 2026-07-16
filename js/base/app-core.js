@@ -645,6 +645,17 @@ function getInstanceColumns(results) {
   );
 }
 
+// A row is a "no match" when it has recommendation columns and EVERY one of them
+// is a no-match placeholder. One definition, so the red row highlight, the
+// no-match-only view filter, the no-match export, and the relax suggestion all
+// agree on which rows are unmatched — a row that is red must be the same row the
+// filter keeps and the export writes.
+function rowIsAllNoMatch(row, instanceCols) {
+  return (
+    instanceCols.length > 0 && instanceCols.every((c) => isNoMatchValue(row[c]))
+  );
+}
+
 // Sorts rows by one column, numerically when both values parse as numbers.
 // Mutates and returns `rows` — callers pass a copy when they need one.
 function sortResultRows(rows, column, direction) {
@@ -792,9 +803,7 @@ function computeRelaxSuggestion(results) {
   );
   if (!instanceCols.length || !missCols.length) return null;
 
-  const unmatched = results.filter((row) =>
-    instanceCols.every((c) => isNoMatchValue(row[c])),
-  );
+  const unmatched = results.filter((row) => rowIsAllNoMatch(row, instanceCols));
   if (!unmatched.length) return null;
 
   const rescues = new Map();

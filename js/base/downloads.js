@@ -36,7 +36,7 @@ function getNoMatchRows(results) {
   if (!results || !results.length) return [];
   const instCols = getInstanceColumns(results);
   if (!instCols.length) return [];
-  return results.filter((row) => instCols.every((c) => isNoMatchValue(row[c])));
+  return results.filter((row) => rowIsAllNoMatch(row, instCols));
 }
 
 // Exports the fully-unmatched rows with their original input columns plus
