@@ -112,6 +112,13 @@ function _buildStatsHtml(results) {
 }
 
 // ─── Show in-browser results preview ──────────────────────────────────────────
+// Page sizes offered above the results table. "All" is Infinity — one page that
+// holds every row — so the same pagination math covers "show everything" without
+// a special case at every use.
+const PAGE_SIZE_OPTIONS = [25, 50, 100, Infinity];
+const DEFAULT_PAGE_SIZE = 25;
+const pageSizeLabel = (size) => (size === Infinity ? "All" : String(size));
+
 function showResultsPreview(results) {
   const container = document.getElementById("resultsPreviewSection");
   if (!container || !results || results.length === 0) return;
@@ -151,13 +158,15 @@ function showResultsPreview(results) {
     if (!displayCols.includes(r)) displayCols.push(r);
   });
 
-  // Store state for sort + search filter
+  // Store state for sort + search filter + pagination
   window._previewState = {
     results,
     displayCols,
     sortCol: null,
     sortDir: 1,
     filter: "",
+    page: 0,
+    pageSize: DEFAULT_PAGE_SIZE,
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
@@ -198,7 +207,12 @@ function _renderPreviewTable(
   displayCols,
   sortCol,
   sortDir,
-  { filter = "", restoreFocus = false } = {},
+  {
+    filter = "",
+    restoreFocus = false,
+    page = 0,
+    pageSize = DEFAULT_PAGE_SIZE,
+  } = {},
 ) {
   const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
@@ -249,7 +263,21 @@ function _renderPreviewTable(
       .join(" ");
   }
 
-  const previewRows = rows.slice(0, 20);
+  // Pagination is applied AFTER filter + sort, so a page is always a window onto
+  // the rows the user is actually looking at. The clipboard and downloads ignore
+  // it entirely — they carry the whole filtered/sorted set — so the page is a
+  // viewing convenience and never silently narrows what leaves the tool.
+  const totalRows = rows.length;
+  const pageCount =
+    pageSize === Infinity ? 1 : Math.max(1, Math.ceil(totalRows / pageSize));
+  // Clamp: a filter can shrink the row set beneath the current page.
+  const pageIndex = Math.min(Math.max(0, page), pageCount - 1);
+  const pageStart = pageSize === Infinity ? 0 : pageIndex * pageSize;
+  const pageEnd =
+    pageSize === Infinity
+      ? totalRows
+      : Math.min(pageStart + pageSize, totalRows);
+  const previewRows = rows.slice(pageStart, pageEnd);
 
   const sortArrow = (i) => {
     if (sortCol !== i)
@@ -259,23 +287,53 @@ function _renderPreviewTable(
       : `<span style="margin-left:4px;">▼</span>`;
   };
 
+  const rangeLabel = `${pageStart + 1}–${pageEnd} of ${totalRows}`;
   const countLabel = needle
-    ? `first ${previewRows.length} of ${rows.length} matching rows (${results.length} total)`
-    : `first ${previewRows.length} of ${results.length} rows`;
+    ? totalRows === 0
+      ? `no matching rows (${results.length} total)`
+      : `${rangeLabel} matching rows (${results.length} total)`
+    : `${rangeLabel} rows`;
+
+  const pageSizeSelect = `
+    <label style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Rows
+      <select id="previewPageSize" aria-label="Rows per page" onchange="window._previewSetPageSize(this.value)"
+        style="margin-left:4px;padding:4px 6px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);">
+        ${PAGE_SIZE_OPTIONS.map(
+          (s) =>
+            `<option value="${s === Infinity ? "all" : s}"${s === pageSize ? " selected" : ""}>${pageSizeLabel(s)}</option>`,
+        ).join("")}
+      </select>
+    </label>`;
+
+  // Only shown when there is more than one page — a single page has nothing to
+  // navigate, and a disabled Prev/Next pair would just be noise.
+  const navBtn = (label, target, disabled, aria) =>
+    `<button type="button" onclick="window._previewGoToPage(${target})"${disabled ? " disabled" : ""} aria-label="${aria}"
+      style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
+  const paginationNav =
+    pageCount > 1
+      ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap;">
+          ${navBtn("‹ Prev", pageIndex - 1, pageIndex === 0, "Previous page")}
+          <span style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Page ${pageIndex + 1} of ${pageCount}</span>
+          ${navBtn("Next ›", pageIndex + 1, pageIndex >= pageCount - 1, "Next page")}
+        </div>`
+      : "";
 
   let html = _buildStatsHtml(results);
   html += `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
-      <span style="display:flex;align-items:center;gap:8px;">
+      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        ${pageSizeSelect}
         <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
           oninput="window._previewFilterChanged(this.value)"
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
         <button type="button" onclick="copyPreviewToClipboard()"
-          title="Copy every row shown (all ${rows.length}, not just the first 20) as tab-separated text, ready to paste into a spreadsheet"
+          title="Copy every matching row (all ${rows.length}, not just this page) as tab-separated text, ready to paste into a spreadsheet"
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:pointer;white-space:nowrap;">📋 Copy</button>
       </span>
     </div>
+    ${paginationNav}
     <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid var(--border-slate-light);border-radius:6px;">
       <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
         <thead>
@@ -292,12 +350,16 @@ function _renderPreviewTable(
         <tbody>`;
 
   previewRows.forEach((row, ri) => {
+    // The row's absolute position in the filtered/sorted set, not its position on
+    // the page — so "Copied row 47" stays true on page 2, and the zebra striping
+    // does not flip when a page boundary falls mid-run.
+    const absoluteRow = pageStart + ri + 1;
     const instCols = displayCols.filter(isInstanceCol);
     const allNoMatch =
       instCols.length > 0 && instCols.every((c) => isNoMatch(row[c]));
     const bg = allNoMatch
       ? "var(--danger-bg-soft)"
-      : ri % 2 === 0
+      : absoluteRow % 2 === 1
         ? "var(--surface)"
         : "var(--surface-alt-2)";
     // Tab-separated like the table-level copy, so a single row also pastes
@@ -307,8 +369,8 @@ function _renderPreviewTable(
     html += `<tr style="background:${bg};">`;
     // Copy button
     html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
-      <button onclick="copyTextToClipboard(${escapeHtml(JSON.stringify(rowTsv))}, 'Copied row ${ri + 1} to the clipboard')"
-        title="Copy this row" aria-label="Copy row ${ri + 1}"
+      <button onclick="copyTextToClipboard(${escapeHtml(JSON.stringify(rowTsv))}, 'Copied row ${absoluteRow} to the clipboard')"
+        title="Copy this row" aria-label="Copy row ${absoluteRow}"
         style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
     </td>`;
 
@@ -363,9 +425,9 @@ function _renderPreviewTable(
   // whenever a filter is active — including when it narrows below 20 rows, where
   // the "showing first 20" line alone would leave the difference invisible.
   if (needle) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Filter matches ${rows.length} of ${results.length} rows${rows.length > 20 ? " (showing the first 20)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
-  } else if (rows.length > 20) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing first 20 rows. Download the CSV for the full ${results.length}-row dataset.</p>`;
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Filter matches ${rows.length} of ${results.length} rows. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
+  } else if (pageCount > 1) {
+    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Download the CSV for the full ${results.length}-row dataset in a single file.</p>`;
   }
   html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · Red rows = no match</p>`;
 
@@ -581,11 +643,62 @@ window._sortPreview = function (colIdx) {
   const newDir = s.sortCol === colIdx ? -s.sortDir : 1;
   s.sortCol = colIdx;
   s.sortDir = newDir;
+  // Re-sorting reorders the whole set, so page 3 would show different rows; go
+  // back to the top where the newly-sorted rows are.
+  s.page = 0;
   const container = document.getElementById("resultsPreviewSection");
   if (container)
     _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir, {
       filter: s.filter,
+      page: s.page,
+      pageSize: s.pageSize,
     });
+};
+
+// Rows-per-page selector. "all" → Infinity (one page holds everything).
+window._previewSetPageSize = function (value) {
+  const s = window._previewState;
+  if (!s) return;
+  s.pageSize =
+    value === "all" ? Infinity : parseInt(value, 10) || DEFAULT_PAGE_SIZE;
+  s.page = 0;
+  const container = document.getElementById("resultsPreviewSection");
+  if (container)
+    _renderPreviewTable(
+      container,
+      s.results,
+      s.displayCols,
+      s.sortCol,
+      s.sortDir,
+      {
+        filter: s.filter,
+        page: s.page,
+        pageSize: s.pageSize,
+      },
+    );
+};
+
+// Page navigation. The render clamps the index, so an out-of-range target is
+// harmless — but keep the stored page in range too, or a later re-render reads a
+// stale value.
+window._previewGoToPage = function (index) {
+  const s = window._previewState;
+  if (!s) return;
+  s.page = Math.max(0, index);
+  const container = document.getElementById("resultsPreviewSection");
+  if (container)
+    _renderPreviewTable(
+      container,
+      s.results,
+      s.displayCols,
+      s.sortCol,
+      s.sortDir,
+      {
+        filter: s.filter,
+        page: s.page,
+        pageSize: s.pageSize,
+      },
+    );
 };
 
 // Debounced search-filter handler for the preview table
@@ -593,6 +706,9 @@ window._previewFilterChanged = function (value) {
   const s = window._previewState;
   if (!s) return;
   s.filter = value;
+  // A new filter changes which rows exist, so the current page number no longer
+  // means anything; start again at the first page of the new result set.
+  s.page = 0;
   clearTimeout(window._previewFilterTimer);
   window._previewFilterTimer = setTimeout(() => {
     const container = document.getElementById("resultsPreviewSection");
@@ -608,7 +724,12 @@ window._previewFilterChanged = function (value) {
         s.displayCols,
         s.sortCol,
         s.sortDir,
-        { filter: s.filter, restoreFocus: true },
+        {
+          filter: s.filter,
+          restoreFocus: true,
+          page: s.page,
+          pageSize: s.pageSize,
+        },
       );
     }
   }, 150);

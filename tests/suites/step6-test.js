@@ -329,17 +329,14 @@ function check(name, cond, detail) {
     "search input rendered",
     container.innerHTML.includes('id="previewSearch"'),
   );
-  check(
-    "unfiltered count",
-    container.innerHTML.includes("first 20 of 25 rows"),
-  );
+  check("unfiltered count", container.innerHTML.includes("1–25 of 25 rows"));
 
   console.log("[filtering]");
   ctx._previewFilterChanged("db-");
   await new Promise((r) => setTimeout(r, 250)); // wait out the 150ms debounce
   check(
     "filtered count line",
-    container.innerHTML.includes("first 5 of 5 matching rows (25 total)"),
+    container.innerHTML.includes("1–5 of 5 matching rows (25 total)"),
     container.innerHTML.match(/Results Preview \([^)]*\)/)?.[0],
   );
   check(
@@ -363,7 +360,7 @@ function check(name, cond, detail) {
   );
   check(
     "value filter matches instance col",
-    container.innerHTML.includes("first 5 of 5 matching rows"),
+    container.innerHTML.includes("1–5 of 5 matching rows"),
   );
 
   console.log("[sort while filtered]");
@@ -384,16 +381,13 @@ function check(name, cond, detail) {
   check("no-match message", container.innerHTML.includes("No rows match"));
   check(
     "zero count",
-    container.innerHTML.includes("first 0 of 0 matching rows (25 total)"),
+    container.innerHTML.includes("no matching rows (25 total)"),
   );
 
   console.log("[clear filter]");
   ctx._previewFilterChanged("");
   await new Promise((r) => setTimeout(r, 250));
-  check(
-    "back to unfiltered",
-    container.innerHTML.includes("first 20 of 25 rows"),
-  );
+  check("back to unfiltered", container.innerHTML.includes("1–25 of 25 rows"));
 
   // A download must never silently disagree with the screen: it follows the
   // preview's sort, ignores its filter, and says so while a filter is active.
