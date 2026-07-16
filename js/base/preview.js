@@ -158,7 +158,8 @@ function showResultsPreview(results) {
     if (!displayCols.includes(r)) displayCols.push(r);
   });
 
-  // Store state for sort + search filter + pagination + no-match-only view
+  // Store state for sort + search filter + pagination + no-match-only view +
+  // per-column filters (keyed by column NAME, so they survive a column moving)
   window._previewState = {
     results,
     displayCols,
@@ -168,6 +169,7 @@ function showResultsPreview(results) {
     page: 0,
     pageSize: DEFAULT_PAGE_SIZE,
     noMatchOnly: false,
+    columnFilters: {},
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
@@ -190,11 +192,17 @@ function filterAndSortRows(
   sortCol,
   sortDir,
   noMatchOnly = false,
+  columnFilters = {},
 ) {
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
   const instanceCols = noMatchOnly ? getInstanceColumns(results) : [];
+  // Per-column needles: a row must match EVERY active one (AND), each against its
+  // own column only — narrower than the global filter, which matches ANY column.
+  const colNeedles = Object.entries(columnFilters)
+    .map(([col, v]) => [col, String(v).trim().toLowerCase()])
+    .filter(([, v]) => v !== "");
   const rows = results.filter((row) => {
     if (noMatchOnly && !rowIsAllNoMatch(row, instanceCols)) return false;
     if (
@@ -206,6 +214,14 @@ function filterAndSortRows(
       )
     )
       return false;
+    for (const [col, v] of colNeedles) {
+      if (
+        !String(row[col] ?? "")
+          .toLowerCase()
+          .includes(v)
+      )
+        return false;
+    }
     return true;
   });
   if (sortCol !== null && sortCol !== undefined) {
@@ -226,6 +242,7 @@ function _renderPreviewTable(
     page = 0,
     pageSize = DEFAULT_PAGE_SIZE,
     noMatchOnly = false,
+    columnFilters = {},
   } = {},
 ) {
   const isNoMatch = isNoMatchValue;
@@ -249,15 +266,19 @@ function _renderPreviewTable(
     sortCol,
     sortDir,
     noMatchOnly,
+    columnFilters,
   );
   // Only for the wording below ("No rows match …", the count line); the
   // filtering itself is the helper's job
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
-  // Either narrowing is "filtered" for the count wording and the reminder that
+  const colFilterActive = Object.values(columnFilters).some(
+    (v) => String(v).trim() !== "",
+  );
+  // Any narrowing is "filtered" for the count wording and the reminder that
   // downloads still carry the whole set.
-  const filtered = !!needle || noMatchOnly;
+  const filtered = !!needle || noMatchOnly || colFilterActive;
   // The instance columns once, so the row highlight below uses the SAME predicate
   // the no-match-only filter does — a red row is exactly a row the filter keeps.
   const instanceCols = getInstanceColumns(results);
@@ -372,6 +393,19 @@ function _renderPreviewTable(
               )
               .join("")}
           </tr>
+          <tr style="background:var(--surface-alt);">
+            <th style="padding:2px 4px;text-align:center;">${
+              colFilterActive
+                ? `<button type="button" onclick="window._previewClearColumnFilters()" title="Clear all column filters" aria-label="Clear all column filters" style="font-size:10px;line-height:1;padding:2px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);color:var(--text-body);cursor:pointer;">✕</button>`
+                : ""
+            }</th>
+            ${displayCols
+              .map(
+                (c, i) =>
+                  `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…" oninput="window._previewColumnFilterChanged(${i}, this.value)" style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
+              )
+              .join("")}
+          </tr>
         </thead>
         <tbody>`;
 
@@ -442,11 +476,11 @@ function _renderPreviewTable(
 
   if (previewRows.length === 0 && filtered) {
     const emptyMsg =
-      noMatchOnly && !needle
+      noMatchOnly && !needle && !colFilterActive
         ? "No unmatched rows — every row found an instance."
-        : noMatchOnly && needle
-          ? `No unmatched rows match "${escapeHtml(needle)}"`
-          : `No rows match "${escapeHtml(needle)}"`;
+        : needle && !noMatchOnly && !colFilterActive
+          ? `No rows match "${escapeHtml(needle)}"`
+          : "No rows match the current filters.";
     html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">${emptyMsg}</td></tr>`;
   }
 
@@ -464,12 +498,30 @@ function _renderPreviewTable(
   container.innerHTML = html;
   container.classList.remove("hidden");
 
-  // Repopulate the search input via the DOM (never as an HTML attribute) and
-  // restore focus + cursor so re-rendering doesn't eat keystrokes
+  // Repopulate every filter input via the DOM (never as an HTML attribute — a
+  // value with a quote would break the attribute) and restore focus + cursor so a
+  // re-render mid-typing does not eat keystrokes.
   const searchInput = document.getElementById("previewSearch");
-  if (searchInput) {
-    searchInput.value = filter || "";
-    if (restoreFocus) {
+  if (searchInput) searchInput.value = filter || "";
+  displayCols.forEach((col, i) => {
+    const inp = document.getElementById(`colfilter_${i}`);
+    if (inp) inp.value = columnFilters[col] || "";
+  });
+
+  if (restoreFocus) {
+    // A column-filter keystroke restores that column's input; anything else
+    // restores the global search. The active column is keyed by NAME, so it is
+    // found again even if its position has shifted.
+    const activeCol = window._previewActiveColFilter;
+    if (activeCol) {
+      const idx = displayCols.indexOf(activeCol.col);
+      const inp = idx >= 0 ? document.getElementById(`colfilter_${idx}`) : null;
+      if (inp) {
+        inp.focus();
+        if (inp.setSelectionRange && activeCol.pos != null)
+          inp.setSelectionRange(activeCol.pos, activeCol.pos);
+      }
+    } else if (searchInput) {
       searchInput.focus();
       const pos =
         window._previewCursorPos != null
@@ -583,8 +635,8 @@ function copyPreviewToClipboard() {
   if (!state || !state.results || !state.results.length) return;
 
   // Same helper the table renders from, so the two cannot disagree — including
-  // the no-match-only view, so a copy taken with it on carries those rows and
-  // only those.
+  // the no-match-only view and the per-column filters, so a copy carries exactly
+  // the rows on screen.
   const rows = filterAndSortRows(
     state.results,
     state.displayCols,
@@ -592,6 +644,7 @@ function copyPreviewToClipboard() {
     state.sortCol,
     state.sortDir,
     state.noMatchOnly,
+    state.columnFilters,
   );
 
   copyTextToClipboard(
@@ -670,23 +723,41 @@ function applyRelaxSuggestion() {
 }
 window.applyRelaxSuggestion = applyRelaxSuggestion;
 
-window._sortPreview = function (colIdx) {
+// One re-render, reading every view option from _previewState. A new option is
+// added to the state and to the render — never to five separate call sites — so
+// no interaction can quietly forget to pass one. `restoreFocus` is the only
+// per-call concern: a filter keystroke restores the caret, a page turn does not.
+function _rerenderPreview(restoreFocus = false) {
   const s = window._previewState;
   if (!s) return;
-  const newDir = s.sortCol === colIdx ? -s.sortDir : 1;
-  s.sortCol = colIdx;
-  s.sortDir = newDir;
-  // Re-sorting reorders the whole set, so page 3 would show different rows; go
-  // back to the top where the newly-sorted rows are.
-  s.page = 0;
   const container = document.getElementById("resultsPreviewSection");
-  if (container)
-    _renderPreviewTable(container, s.results, s.displayCols, colIdx, newDir, {
+  if (!container) return;
+  _renderPreviewTable(
+    container,
+    s.results,
+    s.displayCols,
+    s.sortCol,
+    s.sortDir,
+    {
       filter: s.filter,
       page: s.page,
       pageSize: s.pageSize,
       noMatchOnly: s.noMatchOnly,
-    });
+      columnFilters: s.columnFilters,
+      restoreFocus,
+    },
+  );
+}
+
+window._sortPreview = function (colIdx) {
+  const s = window._previewState;
+  if (!s) return;
+  s.sortDir = s.sortCol === colIdx ? -s.sortDir : 1;
+  s.sortCol = colIdx;
+  // Re-sorting reorders the whole set, so page 3 would show different rows; go
+  // back to the top where the newly-sorted rows are.
+  s.page = 0;
+  _rerenderPreview();
 };
 
 // Rows-per-page selector. "all" → Infinity (one page holds everything).
@@ -696,21 +767,7 @@ window._previewSetPageSize = function (value) {
   s.pageSize =
     value === "all" ? Infinity : parseInt(value, 10) || DEFAULT_PAGE_SIZE;
   s.page = 0;
-  const container = document.getElementById("resultsPreviewSection");
-  if (container)
-    _renderPreviewTable(
-      container,
-      s.results,
-      s.displayCols,
-      s.sortCol,
-      s.sortDir,
-      {
-        filter: s.filter,
-        page: s.page,
-        pageSize: s.pageSize,
-        noMatchOnly: s.noMatchOnly,
-      },
-    );
+  _rerenderPreview();
 };
 
 // Page navigation. The render clamps the index, so an out-of-range target is
@@ -720,21 +777,7 @@ window._previewGoToPage = function (index) {
   const s = window._previewState;
   if (!s) return;
   s.page = Math.max(0, index);
-  const container = document.getElementById("resultsPreviewSection");
-  if (container)
-    _renderPreviewTable(
-      container,
-      s.results,
-      s.displayCols,
-      s.sortCol,
-      s.sortDir,
-      {
-        filter: s.filter,
-        page: s.page,
-        pageSize: s.pageSize,
-        noMatchOnly: s.noMatchOnly,
-      },
-    );
+  _rerenderPreview();
 };
 
 // Restrict the table to rows with no matching instance — exactly the rows the
@@ -744,24 +787,42 @@ window._previewToggleNoMatch = function (checked) {
   if (!s) return;
   s.noMatchOnly = !!checked;
   s.page = 0;
-  const container = document.getElementById("resultsPreviewSection");
-  if (container)
-    _renderPreviewTable(
-      container,
-      s.results,
-      s.displayCols,
-      s.sortCol,
-      s.sortDir,
-      {
-        filter: s.filter,
-        page: s.page,
-        pageSize: s.pageSize,
-        noMatchOnly: s.noMatchOnly,
-      },
-    );
+  _rerenderPreview();
 };
 
-// Debounced search-filter handler for the preview table
+// Per-column filter, keyed by column NAME so it survives a column moving. An
+// empty value removes the entry rather than storing "", so `colFilterActive`
+// stays a simple truthiness check. Debounced and focus-restored like the global
+// search — the active column is remembered by name across the re-render.
+window._previewColumnFilterChanged = function (colIdx, value) {
+  const s = window._previewState;
+  if (!s) return;
+  const col = s.displayCols[colIdx];
+  if (col == null) return;
+  if (String(value).trim() === "") delete s.columnFilters[col];
+  else s.columnFilters[col] = value;
+  s.page = 0;
+  clearTimeout(window._previewFilterTimer);
+  window._previewFilterTimer = setTimeout(() => {
+    const live = document.getElementById(`colfilter_${colIdx}`);
+    window._previewActiveColFilter = {
+      col,
+      pos: live && live.selectionStart != null ? live.selectionStart : null,
+    };
+    _rerenderPreview(true);
+    window._previewActiveColFilter = null;
+  }, 150);
+};
+
+window._previewClearColumnFilters = function () {
+  const s = window._previewState;
+  if (!s) return;
+  s.columnFilters = {};
+  s.page = 0;
+  _rerenderPreview();
+};
+
+// Debounced global search-filter handler for the preview table
 window._previewFilterChanged = function (value) {
   const s = window._previewState;
   if (!s) return;
@@ -771,28 +832,12 @@ window._previewFilterChanged = function (value) {
   s.page = 0;
   clearTimeout(window._previewFilterTimer);
   window._previewFilterTimer = setTimeout(() => {
-    const container = document.getElementById("resultsPreviewSection");
     const liveInput = document.getElementById("previewSearch");
     window._previewCursorPos =
       liveInput && liveInput.selectionStart != null
         ? liveInput.selectionStart
         : null;
-    if (container) {
-      _renderPreviewTable(
-        container,
-        s.results,
-        s.displayCols,
-        s.sortCol,
-        s.sortDir,
-        {
-          filter: s.filter,
-          restoreFocus: true,
-          page: s.page,
-          pageSize: s.pageSize,
-          noMatchOnly: s.noMatchOnly,
-        },
-      );
-    }
+    _rerenderPreview(true);
   }, 150);
 };
 
