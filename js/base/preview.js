@@ -170,6 +170,10 @@ function showResultsPreview(results) {
     pageSize: DEFAULT_PAGE_SIZE,
     noMatchOnly: false,
     columnFilters: {},
+    // Columns the user has hidden from view (by name). Display-only: filtering and
+    // sorting still see every column, and downloads still carry every column.
+    hiddenCols: new Set(),
+    colsMenuOpen: false,
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
@@ -243,8 +247,15 @@ function _renderPreviewTable(
     pageSize = DEFAULT_PAGE_SIZE,
     noMatchOnly = false,
     columnFilters = {},
+    hiddenCols = new Set(),
+    colsMenuOpen = false,
   } = {},
 ) {
+  const hidden = hiddenCols instanceof Set ? hiddenCols : new Set(hiddenCols);
+  // The columns actually rendered and copied. Hidden columns still filter, sort
+  // and download — they are only absent from the on-screen table and the
+  // clipboard, the same way a filtered-out row is.
+  const visibleCols = displayCols.filter((c) => !hidden.has(c));
   const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
   const isReasonCol = (c) => c.includes("No Match Reason");
@@ -348,6 +359,26 @@ function _renderPreviewTable(
       </select>
     </label>`;
 
+  // A native <details> disclosure — no click-outside JS, CSP-safe. Its open state
+  // is tracked so re-rendering after a toggle does not snap the menu shut. Each
+  // checkbox carries the column's INDEX, never its name, into the handler.
+  const hiddenCount = displayCols.length - visibleCols.length;
+  const columnsMenu = `
+    <details id="previewColsMenu"${colsMenuOpen ? " open" : ""} ontoggle="window._previewColsMenuState(this.open)" style="position:relative;">
+      <summary style="list-style:none;cursor:pointer;font-size:12px;color:var(--text-soft);border:1px solid var(--border-slate);border-radius:6px;padding:4px 8px;background:var(--surface);white-space:nowrap;user-select:none;">🧬 Columns${hiddenCount ? ` (${hiddenCount} hidden)` : ""}</summary>
+      <div style="position:absolute;z-index:3;margin-top:4px;right:0;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--border-slate);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.18);padding:6px 4px;min-width:180px;">
+        ${displayCols
+          .map(
+            (c, i) =>
+              `<label style="display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:12px;color:var(--text-body);white-space:nowrap;cursor:pointer;">
+                <input type="checkbox"${hidden.has(c) ? "" : " checked"} onchange="window._previewToggleColumn(${i}, this.checked)" aria-label="Show column ${escapeHtml(c)}" />
+                ${escapeHtml(c)}
+              </label>`,
+          )
+          .join("")}
+      </div>
+    </details>`;
+
   // Only shown when there is more than one page — a single page has nothing to
   // navigate, and a disabled Prev/Next pair would just be noise.
   const navBtn = (label, target, disabled, aria) =>
@@ -368,6 +399,7 @@ function _renderPreviewTable(
       <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         ${pageSizeSelect}
+        ${columnsMenu}
         <label style="font-size:12px;color:var(--text-soft);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;">
           <input type="checkbox" id="previewNoMatchOnly"${noMatchOnly ? " checked" : ""} onchange="window._previewToggleNoMatch(this.checked)" aria-label="Show only rows with no matching instance" />
           No-match only
@@ -387,9 +419,10 @@ function _renderPreviewTable(
           <tr style="position:sticky;top:0;z-index:1;background:var(--table-head-bg);color:var(--table-head-text);">
             <th style="padding:6px 8px;white-space:nowrap;cursor:default;"></th>
             ${displayCols
-              .map(
-                (c, i) =>
-                  `<th scope="col" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+              .map((c, i) =>
+                hidden.has(c)
+                  ? ""
+                  : `<th scope="col" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
               )
               .join("")}
           </tr>
@@ -400,9 +433,10 @@ function _renderPreviewTable(
                 : ""
             }</th>
             ${displayCols
-              .map(
-                (c, i) =>
-                  `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…" oninput="window._previewColumnFilterChanged(${i}, this.value)" style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
+              .map((c, i) =>
+                hidden.has(c)
+                  ? ""
+                  : `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…" oninput="window._previewColumnFilterChanged(${i}, this.value)" style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
               )
               .join("")}
           </tr>
@@ -421,8 +455,9 @@ function _renderPreviewTable(
         ? "var(--surface)"
         : "var(--surface-alt-2)";
     // Tab-separated like the table-level copy, so a single row also pastes
-    // across cells rather than landing in one
-    const rowTsv = buildPreviewTsv([row], displayCols).split("\n")[1];
+    // across cells rather than landing in one. Visible columns only, so a copied
+    // row matches the columns on screen — the table copy narrows the same way.
+    const rowTsv = buildPreviewTsv([row], visibleCols).split("\n")[1];
 
     html += `<tr style="background:${bg};">`;
     // Copy button
@@ -433,6 +468,7 @@ function _renderPreviewTable(
     </td>`;
 
     displayCols.forEach((col) => {
+      if (hidden.has(col)) return;
       const val = row[col] ?? "";
       let cellContent;
 
@@ -481,7 +517,7 @@ function _renderPreviewTable(
         : needle && !noMatchOnly && !colFilterActive
           ? `No rows match "${escapeHtml(needle)}"`
           : "No rows match the current filters.";
-    html += `<tr><td colspan="${displayCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">${emptyMsg}</td></tr>`;
+    html += `<tr><td colspan="${visibleCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">${emptyMsg}</td></tr>`;
   }
 
   html += `</tbody></table></div>`;
@@ -647,8 +683,16 @@ function copyPreviewToClipboard() {
     state.columnFilters,
   );
 
+  // And only the visible columns, so the copy matches the on-screen table by
+  // column too. Downloads still carry every column — hidden is a viewing choice.
+  const hidden =
+    state.hiddenCols instanceof Set
+      ? state.hiddenCols
+      : new Set(state.hiddenCols || []);
+  const visibleCols = state.displayCols.filter((c) => !hidden.has(c));
+
   copyTextToClipboard(
-    buildPreviewTsv(rows, state.displayCols),
+    buildPreviewTsv(rows, visibleCols),
     `Copied ${rows.length} row(s) to the clipboard`,
   );
 }
@@ -744,6 +788,8 @@ function _rerenderPreview(restoreFocus = false) {
       pageSize: s.pageSize,
       noMatchOnly: s.noMatchOnly,
       columnFilters: s.columnFilters,
+      hiddenCols: s.hiddenCols,
+      colsMenuOpen: s.colsMenuOpen,
       restoreFocus,
     },
   );
@@ -820,6 +866,39 @@ window._previewClearColumnFilters = function () {
   s.columnFilters = {};
   s.page = 0;
   _rerenderPreview();
+};
+
+// Show or hide a column, by its index in displayCols. Hiding also drops that
+// column's filter, so there is never a filter narrowing the table from a column
+// nobody can see. The last visible column cannot be hidden — an empty table has
+// nothing to show and no header to bring the column back from.
+window._previewToggleColumn = function (colIdx, visible) {
+  const s = window._previewState;
+  if (!s) return;
+  const col = s.displayCols[colIdx];
+  if (col == null) return;
+  if (!(s.hiddenCols instanceof Set))
+    s.hiddenCols = new Set(s.hiddenCols || []);
+  if (visible) {
+    s.hiddenCols.delete(col);
+  } else {
+    const visibleCount = s.displayCols.length - s.hiddenCols.size;
+    if (visibleCount <= 1) {
+      // Refuse to hide the last one; the re-render restores its checkbox.
+      _rerenderPreview();
+      return;
+    }
+    s.hiddenCols.add(col);
+    delete s.columnFilters[col];
+  }
+  _rerenderPreview();
+};
+
+// Remember whether the column menu is open, so re-rendering after a toggle does
+// not snap it shut. Pure state — no re-render, or the ontoggle event would loop.
+window._previewColsMenuState = function (open) {
+  const s = window._previewState;
+  if (s) s.colsMenuOpen = !!open;
 };
 
 // Debounced global search-filter handler for the preview table
