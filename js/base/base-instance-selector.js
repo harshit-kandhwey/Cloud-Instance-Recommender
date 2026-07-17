@@ -720,6 +720,10 @@ class BaseInstanceSelector {
       memory: 0,
       price: 0,
       hourlyPrice: "0.00",
+      // Declared here so an unmatched row carries the same shape as a matched
+      // one: the factory writes this field straight through, and a missing key
+      // would otherwise surface as "undefined" in the exported CSV.
+      familyName: "",
       rulesApplied: (this._lastRulesApplied || []).join(" | "),
       reason: reason,
     };
@@ -738,12 +742,6 @@ class BaseInstanceSelector {
       generation: instance.generation,
       reason: `Selected based on >=${currentCpu}vCPU and >=${currentMemory}GB - cheapest match`,
     };
-  }
-
-  // Get instance family from instance type
-  getInstanceFamily(instanceType) {
-    const match = instanceType.match(/^([a-z]+\d+[a-z]*)/i);
-    return match ? match[1] : "";
   }
 
   // Get main instance family (simplified)

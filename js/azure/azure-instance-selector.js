@@ -380,13 +380,6 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     );
   }
 
-  // Azure-specific: Get instance family from Azure instance type
-  getInstanceFamily(instanceType) {
-    // Standard_D2s_v3 -> D2s_v3
-    const match = instanceType.match(/^Standard_([A-Z][a-z]*\d*[a-z]*)/);
-    return match ? match[1] : "";
-  }
-
   // Azure-specific: Get VM series from instance type
   getVMSeries(instanceType) {
     // Standard_D2s_v3 -> Dsv3

@@ -304,9 +304,11 @@ The results CSV contains your original columns plus per-provider recommendation 
 | Column                                            | Description                                                                        |
 | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `AWS Like-to-Like Instance`                       | Recommended EC2 type                                                               |
+| `AWS Like-to-Like Family`                         | Family category of that instance — `General purpose`, `Compute optimized`, …       |
 | `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                                                 |
 | `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                                                     |
 | `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                                                   |
+| `AWS Optimized Family`                            | Family category of the optimized instance                                          |
 | `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired                                |
 | `AWS No Match Reason`                             | Explains why no instance was found (when applicable)                               |
 | `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax |

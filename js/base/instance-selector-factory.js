@@ -208,12 +208,14 @@ window.getInstanceRecommendationWithSelector = async function (
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Missing data";
+          result[`${providerUpper} Like-to-Like Family`] = "N/A";
           result[`${providerUpper} Like-to-Like vCPUs`] = "N/A";
           result[`${providerUpper} Like-to-Like Memory (GiB)`] = "N/A";
         }
 
         if (generateOptimized) {
           result[`${providerUpper} Optimized Instance`] = "Missing data";
+          result[`${providerUpper} Optimized Family`] = "N/A";
           result[`${providerUpper} Optimized vCPUs`] = "N/A";
           result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
         }
@@ -230,6 +232,12 @@ window.getInstanceRecommendationWithSelector = async function (
           );
           result[`${providerUpper} Like-to-Like Instance`] =
             likeToLike.instanceType;
+          // The provider's own family category ("General purpose", "Compute
+          // optimized"): taken from the region data, never parsed back out of
+          // the instance name — Azure's family is not a function of its name
+          // (b2ms→bs drops the size letters, d16lsv6→dlsv6 keeps them).
+          result[`${providerUpper} Like-to-Like Family`] =
+            likeToLike.familyName;
           result[`${providerUpper} Like-to-Like vCPUs`] = likeToLike.vCpus;
           result[`${providerUpper} Like-to-Like Memory (GiB)`] =
             likeToLike.memory;
@@ -258,6 +266,7 @@ window.getInstanceRecommendationWithSelector = async function (
             );
             result[`${providerUpper} Optimized Instance`] =
               optimized.instanceType;
+            result[`${providerUpper} Optimized Family`] = optimized.familyName;
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
             result[`${providerUpper} Optimized Memory (GiB)`] =
               optimized.memory;
@@ -277,6 +286,7 @@ window.getInstanceRecommendationWithSelector = async function (
           } else {
             result[`${providerUpper} Optimized Instance`] =
               "No utilization data";
+            result[`${providerUpper} Optimized Family`] = "N/A";
             result[`${providerUpper} Optimized vCPUs`] = "N/A";
             result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
             if (!generateLikeToLike) {
@@ -294,12 +304,14 @@ window.getInstanceRecommendationWithSelector = async function (
 
         if (generateLikeToLike) {
           result[`${providerUpper} Like-to-Like Instance`] = "Error";
+          result[`${providerUpper} Like-to-Like Family`] = "Error";
           result[`${providerUpper} Like-to-Like vCPUs`] = "Error";
           result[`${providerUpper} Like-to-Like Memory (GiB)`] = "Error";
         }
 
         if (generateOptimized) {
           result[`${providerUpper} Optimized Instance`] = "Error";
+          result[`${providerUpper} Optimized Family`] = "Error";
           result[`${providerUpper} Optimized vCPUs`] = "Error";
           result[`${providerUpper} Optimized Memory (GiB)`] = "Error";
         }

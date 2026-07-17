@@ -782,12 +782,6 @@ class AWSInstanceSelector extends BaseInstanceSelector {
     return filteredInstances;
   }
 
-  // AWS-specific: Get instance family from AWS instance type
-  getInstanceFamily(instanceType) {
-    const match = instanceType.match(/^([a-z]+\d+[a-z]*)/);
-    return match ? match[1] : "";
-  }
-
   // AWS-specific: Log enhanced loading statistics
   logLoadingStatistics(instances, region) {
     super.logLoadingStatistics(instances, region);

@@ -477,13 +477,6 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     return filteredInstances;
   }
 
-  // GCP-specific: Get instance family from GCP instance type
-  getInstanceFamily(instanceType) {
-    // n2-standard-4 -> n2-standard
-    const match = instanceType.match(/^([a-z]+\d*[a-z]*-[a-z]+)/);
-    return match ? match[1] : "";
-  }
-
   // GCP-specific: Log enhanced loading statistics
   logLoadingStatistics(instances, region) {
     super.logLoadingStatistics(instances, region);
