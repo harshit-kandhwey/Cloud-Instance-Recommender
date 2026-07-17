@@ -140,6 +140,97 @@ function _familyDistribution(results) {
     </figure>`;
 }
 
+// ─── vCPU / RAM before → after ──────────────────────────────────────────────
+// What optimizing did to the fleet's size, per provider: the total baseline
+// footprint against the total optimized footprint. TWO charts, never one with
+// two y-axes — vCPU and GiB are different units on different scales, and a
+// shared axis would imply a crossover wherever the two happen to be zeroed.
+//
+// "Before" wears the de-emphasis gray and "after" the emphasis hue, so the eye
+// reads the direction of change without a legend; each bar is direct-labelled
+// with its value. Bars share one scale per chart (the max across providers of
+// either endpoint) so a longer bar always means more. Never summed across
+// providers — the same VM appears once per provider, so a combined total would
+// count it two or three times; each provider is its own small multiple.
+function _beforeAfter(results) {
+  const savings =
+    typeof computeSizingSavings === "function"
+      ? computeSizingSavings(results)
+      : [];
+  if (!savings.length) return "";
+
+  const measures = [
+    {
+      caption: "vCPU: before → after",
+      before: "beforeVcpus",
+      after: "afterVcpus",
+      unit: "vCPU",
+    },
+    {
+      caption: "Memory: before → after",
+      before: "beforeMemory",
+      after: "afterMemory",
+      unit: "GiB",
+    },
+  ];
+
+  const charts = measures
+    .map(({ caption, before, after, unit }) => {
+      // A measure with no movement on any provider is an axis of equal bars —
+      // honest but empty; the other chart carries whatever did change.
+      if (savings.every((s) => s[before] === s[after])) return "";
+
+      const scale = Math.max(
+        1,
+        ...savings.map((s) => Math.max(s[before], s[after])),
+      );
+
+      const providerBlocks = savings
+        .map((s) => {
+          const bar = (label, value, color) => {
+            const pct = Math.round((value / scale) * 100);
+            return `
+        <div style="display:flex;align-items:center;gap:8px;margin:2px 0;font-size:12px;">
+          <span style="flex:0 0 52px;color:var(--text-soft);text-align:right;">${label}</span>
+          <span style="flex:1;min-width:60px;height:14px;background:var(--success-bg);border-radius:4px;overflow:hidden;">
+            <span style="display:block;width:${pct}%;height:100%;background:${color};border-radius:4px;"></span>
+          </span>
+          <span style="flex:0 0 auto;font-weight:700;color:var(--text);min-width:28px;">${value}</span>
+        </div>`;
+          };
+
+          const heading =
+            savings.length > 1
+              ? `<div style="font-size:11px;font-weight:700;color:var(--text-soft);margin:6px 0 1px 0;">${escapeHtml(s.provider)}</div>`
+              : "";
+
+          return `${heading}
+        ${bar("Before", s[before], "var(--chart-context)")}
+        ${bar("After", s[after], "var(--chart-bar)")}`;
+        })
+        .join("");
+
+      // One-line accessible summary, so the direction of change is never
+      // colour-alone.
+      const summary = savings
+        .map(
+          (s) =>
+            `${s.provider}: ${s[before]} → ${s[after]} ${unit} vs ${s.baseline}`,
+        )
+        .join("; ");
+
+      return `
+      <figure style="margin:14px 0 0 0;" role="img" aria-label="${escapeHtml(caption)}. ${escapeHtml(summary)}">
+        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:2px;">${caption}</figcaption>
+        ${providerBlocks}
+      </figure>`;
+    })
+    .filter(Boolean)
+    .join("");
+
+  return charts;
+}
+
 // ─── Entry point ──────────────────────────────────────────────────────────────
 // Returns false when the page has no placeholder, so a caller can tell the
 // difference between "nothing to draw" and "nowhere to draw it".
@@ -153,7 +244,11 @@ function renderResultsCharts(results) {
     return true;
   }
 
-  const charts = [_matchRateMeter(results), _familyDistribution(results)]
+  const charts = [
+    _matchRateMeter(results),
+    _familyDistribution(results),
+    _beforeAfter(results),
+  ]
     .filter(Boolean)
     .join("");
   if (!charts) {

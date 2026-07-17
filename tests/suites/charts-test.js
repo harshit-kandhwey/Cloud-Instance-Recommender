@@ -239,6 +239,167 @@ console.log("[family names are escaped, never injected]");
   );
 }
 
+// A row with a like-for-like baseline and an optimized recommendation, so
+// computeSizingSavings has a before and an after to compare.
+const baRow = (name, { l2lCpu, l2lMem, optCpu, optMem, p = "AWS" }) => ({
+  "VM Name": name,
+  [`${p} Like-to-Like Instance`]: "m5.xlarge",
+  [`${p} Like-to-Like vCPUs`]: l2lCpu,
+  [`${p} Like-to-Like Memory (GiB)`]: l2lMem,
+  [`${p} Optimized Instance`]: "t3.large",
+  [`${p} Optimized vCPUs`]: optCpu,
+  [`${p} Optimized Memory (GiB)`]: optMem,
+});
+
+console.log("[vCPU and RAM are each their own before→after chart]");
+{
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    baRow("a", { l2lCpu: 8, l2lMem: 32, optCpu: 4, optMem: 16 }),
+  ]);
+  const html = panel(elements).innerHTML;
+
+  check(
+    "there is a vCPU before→after chart",
+    html.includes("vCPU: before → after"),
+    html,
+  );
+  check(
+    "there is a separate Memory before→after chart",
+    html.includes("Memory: before → after"),
+    html,
+  );
+  // Two charts, never one dual-axis chart: exactly two before→after figures,
+  // counted by their captions (the phrase also appears in each aria-label).
+  const captions =
+    html.match(/<figcaption[^>]*>[^<]*before → after<\/figcaption>/g) || [];
+  check(
+    "the two measures are two charts, not one shared axis",
+    captions.length === 2,
+    `${captions.length} chart caption(s)`,
+  );
+  check(
+    "the vCPU endpoints are stated: 8 before, 4 after",
+    /8 → 4 vCPU/.test(html),
+    html.match(/aria-label="vCPU[^"]*"/)?.[0],
+  );
+  check(
+    "the memory endpoints are stated: 32 before, 16 after",
+    /32 → 16 GiB/.test(html),
+    html.match(/aria-label="Memory[^"]*"/)?.[0],
+  );
+  // Direction is carried by the aria-label, never colour alone.
+  check(
+    "each chart carries a text alternative naming the baseline",
+    /aria-label="vCPU[^"]*vs like-for-like"/.test(html),
+  );
+  // Before and after are visually distinct: the de-emphasis gray vs the hue.
+  check(
+    "before wears the context gray and after the emphasis hue",
+    html.includes("var(--chart-context)") && html.includes("var(--chart-bar)"),
+  );
+}
+
+console.log("[a before→after endpoint pair reconstructs the reported delta]");
+{
+  // The chart's endpoints and the stats bar's savings delta come from the same
+  // primitive, so they can never disagree: before − after === the delta.
+  const { ctx } = buildContext();
+  const savings = ctx.computeSizingSavings([
+    baRow("a", { l2lCpu: 8, l2lMem: 32, optCpu: 4, optMem: 16 }),
+    baRow("b", { l2lCpu: 2, l2lMem: 8, optCpu: 2, optMem: 4 }),
+  ]);
+  const s = savings[0];
+  check(
+    "beforeVcpus − afterVcpus equals the vcpus delta",
+    s.beforeVcpus - s.afterVcpus === s.vcpus,
+    JSON.stringify(s),
+  );
+  check(
+    "beforeMemory − afterMemory equals the memory delta",
+    s.beforeMemory - s.afterMemory === s.memory,
+    JSON.stringify(s),
+  );
+}
+
+console.log("[an axis that did not move is not drawn as equal bars]");
+{
+  // vCPU is identical before and after; only memory changed. The vCPU chart
+  // would be two equal bars saying nothing, so it is omitted; memory remains.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    baRow("a", { l2lCpu: 4, l2lMem: 32, optCpu: 4, optMem: 16 }),
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "the unchanged vCPU axis is omitted",
+    !html.includes("vCPU: before → after"),
+    html,
+  );
+  check(
+    "the changed memory axis is still drawn",
+    html.includes("Memory: before → after"),
+  );
+}
+
+console.log("[an optimized-only run compares against the current size]");
+{
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    {
+      "VM Name": "a",
+      "CPU Count": "8",
+      "Memory (GB)": "32",
+      "AWS Optimized Instance": "m5.large",
+      "AWS Optimized vCPUs": 4,
+      "AWS Optimized Memory (GiB)": 16,
+    },
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "the baseline is named as the current size, not like-for-like",
+    /vs current size/.test(html) && !/vs like-for-like/.test(html),
+    html.match(/aria-label="vCPU[^"]*"/)?.[0],
+  );
+}
+
+console.log("[upsizing is charted as plainly as downsizing]");
+{
+  // Optimized is LARGER than the baseline (an honest outcome when the current
+  // box was undersized). The after bar must simply be the longer one.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    baRow("a", { l2lCpu: 2, l2lMem: 8, optCpu: 4, optMem: 8 }),
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "an upsized vCPU is shown going up, not hidden",
+    /2 → 4 vCPU/.test(html),
+    html.match(/aria-label="vCPU[^"]*"/)?.[0],
+  );
+}
+
+console.log("[a like-for-like-only run draws no before→after]");
+{
+  // No optimized columns, so there is no "after" — the charts must simply not
+  // appear rather than inventing one.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    {
+      "VM Name": "a",
+      "AWS Like-to-Like Instance": "m5.large",
+      "AWS Like-to-Like vCPUs": 2,
+      "AWS Like-to-Like Memory (GiB)": 8,
+    },
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "no before→after chart is drawn",
+    !html.includes("before → after"),
+    html,
+  );
+}
+
 console.log("[the renderer survives a page that has no placeholder]");
 {
   // Four pages, one renderer: a page missing the panel must lose the charts, not

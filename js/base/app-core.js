@@ -712,6 +712,13 @@ function computeSizingSavings(results) {
 
     let vcpus = 0;
     let memory = 0;
+    // The absolute before/after totals, alongside the net delta — a before→after
+    // chart needs the two endpoints, not just their difference. Summed over the
+    // same rows and the same baseline, so beforeVcpus − afterVcpus === vcpus.
+    let beforeVcpus = 0;
+    let afterVcpus = 0;
+    let beforeMemory = 0;
+    let afterMemory = 0;
     let rows = 0;
 
     results.forEach((row) => {
@@ -734,14 +741,23 @@ function computeSizingSavings(results) {
       if ([toCpu, toMem, fromCpu, fromMem].some((n) => isNaN(n))) return;
       vcpus += fromCpu - toCpu;
       memory += fromMem - toMem;
+      beforeVcpus += fromCpu;
+      afterVcpus += toCpu;
+      beforeMemory += fromMem;
+      afterMemory += toMem;
       rows++;
     });
 
     if (rows > 0 && (vcpus !== 0 || memory !== 0)) {
+      const round = (n) => Math.round(n * 10) / 10;
       savings.push({
         provider,
-        vcpus: Math.round(vcpus * 10) / 10,
-        memory: Math.round(memory * 10) / 10,
+        vcpus: round(vcpus),
+        memory: round(memory),
+        beforeVcpus: round(beforeVcpus),
+        afterVcpus: round(afterVcpus),
+        beforeMemory: round(beforeMemory),
+        afterMemory: round(afterMemory),
         rows,
         baseline: againstLikeForLike ? "like-for-like" : "current size",
       });
