@@ -97,6 +97,148 @@ console.log("[a clean sweep says 100%, with no phantom no-match]");
   check("and no 'no match' clause at all", !html.includes("no match"), html);
 }
 
+// A row landing on a given family, per provider. Optimized and Like-to-Like are
+// given DIFFERENT families on purpose, so a test can tell which one the chart
+// counted — the chart should prefer the optimized recommendation.
+const famRow = (name, { awsOpt, awsL2l, azOpt } = {}) => {
+  const row = { "VM Name": name };
+  if (awsOpt || awsL2l) {
+    row["AWS Like-to-Like Instance"] = "m5.xlarge";
+    row["AWS Like-to-Like Family"] = awsL2l || "General purpose";
+    row["AWS Optimized Instance"] = "t3.large";
+    row["AWS Optimized Family"] = awsOpt || "General purpose";
+  }
+  if (azOpt) {
+    row["AZURE Optimized Instance"] = "d2sv5";
+    row["AZURE Optimized Family"] = azOpt;
+  }
+  return row;
+};
+// A no-match AWS row, exactly as the factory writes one: the instance cell is a
+// real sentinel ("Missing data") and the family cell its "N/A" placeholder. The
+// chart must recognise it by the instance cell — if it instead trusted the
+// family string, counting "N/A" as a family would slip through the day the
+// placeholder text changes.
+const famNoMatch = (name) => ({
+  "VM Name": name,
+  "AWS Like-to-Like Instance": "Missing data",
+  "AWS Like-to-Like Family": "N/A",
+  "AWS Optimized Instance": "Missing data",
+  "AWS Optimized Family": "N/A",
+});
+
+console.log("[family distribution counts the families it landed on]");
+{
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    famRow("a", { awsOpt: "General purpose" }),
+    famRow("b", { awsOpt: "General purpose" }),
+    famRow("c", { awsOpt: "Compute optimized" }),
+    famNoMatch("d"), // must not become a phantom "N/A" bar
+  ]);
+  const html = panel(elements).innerHTML;
+
+  check("the section is titled", html.includes("Recommended families"), html);
+  check(
+    "each landed-on family is named",
+    html.includes("General purpose") && html.includes("Compute optimized"),
+    html,
+  );
+  // Two on General purpose, one on Compute optimized, counted honestly.
+  check(
+    "General purpose carries its count of 2",
+    /General purpose<\/span>[\s\S]*?>2<\/span>/.test(html),
+    html.match(/General purpose[\s\S]{0,220}?<\/span>/)?.[0],
+  );
+  check(
+    "a no-match row does not invent an N/A family",
+    !html.includes(">N/A<") && !/title="N\/A"/.test(html),
+    html,
+  );
+  check(
+    "the single-provider heading counts only matched rows",
+    html.includes("3 matched"),
+    html.match(/\d+ matched[^<]*/)?.[0],
+  );
+  // Most-common first: General purpose (2) must appear before Compute
+  // optimized (1) in document order.
+  check(
+    "families are ordered most-common first",
+    html.indexOf("General purpose") < html.indexOf("Compute optimized"),
+  );
+}
+
+console.log("[it charts the optimized recommendation, not the like-for-like]");
+{
+  // Optimized landed on Compute optimized; like-for-like on Memory optimized.
+  // The chart describes what you would deploy — the optimized set — so Memory
+  // optimized must not appear at all.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    famRow("a", { awsOpt: "Compute optimized", awsL2l: "Memory optimized" }),
+  ]);
+  const html = panel(elements).innerHTML;
+  check("the optimized family is shown", html.includes("Compute optimized"));
+  check(
+    "and the like-for-like family is not",
+    !html.includes("Memory optimized"),
+    html,
+  );
+  check("the heading names the optimized basis", html.includes("optimized"));
+}
+
+console.log("[a like-for-like-only run falls back to that family]");
+{
+  // No Optimized Family column exists, so the chart must read the like-to-like
+  // family rather than showing nothing.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    {
+      "VM Name": "a",
+      "AWS Like-to-Like Instance": "m5.xlarge",
+      "AWS Like-to-Like Family": "Storage optimized",
+    },
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "the like-for-like family is charted",
+    html.includes("Storage optimized"),
+  );
+  check(
+    "and the heading says like-to-like",
+    /like-to-like/i.test(html),
+    html.match(/\d+ matched[^<]*/)?.[0],
+  );
+}
+
+console.log("[each provider gets its own block, labels never merged]");
+{
+  // The category LABELS differ across clouds and must not be pooled: keep one
+  // block per provider, each naming its provider.
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    famRow("a", { awsOpt: "General purpose", azOpt: "General purpose" }),
+    famRow("b", { awsOpt: "Compute optimized", azOpt: "General purpose" }),
+  ]);
+  const html = panel(elements).innerHTML;
+  check("AWS is named as its own block", html.includes("AWS"), html);
+  check("AZURE is named as its own block", html.includes("AZURE"), html);
+}
+
+console.log("[family names are escaped, never injected]");
+{
+  const { ctx, elements } = buildContext();
+  ctx.renderResultsCharts([
+    famRow("a", { awsOpt: "<img src=x onerror=alert(1)>" }),
+  ]);
+  const html = panel(elements).innerHTML;
+  check(
+    "an angle bracket in a family name is escaped",
+    html.includes("&lt;img") && !html.includes("<img src=x"),
+    html.match(/&lt;img[^"]*|<img src=x[^>]*/)?.[0],
+  );
+}
+
 console.log("[the renderer survives a page that has no placeholder]");
 {
   // Four pages, one renderer: a page missing the panel must lose the charts, not
