@@ -767,6 +767,49 @@ function computeSizingSavings(results) {
   return savings;
 }
 
+// ─── Fit / headroom ───────────────────────────────────────────────────────────
+// How much spare capacity a like-for-like recommendation leaves over the size
+// that was requested. Instances come in fixed vCPU:RAM ratios, so matching a
+// workload whose own ratio differs forces extra capacity on one axis — that
+// excess is the headroom, and a large one flags an over-provisioned match (a
+// requirement of 14 vCPU / 8 GB lands on a box with 32 GB: 300% memory
+// headroom, not because the box is wrong but because nothing smaller had the
+// cores).
+//
+// Only meaningful for the like-for-like recommendation, whose requirement is
+// exactly the requested CPU Count / Memory (GB). The optimized recommendation is
+// sized against utilization instead — deliberately smaller — and its rightsizing
+// is shown by the vCPU diff, not here. Returns null when the numbers to compare
+// are not both present (a no-match row has no vCPUs/Memory to read).
+//
+// Compared the way the ENGINE compares — instance GiB against requested GB
+// directly, the ~7% unit difference well below the flag threshold — so the flag
+// never contradicts the match the engine actually made.
+function computeFitHeadroom(row, provider) {
+  const reqCpu = parseFloat(row[COLUMN_MAPPINGS.cpu]);
+  const reqMem = parseFloat(row[COLUMN_MAPPINGS.memory]);
+  const instCpu = parseFloat(row[`${provider} Like-to-Like vCPUs`]);
+  const instMem = parseFloat(row[`${provider} Like-to-Like Memory (GiB)`]);
+  if ([reqCpu, reqMem, instCpu, instMem].some((n) => isNaN(n))) return null;
+  if (reqCpu <= 0 || reqMem <= 0) return null;
+
+  const cpu = (instCpu - reqCpu) / reqCpu;
+  const mem = (instMem - reqMem) / reqMem;
+  // The binding axis is the tighter fit; the other carries the waste. Report the
+  // worse (larger) of the two as the headroom that flags over-provisioning.
+  const worst = Math.max(cpu, mem);
+  return {
+    cpu,
+    mem,
+    worst,
+    axis: cpu >= mem ? "vCPU" : "memory",
+    reqCpu,
+    reqMem,
+    instCpu,
+    instMem,
+  };
+}
+
 // ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
 // The engine already works out, per unmatched row, which soft-filter group kept
 // the otherwise-fitting instance out ("Nearest Miss" column). This turns that

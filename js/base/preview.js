@@ -13,6 +13,37 @@ function escapeCsvCell(val) {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
+// The fit/headroom flag that trails a like-for-like instance name: how much
+// spare capacity the match leaves over the requested size (computeFitHeadroom).
+// Display-only — nothing about it reaches a download, so the CSV schema and the
+// goldens are untouched. Shown only for a like-for-like Instance cell, and only
+// once the worst-axis headroom is worth flagging: below 25% is a tight fit and
+// stays unmarked (this also keeps the ~7% GiB-vs-GB rounding from ever showing).
+// 100%+ (the box is ≥2× the requirement on some axis) is drawn stronger.
+const FIT_FLAG_MIN = 0.25;
+const FIT_FLAG_STRONG = 1.0;
+function _fitBadgeHtml(row, col) {
+  // One anchored mechanism: the flag is for a like-for-like Instance column and
+  // its provider is exactly the prefix. An Optimized Instance column does not
+  // match, so it is never flagged (its rightsizing is the vCPU diff instead) —
+  // and the provider can never be mis-derived into a neighbouring column.
+  const m = /^(.*) Like-to-Like Instance$/.exec(col);
+  if (!m) return "";
+  if (typeof computeFitHeadroom !== "function") return "";
+  const provider = m[1];
+  const h = computeFitHeadroom(row, provider);
+  if (!h || h.worst < FIT_FLAG_MIN) return "";
+
+  const pct = Math.round(h.worst * 100);
+  const strong = h.worst >= FIT_FLAG_STRONG;
+  const color = strong ? "var(--amber-deep)" : "var(--amber-strong)";
+  const weight = strong ? "font-weight:700;" : "";
+  const provided = h.axis === "vCPU" ? `${h.instCpu} vCPU` : `${h.instMem} GiB`;
+  const required = h.axis === "vCPU" ? `${h.reqCpu} vCPU` : `${h.reqMem} GB`;
+  const label = `Over-provisioned: provides ${provided} against ${required} required — ${pct}% ${h.axis} headroom`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};${weight}white-space:nowrap;">▲${pct}%</span>`;
+}
+
 // The stats bar describes the whole result set, so it does not change when the
 // preview is filtered or re-sorted — but it was being rebuilt on every debounced
 // keystroke and every sort click, rescanning every row for rules, matches and
@@ -481,8 +512,11 @@ function _renderPreviewTable(
       } else if (isInstanceCol(col)) {
         const bad = isNoMatch(val);
         const color = bad ? "var(--red-strong)" : "var(--ok-strong)";
+        // A matched like-for-like cell trails its fit/headroom flag; a no-match
+        // cell never does (there is no instance whose size to compare).
+        const fit = bad ? "" : _fitBadgeHtml(row, col);
         cellContent = val
-          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>`
+          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>${fit}`
           : '<span style="color:var(--text-disabled)">—</span>';
       } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
         // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
@@ -529,7 +563,7 @@ function _renderPreviewTable(
   } else if (pageCount > 1) {
     html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Download the CSV for the full ${results.length}-row dataset in a single file.</p>`;
   }
-  html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · Red rows = no match</p>`;
+  html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · <span style="color:var(--amber-strong);">▲%</span> on a like-for-like match = over-provisioned by that much on its worst axis · Red rows = no match</p>`;
 
   container.innerHTML = html;
   container.classList.remove("hidden");
