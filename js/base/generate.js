@@ -283,6 +283,12 @@ async function processRecommendations() {
     // Show inline results preview
     showResultsPreview(processedResults);
 
+    // Summary charts above the table. Guarded: charts.js is a page-level script
+    // like the rest, and a page that has not loaded it should lose the charts,
+    // not the results.
+    if (typeof renderResultsCharts === "function")
+      renderResultsCharts(processedResults);
+
     // Offer the single filter change that would rescue the most unmatched rows
     updateRelaxSuggestion(processedResults);
 

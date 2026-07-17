@@ -390,6 +390,7 @@ console.log("[section collapse state]");
     "regionValidationSection",
     "appMappingSection",
     "dataPreviewSection",
+    "resultsChartsSection",
   ];
   // The id has to be found on a real ELEMENT in the document body, not merely
   // somewhere in the file's bytes. A substring search would be satisfied by the

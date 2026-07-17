@@ -66,6 +66,15 @@
   --red-strong: #dc2626;
   --red-badge: #dc3545;
 
+  /* Charts. Marks, not text — labels wear the text tokens above.
+     Each step is chosen per theme against that theme's --surface and checked for
+     >=3:1 contrast, never flipped automatically from the other mode: #4c63d2
+     reads 5.22:1 on white but only 2.97:1 on the dark surface, and #818cf8 the
+     reverse (2.98 / 5.19). --chart-context is the de-emphasis gray a "before"
+     bar wears so the "after" bar is the one that carries the accent. */
+  --chart-bar: #4c63d2;
+  --chart-context: #64748b;
+
   /* Step-guide heading accents (details blocks in the pages) */
   --heading-indigo: #2c3e8c;
   --heading-green: #1a6b3c;
@@ -129,6 +138,9 @@
   --amber-deep: #f59e0b;
   --red-strong: #f87171;
   --red-badge: #f87171;
+
+  --chart-bar: #818cf8;
+  --chart-context: #94a3b8;
 
   --heading-indigo: #a5b4fc;
   --heading-green: #6ee7a0;

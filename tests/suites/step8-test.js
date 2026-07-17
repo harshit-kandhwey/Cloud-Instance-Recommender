@@ -36,6 +36,7 @@ console.log("[token coverage]");
     "js/base/form-controls.js",
     "js/base/generate.js",
     "js/base/preview.js",
+    "js/base/charts.js",
     "js/base/downloads.js",
     "aws.html",
     "azure.html",
