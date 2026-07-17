@@ -327,6 +327,122 @@ check(
   JSON.stringify(pinnedAfter),
 );
 
+// ── CSV export: the whole comparison as one sectioned file ─────────────────────
+// buildScenarioComparisonCsv reuses the same pure diffs the table draws, so the
+// file cannot disagree with the screen; escapeCsvCell (moved to app-core.js)
+// hardens every cell exactly as the other exports do.
+sandbox.csvA = {
+  label: "Run 1",
+  at: "10:00:00",
+  config: {
+    recommendationType: "both",
+    providers: ["aws"],
+    checkboxes: { currentGenerationOnly: false },
+    numbers: { cpuDownsizeMax: "40" },
+    texts: {},
+    groupChecked: [],
+  },
+  results: [
+    { "VM Name": "web-01", [AWS]: "m5.large" },
+    { "VM Name": "db-02", [AWS]: "r5.xlarge" }, // unchanged
+    { "VM Name": "odd,name", [AWS]: "No data available" }, // newly matched
+  ],
+};
+sandbox.csvB = {
+  label: "Run 3",
+  at: "10:05:00",
+  config: {
+    recommendationType: "both",
+    providers: ["aws"],
+    checkboxes: { currentGenerationOnly: true },
+    numbers: { cpuDownsizeMax: "30" },
+    texts: {},
+    groupChecked: [],
+  },
+  results: [
+    { "VM Name": "web-01", [AWS]: "m6i.large" }, // changed
+    { "VM Name": "db-02", [AWS]: "r5.xlarge" }, // unchanged
+    { "VM Name": "odd,name", [AWS]: "r6g.large" }, // newly matched
+  ],
+};
+const csv = run("buildScenarioComparisonCsv(csvA, csvB)");
+const csvLines = csv.split("\n");
+
+check(
+  "the config section reports the changed settings",
+  csv.includes("Current generation only,off,on") &&
+    csv.includes("CPU downsize max %,40,30"),
+  csv,
+);
+check(
+  "the summary carries the match rates and change count",
+  csv.includes("Match rate %,67,100") && csv.includes("VMs changed,,2 of 3"),
+  csvLines
+    .filter((l) => l.startsWith("Match rate") || l.startsWith("VMs"))
+    .join(" | "),
+);
+check(
+  "the changed-rows header pairs each column as (A) and (B)",
+  csv.includes(`${AWS} (A),${AWS} (B)`),
+  csvLines.find((l) => l.startsWith("VM,")),
+);
+check(
+  "only changed rows are written — the unchanged db-02 is absent",
+  csv.includes("web-01,m5.large,m6i.large") && !/(^|\n)db-02,/.test(csv),
+  csvLines.filter((l) => /^(web-01|db-02|"odd)/.test(l)).join(" | "),
+);
+check(
+  "a comma in a VM name is quoted, not left to split the row",
+  csv.includes('"odd,name",No data available,r6g.large'),
+  csvLines.find((l) => l.includes("odd,name")),
+);
+
+// CSV-injection hardening: a value that begins with a formula character must be
+// neutralised so a spreadsheet does not execute it on open.
+sandbox.evilA = {
+  label: "x",
+  at: "t",
+  config: null,
+  results: [{ "VM Name": "=HYPERLINK(1)", [AWS]: "m5.large" }],
+};
+sandbox.evilB = {
+  label: "y",
+  at: "t",
+  config: null,
+  results: [{ "VM Name": "=HYPERLINK(1)", [AWS]: "m6i.large" }],
+};
+const evilCsv = run("buildScenarioComparisonCsv(evilA, evilB)");
+check(
+  "a leading = in a cell is prefixed with a quote",
+  evilCsv.includes("'=HYPERLINK(1)") && !/\n=HYPERLINK/.test(evilCsv),
+  evilCsv.split("\n").find((l) => l.includes("HYPERLINK")),
+);
+check(
+  "a null config snapshot is stated, not crashed on",
+  evilCsv.includes("Configuration snapshot unavailable"),
+  evilCsv,
+);
+
+// No recommendation changed → the section says so rather than an empty table.
+sandbox.sameA = {
+  label: "a",
+  at: "t",
+  config: null,
+  results: [{ "VM Name": "x", [AWS]: "m5.large" }],
+};
+sandbox.sameB = {
+  label: "b",
+  at: "t",
+  config: null,
+  results: [{ "VM Name": "x", [AWS]: "m5.large" }],
+};
+check(
+  "an unchanged comparison names that explicitly",
+  run("buildScenarioComparisonCsv(sameA, sameB)").includes(
+    "No recommendation changed between the two runs.",
+  ),
+);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);

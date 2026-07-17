@@ -586,6 +586,16 @@ function exportFilename(base, extension) {
   return `${base}_${exportDateStamp()}.${extension}`;
 }
 
+// Shared CSV cell escaping (quotes + formula-injection hardening). Defined here,
+// with downloadCsv / exportFilename, so the preview, the result/no-match
+// downloads, and the scenario-comparison export all quote cells identically —
+// one guard, not several that could drift.
+function escapeCsvCell(val) {
+  const s = String(val == null ? "" : val);
+  const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+
 // Byte-order mark. Excel assumes a CSV is in the local ANSI codepage unless the
 // file starts with one, so without it a VM or application named "München" or
 // "日本" opens as mojibake — the single most common complaint about CSV exports.

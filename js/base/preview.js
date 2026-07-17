@@ -6,12 +6,9 @@
 // every page) so the stats bar, exports, and the App Portfolio page share one
 // definition.
 
-// Shared CSV cell escaping (quotes + formula-injection hardening)
-function escapeCsvCell(val) {
-  const s = String(val == null ? "" : val);
-  const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
-  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
+// escapeCsvCell lives in app-core.js alongside downloadCsv / exportFilename —
+// the shared CSV home — so the preview, the downloads, and the scenario export
+// all quote and formula-harden cells the same way.
 
 // The fit/headroom flag that trails a like-for-like instance name: how much
 // spare capacity the match leaves over the requested size (computeFitHeadroom).

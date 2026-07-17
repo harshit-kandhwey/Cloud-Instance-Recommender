@@ -231,6 +231,86 @@ function diffScenarioConfigs(cfgA, cfgB) {
   return rows;
 }
 
+// ─── CSV export ─────────────────────────────────────────────────────────────────
+
+// Pure: the whole comparison as one sectioned CSV — the run labels, the
+// configuration changes, the summary, and the changed recommendation rows.
+// Reuses the same pure diffs the on-screen comparison draws, so the file can
+// never disagree with the table. escapeCsvCell (app-core.js) hardens every cell
+// against CSV injection, exactly as the other exports do.
+//
+// Sectioned rather than one flat grid because the four parts have different
+// shapes; blank lines separate them. Only CHANGED rows are written, matching
+// what the comparison shows and what the roadmap asks for.
+function buildScenarioComparisonCsv(a, b) {
+  const esc = escapeCsvCell;
+  const line = (cells) => cells.map(esc).join(",");
+  const out = [];
+
+  out.push(line(["Scenario comparison"]));
+  out.push(line(["A", `${a.label} · ${a.at}`]));
+  out.push(line(["B", `${b.label} · ${b.at}`]));
+  out.push("");
+
+  // Configuration changes.
+  out.push(line(["Configuration changes (A → B)"]));
+  const cfg = diffScenarioConfigs(a.config, b.config);
+  if (cfg === null) {
+    out.push(
+      line(["Configuration snapshot unavailable for one or both runs."]),
+    );
+  } else if (!cfg.length) {
+    out.push(line(["No configuration changed between the two runs."]));
+  } else {
+    out.push(line(["Setting", "A", "B"]));
+    cfg.forEach((r) => out.push(line([r.setting, r.a || "—", r.b || "—"])));
+  }
+  out.push("");
+
+  const d = diffScenarios(a, b);
+
+  // Summary.
+  out.push(line(["Summary"]));
+  out.push(line(["Metric", "A", "B"]));
+  out.push(line(["Match rate %", d.summary.matchRateA, d.summary.matchRateB]));
+  out.push(
+    line(["VMs changed", "", `${d.summary.changedRows} of ${d.pairedRows}`]),
+  );
+  out.push(line(["Newly matched", "", d.summary.newlyMatched]));
+  out.push(line(["Newly unmatched", "", d.summary.newlyUnmatched]));
+  if (d.note) out.push(line(["Note", d.note]));
+  out.push("");
+
+  // Changed recommendation rows: VM, then each comparable column as an (A)/(B)
+  // pair so the change is legible in a spreadsheet.
+  out.push(line(["Changed recommendations (A → B)"]));
+  if (!d.cols.length) {
+    out.push(line(["The two runs have no comparable recommendation columns."]));
+  } else if (!d.changedRows.length) {
+    out.push(line(["No recommendation changed between the two runs."]));
+  } else {
+    const header = ["VM"];
+    d.cols.forEach((c) => header.push(`${c} (A)`, `${c} (B)`));
+    out.push(line(header));
+    d.changedRows.forEach((row) => {
+      const cells = [row.key];
+      row.cells.forEach((c) => cells.push(c.a ?? "", c.b ?? ""));
+      out.push(line(cells));
+    });
+  }
+
+  return out.join("\n");
+}
+
+function downloadScenarioComparison() {
+  if (!scenarioA || !scenarioB) {
+    showToast("Pin two runs before exporting the comparison.", "warning");
+    return;
+  }
+  const csv = buildScenarioComparisonCsv(scenarioA, scenarioB);
+  downloadCsv(csv, exportFilename("scenario_comparison", "csv"));
+}
+
 // ─── Pin / clear ────────────────────────────────────────────────────────────────
 
 function makeScenario() {
@@ -397,7 +477,9 @@ function renderScenarioComparison() {
 
   result.innerHTML = `
     <div class="scenario-result">
-      <div class="scenario-legend">Comparing <b>A: ${sEsc(scenarioA.label)}</b> ↔ <b>B: ${sEsc(scenarioB.label)}</b> — showing only changed rows.</div>
+      <div class="scenario-legend">Comparing <b>A: ${sEsc(scenarioA.label)}</b> ↔ <b>B: ${sEsc(scenarioB.label)}</b> — showing only changed rows.
+        <button type="button" class="btn btn-secondary" onclick="downloadScenarioComparison()" style="margin-left:8px;">⬇ Export comparison CSV</button>
+      </div>
       ${configBlock}${summary}${note}${body}
     </div>`;
 
