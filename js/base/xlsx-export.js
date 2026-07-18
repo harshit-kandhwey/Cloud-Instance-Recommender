@@ -57,9 +57,58 @@ function buildResultsSheetModel(results) {
   return { headers, rows, cols, autofilter };
 }
 
-// Neutral model → SheetJS workbook. Header styling applied only when the fork
-// is the active engine (plain build silently ignores the `.s`, still valid).
-function buildResultsWorkbook(model, styled, XLSX) {
+// The alternative-strategy sheets, in order. Each is a focused view: the VM
+// identity/size columns plus every provider's pick for that one strategy.
+const STRATEGY_SHEET_NAMES = [
+  "Most Cost Optimized",
+  "Workload Based",
+  "Newest Generation",
+];
+
+// Identity/size columns to lead each strategy sheet (those actually present).
+function strategyIdColumns(results) {
+  const keys = results && results.length ? Object.keys(results[0]) : [];
+  return [
+    "VM Name",
+    "App Name",
+    "CPU Count",
+    "Memory (GB)",
+    "Current Instance Type",
+  ].filter((c) => keys.includes(c));
+}
+
+// Providers that carry alternative columns, in first-seen order.
+function providersWithAlternatives(results) {
+  const keys = results && results.length ? Object.keys(results[0]) : [];
+  const provs = [];
+  keys.forEach((k) => {
+    const m = k.match(/^(.*) Most Cost Optimized$/);
+    if (m && !provs.includes(m[1])) provs.push(m[1]);
+  });
+  return provs;
+}
+
+// Pure: a per-strategy sheet model (identity columns + one pick column per
+// provider). null when the run carries no alternative columns.
+function buildStrategySheetModel(results, strategy) {
+  const provs = providersWithAlternatives(results);
+  if (!provs.length) return null;
+  const keys = Object.keys(results[0]);
+  const cols = [
+    ...strategyIdColumns(results),
+    ...provs.map((p) => `${p} ${strategy}`),
+  ].filter((c) => keys.includes(c));
+  const projected = results.map((r) => {
+    const o = {};
+    cols.forEach((c) => (o[c] = r[c] ?? ""));
+    return o;
+  });
+  return buildResultsSheetModel(projected);
+}
+
+// A neutral sheet model → a SheetJS worksheet. Header styling applied only when
+// the fork is the active engine (plain build ignores `.s`, still valid).
+function sheetFromResultsModel(model, styled, XLSX) {
   const ws = {};
   const ncols = model.headers.length;
 
@@ -80,9 +129,25 @@ function buildResultsWorkbook(model, styled, XLSX) {
   });
   ws["!cols"] = model.cols;
   if (ncols) ws["!autofilter"] = { ref: model.autofilter };
+  return ws;
+}
 
+// Neutral model → SheetJS workbook. The main "Recommendations" sheet, then one
+// sheet per alternative strategy (extraSheets = [{ name, model }]).
+function buildResultsWorkbook(model, styled, XLSX, extraSheets) {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Recommendations");
+  XLSX.utils.book_append_sheet(
+    wb,
+    sheetFromResultsModel(model, styled, XLSX),
+    "Recommendations",
+  );
+  (extraSheets || []).forEach(({ name, model: m }) => {
+    XLSX.utils.book_append_sheet(
+      wb,
+      sheetFromResultsModel(m, styled, XLSX),
+      name,
+    );
+  });
   return wb;
 }
 
@@ -141,10 +206,16 @@ function downloadResultsXlsx() {
   ensureResultsXlsx()
     .then((info) => {
       if (!window.XLSX) throw new Error("spreadsheet engine unavailable");
+      const ordered = resultsInPreviewOrder(processedResults);
+      const extraSheets = STRATEGY_SHEET_NAMES.map((name) => {
+        const model = buildStrategySheetModel(ordered, name);
+        return model ? { name, model } : null;
+      }).filter(Boolean);
       const wb = buildResultsWorkbook(
-        buildResultsSheetModel(resultsInPreviewOrder(processedResults)),
+        buildResultsSheetModel(ordered),
         !!info.styled,
         window.XLSX,
+        extraSheets,
       );
       const fname = exportFilename("instance_recommendations", "xlsx");
       window.XLSX.writeFile(wb, fname);

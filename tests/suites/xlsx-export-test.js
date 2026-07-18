@@ -169,6 +169,62 @@ check(
   run("JSON.stringify(__back[2])"),
 );
 
+// ── Alternative-strategy sheets ─────────────────────────────────────────────
+// A run carrying the alternative columns gets one sheet per strategy, each a
+// focused view (identity columns + one pick column per provider).
+console.log("[per-strategy sheets]");
+run(
+  `__ra = [
+    { "VM Name": "web-01", "CPU Count": "4", "Memory (GB)": "16",
+      "AWS Like-to-Like Instance": "m6g.xlarge",
+      "AWS Most Cost Optimized": "m6g.xlarge (4/16)",
+      "AWS Workload Based": "r6g.xlarge (4/32)",
+      "AWS Newest Generation": "m8g.xlarge (4/16)" },
+    { "VM Name": "db-01", "CPU Count": "8", "Memory (GB)": "32",
+      "AWS Like-to-Like Instance": "No Match",
+      "AWS Most Cost Optimized": "",
+      "AWS Workload Based": "",
+      "AWS Newest Generation": "" }
+  ];`,
+);
+check(
+  "buildStrategySheetModel projects identity + the one strategy column",
+  run(
+    '__sm = buildStrategySheetModel(__ra, "Most Cost Optimized"); __sm.headers.join("|")',
+  ) === "VM Name|CPU Count|Memory (GB)|AWS Most Cost Optimized",
+  run('__sm.headers.join("|")'),
+);
+check(
+  "the strategy sheet carries the per-row pick",
+  run('__sm.rows[0].join("|")') === "web-01|4|16|m6g.xlarge (4/16)",
+  run('__sm.rows[0].join("|")'),
+);
+check(
+  "a run with no alternative columns yields no strategy model",
+  run(
+    'buildStrategySheetModel([{ "VM Name": "x" }], "Most Cost Optimized")',
+  ) === null,
+);
+run(
+  `__ex = ["Most Cost Optimized","Workload Based","Newest Generation"]
+     .map((name) => ({ name, model: buildStrategySheetModel(__ra, name) }))
+     .filter((s) => s.model);
+   __wb2 = buildResultsWorkbook(buildResultsSheetModel(__ra), true, window.XLSX, __ex);`,
+);
+check(
+  "the workbook adds one sheet per strategy after Recommendations",
+  run('__wb2.SheetNames.join("|")') ===
+    "Recommendations|Most Cost Optimized|Workload Based|Newest Generation",
+  run('__wb2.SheetNames.join("|")'),
+);
+check(
+  "a strategy sheet holds its pick cell",
+  run('__wb2.Sheets["Workload Based"]["D2"].v') === "r6g.xlarge (4/32)",
+  run(
+    '__wb2.Sheets["Workload Based"]["D2"] && __wb2.Sheets["Workload Based"]["D2"].v',
+  ),
+);
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);

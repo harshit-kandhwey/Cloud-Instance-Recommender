@@ -404,7 +404,95 @@ class BaseInstanceSelector {
       currentMemory,
     );
     result.rulesApplied = (this._lastRulesApplied || []).join(" | ");
+    // Alternative-strategy picks over the same valid pool (Most Cost Optimized /
+    // Workload Based / Newest Generation) — labeled options beside the best match.
+    result.alternatives = this.computeAlternatives(
+      filteredInstances,
+      currentCpu,
+      currentMemory,
+      options,
+    );
     return result;
+  }
+
+  // The alternative-strategy picks over the same valid candidate pool as the
+  // primary recommendation — every one meets the requirement and all filters, so
+  // each is a deployable option; they differ only in what they optimize for.
+  // Price ranks internally (never shown); the caller renders instanceType only.
+  //   Most Cost Optimized — cheapest in the pool, workload ignored.
+  //   Workload Based      — cheapest in the workload-preferred family, UNBOUNDED
+  //                         ("—" when no workload/General or none in the family).
+  //   Newest Generation   — bounded workload preference first (the 3.8.12 rule),
+  //                         then highest generation, then cheapest.
+  computeAlternatives(pool, reqCpu, reqMemory, options = {}) {
+    const compact = (i) =>
+      i
+        ? { instanceType: i.instanceType, vCpus: i.vCpus, memory: i.memory }
+        : null;
+    if (!pool || !pool.length) {
+      return { cost: null, workload: null, newestGen: null };
+    }
+
+    const provider = this.getProviderName().toLowerCase();
+    const workload = (options.rowWorkload || "").toLowerCase().trim();
+    const RE = typeof RuleEngine !== "undefined" ? RuleEngine : null;
+
+    // Most Cost Optimized: cheapest in the pool; tie → smaller vCPU, then memory.
+    const cost = [...pool].sort(
+      (a, b) => a.price - b.price || a.vCpus - b.vCpus || a.memory - b.memory,
+    )[0];
+
+    // Workload Based: cheapest in the preferred family (unbounded).
+    let workloadPick = null;
+    if (RE && workload && workload !== "general") {
+      const preferred = RE.getPreferredFamilies(workload, provider);
+      if (preferred.length) {
+        const inFamily = pool.filter((i) =>
+          preferred.some((f) => (i.family || "").toLowerCase().startsWith(f)),
+        );
+        workloadPick = inFamily.sort((a, b) => a.price - b.price)[0] || null;
+      }
+    }
+
+    // Newest Generation: bounded workload preference first, then newest, then price.
+    const rank = (i) => (RE ? RE.generationRank(i, provider) : 0);
+    const preferredFit = (i) => {
+      if (!RE || !workload || workload === "general") return false;
+      const preferred = RE.getPreferredFamilies(workload, provider);
+      return (
+        preferred.some((f) => (i.family || "").toLowerCase().startsWith(f)) &&
+        RE.isWorkloadFit(i, reqCpu, reqMemory)
+      );
+    };
+    // Keep Newest Generation a like-to-like-sized alternative: rank only within
+    // the fit window (<=2x vCPU, <=4x memory of the requirement), falling back to
+    // the whole pool if none qualifies. This also makes it robust to imperfect
+    // generation parsing (Azure versions aren't cleanly derivable from the name)
+    // — a mis-ranked oversized instance can never become the "newest" pick.
+    const windowed = pool.filter((i) =>
+      RE ? RE.isWorkloadFit(i, reqCpu, reqMemory) : true,
+    );
+    const genPool = windowed.length ? windowed : pool;
+    const anyPreferredFit = genPool.some(preferredFit);
+    const newestGen = [...genPool].sort((a, b) => {
+      if (anyPreferredFit) {
+        const pa = preferredFit(a) ? 0 : 1;
+        const pb = preferredFit(b) ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+      }
+      return (
+        rank(b) - rank(a) ||
+        a.price - b.price ||
+        a.vCpus - b.vCpus ||
+        a.memory - b.memory
+      );
+    })[0];
+
+    return {
+      cost: compact(cost),
+      workload: compact(workloadPick),
+      newestGen: compact(newestGen),
+    };
   }
 
   // Apply common filters
@@ -727,6 +815,8 @@ class BaseInstanceSelector {
       // one: the factory writes this field straight through, and a missing key
       // would otherwise surface as "undefined" in the exported CSV.
       familyName: "",
+      // Same shape as a matched result: no alternatives for an unmatched row.
+      alternatives: { cost: null, workload: null, newestGen: null },
       rulesApplied: (this._lastRulesApplied || []).join(" | "),
       reason: reason,
     };

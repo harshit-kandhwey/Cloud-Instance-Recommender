@@ -421,6 +421,34 @@ const RuleEngine = (() => {
     return { instances: filtered, rules };
   }
 
+  // A comparable "newness" ordinal per provider (higher = newer), for the
+  // Newest-Generation alternative. Mirrors the family/version parsing in
+  // meetsMinGeneration so the two never disagree on what "newer" means.
+  /**
+   * @param {Instance} inst
+   * @param {Provider} provider
+   * @returns {number}
+   */
+  function generationRank(inst, provider) {
+    const type = (inst.instanceType || "").toLowerCase();
+    const family = (inst.family || "").toLowerCase();
+    if (provider === "aws") {
+      const m = type.match(/^[a-z]+(\d+)/); // m7i.large → 7
+      return m ? parseInt(m[1]) : 0;
+    }
+    if (provider === "azure") {
+      // The VERSION is the TRAILING v<n> (d4asv7 → 7). Anchor to the end so a
+      // size-embedded "v" like nv72adsv5 isn't misread as generation 72.
+      const m = type.match(/v(\d+)$/i);
+      return m ? parseInt(m[1]) : 2; // no v-suffix = old-style
+    }
+    if (provider === "gcp") {
+      const fam = family.split("-")[0]; // e2-standard → e2
+      return GCP_GEN_ORDER[fam] ?? 1;
+    }
+    return 0;
+  }
+
   return {
     apply,
     getPreferredFamilies,
@@ -428,6 +456,9 @@ const RuleEngine = (() => {
     isCurrentGen,
     isARM,
     meetsMinGeneration,
+    // Exposed for the alternative-strategy picks (base-instance-selector):
+    isWorkloadFit,
+    generationRank,
   };
 })();
 

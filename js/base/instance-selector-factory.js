@@ -48,6 +48,13 @@ function formatNearestMiss(nm) {
     : base;
 }
 
+// One alternative-strategy pick as a compact cell: "instanceType (vCPU/GiB)",
+// or "" when the strategy has no pick (empty pool, or Workload Based with no
+// workload). Never carries price — pricing stays internal.
+function formatAlternative(a) {
+  return a ? `${a.instanceType} (${a.vCpus}/${a.memory})` : "";
+}
+
 // Enhanced integration function with multi-provider support.
 // Optional hooks = { onProgress(done, total), yieldEvery } — when provided,
 // the row loop reports progress and yields to the event loop every
@@ -219,10 +226,18 @@ window.getInstanceRecommendationWithSelector = async function (
           result[`${providerUpper} Optimized vCPUs`] = "N/A";
           result[`${providerUpper} Optimized Memory (GiB)`] = "N/A";
         }
+        // Alternative-strategy columns carry the same shape on every row.
+        result[`${providerUpper} Most Cost Optimized`] = "";
+        result[`${providerUpper} Workload Based`] = "";
+        result[`${providerUpper} Newest Generation`] = "";
         return;
       }
 
       try {
+        // Where the alternative-strategy picks come from: the like-to-like
+        // result (computed against the requested size) when present, else the
+        // optimized result (against its target) on an optimized-only run.
+        let altSource = null;
         if (generateLikeToLike) {
           const likeToLike = selector.getLikeToLikeInstance(
             region,
@@ -230,6 +245,7 @@ window.getInstanceRecommendationWithSelector = async function (
             memory,
             rowOptions,
           );
+          altSource = likeToLike;
           result[`${providerUpper} Like-to-Like Instance`] =
             likeToLike.instanceType;
           // The provider's own family category ("General purpose", "Compute
@@ -264,6 +280,7 @@ window.getInstanceRecommendationWithSelector = async function (
               memoryUtil,
               rowOptions,
             );
+            if (!altSource) altSource = optimized;
             result[`${providerUpper} Optimized Instance`] =
               optimized.instanceType;
             result[`${providerUpper} Optimized Family`] = optimized.familyName;
@@ -295,6 +312,19 @@ window.getInstanceRecommendationWithSelector = async function (
             }
           }
         }
+
+        // Alternative-strategy picks (Most Cost Optimized / Workload Based /
+        // Newest Generation), from the valid pool the primary pick came from.
+        const alt = (altSource && altSource.alternatives) || {};
+        result[`${providerUpper} Most Cost Optimized`] = formatAlternative(
+          alt.cost,
+        );
+        result[`${providerUpper} Workload Based`] = formatAlternative(
+          alt.workload,
+        );
+        result[`${providerUpper} Newest Generation`] = formatAlternative(
+          alt.newestGen,
+        );
       } catch (error) {
         console.error(
           `Error processing ${provider} for row ${index + 1}:`,
@@ -315,6 +345,9 @@ window.getInstanceRecommendationWithSelector = async function (
           result[`${providerUpper} Optimized vCPUs`] = "Error";
           result[`${providerUpper} Optimized Memory (GiB)`] = "Error";
         }
+        result[`${providerUpper} Most Cost Optimized`] = "Error";
+        result[`${providerUpper} Workload Based`] = "Error";
+        result[`${providerUpper} Newest Generation`] = "Error";
       }
     });
 

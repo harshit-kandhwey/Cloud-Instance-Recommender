@@ -179,6 +179,26 @@ function showResultsPreview(results) {
     if (allKeys.includes(vCpuCol)) displayCols.push(vCpuCol);
     if (allKeys.includes(memCol)) displayCols.push(memCol);
   });
+  // Alternative-strategy columns (Top-N alternatives), grouped per provider.
+  // Present only on runs that produced them; users can hide them like any column.
+  const altSuffixes = [
+    "Most Cost Optimized",
+    "Workload Based",
+    "Newest Generation",
+  ];
+  const altProviders = [];
+  allKeys.forEach((k) => {
+    const m = k.match(/^(.*) Most Cost Optimized$/);
+    if (m && !altProviders.includes(m[1])) altProviders.push(m[1]);
+  });
+  altProviders.forEach((p) => {
+    altSuffixes.forEach((s) => {
+      const col = `${p} ${s}`;
+      if (allKeys.includes(col) && !displayCols.includes(col)) {
+        displayCols.push(col);
+      }
+    });
+  });
   rulesCols.forEach((r) => {
     if (!displayCols.includes(r)) displayCols.push(r);
   });

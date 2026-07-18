@@ -126,9 +126,19 @@ Everything runs client-side, and no pricing appears in any view or sheet.
 
 Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. Nothing is applied automatically — a preset takes effect only when you click Apply.
 
+### 🎛️ Alternative recommendations (per row)
+
+Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries three labeled alternatives per provider — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
+
+- **Most Cost Optimized** — the cheapest instance that still meets the requirement, ignoring the workload family.
+- **Workload Based** — the cheapest instance in the workload-appropriate family (e.g. memory-optimized for Cache/Database), even if it over-provisions; blank when there's no workload or no family member fits.
+- **Newest Generation** — the newest hardware that fits, kept close to the requested size.
+
+They appear as separate columns in the results grid/CSV and preview (hideable like any column), and the **Excel export adds one sheet per strategy**. Pricing is only ever used to rank internally — never shown.
+
 ### 📗 Results Excel Export
 
-Next to the results CSV, **📊 Download Results Excel** writes the same grid as a styled single-sheet `.xlsx`: formatted header row, autofilter, fitted column widths, and numeric columns typed as real numbers so sorting and filtering behave correctly in Excel with no import dialog. The spreadsheet engine is lazy-loaded on first click.
+Next to the results CSV, **📊 Download Results Excel** writes the same grid as a styled `.xlsx`: a **Recommendations** sheet (formatted header row, autofilter, fitted column widths, numeric columns typed as real numbers so sorting/filtering behave with no import dialog), plus one sheet per alternative strategy (Most Cost Optimized / Workload Based / Newest Generation). The spreadsheet engine is lazy-loaded on first click.
 
 ### 🧭 Nearest-Miss Diagnostics
 
