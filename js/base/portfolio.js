@@ -390,8 +390,24 @@ const overviewState = {
   sort: "vcpus",
   dir: "desc",
   filter: "",
+  // Structured filters beyond the name search: apps with at least one
+  // unmatched VM, and compliance-sensitive apps.
+  noMatchOnly: false,
+  complianceOnly: false,
   expanded: new Set(),
 };
+
+// Pure: the apps that pass the current filters (name substring AND the two
+// structured toggles). Kept apart from the DOM render so it can be unit-tested.
+function portfolioFilterApps(apps, state) {
+  const q = (state.filter || "").trim().toLowerCase();
+  return apps.filter((a) => {
+    if (q && !a.app.toLowerCase().includes(q)) return false;
+    if (state.noMatchOnly && !(a.noMatch > 0)) return false;
+    if (state.complianceOnly && !a.hasCompliance) return false;
+    return true;
+  });
+}
 
 // Fixed hues for well-known categories; other keys cycle a palette. These stay
 // literal (like the provider brand colors) and are saturated enough for both themes.
@@ -579,9 +595,15 @@ function renderOverview(m) {
   const table = `<div class="pf-section">
     <div class="pf-section-head">
       <h3>Applications</h3>
-      <input class="pf-search form-control" type="search" placeholder="Filter applications…"
-        value="${esc(overviewState.filter)}" oninput="filterPortfolioApps(this.value)"
-        aria-label="Filter applications" />
+      <div class="pf-filters">
+        <input class="pf-search form-control" type="search" placeholder="Filter applications…"
+          value="${esc(overviewState.filter)}" oninput="filterPortfolioApps(this.value)"
+          aria-label="Filter applications by name" />
+        <label class="pf-filter-toggle"><input type="checkbox" ${overviewState.noMatchOnly ? "checked" : ""}
+          onchange="togglePortfolioFilter('noMatchOnly', this.checked)" /> No-match only</label>
+        <label class="pf-filter-toggle"><input type="checkbox" ${overviewState.complianceOnly ? "checked" : ""}
+          onchange="togglePortfolioFilter('complianceOnly', this.checked)" /> Compliance only</label>
+      </div>
     </div>
     <div class="pf-scroll">
       <table class="pf-table" id="pf-app-table">
@@ -616,11 +638,9 @@ function sortApps(apps) {
 function renderAppTableBody() {
   const tbody = document.getElementById("pf-app-tbody");
   if (!tbody || !portfolioModel) return;
-  const q = overviewState.filter.trim().toLowerCase();
-  const filtered = portfolioModel.apps.filter(
-    (a) => !q || a.app.toLowerCase().includes(q),
+  const apps = sortApps(
+    portfolioFilterApps(portfolioModel.apps, overviewState),
   );
-  const apps = sortApps(filtered);
 
   tbody.innerHTML =
     apps
@@ -652,8 +672,10 @@ function renderAppTableBody() {
       })
       .join("") ||
     `<tr><td colspan="8" class="pf-muted">${
-      overviewState.filter
-        ? `No applications match “${esc(overviewState.filter)}”.`
+      overviewState.filter ||
+      overviewState.noMatchOnly ||
+      overviewState.complianceOnly
+        ? "No applications match the current filters."
         : "No applications."
     }</td></tr>`;
 
@@ -723,6 +745,12 @@ function renderCallouts(m) {
 function filterPortfolioApps(v) {
   overviewState.filter = v || "";
   renderAppTableBody();
+}
+function togglePortfolioFilter(key, val) {
+  if (key === "noMatchOnly" || key === "complianceOnly") {
+    overviewState[key] = !!val;
+    renderAppTableBody();
+  }
 }
 function sortPortfolioApps(key) {
   if (overviewState.sort === key) {
@@ -795,7 +823,10 @@ function renderAppPanel(a, m, idx) {
     renderHealth(a) +
     renderRightSizing(a, m);
 
-  return `<h3 style="margin:0 0 12px;color:var(--heading-indigo)">${esc(title)}</h3>
+  return `<div class="pf-app-head">
+      <h3 style="margin:0;color:var(--heading-indigo)">${esc(title)}</h3>
+      <button class="btn btn-secondary pf-mini-btn" onclick="downloadAppCsv(${JSON.stringify(idx)})" title="Download this application's VM rows as CSV">⬇️ App CSV</button>
+    </div>
     ${kpis}${mixes}<div class="pf-blocks">${blocks}</div>${renderVmTable(a, m)}`;
 }
 
@@ -860,6 +891,39 @@ function renderVmTable(a, m) {
     )
     .join("");
   return `<div class="pf-block"><h4>📋 VM detail (${a.vms})</h4><div class="pf-scroll"><table class="pf-table pf-table-sm"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+
+// ─── Per-app CSV export ───────────────────────────────────────────────────────
+// One application's VM rows, every result column, hardened against CSV injection
+// through the same escapeCsvCell the other exports use (shared from app-core.js).
+// Pure builder + a thin DOM/download wrapper, mirroring downloads.js.
+function buildAppCsv(appStat, cols) {
+  const line = (arr) => arr.map(escapeCsvCell).join(",");
+  return [
+    line(cols),
+    ...appStat.rows.map((r) => line(cols.map((c) => r[c] ?? ""))),
+  ].join("\n");
+}
+
+function downloadAppCsv(idx) {
+  if (!portfolioModel) return;
+  const a =
+    idx === "unassigned" ? portfolioModel.unassigned : portfolioModel.apps[idx];
+  if (!a || !a.rows || !a.rows.length) {
+    if (typeof showToast === "function") {
+      showToast("No VM rows to export for this application.", "warning");
+    }
+    return;
+  }
+  const cols = vmDetailColumns(portfolioModel, a);
+  const base = String(a.app || "unassigned")
+    .replace(/[^a-z0-9_-]+/gi, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+  downloadCsv(
+    buildAppCsv(a, cols),
+    exportFilename(`portfolio_${base || "app"}`, "csv"),
+  );
 }
 
 // ─── Executive Excel export ───────────────────────────────────────────────────

@@ -462,4 +462,62 @@ check(
   run(`XLSX.write(__wb, { type: "base64", bookType: "xlsx" }).length`) > 1000,
 );
 
+// ── Overview filters: name search + no-match-only + compliance-only ────────────
+// Billing: 2 matched VMs, one PCI (compliance, no no-match).
+// Analytics: 1 fully-unmatched VM (no-match, no compliance).
+console.log("[overview filters]");
+run("__flt = (st) => portfolioFilterApps(__m.apps, st).map((a) => a.app);");
+check(
+  "no-match-only keeps just the app with an unmatched VM",
+  JSON.stringify(run("__flt({ noMatchOnly: true })")) ===
+    JSON.stringify(["Analytics"]),
+  run("JSON.stringify(__flt({ noMatchOnly: true }))"),
+);
+check(
+  "compliance-only keeps just the compliance-sensitive app",
+  JSON.stringify(run("__flt({ complianceOnly: true })")) ===
+    JSON.stringify(["Billing"]),
+  run("JSON.stringify(__flt({ complianceOnly: true }))"),
+);
+check(
+  "the name search still narrows by substring",
+  JSON.stringify(run("__flt({ filter: 'bill' })")) ===
+    JSON.stringify(["Billing"]),
+);
+check(
+  "combined toggles AND together (no app is both here)",
+  run("__flt({ noMatchOnly: true, complianceOnly: true }).length") === 0,
+);
+check("no filters returns every app", run("__flt({}).length") === 2);
+
+// ── Per-app CSV export (buildAppCsv) ───────────────────────────────────────────
+console.log("[per-app CSV export]");
+run("__billing = __m.apps.find((a) => a.app === 'Billing');");
+run("__cols = vmDetailColumns(__m, __billing);");
+run("__csv = buildAppCsv(__billing, __cols);");
+check(
+  "the CSV header is the detail columns and starts with VM Name",
+  run('__csv.split("\\n")[0].startsWith("VM Name")'),
+  run('__csv.split("\\n")[0]'),
+);
+check(
+  "one header row plus one row per VM (2 VMs → 3 lines)",
+  run('__csv.split("\\n").length') === 3,
+  run('String(__csv.split("\\n").length)'),
+);
+check(
+  "both Billing VMs are written",
+  run('__csv.includes("b1") && __csv.includes("b2")'),
+);
+// Injection + comma hardening, via the shared escapeCsvCell.
+run(
+  '__evil = buildAppCsv({ rows: [{ "VM Name": "=HYPERLINK(1)", "App Name": "a,b" }] }, ["VM Name", "App Name"]);',
+);
+check(
+  "a leading = is neutralised and a comma-bearing cell is quoted",
+  run('__evil.includes("\'=HYPERLINK(1)")') &&
+    run("__evil.includes('\"a,b\"')"),
+  run("__evil"),
+);
+
 process.exit(failures ? 1 : 0);

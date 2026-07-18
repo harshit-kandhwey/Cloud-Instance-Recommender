@@ -109,6 +109,34 @@
 .pf-search {
   max-width: 260px;
 }
+/* Name search + the two structured toggles, right-aligned in the section head. */
+.pf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+.pf-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: var(--text-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pf-filter-toggle input {
+  cursor: pointer;
+}
+/* App-panel header: title on the left, its per-app CSV button on the right. */
+.pf-app-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+}
 .pf-count {
   margin-top: 6px;
   font-size: 0.8rem;
