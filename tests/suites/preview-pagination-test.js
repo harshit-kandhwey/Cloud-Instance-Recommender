@@ -64,6 +64,25 @@ const settle = () => new Promise((r) => setTimeout(r, 250)); // 150ms filter deb
       html.includes("all 60"),
       html.match(/title="Copy every[^"]*"/)?.[0],
     );
+
+    // And the claim is true. Asserting only the tooltip would leave the promise
+    // untested — the copy could silently narrow to the current page and this
+    // suite would stay green. Drive the REAL copy path and count what it hands
+    // the clipboard; reassigning copyTextToClipboard intercepts the internal call.
+    let captured = null;
+    ctx.copyTextToClipboard = (text) => {
+      captured = text;
+    };
+    ctx.copyPreviewToClipboard();
+    const copiedRows = (captured || "")
+      .split("\n")
+      .slice(1)
+      .filter((l) => l.trim() !== "");
+    check(
+      "and the copy really carries all 60 rows, not the 25 on this page",
+      copiedRows.length === 60,
+      `copied ${copiedRows.length} rows`,
+    );
   }
 
   console.log("[later pages carry later rows, numbered absolutely]");

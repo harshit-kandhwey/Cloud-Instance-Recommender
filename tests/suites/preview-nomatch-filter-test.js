@@ -90,27 +90,52 @@ console.log("[every row shown under the toggle is a red row]");
   );
 }
 
-console.log("[the clipboard narrows with the toggle, through one helper]");
+console.log("[the clipboard narrows with the toggle]");
 {
-  // copyPreviewToClipboard and the render both call filterAndSortRows with the
-  // toggle. Testing the helper directly proves the set the clipboard would copy
-  // is exactly the unmatched rows — the render is shown to use the same set above.
+  // Drive the REAL copy path and capture what it hands the clipboard. Calling
+  // filterAndSortRows directly instead would only prove the helper filters — it
+  // would stay green if copyPreviewToClipboard stopped forwarding noMatchOnly,
+  // which is exactly the regression this test exists to catch. Reassigning the
+  // context's copyTextToClipboard intercepts the internal call.
   const { ctx } = buildContext();
   ctx.showResultsPreview(MIXED);
-  const { displayCols } = ctx._previewState;
-  const narrowed = ctx.filterAndSortRows(MIXED, displayCols, "", null, 1, true);
+  ctx._previewToggleNoMatch(true);
+
+  let captured = null;
+  ctx.copyTextToClipboard = (text) => {
+    captured = text;
+  };
+  ctx.copyPreviewToClipboard();
+
   check(
-    "the shared filter returns exactly the unmatched rows",
-    narrowed.length === 2 &&
-      narrowed.every(
-        (r) =>
-          r["AWS Like-to-Like Instance"] === "No Match" &&
-          r["AWS Optimized Instance"] === "No Match",
-      ),
-    JSON.stringify(narrowed.map((r) => r["VM Name"])),
+    "the copy actually ran and produced text",
+    typeof captured === "string" && captured.length > 0,
   );
-  const full = ctx.filterAndSortRows(MIXED, displayCols, "", null, 1, false);
-  check("and with the toggle off it returns all six", full.length === 6);
+  const copiedNames = (captured || "")
+    .split("\n")
+    .slice(1)
+    .map((l) => l.split("\t")[0])
+    .filter(Boolean);
+  check(
+    "the clipboard carries exactly the unmatched rows",
+    copiedNames.sort().join(",") === "huge-01,huge-02",
+    JSON.stringify(copiedNames),
+  );
+
+  // And with the toggle off the copy widens back to all six.
+  ctx._previewToggleNoMatch(false);
+  captured = null;
+  ctx.copyPreviewToClipboard();
+  const allNames = (captured || "")
+    .split("\n")
+    .slice(1)
+    .map((l) => l.split("\t")[0])
+    .filter(Boolean);
+  check(
+    "with the toggle off the clipboard carries all six",
+    allNames.length === 6,
+    JSON.stringify(allNames),
+  );
 }
 
 console.log("[the toggle composes with the text filter, not replaces it]");

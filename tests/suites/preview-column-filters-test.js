@@ -145,32 +145,36 @@ function colIndex(ctx, name) {
     );
   }
 
-  console.log(
-    "[the clipboard copies the column-filtered set, through one helper]",
-  );
+  console.log("[the clipboard copies the column-filtered set]");
   {
     const { ctx } = buildContext();
     ctx.showResultsPreview(ROWS);
-    const displayCols = ctx._previewState.displayCols;
     ctx._previewState.columnFilters = { OS: "Windows" };
-    // copyPreviewToClipboard reads state and calls the same helper; testing the
-    // helper with the same state proves the copied set is the on-screen set.
-    const copied = ctx.filterAndSortRows(
-      ROWS,
-      displayCols,
-      ctx._previewState.filter,
-      ctx._previewState.sortCol,
-      ctx._previewState.sortDir,
-      ctx._previewState.noMatchOnly,
-      ctx._previewState.columnFilters,
-    );
+
+    // Drive the REAL copy path and capture what it hands the clipboard.
+    // Re-running filterAndSortRows here instead would only prove that the helper
+    // filters — it would stay green if copyPreviewToClipboard stopped forwarding
+    // columnFilters at all, which is the one thing this test exists to catch.
+    // Reassigning the context's copyTextToClipboard intercepts the internal call.
+    let captured = null;
+    ctx.copyTextToClipboard = (text) => {
+      captured = text;
+    };
+    ctx.copyPreviewToClipboard();
+
     check(
-      "only the Windows rows would be copied",
-      copied
-        .map((r) => r["VM Name"])
-        .sort()
-        .join(",") === "db-01,web-02",
-      JSON.stringify(copied.map((r) => r["VM Name"])),
+      "the copy actually ran and produced text",
+      typeof captured === "string" && captured.length > 0,
+    );
+    const copiedNames = (captured || "")
+      .split("\n")
+      .slice(1)
+      .map((l) => l.split("\t")[0])
+      .filter(Boolean);
+    check(
+      "only the Windows rows were copied",
+      copiedNames.sort().join(",") === "db-01,web-02",
+      JSON.stringify(copiedNames),
     );
   }
 
