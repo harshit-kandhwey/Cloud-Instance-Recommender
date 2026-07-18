@@ -52,18 +52,22 @@ function _buildStatsHtml(results) {
   if (_statsCache.results === results) return _statsCache.html;
 
   const allKeys = Object.keys(results[0] || {});
-  const isNoMatch = isNoMatchValue;
+
+  // The SAME predicate the red row highlight, the no-match-only view and the
+  // no-match export use. The stats bar used to re-derive it inline, which made
+  // the two disagree on the one case they treat differently: with no
+  // recommendation columns at all, `some(...)` over an empty list is false, so
+  // every row was counted "no match" while the no-match view kept none of them —
+  // the stats bar and the view contradicting each other on the same screen.
+  const instanceCols = getInstanceColumns(results);
+  const hasRecommendations = instanceCols.length > 0;
 
   let matchedRows = 0;
   const rulesCounts = {};
 
   results.forEach((row) => {
-    const instCols = allKeys.filter(
-      (k) =>
-        k.includes("Like-to-Like Instance") || k.includes("Optimized Instance"),
-    );
-    const hasMatch = instCols.some((c) => !isNoMatch(row[c]));
-    if (hasMatch) matchedRows++;
+    if (hasRecommendations && !rowIsAllNoMatch(row, instanceCols))
+      matchedRows++;
 
     allKeys
       .filter((k) => k.includes("Rules Applied"))
@@ -81,8 +85,10 @@ function _buildStatsHtml(results) {
       });
   });
 
-  const noMatchRows = results.length - matchedRows;
-  const pct = Math.round((matchedRows / results.length) * 100);
+  const noMatchRows = hasRecommendations ? results.length - matchedRows : 0;
+  const pct = hasRecommendations
+    ? Math.round((matchedRows / results.length) * 100)
+    : 0;
 
   // Distinct applications, when the results carry an App Name column
   const appCount = allKeys.includes("App Name")
@@ -127,8 +133,12 @@ function _buildStatsHtml(results) {
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:8px;font-size:0.875em;">
       <span style="font-weight:700;color:var(--good-strong);">✅ Generation complete</span>
       <span style="color:var(--text-body);">📊 <strong>${results.length}</strong> rows</span>
-      <span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
-      ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}
+      ${
+        hasRecommendations
+          ? `<span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
+      ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}`
+          : `<span style="color:var(--text-soft);" title="These results carry no Like-to-Like or Optimized Instance column, so there is no match rate to report">No recommendation columns</span>`
+      }
       ${appCount > 0 ? `<span style="color:var(--text-body);">🧩 <strong>${appCount}</strong> apps</span>` : ""}
       ${savingsChips}
       ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
