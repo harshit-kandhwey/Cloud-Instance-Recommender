@@ -429,7 +429,7 @@ function _renderPreviewTable(
           .map(
             (c, i) =>
               `<label style="display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:12px;color:var(--text-body);white-space:nowrap;cursor:pointer;">
-                <input type="checkbox"${hidden.has(c) ? "" : " checked"} onchange="window._previewToggleColumn(${i}, this.checked)" aria-label="Show column ${escapeHtml(c)}" />
+                <input type="checkbox" id="previewColToggle_${i}"${hidden.has(c) ? "" : " checked"} onchange="window._previewToggleColumn(${i}, this.checked)" aria-label="Show column ${escapeHtml(c)}" />
                 ${escapeHtml(c)}
               </label>`,
           )
@@ -439,15 +439,18 @@ function _renderPreviewTable(
 
   // Only shown when there is more than one page — a single page has nothing to
   // navigate, and a disabled Prev/Next pair would just be noise.
-  const navBtn = (label, target, disabled, aria) =>
-    `<button type="button" onclick="window._previewGoToPage(${target})"${disabled ? " disabled" : ""} aria-label="${aria}"
+  // The ids are what let a page turn hand focus back to the button that was
+  // pressed. Deliberately NOT prefixed "previewPage" — that would collide with
+  // the rows-per-page select when the focus restore tests an id for nav-ness.
+  const navBtn = (label, target, disabled, aria, id) =>
+    `<button type="button" id="${id}" onclick="window._previewGoToPage(${target})"${disabled ? " disabled" : ""} aria-label="${aria}"
       style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
   const paginationNav =
     pageCount > 1
       ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap;">
-          ${navBtn("‹ Prev", pageIndex - 1, pageIndex === 0, "Previous page")}
+          ${navBtn("‹ Prev", pageIndex - 1, pageIndex === 0, "Previous page", "previewNavPrev")}
           <span style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Page ${pageIndex + 1} of ${pageCount}</span>
-          ${navBtn("Next ›", pageIndex + 1, pageIndex >= pageCount - 1, "Next page")}
+          ${navBtn("Next ›", pageIndex + 1, pageIndex >= pageCount - 1, "Next page", "previewNavNext")}
         </div>`
       : "";
 
@@ -480,7 +483,7 @@ function _renderPreviewTable(
               .map((c, i) =>
                 hidden.has(c)
                   ? ""
-                  : `<th scope="col" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+                  : `<th scope="col" id="previewSortTh_${i}" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
               )
               .join("")}
           </tr>
@@ -628,6 +631,32 @@ function _renderPreviewTable(
       if (searchInput.setSelectionRange)
         searchInput.setSelectionRange(pos, pos);
     }
+  }
+
+  // Every other view-changing interaction — page turn, rows-per-page, no-match
+  // toggle, column show/hide, sort — replaces the node the user was standing on,
+  // which drops a keyboard user back to the body and loses their place. Each of
+  // those handlers records the control to focus again; the ids above are stable
+  // across the re-render, so the same control is found even when the table's
+  // contents changed underneath it.
+  const focusId = window._previewFocusId;
+  if (focusId) {
+    window._previewFocusId = null;
+    let target = document.getElementById(focusId);
+    if (
+      (!target || target.disabled) &&
+      (focusId === "previewNavNext" || focusId === "previewNavPrev")
+    ) {
+      // The button just became disabled — the turn reached the first or last
+      // page. Fall back to its partner, then to rows-per-page: somewhere beside
+      // where the user was, rather than nowhere.
+      const partner =
+        focusId === "previewNavNext" ? "previewNavPrev" : "previewNavNext";
+      target = document.getElementById(partner);
+      if (!target || target.disabled)
+        target = document.getElementById("previewPageSize");
+    }
+    if (target && typeof target.focus === "function") target.focus();
   }
 }
 
@@ -864,6 +893,7 @@ window._sortPreview = function (colIdx) {
   // Re-sorting reorders the whole set, so page 3 would show different rows; go
   // back to the top where the newly-sorted rows are.
   s.page = 0;
+  window._previewFocusId = `previewSortTh_${colIdx}`;
   _rerenderPreview();
 };
 
@@ -874,6 +904,7 @@ window._previewSetPageSize = function (value) {
   s.pageSize =
     value === "all" ? Infinity : parseInt(value, 10) || DEFAULT_PAGE_SIZE;
   s.page = 0;
+  window._previewFocusId = "previewPageSize";
   _rerenderPreview();
 };
 
@@ -883,6 +914,9 @@ window._previewSetPageSize = function (value) {
 window._previewGoToPage = function (index) {
   const s = window._previewState;
   if (!s) return;
+  // Which button the user pressed, read from the direction of travel — so focus
+  // returns to it and a keyboard user can page through with repeated Enter.
+  window._previewFocusId = index > s.page ? "previewNavNext" : "previewNavPrev";
   s.page = Math.max(0, index);
   _rerenderPreview();
 };
@@ -894,6 +928,7 @@ window._previewToggleNoMatch = function (checked) {
   if (!s) return;
   s.noMatchOnly = !!checked;
   s.page = 0;
+  window._previewFocusId = "previewNoMatchOnly";
   _rerenderPreview();
 };
 
@@ -926,6 +961,9 @@ window._previewClearColumnFilters = function () {
   if (!s) return;
   s.columnFilters = {};
   s.page = 0;
+  // The ✕ button itself disappears once there are no filters left to clear, so
+  // it cannot take focus back; the row filter is the nearest thing that stays.
+  window._previewFocusId = "previewSearch";
   _rerenderPreview();
 };
 
@@ -940,6 +978,7 @@ window._previewToggleColumn = function (colIdx, visible) {
   if (col == null) return;
   if (!(s.hiddenCols instanceof Set))
     s.hiddenCols = new Set(s.hiddenCols || []);
+  window._previewFocusId = `previewColToggle_${colIdx}`;
   if (visible) {
     s.hiddenCols.delete(col);
   } else {
@@ -950,7 +989,15 @@ window._previewToggleColumn = function (colIdx, visible) {
       return;
     }
     s.hiddenCols.add(col);
-    delete s.columnFilters[col];
+    // Dropping this column's filter WIDENS the row set, so the current page
+    // would be an index into the old, narrower one — every other view-changing
+    // handler resets the page for exactly this reason. Only when a filter was
+    // actually there: hiding an unfiltered column changes no rows, and throwing
+    // the user back to page 1 for a cosmetic change would be its own bug.
+    if (Object.prototype.hasOwnProperty.call(s.columnFilters, col)) {
+      delete s.columnFilters[col];
+      s.page = 0;
+    }
   }
   _rerenderPreview();
 };
