@@ -1882,7 +1882,9 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
         <li>
           <strong>AWS page — both Like-to-Like and Optimized selected:</strong>
           three buttons appear:<br />
-          <strong>📥 Download Results CSV</strong> — all columns in one file<br />
+          <strong>📊 Download Results (Excel)</strong> — the full workbook (the
+          primary download); flat CSVs are behind the
+          <strong>CSV ▾</strong> menu<br />
           <strong>🧾 Bulk Template (Like-to-Like)</strong> — AWS Pricing
           Calculator format, Like-to-Like instances only<br />
           <strong>🧾 Bulk Template (Optimized)</strong> — AWS Pricing Calculator
@@ -2162,12 +2164,16 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
       <div id="xlsx-export">
         <h3>📗 Results Excel (.xlsx)</h3>
         <p>
-          Next to the CSV, <strong>📊 Download Results Excel</strong> writes the
-          same rows and columns as a single-sheet workbook with a formatted
+          <strong>📊 Download Results (Excel)</strong> is the primary download:
+          a workbook with a <strong>Recommendations</strong> sheet (formatted
           header row, autofilter, fitted column widths, and numeric columns
           stored as real numbers — so sorting and filtering behave correctly in
-          Excel with no import dialog or encoding step. The spreadsheet engine
-          loads on first click; everything runs in the browser.
+          Excel with no import dialog or encoding step) plus one sheet per
+          alternative strategy. The flat CSV exports (Results, No-Match Rows,
+          App Summary) live behind the <strong>CSV ▾</strong> checklist beside
+          it — tick the ones you want and click Download selected. The
+          spreadsheet engine loads on first click; everything runs in the
+          browser.
         </p>
       </div>
 

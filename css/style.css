@@ -788,6 +788,49 @@ nav a.active {
   border: 1px solid var(--border-mid);
 }
 
+/* ── CSV multiselect dropdown ──────────────────────────────────────────────────
+   Excel is the primary one-click download; the flat CSV exports live behind a
+   "CSV ▾" checklist rendered by js/base/downloads.js (renderCsvMenu). */
+.csv-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.csv-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-slate);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.csv-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.875em;
+  color: var(--text);
+  cursor: pointer;
+}
+.csv-menu-item:hover {
+  background: var(--surface-tint);
+}
+.csv-menu-item input {
+  cursor: pointer;
+}
+.csv-menu-go {
+  margin-top: 4px;
+  width: 100%;
+}
+
 /* ── Executive print report ───────────────────────────────────────────────────
    A one-page summary (built by js/base/charts.js → buildExecutiveReport) that
    lives hidden in the page as a direct child of <body>. Hidden on screen; on

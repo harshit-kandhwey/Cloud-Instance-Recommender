@@ -1,7 +1,7 @@
 // App summary rollup verification (batch item 4, commit B):
 //   - getAppSummary aggregation (VMs, vCPUs, memory, matched/no-match)
 //   - blank App Name skipped; no App Name column → []
-//   - updateAppSummaryButton visibility + count badge
+//   - the App Summary item's presence + count in the CSV menu (renderCsvMenu)
 //   - downloadAppSummary CSV content + formula-injection hardening
 //   - "N apps" chip in the stats bar
 const fs = require("fs");
@@ -222,21 +222,18 @@ check(
   ),
 );
 
-console.log("[button state]");
-vm.runInContext("updateAppSummaryButton(processedResults)", ctx);
+console.log("[CSV menu state]");
+vm.runInContext("renderCsvMenu(processedResults)", ctx);
 check(
-  "button visible with app count",
-  !elements.downloadAppSummaryBtn.classes.has("hidden") &&
-    elements.downloadAppSummaryBtn.textContent.includes("(6)"),
-  elements.downloadAppSummaryBtn.textContent,
+  "App Summary item listed with app count",
+  elements.csvMenu.innerHTML.includes("App Summary CSV (6)"),
+  elements.csvMenu.innerHTML,
 );
-vm.runInContext(
-  'updateAppSummaryButton([{ "VM Name": "x", "CPU Count": "2" }])',
-  ctx,
-);
+vm.runInContext('renderCsvMenu([{ "VM Name": "x", "CPU Count": "2" }])', ctx);
 check(
-  "button hidden when no App Name column",
-  elements.downloadAppSummaryBtn.classes.has("hidden"),
+  "App Summary item absent when no App Name column",
+  !elements.csvMenu.innerHTML.includes("App Summary CSV"),
+  elements.csvMenu.innerHTML,
 );
 
 console.log("[export content]");

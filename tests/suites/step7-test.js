@@ -29,6 +29,7 @@ function fakeElement(id) {
       focus: () => {},
       setSelectionRange: () => {},
       scrollIntoView: () => {},
+      setAttribute: () => {},
     };
   }
   return elements[id];
@@ -73,9 +74,11 @@ sandbox.document = {
     return el;
   },
   getElementById: (id) => fakeElement(id),
+  querySelector: () => null,
   querySelectorAll: (sel) =>
     sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
   addEventListener: () => {},
+  removeEventListener: () => {},
   head: { appendChild: () => {} },
   body: { appendChild: () => {}, removeChild: () => {} },
 };
@@ -187,20 +190,44 @@ check(
   !rows.some((r) => r["VM Name"] === "partial-1"),
 );
 
-console.log("[button state]");
-vm.runInContext("updateNoMatchButton(processedResults)", ctx);
+console.log("[CSV menu state]");
+vm.runInContext("renderCsvMenu(processedResults)", ctx);
 check(
-  "button visible with count",
-  !elements.downloadNoMatchBtn.classes.has("hidden") &&
-    elements.downloadNoMatchBtn.textContent.includes("(2)"),
-  elements.downloadNoMatchBtn.textContent,
+  "No-Match item listed with count",
+  elements.csvMenu.innerHTML.includes("No-Match Rows CSV (2)"),
+  elements.csvMenu.innerHTML,
 );
 
-vm.runInContext(`updateNoMatchButton([${JSON.stringify(results[0])}])`, ctx);
+vm.runInContext(`renderCsvMenu([${JSON.stringify(results[0])}])`, ctx);
 check(
-  "button re-hidden on all-match run",
-  elements.downloadNoMatchBtn.classes.has("hidden"),
+  "No-Match item absent on an all-match run",
+  !elements.csvMenu.innerHTML.includes("No-Match Rows CSV"),
+  elements.csvMenu.innerHTML,
 );
+
+console.log("[download selected CSVs]");
+vm.runInContext("renderCsvMenu(processedResults)", ctx);
+// Simulate the two checked boxes the browser's ':checked' selector would return.
+elements.csvMenu.querySelectorAll = () => [
+  { value: "results" },
+  { value: "nomatch" },
+];
+downloads.length = 0;
+vm.runInContext("downloadSelectedCsvs()", ctx);
+check(
+  "exactly the checked exports fire (results + no-match, not app summary)",
+  downloads.length === 2 &&
+    downloads.some((d) =>
+      (d.name || "").includes("instance_recommendations"),
+    ) &&
+    downloads.some((d) => (d.name || "").includes("no_match_rows")),
+  downloads.map((d) => d.name).join(", "),
+);
+// Nothing checked → a warning, no downloads.
+elements.csvMenu.querySelectorAll = () => [];
+downloads.length = 0;
+vm.runInContext("downloadSelectedCsvs()", ctx);
+check("an empty selection downloads nothing", downloads.length === 0);
 
 console.log("[export content]");
 vm.runInContext("downloadNoMatchRows()", ctx);

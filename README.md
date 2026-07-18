@@ -109,7 +109,7 @@ For small inventories, skip the file entirely: "Or enter VMs manually" opens a f
 
 ### 🧾 No-Match Remediation Export
 
-When some rows get no recommendation from any provider, a "No-Match Rows CSV" button (with count) exports exactly those rows together with their `No Match Reason` and `Rules Applied` diagnostics — fix the rows, re-upload, re-run.
+When some rows get no recommendation from any provider, the **CSV ▾** menu offers a **No-Match Rows** export (with count) — exactly those rows together with their `No Match Reason` and `Rules Applied` diagnostics, to fix and re-upload.
 
 ### 🧩 App Grouping, Portfolio & Executive Excel
 
@@ -136,9 +136,11 @@ Beside the primary **Best Match** (like-to-like) and utilization-based **Optimiz
 
 They appear as separate columns in the results grid/CSV and preview (hideable like any column), and the **Excel export adds one sheet per strategy**. Pricing is only ever used to rank internally — never shown.
 
-### 📗 Results Excel Export
+### 📗 Downloads — Excel first, CSVs on demand
 
-Next to the results CSV, **📊 Download Results Excel** writes the same grid as a styled `.xlsx`: a **Recommendations** sheet (formatted header row, autofilter, fitted column widths, numeric columns typed as real numbers so sorting/filtering behave with no import dialog), plus one sheet per alternative strategy (Most Cost Optimized / Workload Based / Newest Generation). The spreadsheet engine is lazy-loaded on first click.
+The results area leads with a single primary **📊 Download Results (Excel)** button: a styled `.xlsx` with a **Recommendations** sheet (formatted header row, autofilter, fitted column widths, numeric columns typed as real numbers so sorting/filtering behave with no import dialog) plus one sheet per alternative strategy (Most Cost Optimized / Workload Based / Newest Generation). The spreadsheet engine is lazy-loaded on first click.
+
+The flat CSV exports live behind an inline **CSV ▾** checklist next to it: **Results** (always), plus **No-Match Rows** and **App Summary** when they have rows (each with its count). Tick the ones you want and click **Download selected** — each is the same file its single download would produce.
 
 ### 🧭 Nearest-Miss Diagnostics
 
@@ -328,7 +330,7 @@ The results CSV contains your original columns plus per-provider recommendation 
 | `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax |
 | _(Azure and GCP columns follow the same pattern)_ |                                                                                    |
 
-The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), a **fit/headroom flag** (a ▲% beside a like-for-like match, showing how far the chosen instance over-provisions its worst axis versus the requested size — the discrete-sizing and ratio-mismatch waste), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **No-Match Rows CSV** button for fix-and-re-upload remediation. The same grid is also downloadable as a styled Excel workbook (**Download Results Excel**), and any two runs can be pinned and diffed with **Scenario comparison** to see exactly what a filter change did — including a one-click **Export comparison CSV** that writes the configuration changes and the changed recommendation rows to a single file. A **🖨️ Print Report** button opens a print-ready one-page executive summary (headline stats plus the match-rate, family, and before → after charts) to print or save as PDF.
+The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), a **fit/headroom flag** (a ▲% beside a like-for-like match, showing how far the chosen instance over-provisions its worst axis versus the requested size — the discrete-sizing and ratio-mismatch waste), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **CSV ▾** menu's **No-Match Rows** item for fix-and-re-upload remediation. The grid downloads primarily as a styled Excel workbook (**📊 Download Results (Excel)**, with a sheet per alternative strategy) — with the flat CSVs behind the **CSV ▾** checklist — and any two runs can be pinned and diffed with **Scenario comparison** to see exactly what a filter change did — including a one-click **Export comparison CSV** that writes the configuration changes and the changed recommendation rows to a single file. A **🖨️ Print Report** button opens a print-ready one-page executive summary (headline stats plus the match-rate, family, and before → after charts) to print or save as PDF.
 
 > **Pricing is intentionally excluded from output.** Cloud pricing depends on region, OS, discounts, Reserved Instances, Savings Plans, and enterprise agreements — a static price in the CSV would be misleading within weeks. Use the provider's pricing calculator with the recommended instance types for authoritative cost figures.
 

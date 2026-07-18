@@ -301,11 +301,9 @@ async function processRecommendations() {
     // AWS page: sync the calculator bulk-template button(s) with the run types
     updateDownloadButtons(processedResults);
 
-    // No-match remediation export button (hidden when everything matched)
-    updateNoMatchButton(processedResults);
-
-    // Per-app summary export button (hidden when there's no App Name column)
-    updateAppSummaryButton(processedResults);
+    // CSV multiselect dropdown (Results always; No-Match / App Summary when they
+    // have rows). Excel is the primary one-click download beside it.
+    renderCsvMenu(processedResults);
 
     // "Open App Portfolio" handoff button (hidden when there's no named app)
     updateAppPortfolioButton(processedResults);

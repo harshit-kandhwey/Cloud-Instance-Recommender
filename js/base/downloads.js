@@ -73,34 +73,94 @@ function downloadNoMatchRows() {
   console.log(`No-match export completed: ${noMatch.length} rows`);
 }
 
-// Shows the no-match button with a count badge, or hides it on all-match runs
-function updateNoMatchButton(results) {
-  const btn = document.getElementById("downloadNoMatchBtn");
-  if (!btn) return;
-  const count = getNoMatchRows(results).length;
-  if (count > 0) {
-    btn.textContent = `⚠️ No-Match Rows CSV (${count})`;
-    btn.title = `${count} row(s) got no recommendation from any provider — download them with reasons to fix and re-upload`;
-    btn.classList.remove("hidden");
-  } else {
-    btn.classList.add("hidden");
+// ─── CSV multiselect dropdown ─────────────────────────────────────────────────
+// Excel is the primary one-click download; the flat CSV exports are the
+// secondary, opt-in choice behind a "CSV ▾" checklist. Results is always
+// offered; No-Match and App Summary appear only when they have rows (each with
+// its count), so the menu never lists an empty export. Rendered from the same
+// getNoMatchRows / getAppSummary primitives the exports use.
+function renderCsvMenu(results) {
+  const menu = document.getElementById("csvMenu");
+  if (!menu) return;
+  const noMatch = getNoMatchRows(results).length;
+  const apps = getAppSummary(results).length;
+  const item = (id, label, checked) =>
+    `<label class="csv-menu-item"><input type="checkbox" value="${id}"${
+      checked ? " checked" : ""
+    } /> ${label}</label>`;
+  const items = [item("results", "Results CSV", true)];
+  if (noMatch > 0) {
+    items.push(item("nomatch", `No-Match Rows CSV (${noMatch})`, false));
   }
-  updateAnalysisGroupVisibility();
+  if (apps > 0) {
+    items.push(item("appsummary", `App Summary CSV (${apps})`, false));
+  }
+  menu.innerHTML = `${items.join("")}<button type="button" class="btn btn-primary csv-menu-go" onclick="downloadSelectedCsvs()">Download selected</button>`;
 }
 
-// The three Analysis buttons toggle independently; hide their labeled cluster
-// when none of them is visible so the label never sits over an empty group.
+// Show/hide the checklist; an outside click closes it (registered only while open
+// so it never lingers).
+function toggleCsvMenu() {
+  const menu = document.getElementById("csvMenu");
+  const btn = document.getElementById("csvMenuBtn");
+  if (!menu) return;
+  const willShow = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !willShow);
+  if (btn) btn.setAttribute("aria-expanded", String(willShow));
+  if (willShow) {
+    setTimeout(
+      () => document.addEventListener("click", _csvMenuOutsideClick),
+      0,
+    );
+  } else {
+    document.removeEventListener("click", _csvMenuOutsideClick);
+  }
+}
+
+function _csvMenuOutsideClick(e) {
+  const dd = document.querySelector(".csv-dropdown");
+  if (dd && dd.contains(e.target)) return;
+  const menu = document.getElementById("csvMenu");
+  if (menu) menu.classList.add("hidden");
+  const btn = document.getElementById("csvMenuBtn");
+  if (btn) btn.setAttribute("aria-expanded", "false");
+  document.removeEventListener("click", _csvMenuOutsideClick);
+}
+
+// Fires each checked export. Multiple downloads in one gesture are allowed by
+// browsers (the second may prompt once); each export is the same function its
+// own menu entry maps to, so the file is identical to a single-pick download.
+function downloadSelectedCsvs() {
+  const menu = document.getElementById("csvMenu");
+  if (!menu) return;
+  const checked = Array.from(
+    menu.querySelectorAll('input[type="checkbox"]:checked'),
+  ).map((c) => c.value);
+  if (!checked.length) {
+    showToast("Select at least one CSV to download.", "warning");
+    return;
+  }
+  const exporters = {
+    results: downloadResults,
+    nomatch: downloadNoMatchRows,
+    appsummary: downloadAppSummary,
+  };
+  checked.forEach((id) => {
+    if (typeof exporters[id] === "function") exporters[id]();
+  });
+  menu.classList.add("hidden");
+  const btn = document.getElementById("csvMenuBtn");
+  if (btn) btn.setAttribute("aria-expanded", "false");
+  document.removeEventListener("click", _csvMenuOutsideClick);
+}
+
+// The Analysis group now holds only the App Portfolio hand-off; hide its labeled
+// cluster when that button is hidden so the label never sits over an empty group.
 function updateAnalysisGroupVisibility() {
   const group = document.getElementById("analysisGroup");
   if (!group) return;
-  const anyVisible = [
-    "downloadNoMatchBtn",
-    "downloadAppSummaryBtn",
-    "openAppPortfolioBtn",
-  ].some((id) => {
-    const btn = document.getElementById(id);
-    return btn && !btn.classList.contains("hidden");
-  });
+  const btn = document.getElementById("openAppPortfolioBtn");
+  const anyVisible = btn && !btn.classList.contains("hidden");
   if (anyVisible) group.classList.remove("hidden");
   else group.classList.add("hidden");
 }
@@ -219,22 +279,6 @@ function downloadAppSummary() {
   downloadCsv(csvContent, exportFilename("app_summary", "csv"));
 
   console.log(`App summary export completed: ${summary.length} apps`);
-}
-
-// Shows the app-summary button (with app count) only when results carry an
-// App Name column; hidden otherwise.
-function updateAppSummaryButton(results) {
-  const btn = document.getElementById("downloadAppSummaryBtn");
-  if (!btn) return;
-  const summary = getAppSummary(results);
-  if (summary.length > 0) {
-    btn.textContent = `🧩 App Summary CSV (${summary.length})`;
-    btn.title = `Per-application rollup of ${summary.length} app(s): VM count, total vCPUs/memory, and match counts`;
-    btn.classList.remove("hidden");
-  } else {
-    btn.classList.add("hidden");
-  }
-  updateAnalysisGroupVisibility();
 }
 
 // ─── App Portfolio handoff ────────────────────────────────────────────────────

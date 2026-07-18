@@ -1174,16 +1174,30 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <div class="download-group">
                   <div class="download-group-label">Results</div>
                   <div class="download-group-btns">
-                    <button class="btn btn-primary" onclick="downloadResults()">
-                      📥 Download Results CSV
-                    </button>
                     <button
-                      class="btn btn-secondary"
+                      class="btn btn-primary"
                       id="downloadResultsXlsxBtn"
                       onclick="downloadResultsXlsx()"
                     >
-                      📊 Download Results Excel
+                      📊 Download Results (Excel)
                     </button>
+                    <div class="csv-dropdown">
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="csvMenuBtn"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        onclick="toggleCsvMenu()"
+                      >
+                        ⬇️ CSV ▾
+                      </button>
+                      <div
+                        id="csvMenu"
+                        class="csv-menu hidden"
+                        role="menu"
+                      ></div>
+                    </div>
                     <button
                       class="btn btn-secondary"
                       onclick="printExecutiveReport()"
@@ -1197,20 +1211,6 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <div class="download-group hidden" id="analysisGroup">
                   <div class="download-group-label">Analysis</div>
                   <div class="download-group-btns">
-                    <button
-                      id="downloadNoMatchBtn"
-                      class="btn btn-secondary hidden"
-                      onclick="downloadNoMatchRows()"
-                    >
-                      ⚠️ No-Match Rows CSV
-                    </button>
-                    <button
-                      id="downloadAppSummaryBtn"
-                      class="btn btn-secondary hidden"
-                      onclick="downloadAppSummary()"
-                    >
-                      🧩 App Summary CSV
-                    </button>
                     <button
                       id="openAppPortfolioBtn"
                       class="btn btn-primary hidden"
