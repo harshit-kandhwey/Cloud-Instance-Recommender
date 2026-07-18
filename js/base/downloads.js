@@ -105,6 +105,39 @@ function updateAnalysisGroupVisibility() {
   else group.classList.add("hidden");
 }
 
+// ─── Executive print report ───────────────────────────────────────────────────
+// Builds the print-only summary into its hidden container, then hands the page
+// to the browser's print dialog. The report reuses the on-screen charts, so
+// there is no separate document and nothing leaves the page (CSP-safe).
+//
+// A body class scopes the print stylesheet: only a deliberate "Print report"
+// press adds it, so a plain Ctrl+P still prints the page as seen and no other
+// page sharing style.css ever prints blank. renderExecutiveReport is guarded —
+// a page without the report placeholder simply prints normally.
+function printExecutiveReport() {
+  if (!processedResults || processedResults.length === 0) {
+    showToast(
+      "Generate recommendations first, then print the executive report.",
+      "warning",
+    );
+    return;
+  }
+
+  if (typeof renderExecutiveReport === "function") {
+    renderExecutiveReport(processedResults);
+  }
+
+  document.body.classList.add("printing-report");
+  // Drop the class once the dialog closes. afterprint is the reliable signal;
+  // the timeout is a fallback for browsers that never fire it, long enough that
+  // a blocking print() has taken its snapshot before the class is removed.
+  const cleanup = () => document.body.classList.remove("printing-report");
+  window.addEventListener("afterprint", cleanup, { once: true });
+  setTimeout(cleanup, 3000);
+
+  window.print();
+}
+
 // ─── Per-app rollup / App Summary export ──────────────────────────────────────
 // Aggregates the per-VM results by App Name: VM count, total vCPUs / memory,
 // and how many VMs did / didn't get a recommendation. Recommendations stay

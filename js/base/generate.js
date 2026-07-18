@@ -289,6 +289,12 @@ async function processRecommendations() {
     if (typeof renderResultsCharts === "function")
       renderResultsCharts(processedResults);
 
+    // Pre-build the hidden executive print report from the same run, so both the
+    // "Print report" button and a native Ctrl+P have it ready. Guarded like the
+    // charts: a page without the placeholder loses the report, not the results.
+    if (typeof renderExecutiveReport === "function")
+      renderExecutiveReport(processedResults);
+
     // Offer the single filter change that would rescue the most unmatched rows
     updateRelaxSuggestion(processedResults);
 

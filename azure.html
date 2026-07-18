@@ -1270,6 +1270,13 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v
                     >
                       📊 Download Results Excel
                     </button>
+                    <button
+                      class="btn btn-secondary"
+                      onclick="printExecutiveReport()"
+                      title="Open a print-ready one-page executive summary (match rate, families, right-sizing) — print or save as PDF"
+                    >
+                      🖨️ Print Report
+                    </button>
                   </div>
                 </div>
 
@@ -1403,5 +1410,9 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v
         </section>
       </main>
     </div>
+    <!-- Executive print report: a direct child of <body> so the print
+         stylesheet can hide every sibling and reveal only this. Filled in by
+         js/base/charts.js (renderExecutiveReport) after a run; hidden on screen. -->
+    <div id="executiveReportSection"></div>
   </body>
 </html>

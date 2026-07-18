@@ -726,3 +726,40 @@ nav a.active {
   font-weight: bold;
   border: 1px solid var(--border-mid);
 }
+
+/* ── Executive print report ───────────────────────────────────────────────────
+   A one-page summary (built by js/base/charts.js → buildExecutiveReport) that
+   lives hidden in the page as a direct child of <body>. Hidden on screen; on
+   print, the "Print report" button adds .printing-report to <body>, which hides
+   every other top-level element and reveals only the report. Scoping on that
+   class means a plain Ctrl+P prints the page as seen, and other pages that share
+   this stylesheet but carry no report never print blank. */
+#executiveReportSection {
+  display: none;
+}
+@media print {
+  body.printing-report > *:not(#executiveReportSection) {
+    display: none !important;
+  }
+  body.printing-report #executiveReportSection {
+    display: block;
+    /* Force the LIGHT tokens the report and its charts read, regardless of the
+       on-screen theme — printing a dark surface wastes ink and reads poorly.
+       Only the tokens actually used inside the report are redeclared here. */
+    --surface: #ffffff;
+    --surface-tint: #f8f9ff;
+    --text: #333333;
+    --text-body: #555555;
+    --text-soft: #64748b;
+    --text-faint: #94a3b8;
+    --success-bg: #d4edda;
+    --success-border: #c3e6cb;
+    --good-strong: #15803d;
+    --amber-strong: #d97706;
+    --red-strong: #dc2626;
+    --chart-bar: #4c63d2;
+    --chart-context: #64748b;
+    --border-slate-light: #e2e8f0;
+    --heading-indigo: #2c3e8c;
+  }
+}

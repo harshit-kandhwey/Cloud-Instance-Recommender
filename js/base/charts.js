@@ -265,3 +265,149 @@ function renderResultsCharts(results) {
   return true;
 }
 window.renderResultsCharts = renderResultsCharts;
+
+// ─── Executive print report ─────────────────────────────────────────────────
+// A one-page summary meant for paper (or PDF), built from the SAME primitives as
+// the on-screen charts so the printed figures can never disagree with the ones
+// above the table. It composes headline stat tiles — the single-number form for
+// a verdict, per the dataviz method — with the three charts unchanged.
+//
+// It lives hidden in the page (js/base/report.js wires the button; css/style.css
+// hides it on screen and reveals only it on print, forcing light tokens so a
+// dark-theme screen never prints an ink-heavy background). Kept beside the chart
+// builders it reuses rather than in its own file, so those figures are one call
+// away and nothing depends on cross-file load order.
+
+// The headline: what the run assessed and what optimizing bought, as stat tiles
+// and a per-provider right-sizing line. Numbers come from the shared primitives
+// (getInstanceColumns / rowIsAllNoMatch / computeSizingSavings), the same ones
+// the meter and the stats bar read — so every figure on the page is one number.
+function _reportHeadline(results) {
+  const instanceCols =
+    typeof getInstanceColumns === "function" ? getInstanceColumns(results) : [];
+  const total = results.length;
+  const unmatched = instanceCols.length
+    ? results.filter((row) => rowIsAllNoMatch(row, instanceCols)).length
+    : 0;
+  const matched = total - unmatched;
+  const pct = total ? Math.round((matched / total) * 100) : 0;
+
+  const keys = Object.keys(results[0] || {});
+  const appCount = keys.includes("App Name")
+    ? new Set(
+        results.map((r) => String(r["App Name"] || "").trim()).filter(Boolean),
+      ).size
+    : 0;
+
+  const tile = (label, value, accent) => `
+      <div style="flex:1 1 130px;min-width:130px;border:1px solid var(--border-slate-light);border-radius:8px;padding:10px 12px;background:var(--surface-tint);">
+        <div style="font-size:22px;font-weight:800;line-height:1.1;color:${accent || "var(--text)"};">${value}</div>
+        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-soft);margin-top:3px;">${label}</div>
+      </div>`;
+
+  const tiles = [
+    tile("VMs assessed", total.toLocaleString()),
+    tile(
+      "Matched",
+      `${matched.toLocaleString()} <span style="font-size:13px;font-weight:600;">(${pct}%)</span>`,
+      "var(--good-strong)",
+    ),
+    unmatched > 0
+      ? tile("No match", unmatched.toLocaleString(), "var(--red-strong)")
+      : "",
+    appCount > 0 ? tile("Applications", appCount.toLocaleString()) : "",
+  ]
+    .filter(Boolean)
+    .join("");
+
+  // Per-provider right-sizing, worded exactly as the stats bar words it: a
+  // positive delta is a reduction (shown "−"), a negative one an increase ("+").
+  const savings =
+    typeof computeSizingSavings === "function"
+      ? computeSizingSavings(results)
+      : [];
+  const savingsLines = savings
+    .map((s) => {
+      const parts = [];
+      if (s.vcpus !== 0)
+        parts.push(`${s.vcpus > 0 ? "−" : "+"}${Math.abs(s.vcpus)} vCPU`);
+      if (s.memory !== 0)
+        parts.push(`${s.memory > 0 ? "−" : "+"}${Math.abs(s.memory)} GB`);
+      if (!parts.length) return "";
+      const win = s.vcpus >= 0 && s.memory >= 0;
+      const color = win ? "var(--good-strong)" : "var(--amber-strong)";
+      return `
+        <div style="font-size:12px;margin:2px 0;color:var(--text-body);">
+          <strong style="color:var(--text);">${escapeHtml(s.provider)}</strong>
+          <span style="color:${color};font-weight:700;"> ${parts.join(" · ")}</span>
+          <span style="color:var(--text-soft);"> vs ${escapeHtml(s.baseline)}</span>
+        </div>`;
+    })
+    .filter(Boolean)
+    .join("");
+
+  const savingsBlock = savingsLines
+    ? `<figure style="margin:14px 0 0 0;">
+        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:4px;">Right-sizing</figcaption>
+        ${savingsLines}
+      </figure>`
+    : "";
+
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">${tiles}</div>
+    ${savingsBlock}`;
+}
+
+// The full report: a titled header, the headline, then the three charts. Returns
+// "" for an empty result set so a caller can tell "nothing to report" from a
+// populated page.
+function buildExecutiveReport(results) {
+  if (!results || !results.length) return "";
+
+  const dates = [
+    typeof window !== "undefined" ? window.AWS_DATA_DATE : undefined,
+    typeof window !== "undefined" ? window.AZURE_DATA_DATE : undefined,
+    typeof window !== "undefined" ? window.GCP_DATA_DATE : undefined,
+  ]
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
+  const asOf = dates.length
+    ? ` · Data as of ${escapeHtml(dates.join(" / "))}`
+    : "";
+  const generated = new Date().toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const charts = [
+    _matchRateMeter(results),
+    _familyDistribution(results),
+    _beforeAfter(results),
+  ]
+    .filter(Boolean)
+    .join("");
+
+  return `
+    <section style="max-width:760px;margin:0 auto;padding:20px 24px;color:var(--text);background:var(--surface);font-family:inherit;">
+      <header style="border-bottom:2px solid var(--border-slate-light);padding-bottom:10px;margin-bottom:16px;">
+        <h1 style="margin:0;font-size:20px;font-weight:800;color:var(--heading-indigo);">Executive summary</h1>
+        <p style="margin:2px 0 0 0;font-size:13px;color:var(--text-body);">Cloud instance recommendations</p>
+        <p style="margin:6px 0 0 0;font-size:11px;color:var(--text-soft);">Generated ${escapeHtml(generated)}${asOf}</p>
+      </header>
+      ${_reportHeadline(results)}
+      ${charts}
+    </section>`;
+}
+
+// Populates the always-present-but-hidden report container. Mirrors
+// renderResultsCharts: returns false when the page has no placeholder, so a
+// caller can tell "nowhere to draw" from "nothing to draw".
+function renderExecutiveReport(results) {
+  const el = document.getElementById("executiveReportSection");
+  if (!el) return false;
+  el.innerHTML = results && results.length ? buildExecutiveReport(results) : "";
+  return true;
+}
+window.buildExecutiveReport = buildExecutiveReport;
+window.renderExecutiveReport = renderExecutiveReport;
