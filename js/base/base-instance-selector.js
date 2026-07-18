@@ -515,9 +515,12 @@ class BaseInstanceSelector {
 
     // Apply rule engine (ENV / OS / Workload / Compliance rules)
     if (typeof RuleEngine !== "undefined" && filtered.length > 0) {
+      // The requirement (for like-to-like the requested size; for optimized the
+      // utilization-adjusted target) is passed through so the workload
+      // preference can refuse to over-provision to honour itself.
       const ruleResult = RuleEngine.apply(
         filtered,
-        options,
+        { ...options, reqCpu: currentCpu, reqMemory: currentMemory },
         this.getProviderName().toLowerCase(),
       );
       this._lastRulesApplied = ruleResult.rules;

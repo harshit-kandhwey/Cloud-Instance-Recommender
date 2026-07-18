@@ -38,6 +38,8 @@
  * @property {string} [rowWorkload]
  * @property {string} [rowCompliance]
  * @property {string} [rowMinGen]
+ * @property {number} [reqCpu] required vCPUs — bounds workload over-provisioning
+ * @property {number} [reqMemory] required memory (GB) — bounds the same
  */
 
 /** @typedef {"aws"|"azure"|"gcp"} Provider */
@@ -226,20 +228,64 @@ const RuleEngine = (() => {
     );
   }
 
-  // Sort preferred workload families first, cheapest within each tier
+  // A workload preference is a nudge toward an APPROPRIATE FAMILY, never a licence
+  // to over-provision. A like-to-like match may use at most double the requested
+  // vCPUs and quadruple the requested memory to honour the preference; beyond
+  // that the "preferred" instance is not a like-to-like match at all and the
+  // preference is dropped, leaving the normal cheapest-adequate pick.
+  //
+  // Without this bound the preference silently defeated size fit: GCP's
+  // memory-optimized m-series starts at 32 vCPU / 976 GiB, so a 2 vCPU / 4 GB
+  // Cache VM landed on m3-ultramem-32 (32 vCPU / 976 GiB) — 16× the cores it
+  // asked for. AWS/Azure have small memory-optimized instances (r6g.large,
+  // e2psv6), so their preference still applies; GCP simply has no close-fit
+  // member for a small workload, so it correctly falls back.
+  const WORKLOAD_MAX_CPU_FACTOR = 2;
+  const WORKLOAD_MAX_MEM_FACTOR = 4;
+
+  // Is this instance a close-enough like-to-like fit to be worth preferring?
+  // With no requirement to bound against, everything is eligible (preserves the
+  // prior behaviour for any caller that doesn't pass the requirement).
+  function isWorkloadFit(instance, reqCpu, reqMemory) {
+    if (!reqCpu && !reqMemory) return true;
+    const cpuOk = !reqCpu || instance.vCpus <= reqCpu * WORKLOAD_MAX_CPU_FACTOR;
+    const memOk =
+      !reqMemory || instance.memory <= reqMemory * WORKLOAD_MAX_MEM_FACTOR;
+    return cpuOk && memOk;
+  }
+
+  // True when at least one preferred-family instance is a close-enough fit — so
+  // the preference can actually be honoured without over-provisioning.
+  function hasPreferredFit(instances, workload, provider, reqCpu, reqMemory) {
+    const preferred = getPreferredFamilies(workload, provider);
+    if (!preferred.length) return false;
+    return instances.some(
+      (inst) =>
+        preferred.some((f) =>
+          (inst.family || "").toLowerCase().startsWith(f),
+        ) && isWorkloadFit(inst, reqCpu, reqMemory),
+    );
+  }
+
+  // Sort the close-fitting preferred families first, cheapest within each tier.
+  // A preferred-family instance that over-provisions past the fit bound is NOT
+  // treated as preferred, so it can't jump ahead of the cheapest-adequate pick.
   /**
    * @param {Instance[]} instances
    * @param {string} workload
    * @param {Provider} provider
+   * @param {number} [reqCpu]
+   * @param {number} [reqMemory]
    */
-  function sortByWorkload(instances, workload, provider) {
+  function sortByWorkload(instances, workload, provider, reqCpu, reqMemory) {
     const preferred = getPreferredFamilies(workload, provider);
     if (!preferred.length) return instances;
+    const isPreferred = (inst) =>
+      preferred.some((f) => (inst.family || "").toLowerCase().startsWith(f)) &&
+      isWorkloadFit(inst, reqCpu, reqMemory);
     return [...instances].sort((a, b) => {
-      const af = (a.family || "").toLowerCase();
-      const bf = (b.family || "").toLowerCase();
-      const as = preferred.some((f) => af.startsWith(f)) ? 0 : 1;
-      const bs = preferred.some((f) => bf.startsWith(f)) ? 0 : 1;
+      const as = isPreferred(a) ? 0 : 1;
+      const bs = isPreferred(b) ? 0 : 1;
       if (as !== bs) return as - bs;
       return a.price - b.price;
     });
@@ -345,12 +391,30 @@ const RuleEngine = (() => {
       // If filter empties the pool, keep current set and note it
     }
 
-    // ── Workload preference: sort preferred families first ──────────────────
+    // ── Workload preference: sort close-fitting preferred families first ────
+    // Only when a preferred-family instance is a close-enough fit — otherwise
+    // honouring the preference would force a hugely over-provisioned instance
+    // (see WORKLOAD_MAX_*_FACTOR), so the size-based order stands and the row
+    // says why the nudge didn't apply.
     if (workload && workload !== "general") {
       const preferred = getPreferredFamilies(workload, provider);
       if (preferred.length) {
-        filtered = sortByWorkload(filtered, workload, provider);
-        rules.push(`Workload: ${workload} preference`);
+        const reqCpu = Number(options.reqCpu) || 0;
+        const reqMemory = Number(options.reqMemory) || 0;
+        if (hasPreferredFit(filtered, workload, provider, reqCpu, reqMemory)) {
+          filtered = sortByWorkload(
+            filtered,
+            workload,
+            provider,
+            reqCpu,
+            reqMemory,
+          );
+          rules.push(`Workload: ${workload} preference`);
+        } else {
+          rules.push(
+            `Workload: ${workload} preference not applied (no close-size match)`,
+          );
+        }
       }
     }
 
