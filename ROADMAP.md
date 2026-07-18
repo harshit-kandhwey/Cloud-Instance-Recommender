@@ -66,8 +66,11 @@ Turn the results grid into something you can explore and present.
 
 - Full results table beyond the 20-row preview — pagination or virtualization,
   column show/hide, per-column filters, and a "no-match only" toggle. (M)
-- Hand-built charts (CSP-safe, no libraries — `script-src 'self'` and
-  `connect-src 'none'` mean a charting library cannot be loaded at all): a
+- Hand-built charts (no libraries — the project's choice, not a restriction:
+  `script-src 'self'` permits same-origin scripts, so a vendored charting
+  library would load just as SheetJS does, and `connect-src 'none'` blocks
+  network connections rather than script execution; staying dependency-free
+  keeps the CSP tight with no CDN and no supply-chain surface): a
   match-rate **meter**, family distribution, and vCPU/RAM before→after. Two
   deliberate departures from the original sketch: the match rate is a meter and
   **not a donut**, because a two-slice pie asks the eye to compare angles for

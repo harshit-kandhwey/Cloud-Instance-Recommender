@@ -1,5 +1,10 @@
-// Results charts. Hand-built, no charting library — the CSP forbids loading one
-// (`script-src 'self'`, `connect-src 'none'`), and nothing here needs one.
+// Results charts. Hand-built, no charting library — a deliberate choice, not a
+// restriction. `script-src 'self'` permits same-origin scripts, so a vendored
+// library would load exactly the way SheetJS already does (js/vendor/, injected
+// by ingest.js and portfolio.js); `connect-src 'none'` blocks network
+// connections, not script execution. Staying dependency-free is the project's
+// policy — no CDN, no supply-chain surface, a CSP that stays tight — and nothing
+// here needs a library anyway.
 //
 // Rendered into #resultsChartsSection by renderResultsCharts(), which every tool
 // page carries. Like every shared renderer, it survives its element being absent:

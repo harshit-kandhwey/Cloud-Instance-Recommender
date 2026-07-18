@@ -1,5 +1,5 @@
-// Results charts: hand-built, no library (the CSP forbids one), theme tokens
-// only, and honest about what they show.
+// Results charts: hand-built, no library (the project's choice, not a CSP
+// restriction), theme tokens only, and honest about what they show.
 const fs = require("fs");
 const path = require("path");
 const { REPO, buildContext, makeChecker } = require("./harness");
@@ -429,9 +429,10 @@ console.log("[nothing to draw is drawn as nothing]");
 console.log("[no library, no literal colours]");
 {
   const src = fs.readFileSync(path.join(REPO, "js/base/charts.js"), "utf8");
-  // The CSP is script-src 'self'; connect-src 'none'. A chart library could only
-  // arrive by injected script or fetch, and neither is available — so the guard
-  // is that the module never reaches for one.
+  // Staying dependency-free is a policy, so it needs a guard: `script-src 'self'`
+  // would happily load a vendored library by injected script (SheetJS already
+  // arrives that way), and `connect-src 'none'` only blocks network connections.
+  // Nothing stops charts.js reaching for a library except this check.
   check(
     "the module loads no script and fetches nothing",
     !/\bfetch\s*\(|XMLHttpRequest|createElement\(["']script|import\s*\(/.test(
