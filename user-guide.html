@@ -701,11 +701,13 @@
           know exactly what to relax.
         </li>
         <li>
-          <strong>Scenario comparison</strong> — pin two generation runs and
-          diff them: match-rate change, newly matched/unmatched VMs, and old →
-          new values for every changed recommendation. Export the whole
-          comparison — the configuration changes and the changed rows — to a
-          single CSV.
+          <strong>Scenario comparison</strong> — pin generation runs (named, up
+          to six) and diff them. Two runs give a detailed pairwise view:
+          match-rate change, newly matched/unmatched VMs, the configuration
+          settings that differed, and old → new values for every changed
+          recommendation. Three or more give an N-way matrix — one column per
+          run over the rows that differ across the set. Either view exports to
+          CSV.
         </li>
         <li>
           <strong>Install &amp; offline</strong> — the tool is an installable

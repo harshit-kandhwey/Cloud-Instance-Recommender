@@ -288,16 +288,16 @@ run(`processedResults = [
   { "VM Name": "db1", "${AWS}": "r5.large" }
 ]`);
 run("pinScenario()");
-const pinnedFirst = run("scenarioA.results[0]['VM Name']");
+const pinnedFirst = run("scenarios[0].results[0]['VM Name']");
 check("scenario pinned", pinnedFirst === "web1");
 
 // A later run REPLACES processedResults (as generate.js does)
 run(`processedResults = [{ "VM Name": "other", "${AWS}": "t3.micro" }]`);
 check(
   "pinned scenario keeps its own rows after a regenerate",
-  run("scenarioA.results.length") === 2 &&
-    run("scenarioA.results[0]['VM Name']") === "web1",
-  JSON.stringify(run("scenarioA.results")),
+  run("scenarios[0].results.length") === 2 &&
+    run("scenarios[0].results[0]['VM Name']") === "web1",
+  JSON.stringify(run("scenarios[0].results")),
 );
 
 // Sorting for the preview/exports must copy, never reorder the pinned array.
@@ -306,16 +306,16 @@ check(
 // that the spread operator works, and would still pass if a production call site
 // started sorting a pinned scenario in place.
 run(`window._previewState = {
-  results: scenarioA.results,
+  results: scenarios[0].results,
   displayCols: ["VM Name"],
   sortCol: 0,
   sortDir: 1,
   filter: ""
 }`);
 const exported = run(
-  `resultsInPreviewOrder(scenarioA.results).map((r) => r["VM Name"])`,
+  `resultsInPreviewOrder(scenarios[0].results).map((r) => r["VM Name"])`,
 );
-const pinnedAfter = run(`scenarioA.results.map((r) => r["VM Name"])`);
+const pinnedAfter = run(`scenarios[0].results.map((r) => r["VM Name"])`);
 check(
   "the export path really does reorder (so the next check means something)",
   JSON.stringify(exported) === JSON.stringify(["db1", "web1"]),
@@ -442,6 +442,231 @@ check(
     "No recommendation changed between the two runs.",
   ),
 );
+
+// ══ v2: N-way diff (diffScenariosN) ════════════════════════════════════════════
+// Generalises the pairwise diff to any number of runs; a cell is "changed" when
+// the runs don't all agree, a row when any of its cells does.
+
+// Three runs, each differing from the others on exactly one VM.
+sandbox.n1 = {
+  label: "Base",
+  at: "t",
+  results: [
+    { "VM Name": "web1", [AWS]: "m5.large" },
+    { "VM Name": "db1", [AWS]: "c5.large" },
+  ],
+};
+sandbox.n2 = {
+  label: "Tuned",
+  at: "t",
+  results: [
+    { "VM Name": "web1", [AWS]: "m5.large" },
+    { "VM Name": "db1", [AWS]: "c6i.large" },
+  ],
+};
+sandbox.n3 = {
+  label: "Aggressive",
+  at: "t",
+  results: [
+    { "VM Name": "web1", [AWS]: "m6i.large" },
+    { "VM Name": "db1", [AWS]: "c5.large" },
+  ],
+};
+const dn = run("diffScenariosN([n1, n2, n3])");
+check(
+  "N-way compares 2 rows across 3 runs",
+  dn.pairedRows === 2 && dn.perScenario.length === 3,
+  JSON.stringify({ paired: dn.pairedRows, per: dn.perScenario.length }),
+);
+check(
+  "both rows differ across the set",
+  dn.changedRows.length === 2,
+  JSON.stringify(dn.changedRows.map((r) => r.key)),
+);
+check(
+  "a differing cell carries one value per run",
+  dn.changedRows[0].cells[0].values.length === 3 &&
+    dn.changedRows[0].cells[0].changed === true,
+  JSON.stringify(dn.changedRows[0].cells[0]),
+);
+check(
+  "per-run match rate is reported with the run label",
+  dn.perScenario[0].label === "Base" && dn.perScenario[0].matchRate === 100,
+  JSON.stringify(dn.perScenario),
+);
+
+// N-way must agree with the pairwise diff on the two-run case.
+const dnPair = run("diffScenariosN([A1, B1])");
+check(
+  "N-way agrees with pairwise on changed-row count for two runs",
+  dnPair.changedRows.length ===
+    run("diffScenarios(A1, B1)").summary.changedRows,
+  `${dnPair.changedRows.length} vs pairwise`,
+);
+
+// A VM missing from one run is compared only where common to all, and noted.
+sandbox.nMissA = {
+  label: "A",
+  at: "t",
+  results: [
+    { "VM Name": "x", [AWS]: "m5.large" },
+    { "VM Name": "y", [AWS]: "c5.large" },
+  ],
+};
+sandbox.nMissB = {
+  label: "B",
+  at: "t",
+  results: [{ "VM Name": "x", [AWS]: "m6i.large" }],
+};
+sandbox.nMissC = {
+  label: "C",
+  at: "t",
+  results: [{ "VM Name": "x", [AWS]: "m5.large" }],
+};
+const dnMiss = run("diffScenariosN([nMissA, nMissB, nMissC])");
+check(
+  "only VMs common to every run are compared, with a note",
+  dnMiss.pairedRows === 1 && /common to all/i.test(dnMiss.note),
+  `paired=${dnMiss.pairedRows} note="${dnMiss.note}"`,
+);
+
+// Falls back to index pairing when VM Names are absent, across N runs.
+sandbox.nIdxA = {
+  label: "A",
+  at: "t",
+  results: [{ [AWS]: "m5.large" }, { [AWS]: "c5.large" }],
+};
+sandbox.nIdxB = {
+  label: "B",
+  at: "t",
+  results: [{ [AWS]: "m5.large" }, { [AWS]: "c6i.large" }],
+};
+sandbox.nIdxC = {
+  label: "C",
+  at: "t",
+  results: [{ [AWS]: "m5.large" }, { [AWS]: "c5.large" }],
+};
+const dnIdx = run("diffScenariosN([nIdxA, nIdxB, nIdxC])");
+check(
+  "index pairing works across N runs (row 2 differs)",
+  dnIdx.changedRows.length === 1 && dnIdx.changedRows[0].key === "Row 2",
+  JSON.stringify(dnIdx.changedRows.map((r) => r.key)),
+);
+
+// Comparable columns are the intersection across ALL runs.
+sandbox.nColA = {
+  label: "A",
+  at: "t",
+  results: [{ "VM Name": "x", [AWS]: "m5.large", [AZ]: "D2s_v5" }],
+};
+sandbox.nColB = {
+  label: "B",
+  at: "t",
+  results: [{ "VM Name": "x", [AWS]: "m6i.large", [AZ]: "D4s_v5" }],
+};
+sandbox.nColC = {
+  label: "C",
+  at: "t",
+  results: [{ "VM Name": "x", [AWS]: "c5.large" }],
+};
+const dnCol = run("diffScenariosN([nColA, nColB, nColC])");
+check(
+  "comparable columns intersect across all runs (AWS only)",
+  JSON.stringify(dnCol.cols) === JSON.stringify([AWS]),
+  JSON.stringify(dnCol.cols),
+);
+
+// ══ v2: N-way CSV (buildScenarioComparisonCsvN) ════════════════════════════════
+const ncsv = run("buildScenarioComparisonCsvN([n1, n2, n3])");
+check(
+  "the N-way header expands each column to one cell per run label",
+  ncsv.includes(`${AWS} [Base],${AWS} [Tuned],${AWS} [Aggressive]`),
+  ncsv.split("\n").find((l) => l.startsWith("VM,")),
+);
+check(
+  "the summary lists a match rate per run",
+  ncsv.includes("Base,100") && ncsv.includes("Tuned,100"),
+  ncsv,
+);
+check(
+  "only differing rows are written, one value per run",
+  ncsv.includes("web1,m5.large,m5.large,m6i.large") &&
+    ncsv.includes("db1,c5.large,c6i.large,c5.large"),
+  ncsv,
+);
+// Injection hardening carries over to the N-way file.
+sandbox.evilN1 = {
+  label: "A",
+  at: "t",
+  results: [{ "VM Name": "=HYPERLINK(1)", [AWS]: "m5.large" }],
+};
+sandbox.evilN2 = {
+  label: "B",
+  at: "t",
+  results: [{ "VM Name": "=HYPERLINK(1)", [AWS]: "m6i.large" }],
+};
+sandbox.evilN3 = {
+  label: "C",
+  at: "t",
+  results: [{ "VM Name": "=HYPERLINK(1)", [AWS]: "r5.large" }],
+};
+const evilN = run("buildScenarioComparisonCsvN([evilN1, evilN2, evilN3])");
+check(
+  "a leading = in a cell is neutralised in the N-way file too",
+  evilN.includes("'=HYPERLINK(1)") && !/\n=HYPERLINK/.test(evilN),
+  evilN.split("\n").find((l) => l.includes("HYPERLINK")),
+);
+
+// ══ v2: named pins, cap, rename, remove ════════════════════════════════════════
+// The UI functions early-return without a DOM (getElementById is null here), so
+// these exercise the state model directly. showToast is stubbed for the warning
+// paths (the cap).
+sandbox.showToast = () => {};
+run("scenarios = []; scenarioSeq = 0;");
+run(`processedResults = [{ "VM Name": "x", "${AWS}": "m5.large" }]`);
+
+run(`pinScenario("Baseline")`);
+run(`pinScenario()`); // default name
+check(
+  "a pin takes the given name; an unnamed pin defaults to Run N",
+  run("scenarios.length") === 2 &&
+    run("scenarios[0].label") === "Baseline" &&
+    run("scenarios[1].label") === "Run 2",
+  JSON.stringify(run("scenarios.map((s) => s.label)")),
+);
+
+// Rename in place, and a blank rename keeps the current label.
+run(`renameScenario(scenarios[1].id, "Tuned")`);
+run(`renameScenario(scenarios[0].id, "   ")`);
+check(
+  "renameScenario updates the label; a blank name is ignored",
+  run("scenarios[1].label") === "Tuned" &&
+    run("scenarios[0].label") === "Baseline",
+  JSON.stringify(run("scenarios.map((s) => s.label)")),
+);
+
+// Remove one by id.
+run(`removeScenario(scenarios[0].id)`);
+check(
+  "removeScenario drops just that run",
+  run("scenarios.length") === 1 && run("scenarios[0].label") === "Tuned",
+  JSON.stringify(run("scenarios.map((s) => s.label)")),
+);
+
+// The cap refuses further pins past SCENARIO_MAX.
+run("scenarios = []; scenarioSeq = 0;");
+const cap = run("SCENARIO_MAX");
+for (let i = 0; i < cap; i++) run("pinScenario()");
+run("pinScenario()"); // one past the cap
+check(
+  "pinning stops at SCENARIO_MAX",
+  run("scenarios.length") === cap,
+  `${run("scenarios.length")} pinned, cap ${cap}`,
+);
+
+// clearScenarios empties the set.
+run("clearScenarios()");
+check("clearScenarios empties the set", run("scenarios.length") === 0);
 
 if (failures) {
   console.log(`\n${failures} check(s) failed`);

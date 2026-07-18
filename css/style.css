@@ -319,9 +319,70 @@ body {
   font-weight: 700;
   color: var(--text);
 }
+.scenario-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
 .scenario-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   color: var(--text-muted);
+  padding: 3px 6px 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+}
+.scenario-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.scenario-at {
+  font-size: 11px;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+.scenario-name-input {
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-slate);
+  border-radius: 6px;
+  max-width: 150px;
+}
+.scenario-name-new {
+  max-width: 180px;
+}
+.scenario-name-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.scenario-remove {
+  border: none;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.scenario-remove:hover {
+  color: var(--red-strong);
+  background: var(--danger-bg);
+}
+/* N-way matrix: the grouped header centres each run's column under its measure. */
+.scenario-nway-table thead th {
+  text-align: center;
+}
+.scenario-nway-table tbody td:first-child {
+  text-align: left;
 }
 .scenario-bar .btn {
   padding: 8px 14px;

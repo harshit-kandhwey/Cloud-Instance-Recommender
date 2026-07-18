@@ -1,15 +1,18 @@
-// Scenario comparison: pin two generation runs (same input, different config)
-// and show which configuration settings differed plus a per-VM diff of what
-// the recommendations changed.
+// Scenario comparison: pin generation runs (same input, different config) and
+// show which configuration settings differed plus a per-VM diff of what the
+// recommendations changed. Two runs get a detailed pairwise view (config diff +
+// old → new cells); three or more get an N-way matrix (one column per run).
 //
-// Scenarios are held in memory for the session only (results grids can exceed
-// localStorage's ~5MB); pinning captures a reference to that run's
-// processedResults, which is never mutated (a new run reassigns the global to
-// a fresh array). The diff builder is pure and unit-tested; the rest is UI.
+// Runs are named (default "Run N", editable in place) and held in memory for
+// the session only: a results grid can exceed localStorage's ~5MB, so
+// cross-session save is deliberately out of scope (the roadmap notes it). A cap
+// keeps the N-way matrix legible. Pinning captures a REFERENCE to that run's
+// processedResults, which is never mutated (a new run reassigns the global to a
+// fresh array). The diff builders are pure and unit-tested; the rest is UI.
 
-let scenarioA = null;
-let scenarioB = null;
-let scenarioPinCount = 0;
+let scenarios = [];
+let scenarioSeq = 0;
+const SCENARIO_MAX = 6;
 
 function sEsc(s) {
   return typeof escapeHtml === "function"
@@ -116,6 +119,93 @@ function diffScenarios(a, b) {
       matchRateA: totalCells ? Math.round((matchedA / totalCells) * 100) : 0,
       matchRateB: totalCells ? Math.round((matchedB / totalCells) * 100) : 0,
     },
+    changedRows,
+  };
+}
+
+// ─── Pure N-way diff ─────────────────────────────────────────────────────────
+// Generalises diffScenarios to any number of runs (>= 2). A row's cell is
+// "changed" when the runs do not all agree on it; a row is changed when any of
+// its comparable cells is. Comparable columns are the instance columns common to
+// EVERY run; rows pair by VM Name when every run has unique non-empty names,
+// else by index — the same rule the pairwise diff uses, applied across the set.
+// Kept separate from diffScenarios so the well-tested two-way path is untouched;
+// the two agree on the two-run case (a cell differs iff a !== b).
+function diffScenariosN(scenarios) {
+  if (!scenarios || scenarios.length < 2) return null;
+
+  // Comparable columns: intersect, preserving the first run's order.
+  let cols = getInstanceColumns(scenarios[0].results);
+  for (let i = 1; i < scenarios.length; i++) {
+    const ci = getInstanceColumns(scenarios[i].results);
+    cols = cols.filter((c) => ci.includes(c));
+  }
+
+  const keyed = scenarios.map((s) => ({ s, keys: scenarioRowKeys(s.results) }));
+  const allNamed = keyed.every((k) => k.keys);
+
+  let rowSets; // per run: Map(key → row)
+  let orderedKeys; // the keys compared, in a stable order
+  let note = "";
+
+  if (allNamed) {
+    rowSets = keyed.map(
+      ({ s, keys }) => new Map(s.results.map((r, i) => [keys[i], r])),
+    );
+    // Compare only VMs present in EVERY run, in the first run's order.
+    orderedKeys = keyed[0].keys.filter((k) => rowSets.every((m) => m.has(k)));
+    const anyExtra = scenarios.some(
+      (s) => s.results.length !== orderedKeys.length,
+    );
+    if (anyExtra) {
+      note = "Some VMs are not in every run; compared the ones common to all.";
+    }
+  } else {
+    const n = Math.min(...scenarios.map((s) => s.results.length));
+    rowSets = scenarios.map(
+      (s) => new Map(s.results.map((r, i) => [String(i), r])),
+    );
+    orderedKeys = [];
+    for (let i = 0; i < n; i++) orderedKeys.push(String(i));
+    if (scenarios.some((s) => s.results.length !== n)) {
+      note = `Runs have different row counts; compared the first ${n}.`;
+    }
+  }
+
+  const displayKey = (k) => {
+    if (allNamed) return k;
+    const r = rowSets[0].get(k);
+    return String(r?.["VM Name"] ?? "") || `Row ${Number(k) + 1}`;
+  };
+
+  const tally = scenarios.map(() => ({ matched: 0, cells: 0 }));
+  const changedRows = [];
+
+  orderedKeys.forEach((k) => {
+    let rowChanged = false;
+    const cells = cols.map((col) => {
+      const values = rowSets.map((m) => String(m.get(k)?.[col] ?? ""));
+      values.forEach((v, si) => {
+        tally[si].cells++;
+        if (!isNoMatchValue(v)) tally[si].matched++;
+      });
+      const changed = values.some((v) => v !== values[0]);
+      if (changed) rowChanged = true;
+      return { col, values, changed };
+    });
+    if (rowChanged) changedRows.push({ key: displayKey(k), cells });
+  });
+
+  return {
+    cols,
+    note,
+    pairedRows: orderedKeys.length,
+    perScenario: scenarios.map((s, i) => ({
+      label: s.label,
+      matchRate: tally[i].cells
+        ? Math.round((tally[i].matched / tally[i].cells) * 100)
+        : 0,
+    })),
     changedRows,
   };
 }
@@ -302,21 +392,76 @@ function buildScenarioComparisonCsv(a, b) {
   return out.join("\n");
 }
 
+// Pure: the N-way comparison as one sectioned CSV — the run labels, a per-run
+// match-rate summary, and the rows that differ across the set, each comparable
+// column expanded to one cell per run (`col [label]`). Used for 3+ runs; the
+// two-run export keeps the richer pairwise format above.
+function buildScenarioComparisonCsvN(list) {
+  const esc = escapeCsvCell;
+  const line = (cells) => cells.map(esc).join(",");
+  const out = [];
+
+  out.push(line(["Scenario comparison"]));
+  list.forEach((s, i) => out.push(line([`S${i + 1}`, `${s.label} · ${s.at}`])));
+  out.push("");
+
+  const d = diffScenariosN(list);
+
+  out.push(line(["Summary"]));
+  out.push(line(["Scenario", "Match rate %"]));
+  d.perScenario.forEach((p) => out.push(line([p.label, p.matchRate])));
+  out.push(
+    line(["VMs differing", `${d.changedRows.length} of ${d.pairedRows}`]),
+  );
+  if (d.note) out.push(line(["Note", d.note]));
+  out.push("");
+
+  out.push(line(["Differing recommendations across runs"]));
+  if (!d.cols.length) {
+    out.push(line(["The runs have no comparable recommendation columns."]));
+  } else if (!d.changedRows.length) {
+    out.push(line(["No recommendation differs across the runs."]));
+  } else {
+    const header = ["VM"];
+    d.cols.forEach((c) =>
+      list.forEach((s) => header.push(`${c} [${s.label}]`)),
+    );
+    out.push(line(header));
+    d.changedRows.forEach((row) => {
+      const cells = [row.key];
+      row.cells.forEach((c) => c.values.forEach((v) => cells.push(v)));
+      out.push(line(cells));
+    });
+  }
+
+  return out.join("\n");
+}
+
+// Adaptive: the pairwise file for two runs (richer — carries the config diff),
+// the N-way matrix for three or more.
 function downloadScenarioComparison() {
-  if (!scenarioA || !scenarioB) {
-    showToast("Pin two runs before exporting the comparison.", "warning");
+  if (scenarios.length < 2) {
+    showToast(
+      "Pin at least two runs before exporting the comparison.",
+      "warning",
+    );
     return;
   }
-  const csv = buildScenarioComparisonCsv(scenarioA, scenarioB);
+  const csv =
+    scenarios.length === 2
+      ? buildScenarioComparisonCsv(scenarios[0], scenarios[1])
+      : buildScenarioComparisonCsvN(scenarios);
   downloadCsv(csv, exportFilename("scenario_comparison", "csv"));
 }
 
-// ─── Pin / clear ────────────────────────────────────────────────────────────────
+// ─── Pin / rename / clear ─────────────────────────────────────────────────────
 
-function makeScenario() {
-  scenarioPinCount++;
+function makeScenario(name) {
+  scenarioSeq++;
+  const label = (name && String(name).trim()) || `Run ${scenarioSeq}`;
   return {
-    label: `Run ${scenarioPinCount}`,
+    id: scenarioSeq,
+    label,
     at: new Date().toLocaleTimeString(),
     providers:
       typeof selectedProviders !== "undefined" ? selectedProviders.slice() : [],
@@ -328,7 +473,7 @@ function makeScenario() {
   };
 }
 
-function pinScenario() {
+function pinScenario(name) {
   if (
     typeof processedResults === "undefined" ||
     !processedResults ||
@@ -337,35 +482,51 @@ function pinScenario() {
     showToast("Generate recommendations first, then pin the run.", "warning");
     return;
   }
-  const scenario = makeScenario();
-  if (!scenarioA) scenarioA = scenario;
-  else if (!scenarioB) scenarioB = scenario;
-  else {
-    // Both full — keep the two most recent: B becomes A, new run becomes B.
-    scenarioA = scenarioB;
-    scenarioB = scenario;
+  if (scenarios.length >= SCENARIO_MAX) {
+    showToast(
+      `You can pin up to ${SCENARIO_MAX} runs — remove one to pin another.`,
+      "warning",
+    );
+    return;
   }
+  scenarios.push(makeScenario(name));
   renderScenarioBar();
-  if (scenarioA && scenarioB) renderScenarioComparison();
+  if (scenarios.length >= 2) renderScenarioComparison();
+}
+
+// Rename in place (blank keeps the current label). Re-renders so the comparison
+// legend and any export pick up the new name immediately.
+function renameScenario(id, name) {
+  const s = scenarios.find((x) => x.id === id);
+  if (!s) return;
+  const v = String(name == null ? "" : name).trim();
+  if (v) s.label = v;
+  renderScenarioBar();
+  if (scenarios.length >= 2) renderScenarioComparison();
+}
+
+function removeScenario(id) {
+  scenarios = scenarios.filter((x) => x.id !== id);
+  renderScenarioBar();
+  if (scenarios.length >= 2) renderScenarioComparison();
+  else {
+    const result = document.getElementById("scenarioCompareResult");
+    if (result) result.innerHTML = "";
+  }
 }
 
 function clearScenarios() {
-  scenarioA = null;
-  scenarioB = null;
+  scenarios = [];
   const result = document.getElementById("scenarioCompareResult");
   if (result) result.innerHTML = "";
   renderScenarioBar();
 }
 
 function compareScenarios() {
-  if (scenarioA && scenarioB) renderScenarioComparison();
+  if (scenarios.length >= 2) renderScenarioComparison();
 }
 
 // ─── UI ─────────────────────────────────────────────────────────────────────────
-
-function scenarioSlotLabel(s) {
-  return s ? `${sEsc(s.label)} · ${sEsc(s.at)}` : "—";
-}
 
 function updateScenarioCompare() {
   const section = document.getElementById("scenarioCompareSection");
@@ -374,21 +535,51 @@ function updateScenarioCompare() {
   renderScenarioBar();
 }
 
+// One chip per pinned run: an inline-editable name, its pin time, and a remove
+// button. The name input is the rename affordance — no modal, no prompt().
+function scenarioChip(s) {
+  return `
+      <span class="scenario-slot" data-id="${s.id}">
+        <input class="scenario-name-input" type="text" value="${sEsc(s.label)}"
+               onchange="renameScenario(${s.id}, this.value)"
+               aria-label="Rename run ${sEsc(s.label)}" />
+        <span class="scenario-at">${sEsc(s.at)}</span>
+        <button type="button" class="scenario-remove" onclick="removeScenario(${s.id})"
+                title="Remove ${sEsc(s.label)}" aria-label="Remove ${sEsc(s.label)}">✕</button>
+      </span>`;
+}
+
 function renderScenarioBar() {
   const section = document.getElementById("scenarioCompareSection");
   if (!section) return;
-  const both = !!(scenarioA && scenarioB);
+  const canCompare = scenarios.length >= 2;
+  const atCap = scenarios.length >= SCENARIO_MAX;
+  const chips = scenarios.length
+    ? scenarios.map(scenarioChip).join("")
+    : `<span class="scenario-empty">No runs pinned yet — generate, tweak filters, and pin each run to compare.</span>`;
+  const compareLabel = scenarios.length >= 3 ? "Compare all" : "Compare A ↔ B";
   section.innerHTML = `
     <div class="scenario-bar">
       <span class="scenario-title">🔀 Scenario comparison</span>
-      <button type="button" class="btn btn-secondary" onclick="pinScenario()">📌 Pin this run</button>
-      <span class="scenario-slot"><b>A:</b> ${scenarioSlotLabel(scenarioA)}</span>
-      <span class="scenario-slot"><b>B:</b> ${scenarioSlotLabel(scenarioB)}</span>
-      <button type="button" class="btn btn-secondary" onclick="compareScenarios()" ${both ? "" : "disabled"}>Compare A ↔ B</button>
-      <button type="button" class="btn btn-secondary" onclick="clearScenarios()" ${scenarioA || scenarioB ? "" : "disabled"}>Clear</button>
+      <input id="scenarioNameInput" class="scenario-name-input scenario-name-new" type="text"
+             placeholder="Name this run (optional)" aria-label="Name this run"
+             ${atCap ? "disabled" : ""} />
+      <button type="button" class="btn btn-secondary" onclick="pinScenario(scenarioNewName())" ${atCap ? "disabled" : ""}>📌 Pin this run</button>
+      <span class="scenario-slots">${chips}</span>
+      <button type="button" class="btn btn-secondary" onclick="compareScenarios()" ${canCompare ? "" : "disabled"}>${compareLabel}</button>
+      <button type="button" class="btn btn-secondary" onclick="clearScenarios()" ${scenarios.length ? "" : "disabled"}>Clear</button>
     </div>
     <div id="scenarioCompareResult"></div>
     <div id="scenarioLiveStatus" class="sr-only" role="status" aria-live="polite"></div>`;
+}
+
+// Reads (and clears) the "name this run" field, so the next pin starts empty.
+function scenarioNewName() {
+  const input = document.getElementById("scenarioNameInput");
+  if (!input) return "";
+  const v = input.value;
+  input.value = "";
+  return v;
 }
 
 // Announce comparison outcomes to screen readers via the persistent live
@@ -399,11 +590,20 @@ function setScenarioLiveStatus(text) {
   if (live) live.textContent = text;
 }
 
+// Two runs → the detailed pairwise view (config diff + old → new cells); three
+// or more → the N-way matrix. The pairwise path is unchanged from v1.
 function renderScenarioComparison() {
   const result = document.getElementById("scenarioCompareResult");
-  if (!result || !scenarioA || !scenarioB) return;
+  if (!result || scenarios.length < 2) return;
+  if (scenarios.length === 2) {
+    renderPairwiseComparison(result, scenarios[0], scenarios[1]);
+  } else {
+    renderNWayComparison(result, scenarios);
+  }
+}
 
-  const d = diffScenarios(scenarioA, scenarioB);
+function renderPairwiseComparison(result, A, B) {
+  const d = diffScenarios(A, B);
   if (!d.cols.length) {
     result.innerHTML = `<div class="scenario-note">These two runs have no comparable recommendation columns (different providers or recommendation types).</div>`;
     setScenarioLiveStatus(
@@ -413,7 +613,7 @@ function renderScenarioComparison() {
   }
 
   // What changed in the configuration between the two pinned runs.
-  const configDiff = diffScenarioConfigs(scenarioA.config, scenarioB.config);
+  const configDiff = diffScenarioConfigs(A.config, B.config);
   let configBlock;
   if (configDiff === null) {
     configBlock = `<div class="scenario-note">Configuration snapshot not available for one or both runs, so setting changes can't be shown.</div>`;
@@ -454,7 +654,7 @@ function renderScenarioComparison() {
 
   let body;
   if (!d.changedRows.length) {
-    body = `<div class="scenario-note">No recommendation changed between run A (${sEsc(scenarioA.label)}) and run B (${sEsc(scenarioB.label)}).</div>`;
+    body = `<div class="scenario-note">No recommendation changed between run A (${sEsc(A.label)}) and run B (${sEsc(B.label)}).</div>`;
   } else {
     const head = `<tr><th>VM</th>${d.cols
       .map((c) => `<th>${sEsc(c)}</th>`)
@@ -477,7 +677,7 @@ function renderScenarioComparison() {
 
   result.innerHTML = `
     <div class="scenario-result">
-      <div class="scenario-legend">Comparing <b>A: ${sEsc(scenarioA.label)}</b> ↔ <b>B: ${sEsc(scenarioB.label)}</b> — showing only changed rows.
+      <div class="scenario-legend">Comparing <b>A: ${sEsc(A.label)}</b> ↔ <b>B: ${sEsc(B.label)}</b> — showing only changed rows.
         <button type="button" class="btn btn-secondary" onclick="downloadScenarioComparison()" style="margin-left:8px;">⬇ Export comparison CSV</button>
       </div>
       ${configBlock}${summary}${note}${body}
@@ -490,5 +690,83 @@ function renderScenarioComparison() {
   setScenarioLiveStatus(
     `Scenario comparison ready: ${d.summary.changedRows} of ${d.pairedRows} VMs changed; ` +
       `match rate ${d.summary.matchRateA}% to ${d.summary.matchRateB}%${cfgPart}.`,
+  );
+}
+
+// N-way: a two-level header (one group per comparable column, a sub-column per
+// run) over the rows that differ across the set. Within a differing cell every
+// value that departs from the first run's is highlighted, so the eye reads what
+// moved without a legend. Config is not diffed here — pairwise settings changes
+// don't generalise to N runs; the per-run match rate carries the headline.
+function renderNWayComparison(result, list) {
+  const d = diffScenariosN(list);
+  if (!d.cols.length) {
+    result.innerHTML = `<div class="scenario-note">These runs have no comparable recommendation columns (different providers or recommendation types).</div>`;
+    setScenarioLiveStatus(
+      "Scenario comparison not possible: the runs have no comparable recommendation columns.",
+    );
+    return;
+  }
+
+  const kpis = d.perScenario
+    .map(
+      (p) =>
+        `<div class="scenario-kpi"><b>${p.matchRate}%</b><span>${sEsc(p.label)} match rate</span></div>`,
+    )
+    .join("");
+  const summary = `
+    <div class="scenario-summary">
+      ${kpis}
+      <div class="scenario-kpi"><b>${d.changedRows.length}</b><span>of ${d.pairedRows} VMs differ</span></div>
+    </div>`;
+
+  const note = d.note ? `<div class="scenario-note">${sEsc(d.note)}</div>` : "";
+
+  let body;
+  if (!d.changedRows.length) {
+    body = `<div class="scenario-note">No recommendation differs across the ${list.length} runs.</div>`;
+  } else {
+    const groupHead = d.cols
+      .map((c) => `<th colspan="${list.length}">${sEsc(c)}</th>`)
+      .join("");
+    const runHead = d.cols
+      .map(() => list.map((s) => `<th>${sEsc(s.label)}</th>`).join(""))
+      .join("");
+    const head = `
+      <tr><th rowspan="2">VM</th>${groupHead}</tr>
+      <tr>${runHead}</tr>`;
+    const rows = d.changedRows
+      .map((row) => {
+        const cells = row.cells
+          .map((c) =>
+            c.values
+              .map((v, si) => {
+                // Highlight only the values that depart from the first run's,
+                // within a column that actually differs on this row.
+                const differs = c.changed && v !== c.values[0];
+                const cls = differs ? "scenario-changed scenario-b" : "";
+                return `<td class="${cls}">${sEsc(v || "—")}</td>`;
+              })
+              .join(""),
+          )
+          .join("");
+        return `<tr><td>${sEsc(row.key)}</td>${cells}</tr>`;
+      })
+      .join("");
+    body = `<div class="scenario-scroll"><table class="scenario-table scenario-nway-table">
+      <thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  const runList = list.map((s) => sEsc(s.label)).join(", ");
+  result.innerHTML = `
+    <div class="scenario-result">
+      <div class="scenario-legend">Comparing <b>${list.length} runs</b> (${runList}) — showing only rows that differ across them.
+        <button type="button" class="btn btn-secondary" onclick="downloadScenarioComparison()" style="margin-left:8px;">⬇ Export comparison CSV</button>
+      </div>
+      ${summary}${note}${body}
+    </div>`;
+
+  setScenarioLiveStatus(
+    `Scenario comparison ready across ${list.length} runs: ${d.changedRows.length} of ${d.pairedRows} VMs differ.`,
   );
 }

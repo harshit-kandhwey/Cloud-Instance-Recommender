@@ -136,7 +136,7 @@ When a row gets no recommendation, a per-provider **Nearest Miss** column shows 
 
 ### 🔀 Scenario Comparison
 
-Pin a generation run as scenario A, tweak filters, re-generate, pin as B, and **Compare A ↔ B**: a summary (VMs changed, match rate A → B, newly matched / newly unmatched) plus a table of only the changed rows with old → new values per recommendation column. Rows pair by VM Name (or by position when names aren't unique), so use the same input file for both runs. Scenarios live in memory for the session only.
+Pin a generation run, tweak filters, re-generate, and pin again — runs are **named** (default "Run N", editable in place) and any number can be pinned (up to 6). **Two runs** get a detailed pairwise view: a summary (VMs changed, match rate A → B, newly matched / newly unmatched), the configuration settings that differed, and a table of only the changed rows with old → new values per recommendation column. **Three or more runs** get an **N-way matrix** — one column per run over the rows that differ across the whole set, with each value that departs from the first run's highlighted, plus a per-run match rate. Rows pair by VM Name (or by position when names aren't unique), so use the same input file across runs. Either view exports to CSV. Scenarios live in memory for the session only.
 
 ### 🖨️ Executive Print Report
 
