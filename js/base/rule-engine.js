@@ -193,6 +193,20 @@ const RuleEngine = (() => {
     return tm ? parseInt(tm[1]) : null;
   }
 
+  // An Azure instance with no version is an original-generation box, which ranks
+  // as 2. Both the MinGen filter and generationRank need that fact; stating it
+  // twice — once as `v === null ? num <= 2`, once as `v === null ? 2 : v` — is
+  // the same "two encodings of one fact" that let the filter and the rank
+  // disagree in the first place, so it lives here once.
+  const AZURE_NO_VERSION_RANK = 2;
+  /**
+   * @param {Instance} inst
+   */
+  function azureRank(inst) {
+    const v = azureVersion(inst);
+    return v === null ? AZURE_NO_VERSION_RANK : v;
+  }
+
   // EVERY MinGen value is NATIVE to the provider it is applied to: an AWS value
   // is an AWS family number (7 → m7/c7/r7), an Azure value is a v-number
   // (5 → v5), a GCP value is a family name ("n4"). Each page supplies one value
@@ -232,9 +246,7 @@ const RuleEngine = (() => {
       // NV/NC series name was read as the version: nv48sv3 (a v3 box) became
       // generation 48, and nv24 became 24. Both looked absurdly new, so no
       // MinGen filter could exclude them. See azureVersion.
-      const v = azureVersion(inst);
-      if (v === null) return num <= 2; // no version = original old-style
-      return v >= num;
+      return azureRank(inst) >= num;
     }
 
     if (provider === "gcp") {
@@ -485,8 +497,7 @@ const RuleEngine = (() => {
     }
     if (provider === "azure") {
       // Same single parser the MinGen filter uses, so the two cannot drift.
-      const v = azureVersion(inst);
-      return v === null ? 2 : v; // no version = old-style
+      return azureRank(inst);
     }
     if (provider === "gcp") {
       const fam = family.split("-")[0]; // e2-standard → e2

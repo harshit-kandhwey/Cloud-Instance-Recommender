@@ -41,6 +41,16 @@ function scenarioRowKeys(results) {
   return names;
 }
 
+// The recommendation columns a run has that the comparison could not use, as a
+// note fragment. A comparison silently narrowed to the columns two runs happen
+// to share is the kind of thing a reader should be told: the diff below covers
+// AWS only, even though one of these runs also produced Azure recommendations.
+function excludedColsNote(allCols, comparedCols) {
+  const dropped = allCols.filter((c) => !comparedCols.includes(c));
+  if (!dropped.length) return "";
+  return `Compared ${comparedCols.length} recommendation column(s) common to every run; not compared: ${dropped.join(", ")}.`;
+}
+
 function diffScenarios(a, b) {
   const colsA = getInstanceColumns(a.results);
   const colsB = getInstanceColumns(b.results);
@@ -80,9 +90,6 @@ function diffScenarios(a, b) {
   let changedCells = 0;
   let newlyMatched = 0;
   let newlyUnmatched = 0;
-  let matchedA = 0;
-  let matchedB = 0;
-  let totalCells = 0;
   const changedRows = [];
 
   pairs.forEach(({ key, ra, rb }) => {
@@ -92,9 +99,6 @@ function diffScenarios(a, b) {
       const bv = rb[col] ?? "";
       const aMatch = !isNoMatchValue(av);
       const bMatch = !isNoMatchValue(bv);
-      totalCells++;
-      if (aMatch) matchedA++;
-      if (bMatch) matchedB++;
       if (!aMatch && bMatch) newlyMatched++;
       if (aMatch && !bMatch) newlyUnmatched++;
       const changed = String(av) !== String(bv);
@@ -107,17 +111,27 @@ function diffScenarios(a, b) {
     if (rowChanged) changedRows.push({ key, cells });
   });
 
+  const colNote = excludedColsNote([...new Set([...colsA, ...colsB])], cols);
+  const fullNote = [note, colNote].filter(Boolean).join(" ");
+
   return {
     cols,
-    note,
+    note: fullNote,
     pairedRows: pairs.length,
     summary: {
       changedRows: changedRows.length,
       changedCells,
       newlyMatched,
       newlyUnmatched,
-      matchRateA: totalCells ? Math.round((matchedA / totalCells) * 100) : 0,
-      matchRateB: totalCells ? Math.round((matchedB / totalCells) * 100) : 0,
+      // Each run's rate over its WHOLE result set, not over the compared cells.
+      // Scoped to the intersection it could flatter a run badly: comparing a
+      // multi-cloud run against an AWS-only one drops the Azure columns, so a
+      // run whose Azure results all failed would report 100% here while its own
+      // stats bar said otherwise. Same helper the stats bar uses, so the two
+      // always agree. The delta counts above stay scoped to the compared
+      // cells — that is what a diff is.
+      matchRateA: matchStats(a.results).rate ?? 0,
+      matchRateB: matchStats(b.results).rate ?? 0,
     },
     changedRows,
   };
@@ -178,17 +192,12 @@ function diffScenariosN(scenarios) {
     return String(r?.["VM Name"] ?? "") || `Row ${Number(k) + 1}`;
   };
 
-  const tally = scenarios.map(() => ({ matched: 0, cells: 0 }));
   const changedRows = [];
 
   orderedKeys.forEach((k) => {
     let rowChanged = false;
     const cells = cols.map((col) => {
       const values = rowSets.map((m) => String(m.get(k)?.[col] ?? ""));
-      values.forEach((v, si) => {
-        tally[si].cells++;
-        if (!isNoMatchValue(v)) tally[si].matched++;
-      });
       const changed = values.some((v) => v !== values[0]);
       if (changed) rowChanged = true;
       return { col, values, changed };
@@ -196,15 +205,21 @@ function diffScenariosN(scenarios) {
     if (rowChanged) changedRows.push({ key: displayKey(k), cells });
   });
 
+  const allCols = [
+    ...new Set(scenarios.flatMap((sc) => getInstanceColumns(sc.results))),
+  ];
+  const fullNoteN = [note, excludedColsNote(allCols, cols)]
+    .filter(Boolean)
+    .join(" ");
+
   return {
     cols,
-    note,
+    note: fullNoteN,
     pairedRows: orderedKeys.length,
-    perScenario: scenarios.map((s, i) => ({
+    // Each run's rate over its WHOLE result set — see the note in diffScenarios.
+    perScenario: scenarios.map((s) => ({
       label: s.label,
-      matchRate: tally[i].cells
-        ? Math.round((tally[i].matched / tally[i].cells) * 100)
-        : 0,
+      matchRate: matchStats(s.results).rate ?? 0,
     })),
     changedRows,
   };

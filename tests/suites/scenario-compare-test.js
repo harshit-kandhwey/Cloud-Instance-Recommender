@@ -668,6 +668,91 @@ check(
 run("clearScenarios()");
 check("clearScenarios empties the set", run("scenarios.length") === 0);
 
+// ─── A run's match rate is its OWN rate, not the rate over compared cells ────
+// The comparison only diffs the recommendation columns common to every run. If
+// the reported "match rate" were scoped to those columns too, a run could be
+// handed a number its own stats bar contradicts.
+//
+// The case that separates the two: a row that FAILS on the compared column but
+// SUCCEEDS on one that was dropped from the comparison. By the shared row
+// predicate that VM found an instance, so the run's rate counts it — but scoped
+// to the compared cells it reads as a miss.
+console.log("[match rate is per run, not per compared cell]");
+{
+  // Run A (multi-cloud): web-01 found nothing on AWS but did on Azure, so BOTH
+  // rows matched → a true 100%. Scoped to the compared AWS column it is 50%.
+  const mixed = [
+    {
+      "VM Name": "web-01",
+      "AWS Like-to-Like Instance": "No Match",
+      "AZURE Like-to-Like Instance": "d4sv5",
+    },
+    {
+      "VM Name": "web-02",
+      "AWS Like-to-Like Instance": "m5.large",
+      "AZURE Like-to-Like Instance": "d4sv5",
+    },
+  ];
+  // Run B (AWS only): one of two rows found nothing → a true 50%. Here the two
+  // scopings coincide, so B is the control and A is the discriminating case.
+  const awsOnly = [
+    { "VM Name": "web-01", "AWS Like-to-Like Instance": "m6i.large" },
+    { "VM Name": "web-02", "AWS Like-to-Like Instance": "No Match" },
+  ];
+
+  const d = run("diffScenarios")(
+    { label: "Mixed", results: mixed },
+    { label: "AwsOnly", results: awsOnly },
+  );
+  check(
+    "only the common AWS column is compared",
+    d.cols.length === 1 && d.cols[0] === "AWS Like-to-Like Instance",
+    JSON.stringify(d.cols),
+  );
+  check(
+    "run A reports its whole-run rate (100), not the compared-cell rate (50)",
+    d.summary.matchRateA === 100,
+    `matchRateA=${d.summary.matchRateA}`,
+  );
+  check(
+    "run B's rate is unchanged, since both scopings agree for it",
+    d.summary.matchRateB === 50,
+    `matchRateB=${d.summary.matchRateB}`,
+  );
+  check(
+    "each rate equals matchStats() for that run — one definition",
+    d.summary.matchRateA === run("matchStats")(mixed).rate &&
+      d.summary.matchRateB === run("matchStats")(awsOnly).rate,
+    `${run("matchStats")(mixed).rate} / ${run("matchStats")(awsOnly).rate}`,
+  );
+  // The delta counts stay scoped to the compared cells — that is what a diff is.
+  check(
+    "the delta counts still describe only the compared cells",
+    d.summary.newlyMatched === 1 && d.summary.newlyUnmatched === 1,
+    JSON.stringify(d.summary),
+  );
+
+  // And the reader is told which columns were left out, rather than the
+  // comparison silently narrowing to AWS with nothing to say so.
+  check(
+    "the note names the columns that were not compared",
+    d.note.includes("not compared: AZURE Like-to-Like Instance"),
+    d.note,
+  );
+
+  // Same guarantee on the N-way path.
+  const dn = run("diffScenariosN")([
+    { label: "Mixed", results: mixed },
+    { label: "AwsOnly", results: awsOnly },
+    { label: "AwsOnly2", results: awsOnly },
+  ]);
+  check(
+    "N-way reports each run's own whole-run rate",
+    dn.perScenario[0].matchRate === 100 && dn.perScenario[1].matchRate === 50,
+    JSON.stringify(dn.perScenario),
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);

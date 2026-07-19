@@ -666,6 +666,30 @@ function rowIsAllNoMatch(row, instanceCols) {
   );
 }
 
+// How a result set scored, by the SAME predicate the red row highlight, the
+// no-match view and the no-match export use: a row counts as matched when it is
+// not all-no-match. One definition, because "match rate" appears in two places —
+// the generation stats bar and the scenario comparison — and a run whose rate
+// reads 94% on one screen and 100% on another is telling the user two different
+// things about the same data.
+//
+// `rate` is null when the results carry no recommendation columns: there is no
+// rate to report, and 0% would read as "nothing matched".
+function matchStats(results) {
+  const total = results && results.length ? results.length : 0;
+  const cols = getInstanceColumns(results || []);
+  if (!total || !cols.length) {
+    return { matched: 0, total, rate: null, hasRecommendations: !!cols.length };
+  }
+  const matched = results.filter((r) => !rowIsAllNoMatch(r, cols)).length;
+  return {
+    matched,
+    total,
+    rate: Math.round((matched / total) * 100),
+    hasRecommendations: true,
+  };
+}
+
 // Sorts rows by one column, numerically when both values parse as numbers.
 // Mutates and returns `rows` — callers pass a copy when they need one.
 function sortResultRows(rows, column, direction) {

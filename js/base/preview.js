@@ -59,16 +59,12 @@ function _buildStatsHtml(results) {
   // recommendation columns at all, `some(...)` over an empty list is false, so
   // every row was counted "no match" while the no-match view kept none of them —
   // the stats bar and the view contradicting each other on the same screen.
-  const instanceCols = getInstanceColumns(results);
-  const hasRecommendations = instanceCols.length > 0;
-
-  let matchedRows = 0;
+  const stats = matchStats(results);
+  const hasRecommendations = stats.hasRecommendations;
+  const matchedRows = stats.matched;
   const rulesCounts = {};
 
   results.forEach((row) => {
-    if (hasRecommendations && !rowIsAllNoMatch(row, instanceCols))
-      matchedRows++;
-
     allKeys
       .filter((k) => k.includes("Rules Applied"))
       .forEach((rc) => {
@@ -85,10 +81,8 @@ function _buildStatsHtml(results) {
       });
   });
 
-  const noMatchRows = hasRecommendations ? results.length - matchedRows : 0;
-  const pct = hasRecommendations
-    ? Math.round((matchedRows / results.length) * 100)
-    : 0;
+  const noMatchRows = hasRecommendations ? stats.total - matchedRows : 0;
+  const pct = stats.rate ?? 0;
 
   // Distinct applications, when the results carry an App Name column
   const appCount = allKeys.includes("App Name")

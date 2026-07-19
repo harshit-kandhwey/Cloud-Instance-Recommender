@@ -15,11 +15,12 @@
 // Every type/family pair below is REAL, taken from js/azure/regions/eastus.js.
 // Invented names would prove nothing about the format the parser actually meets.
 //
-// NOTE ON THE minGen VALUES. An Azure-page value is the v-number directly
-// ("5" = v5). A multi-cloud value is TAGGED "mc<n>" and is AWS-centric
-// ("mc5" = Azure v3). The two used to share one untagged number space, which
-// made the Azure page's own "v5+" option filter to v3+; the tag is what
-// separates them, and it is pinned below.
+// NOTE ON THE minGen VALUES. Every value is NATIVE to the cloud it is applied
+// to: an Azure value is the v-number itself ("5" = v5), an AWS value is the
+// family number, a GCP value is a family name ("n4"). Nothing is translated
+// between clouds — the multi-cloud page supplies three values, one per provider.
+// The two scales used to share one number space, which made the Azure page's own
+// "v5+" option filter to v3+; that is pinned below.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

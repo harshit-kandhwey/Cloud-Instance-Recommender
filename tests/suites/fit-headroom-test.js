@@ -23,6 +23,16 @@ const l2l = (
 const { ctx, elements } = buildContext();
 const headroom = ctx.computeFitHeadroom;
 
+// One VM's own <tr>, so a per-row assertion is scoped to that row and nothing
+// else. This used to be `html.split("mild")[0]`, which assumed "mild" appeared
+// exactly once and only after the row under test — it would have silently
+// mis-scoped the moment the row order or the surrounding markup changed, and a
+// check that quietly stops covering its row is worse than no check.
+const rowFor = (html, vmName) =>
+  (html.match(/<tr[\s\S]*?<\/tr>/g) || []).find((r) =>
+    r.includes(`>${vmName}<`),
+  ) || "";
+
 console.log("[computeFitHeadroom reads the excess over the requested size]");
 {
   // Requirement 2/8 landed on 4/16: double on both axes → 100% on each, worst
@@ -32,6 +42,11 @@ console.log("[computeFitHeadroom reads the excess over the requested size]");
   check("vCPU headroom is 100%", Math.round(h.cpu * 100) === 100, `${h.cpu}`);
   check("memory headroom is 100%", Math.round(h.mem * 100) === 100, `${h.mem}`);
   check("the worst axis is reported", Math.round(h.worst * 100) === 100);
+  // The tie-break itself, not just the magnitude: with both axes at 100% the
+  // worst is the same number either way, so a regression that resolved the tie
+  // to "memory" would leave every assertion above green while the flag named
+  // the wrong axis.
+  check("a tie resolves to vCPU", h.axis === "vCPU", h.axis);
 }
 
 console.log("[the worst axis is the one that is most over-provisioned]");
@@ -100,10 +115,18 @@ console.log("[the ▲ flag trails an over-provisioned like-for-like match]");
     badges.includes("▲300%"),
     badges.join(","),
   );
+  // Assert the row was actually found before asserting what it lacks: a lookup
+  // that returned nothing would make "no flag in this row" pass vacuously.
+  const tightRow = rowFor(html, "tight");
+  check(
+    "the tight row is present to be checked",
+    tightRow.includes(">tight<"),
+    "row lookup found nothing — the next check would pass vacuously",
+  );
   check(
     "the tight fit carries no flag",
-    !/tight[\s\S]*?▲/.test(html.split("mild")[0]),
-    "a 0% fit was flagged",
+    tightRow.includes(">tight<") && !tightRow.includes("▲"),
+    tightRow,
   );
   check(
     "the flag carries a text alternative naming the axis and the numbers",
