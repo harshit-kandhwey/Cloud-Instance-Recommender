@@ -115,17 +115,40 @@ Broaden reach and shore up quality.
 
 - Mobile / responsive audit — the PWA is installable, so phones are real users
   now. (M)
-- **Replace the unpatched styling engine** — `js/vendor/xlsx-js-style` is a fork
-  of SheetJS 0.18.x and sits below the fixes for CVE-2023-30533 (prototype
-  pollution) and CVE-2024-22363 (ReDoS). It is safe today only because it never
-  parses input: reads are pinned to the patched full build and writes to the
-  styling engine, enforced by `xlsx-engine-isolation-test.js`. Upstream is
-  dormant, so this is a standing exposure — find a maintained styled-write path,
-  or drop styling and write with the patched build. See the assessment of record
-  in [SECURITY.md](SECURITY.md). (M)
+- **Replace the unpatched styling engine.** `js/vendor/xlsx-js-style` is a fork
+  of SheetJS 0.18.x and sits below the fixes for **CVE-2023-30533** (prototype
+  pollution) and **CVE-2024-22363** (ReDoS). Both are read-path issues, and the
+  fork is safe here **only because it never parses input** — v3.8.23 pinned reads
+  to the patched full build (`window._xlsxParser`) and writes to the styling
+  engine (`window._xlsxWriter`), enforced by `xlsx-engine-isolation-test.js`.
+  Upstream is dormant, so that containment is the whole mitigation: any change
+  that hands the fork a file to read reintroduces both CVEs. Assessment of record
+  is in [SECURITY.md](SECURITY.md). (M)
+
+  Two ways out, and the choice is the first task:
+  - **Adopt a maintained styled-write path** — keeps the formatted workbooks.
+  - **Drop styling and write with the patched full build** — removes the second
+    engine entirely, and with it the whole class of collision. Cheapest and
+    safest; costs cell formatting in the Excel exports.
+
+  **Dependent work, all of which this item moves:**
+  - `js/base/xlsx-export.js` and `js/base/portfolio.js` — the two styled writers,
+    and the `{ styled }` flag they branch on.
+  - `xlsx-engine-isolation-test.js` — its subject changes or disappears; if the
+    second engine goes, retire the suite rather than leave a guard asserting a
+    collision that can no longer happen.
+  - `SECURITY.md` — the vendored-bundle table, the SHA-256 checksums, and the
+    assessment of record; `vendor-integrity-test.js` fails until the checksums
+    are updated in the same commit as the file.
+  - `sw.js` `PRECACHE`/`CACHE` — a removed or renamed vendor bundle is a deleted
+    file, which 404s on revalidation, so this needs a `CACHE` bump.
+  - `CONTRIBUTING.md` — the "which engine may parse" rule below.
+
 - Dedicated security regression suite: CSV-cell XSS into the preview and
   portfolio, formula-injection round-trip, prototype pollution (extending the
-  recent fix), and localStorage tampering. (M)
+  recent fix), and localStorage tampering. **Should absorb the engine-isolation
+  guard** so one suite owns "untrusted input never reaches an unpatched parser",
+  whichever engines are vendored at the time. (M) _Pairs with the item above._
 - **Scenarios saved across sessions** (deferred from 3.8) — pinned scenarios are
   session-only today. Persisting them means storing whole result sets, which is
   what makes this a storage problem rather than a scenario one: it needs the

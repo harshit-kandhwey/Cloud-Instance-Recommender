@@ -85,9 +85,10 @@ npm run typecheck
     │   ├── xlsx-export.js                  # Styled results .xlsx export
     │   ├── scenario-compare.js             # Pin + diff two generation runs
     │   └── portfolio.js                    # App Portfolio (loaded only on app-portfolio.html)
-    ├── vendor/             # Vendored libs + licenses: SheetJS (upload) and the
-    │                       #   xlsx-js-style fork (portfolio Excel). Keep byte-
-    │                       #   identical to upstream — do NOT run a formatter on them.
+    ├── vendor/             # Vendored libs + licenses. TWO SheetJS builds, and the
+    │                       #   split matters: xlsx.full (patched) PARSES uploads,
+    │                       #   xlsx-js-style (0.18.x fork) only WRITES styled Excel.
+    │                       #   Keep byte-identical to upstream — never format them.
     ├── aws/                # Selector, UI, manifest + regions/ data (35 files)
     ├── azure/              # Selector, UI, manifest + regions/ data (60 files)
     └── gcp/                # Selector, UI, manifest + regions/ data (46 files)
@@ -146,6 +147,21 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 - Prefer `const` over `let`; avoid `var`
 - Use descriptive variable names
 - No comments explaining _what_ the code does — only add a comment when the _why_ is non-obvious
+
+**Only one engine may parse a file.** Two SheetJS builds are vendored and both
+define `window.XLSX` and both expose `read()`, but `xlsx-js-style` is a fork of
+SheetJS 0.18.x that sits below the fixes for CVE-2023-30533 and CVE-2024-22363 —
+both read-path issues. So the two are pinned apart:
+
+- **Reading anything a user supplied** goes through `window._xlsxParser`
+  (`ensureXlsxLoaded()` in `ingest.js`), which is always the patched full build.
+- **Writing** goes through `window._xlsxWriter`, whichever engine that path
+  loaded.
+
+Never read through the bare `window.XLSX` — whichever bundle loaded last owns it,
+so an export earlier in the session would decide which engine parses the next
+upload. `tests/suites/xlsx-engine-isolation-test.js` enforces this; the reasoning
+is in [SECURITY.md](SECURITY.md).
 
 Formatting is Prettier's job, not yours: run `npm run format` before you commit (`npm run format:check` shows what it would change). CI runs the same check on every push and pull request and fails if anything is unformatted. `.prettierignore` keeps Prettier away from the vendored SheetJS builds and the generated region data — never reformat those.
 

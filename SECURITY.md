@@ -159,9 +159,13 @@ bundles genuinely collide — so the day that stops being true, the guard says s
 rather than quietly becoming decorative.
 
 **Residual risk:** the styling fork is unpatched and upstream is dormant, so its
-safety here rests on it never parsing input. Replacing it with a maintained
-styling engine is tracked on the roadmap; until then, any change that gives it a
-file to read reintroduces both CVEs.
+safety here rests on it never parsing input. Until it is replaced, any change
+that gives it a file to read reintroduces both CVEs — the rule contributors need
+is in [CONTRIBUTING.md](CONTRIBUTING.md) under Code Style ("Only one engine may
+parse a file"). Replacing it is scheduled in **[ROADMAP.md](ROADMAP.md) § 3.10 —
+"Replace the unpatched styling engine"**, which also lists the dependent work
+(both styled writers, this assessment and the checksum table, the isolation
+suite, and a `sw.js` `CACHE` bump for the removed bundle).
 
 Never run a formatter over `js/vendor/` — the files must stay byte-identical to
 the upstream artifact so they can be diffed against it.

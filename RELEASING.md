@@ -81,7 +81,7 @@ its highest tag, with the notes drawn from that section:
 
 ```bash
 gh release create <highest-tag-of-the-line> --verify-tag \
-  --title "3.7" \
+  --title "3.8 — Results, visualization & reporting" \
   --notes-file <notes>   # the minor's story, from its changelog section
 
 # --latest ONLY when this is the newest line. It is not a formality: passing it
@@ -89,8 +89,19 @@ gh release create <highest-tag-of-the-line> --verify-tag \
 # and the releases page would recommend the older line to everyone.
 ```
 
-Title the release with the bare minor number. The tag must already be on
-`origin` — `--verify-tag` will refuse otherwise.
+**Title the release `<minor> — <theme>`** — the same theme the minor carries in
+the roadmap and in its version-map heading, em dash included (for example
+`3.8 — Results, visualization & reporting`). The releases page is a list of bare
+numbers otherwise, and a reader deciding whether an upgrade matters to them
+should not have to open each one to find out what it was about.
+
+This settles a drift: earlier lines (`3.4`–`3.6`) were published as bare numbers,
+which is what this document used to prescribe, while `3.7` and `3.8` were both
+published themed. The themed form won on the merits and is now the rule. The
+older releases are left as they are — retitling a published release changes what
+people already hold links to, for no benefit.
+
+The tag must already be on `origin` — `--verify-tag` will refuse otherwise.
 
 ## Before you publish
 
