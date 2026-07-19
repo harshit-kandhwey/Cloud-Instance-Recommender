@@ -82,8 +82,10 @@ Turn the results grid into something you can explore and present.
 - Top-3 alternatives per row — the engine already ranks candidates internally. (M)
 - Fit / headroom indicator per recommendation, flagging over-provisioned
   matches. (M)
-- Scenario comparison v2 — named scenarios, saved across sessions (session-only
-  today), and N-way compare. (M)
+- Scenario comparison v2 — named scenarios and N-way compare. **Shipped in 3.8**
+  (3.8.11); the "saved across sessions" half is deferred to 3.10 and listed with
+  the Storage manager below, since it needs the runtime quota detection that item
+  adds. (M)
 - Export a scenario's changed rows and its configuration diff as CSV. (S)
 - App Portfolio: in-dashboard filters, cross-app search, and per-app CSV, plus
   the deferred cosmetic pass. (M)
@@ -113,9 +115,22 @@ Broaden reach and shore up quality.
 
 - Mobile / responsive audit — the PWA is installable, so phones are real users
   now. (M)
+- **Replace the unpatched styling engine** — `js/vendor/xlsx-js-style` is a fork
+  of SheetJS 0.18.x and sits below the fixes for CVE-2023-30533 (prototype
+  pollution) and CVE-2024-22363 (ReDoS). It is safe today only because it never
+  parses input: reads are pinned to the patched full build and writes to the
+  styling engine, enforced by `xlsx-engine-isolation-test.js`. Upstream is
+  dormant, so this is a standing exposure — find a maintained styled-write path,
+  or drop styling and write with the patched build. See the assessment of record
+  in [SECURITY.md](SECURITY.md). (M)
 - Dedicated security regression suite: CSV-cell XSS into the preview and
   portfolio, formula-injection round-trip, prototype pollution (extending the
   recent fix), and localStorage tampering. (M)
+- **Scenarios saved across sessions** (deferred from 3.8) — pinned scenarios are
+  session-only today. Persisting them means storing whole result sets, which is
+  what makes this a storage problem rather than a scenario one: it needs the
+  quota measurement and pressure handling the storage manager below adds, or it
+  will fail silently on a large inventory. (M) _Needs the storage manager._
 - Storage manager — view and clear all app localStorage, with runtime quota
   detection and quota-pressure handling. Browser localStorage limits vary by
   browser, origin, and mode; the portfolio copy alone has been observed near

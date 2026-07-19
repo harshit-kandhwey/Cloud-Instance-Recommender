@@ -1284,7 +1284,7 @@ function toWsCell(cell, styled) {
 // Thin adapter: neutral model → SheetJS workbook. Sheet names are already
 // final/unique from the builder, so they're used verbatim.
 function writeWorkbook(wbModel, styled) {
-  const XLSX = window.XLSX;
+  const XLSX = window._xlsxWriter || window.XLSX;
   const wb = XLSX.utils.book_new();
   wbModel.sheets.forEach((sheet) => {
     const ws = {};
@@ -1326,12 +1326,18 @@ function loadScriptOnce(src) {
 }
 function ensurePortfolioXlsx() {
   if (_pfXlsxPromise) return _pfXlsxPromise;
+  // Capture the engine this path loaded — see the note in xlsx-export.js: an
+  // .xlsx upload replaces window.XLSX with the full build, which cannot style.
   _pfXlsxPromise = loadScriptOnce("js/vendor/xlsx-js-style.min.js")
-    .then(() => ({ styled: true }))
+    .then(() => {
+      window._xlsxWriter = window.XLSX;
+      return { styled: true };
+    })
     .catch(() =>
-      loadScriptOnce("js/vendor/xlsx.full.min.js").then(() => ({
-        styled: false,
-      })),
+      loadScriptOnce("js/vendor/xlsx.full.min.js").then(() => {
+        window._xlsxWriter = window.XLSX;
+        return { styled: false };
+      }),
     )
     .catch((err) => {
       // Both engines failed to load — clear the cached rejection so a later
@@ -1352,13 +1358,14 @@ function exportPortfolioWorkbook() {
   }
   ensurePortfolioXlsx()
     .then((info) => {
-      if (!window.XLSX) throw new Error("spreadsheet engine unavailable");
+      const XLSXW = window._xlsxWriter || window.XLSX;
+      if (!XLSXW) throw new Error("spreadsheet engine unavailable");
       const wb = writeWorkbook(
         buildPortfolioWorkbookModel(portfolioModel),
         !!info.styled,
       );
       const fname = exportFilename("app_portfolio", "xlsx");
-      window.XLSX.writeFile(wb, fname);
+      XLSXW.writeFile(wb, fname);
     })
     .catch((e) => {
       console.error("Portfolio Excel export failed:", e);

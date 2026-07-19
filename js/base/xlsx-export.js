@@ -171,15 +171,24 @@ function ensureResultsXlsx() {
   // style_version). If just the plain upload build is present we still load the
   // fork, since the results export is meant to be styled.
   if (window.XLSX && window.XLSX.style_version != null) {
+    window._xlsxWriter = window.XLSX;
     _resultsXlsxPromise = Promise.resolve({ styled: true });
     return _resultsXlsxPromise;
   }
+  // Capture the engine this path loaded. The bare global is not stable: an
+  // .xlsx UPLOAD loads the full build (the only one safe to parse with — see
+  // ensureXlsxLoaded in ingest.js) and overwrites window.XLSX, which would
+  // silently strip the styling from a later export.
   _resultsXlsxPromise = loadResultsXlsxScript("js/vendor/xlsx-js-style.min.js")
-    .then(() => ({ styled: true }))
+    .then(() => {
+      window._xlsxWriter = window.XLSX;
+      return { styled: true };
+    })
     .catch(() =>
-      loadResultsXlsxScript("js/vendor/xlsx.full.min.js").then(() => ({
-        styled: false,
-      })),
+      loadResultsXlsxScript("js/vendor/xlsx.full.min.js").then(() => {
+        window._xlsxWriter = window.XLSX;
+        return { styled: false };
+      }),
     )
     .catch((err) => {
       // Both engines failed — drop the cached rejection so a later click retries.
@@ -205,7 +214,8 @@ function downloadResultsXlsx() {
   }
   ensureResultsXlsx()
     .then((info) => {
-      if (!window.XLSX) throw new Error("spreadsheet engine unavailable");
+      const XLSXW = window._xlsxWriter || window.XLSX;
+      if (!XLSXW) throw new Error("spreadsheet engine unavailable");
       const ordered = resultsInPreviewOrder(processedResults);
       const extraSheets = STRATEGY_SHEET_NAMES.map((name) => {
         const model = buildStrategySheetModel(ordered, name);
@@ -214,11 +224,11 @@ function downloadResultsXlsx() {
       const wb = buildResultsWorkbook(
         buildResultsSheetModel(ordered),
         !!info.styled,
-        window.XLSX,
+        XLSXW,
         extraSheets,
       );
       const fname = exportFilename("instance_recommendations", "xlsx");
-      window.XLSX.writeFile(wb, fname);
+      XLSXW.writeFile(wb, fname);
     })
     .catch((e) => {
       console.error("Results Excel export failed:", e);

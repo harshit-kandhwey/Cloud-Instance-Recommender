@@ -78,14 +78,30 @@ function setupFileDragAndDrop(fileInput) {
 }
 
 // Loads the vendored SheetJS parser on first use only (Excel uploads are
-// rare enough that the ~900KB script shouldn't be part of page load)
+// rare enough that the ~900KB script shouldn't be part of page load).
+//
+// SECURITY — the parser must be the FULL build, never the styling fork.
+// Both vendored bundles define `window.XLSX` and both expose read(), but
+// `xlsx-js-style` is a fork of SheetJS 0.18.x and predates the read-path fixes
+// for CVE-2023-30533 (prototype pollution) and CVE-2024-22363 (ReDoS). An Excel
+// export loads that fork into window.XLSX, so a guard of `if (window.XLSX)`
+// would let a LATER upload — the untrusted input — be parsed by the unpatched
+// engine (upload CSV → generate → Download Results → upload an .xlsx).
+//
+// The two bundles are separate objects, so we capture the full build's own
+// reference and read through THAT, whatever window.XLSX points at afterwards.
+// Reading must never go through the bare global again.
 function ensureXlsxLoaded() {
-  if (window.XLSX) return Promise.resolve();
+  if (window._xlsxParser) return Promise.resolve();
   if (!window._xlsxLoadPromise) {
     window._xlsxLoadPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
       script.src = "js/vendor/xlsx.full.min.js";
-      script.onload = () => resolve();
+      script.onload = () => {
+        // Whatever the global held before, the parser is this build.
+        window._xlsxParser = window.XLSX;
+        resolve();
+      };
       script.onerror = () => {
         window._xlsxLoadPromise = null;
         reject(
@@ -269,7 +285,11 @@ async function ingestFile(file) {
   try {
     const buffer = await file.arrayBuffer();
     await ensureXlsxLoaded();
-    const workbook = XLSX.read(new Uint8Array(buffer), { type: "array" });
+    // Through the captured full build, never the bare global — see
+    // ensureXlsxLoaded: the global may be the unpatched styling fork.
+    const workbook = window._xlsxParser.read(new Uint8Array(buffer), {
+      type: "array",
+    });
 
     const sheets = workbook.SheetNames.map((name) =>
       readWorkbookSheet(workbook, name),
@@ -317,7 +337,7 @@ function readWorkbookSheet(workbook, name) {
   if (!sheet) return null;
 
   // raw:false → formatted strings, matching what CSV parsing produces
-  const rows2d = XLSX.utils.sheet_to_json(sheet, {
+  const rows2d = window._xlsxParser.utils.sheet_to_json(sheet, {
     header: 1,
     raw: false,
     defval: "",

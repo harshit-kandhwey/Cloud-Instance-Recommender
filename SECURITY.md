@@ -131,5 +131,37 @@ Checked **monthly, and again before each release**:
    run `node tests/run-all.js` (the xlsx upload and Excel export suites cover
    both libraries), and update the table above.
 
+#### Assessment of record — 2026-07-19 (pre-3.8 release)
+
+| Bundle                           | Version | CVE-2023-30533<br>(prototype pollution,<br>fixed 0.19.3) | CVE-2024-22363<br>(ReDoS, fixed 0.20.2) |
+| -------------------------------- | ------- | -------------------------------------------------------- | --------------------------------------- |
+| `js/vendor/xlsx.full.min.js`     | 0.20.3  | patched                                                  | patched                                 |
+| `js/vendor/xlsx-js-style.min.js` | 0.18.5  | **below the fix**                                        | **below the fix**                       |
+
+Both advisories are in the **read** path — they need a maliciously crafted file
+to be parsed. `xlsx-js-style` is a fork of SheetJS 0.18.x and predates both
+fixes, so it must never parse input. It does not: it is a **writer only**.
+
+That is not merely a convention, because it very nearly failed. Both bundles
+define `window.XLSX` **and both expose `read()`**, so whichever loaded last owned
+the global — and `ensureXlsxLoaded()` short-circuited on `if (window.XLSX)`. This
+ordinary sequence therefore parsed an untrusted upload with the unpatched fork:
+
+> upload a CSV → generate → **Download Results (Excel)** (loads 0.18.5) →
+> **upload an .xlsx** (guard sees a truthy `window.XLSX`, parses with 0.18.5)
+
+Fixed by pinning each side to the engine it loaded, which the two bundles allow
+because they are separate objects: `window._xlsxParser` is always the full build
+and every read goes through it; `window._xlsxWriter` is the styling engine and
+every write goes through that. Neither path reads the bare global any more.
+`tests/suites/xlsx-engine-isolation-test.js` pins this, including that the two
+bundles genuinely collide — so the day that stops being true, the guard says so
+rather than quietly becoming decorative.
+
+**Residual risk:** the styling fork is unpatched and upstream is dormant, so its
+safety here rests on it never parsing input. Replacing it with a maintained
+styling engine is tracked on the roadmap; until then, any change that gives it a
+file to read reintroduces both CVEs.
+
 Never run a formatter over `js/vendor/` — the files must stay byte-identical to
 the upstream artifact so they can be diffed against it.
