@@ -258,7 +258,21 @@ function getRuleDefaults() {
     compliance: (
       document.getElementById("ruleDefaultCompliance")?.value || ""
     ).trim(),
+    // A MinGen value is native to one cloud, so each page supplies its own: the
+    // single-provider pages have one #ruleDefaultMinGen, and the multi-cloud
+    // page has three (one per provider) rather than a cross-provider scale that
+    // would have to be translated. A page only has the controls it has — the
+    // rest read back "".
     minGen: (document.getElementById("ruleDefaultMinGen")?.value || "").trim(),
+    minGenAws: (
+      document.getElementById("ruleDefaultMinGenAws")?.value || ""
+    ).trim(),
+    minGenAzure: (
+      document.getElementById("ruleDefaultMinGenAzure")?.value || ""
+    ).trim(),
+    minGenGcp: (
+      document.getElementById("ruleDefaultMinGenGcp")?.value || ""
+    ).trim(),
   };
 }
 

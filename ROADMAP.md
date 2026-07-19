@@ -75,7 +75,7 @@ Turn the results grid into something you can explore and present.
   deliberate departures from the original sketch: the match rate is a meter and
   **not a donut**, because a two-slice pie asks the eye to compare angles for
   something one length states exactly; and before→after is **two charts, not one**
-  — vCPU and GB are different scales, and a dual-axis chart implies a crossover
+  — vCPU and GiB are different scales, and a dual-axis chart implies a crossover
   wherever the two axes happen to be zeroed. Colours are theme tokens whose steps
   are chosen per mode against that mode's surface and contrast-checked, never
   flipped automatically. (M)

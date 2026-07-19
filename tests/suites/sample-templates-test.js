@@ -37,7 +37,6 @@ const COMMON_COLUMNS = [
   "OS",
   "Workload",
   "Compliance",
-  "Min Gen",
   "Exclude",
   "Current Instance Type",
 ];
@@ -50,6 +49,7 @@ const SAMPLES = [
     fn: "downloadAWSSampleCSV",
     dataScript: "js/aws/aws-data.js",
     regions: ["AWS Region"],
+    minGen: ["Min Gen"],
   },
   {
     label: "Azure",
@@ -58,6 +58,7 @@ const SAMPLES = [
     fn: "downloadAzureSampleCSV",
     dataScript: "js/azure/azure-data.js",
     regions: ["Azure Region"],
+    minGen: ["Min Gen"],
   },
   {
     label: "GCP",
@@ -66,6 +67,7 @@ const SAMPLES = [
     fn: "downloadGCPSampleCSV",
     dataScript: "js/gcp/gcp-data.js",
     regions: ["GCP Region"],
+    minGen: ["Min Gen"],
   },
   {
     // downloadSampleCSV lives in ingest.js, which every page loads.
@@ -75,6 +77,8 @@ const SAMPLES = [
     fn: "downloadSampleCSV",
     dataScript: "js/aws/aws-data.js",
     regions: ["AWS Region", "Azure Region", "GCP Region"],
+    // MinGen is native to one cloud, so a multi-cloud sheet carries one per provider.
+    minGen: ["AWS Min Gen", "Azure Min Gen", "GCP Min Gen"],
   },
 ];
 
@@ -144,7 +148,7 @@ for (const sample of SAMPLES) {
     elements.inputHygieneSection.innerHTML,
   );
 
-  const expected = [...COMMON_COLUMNS, ...sample.regions];
+  const expected = [...COMMON_COLUMNS, ...sample.regions, ...sample.minGen];
   const missing = expected.filter((c) => !headers.includes(c));
   check(
     "it carries every column the docs promise",

@@ -164,10 +164,10 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
-web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,m5.xlarge
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
-app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,,,t3.large</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,AWS Min Gen,Azure Min Gen,GCP Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,,,"Burstable,GPU",m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,,,,,t3.large</pre>
             </div>
 
             <button class="btn btn-secondary" onclick="downloadSampleCSV()">
@@ -959,8 +959,18 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                     "
                     >Min Instance Gen</label
                   >
+                  <label
+                    for="ruleDefaultMinGenAws"
+                    style="
+                      display: block;
+                      font-size: 0.74em;
+                      color: var(--text-soft);
+                      margin: 6px 0 2px;
+                    "
+                    >AWS</label
+                  >
                   <select
-                    id="ruleDefaultMinGen"
+                    id="ruleDefaultMinGenAws"
                     onchange="onRuleChange()"
                     style="
                       width: 100%;
@@ -972,9 +982,63 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                     "
                   >
                     <option value="">— any —</option>
-                    <option value="5">AWS m5/r5 · Azure v3 · GCP N2</option>
-                    <option value="6">AWS m6/r6 · Azure v4 · GCP N4</option>
-                    <option value="7">AWS m7/r7 · Azure v5</option>
+                    <option value="5">Gen 5+ (m5, c5, r5…)</option>
+                    <option value="6">Gen 6+ (m6i, c6a, r6g…)</option>
+                    <option value="7">Gen 7+ (m7i, c7g, r7a…)</option>
+                  </select>
+                  <label
+                    for="ruleDefaultMinGenAzure"
+                    style="
+                      display: block;
+                      font-size: 0.74em;
+                      color: var(--text-soft);
+                      margin: 6px 0 2px;
+                    "
+                    >Azure</label
+                  >
+                  <select
+                    id="ruleDefaultMinGenAzure"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid var(--border-mid);
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
+                    <option value="">— any —</option>
+                    <option value="3">v3+ (Dsv3, Esv3…)</option>
+                    <option value="4">v4+ (Dsv4, Esv4…)</option>
+                    <option value="5">v5+ (Dsv5, Esv5…)</option>
+                  </select>
+                  <label
+                    for="ruleDefaultMinGenGcp"
+                    style="
+                      display: block;
+                      font-size: 0.74em;
+                      color: var(--text-soft);
+                      margin: 6px 0 2px;
+                    "
+                    >GCP</label
+                  >
+                  <select
+                    id="ruleDefaultMinGenGcp"
+                    onchange="onRuleChange()"
+                    style="
+                      width: 100%;
+                      padding: 5px 6px;
+                      border: 1px solid var(--border-mid);
+                      border-radius: 4px;
+                      font-size: 0.83em;
+                      background: white;
+                    "
+                  >
+                    <option value="">— any —</option>
+                    <option value="n2">N2 / C2 (2nd gen+)</option>
+                    <option value="n2d">N2D / C2D+ (AMD)</option>
+                    <option value="n4">N4 / C4 (4th gen+)</option>
                   </select>
                   <div
                     id="conflictMinGen"

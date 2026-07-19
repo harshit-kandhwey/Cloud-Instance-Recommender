@@ -235,6 +235,9 @@ const SCENARIO_CONFIG_LABELS = {
   ruleDefaultWorkload: "Default Workload",
   ruleDefaultCompliance: "Default Compliance",
   ruleDefaultMinGen: "Default Min Gen",
+  ruleDefaultMinGenAws: "Default Min Gen (AWS)",
+  ruleDefaultMinGenAzure: "Default Min Gen (Azure)",
+  ruleDefaultMinGenGcp: "Default Min Gen (GCP)",
 };
 
 // Dynamic filter checkbox id prefixes → readable group names (mirrors

@@ -46,6 +46,9 @@ const PRESET_TEXTS = [
   "ruleDefaultWorkload",
   "ruleDefaultCompliance",
   "ruleDefaultMinGen",
+  "ruleDefaultMinGenAws",
+  "ruleDefaultMinGenAzure",
+  "ruleDefaultMinGenGcp",
 ];
 const PRESET_PROVIDER_IDS = ["aws", "azure", "gcp"];
 
@@ -209,6 +212,9 @@ function applyPresetConfig(cfg) {
   // Text (rule-engine) inputs + conflict re-check.
   Object.entries(cfg.texts || {}).forEach(([id, v]) => {
     const el = document.getElementById(id);
+    // A multi-cloud preset saved before MinGen went per-provider carries the old
+    // shared #ruleDefaultMinGen, which that page no longer has — the id simply
+    // resolves to nothing and the three new selects stay at "— any —".
     if (el) el.value = v;
   });
   callIfFn("checkRuleConflicts");

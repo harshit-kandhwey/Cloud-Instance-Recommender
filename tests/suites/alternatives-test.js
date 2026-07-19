@@ -31,11 +31,16 @@ check(
     rank({ instanceType: "n2-standard-4", family: "n2" }, "gcp") >
       rank({ instanceType: "e2-standard-4", family: "e2" }, "gcp"),
 );
+// Real (type, family) pairs from js/azure/regions/ — the families here used to
+// be invented ("d", "nv"), which is not what the parser meets in production.
+// The version is read from the FAMILY, since the type alone cannot be parsed:
+// nv72adsv5 needs its trailing v5, but nv24's trailing "v24" is its vCPU count.
 check(
-  "Azure reads the TRAILING version, not a size-embedded v",
-  rank({ instanceType: "d4asv7", family: "d" }, "azure") === 7 &&
-    rank({ instanceType: "nv72adsv5", family: "nv" }, "azure") === 5,
-  `d4asv7=${rank({ instanceType: "d4asv7" }, "azure")} nv72adsv5=${rank({ instanceType: "nv72adsv5" }, "azure")}`,
+  "Azure reads the version from the family, not a size-embedded v",
+  rank({ instanceType: "d4asv7", family: "dasv7" }, "azure") === 7 &&
+    rank({ instanceType: "nv72adsv5", family: "nvv5" }, "azure") === 5 &&
+    rank({ instanceType: "nv24", family: "nv" }, "azure") === 2,
+  `d4asv7=${rank({ instanceType: "d4asv7", family: "dasv7" }, "azure")} nv72adsv5=${rank({ instanceType: "nv72adsv5", family: "nvv5" }, "azure")} nv24=${rank({ instanceType: "nv24", family: "nv" }, "azure")}`,
 );
 
 // ── computeAlternatives over a synthetic pool ──────────────────────────────────

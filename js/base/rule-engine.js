@@ -170,6 +170,44 @@ const RuleEngine = (() => {
 
   /**
    * @param {Instance} inst
+   * @returns {number|null}
+   */
+  // The Azure version of one instance, or null when it carries none (an
+  // original-generation box). ONE parser, because two of them is exactly how the
+  // MinGen filter and generationRank came to disagree.
+  //
+  // Read from the FAMILY, not the instance type. The family carries the version
+  // and nothing else — "nv" → none, "nvv3" → 3, "dsv5" → 5 — so there is no size
+  // digit to mistake for a version. The type cannot be parsed reliably at all:
+  // "nv48sv3" needs the TRAILING v3, but "nv24" is a bare NV-series box whose
+  // trailing "v24" is its vCPU count, and no suffix rule separates the two.
+  // Verified against js/azure/regions/: nv24 → family "nv", nv48sv3 → "nvv3".
+  function azureVersion(inst) {
+    const family = (inst.family || "").toLowerCase();
+    const fm = family.match(/v(\d+)$/);
+    if (fm) return parseInt(fm[1]);
+    if (family) return null; // family known, carries no version → old-style
+    // No family at all (hand-built fixtures): fall back to the type's trailing
+    // version, which is correct whenever a real version suffix is present.
+    const tm = (inst.instanceType || "").toLowerCase().match(/v(\d+)$/);
+    return tm ? parseInt(tm[1]) : null;
+  }
+
+  // EVERY MinGen value is NATIVE to the provider it is applied to: an AWS value
+  // is an AWS family number (7 → m7/c7/r7), an Azure value is a v-number
+  // (5 → v5), a GCP value is a family name ("n4"). Each page supplies one value
+  // for its own cloud, and the multi-cloud page supplies three — one per
+  // provider — so a value never has to be translated between clouds.
+  //
+  // There used to be a single cross-provider scale that meant different things
+  // per cloud (7 = AWS 7 / Azure v5 / GCP N4), sharing one number space with the
+  // native values, and the engine guessed between them with
+  // `minNum > 4 ? minNum - 2 : minNum`. That guess is why the Azure page's own
+  // "v5+ (Dsv5, Esv5…)" option quietly filtered to v3+: its 5 was read as a
+  // cross-provider position. The scale is gone; nothing is translated, so
+  // nothing can be misread.
+  /**
+   * @param {Instance} inst
    * @param {string} minGen
    * @param {Provider} provider
    */
@@ -177,34 +215,43 @@ const RuleEngine = (() => {
     if (!minGen) return true;
     const type = (inst.instanceType || "").toLowerCase();
     const family = (inst.family || "").toLowerCase();
+    const raw = String(minGen).trim();
+    const num = parseInt(raw) || 0;
 
     if (provider === "aws") {
       // m5.xlarge→5, m6i.xlarge→6, r7a.large→7, t3.micro→3
       const m = type.match(/^[a-z]+(\d+)/);
       if (!m) return true;
-      return parseInt(m[1]) >= parseInt(minGen);
+      return parseInt(m[1]) >= num;
     }
 
     if (provider === "azure") {
-      // Standard_Dsv3→v3, Standard_D4s_v3→v3, Standard_Esv5→v5
-      // Azure page uses values 3/4/5 (direct v-number)
-      // Multi-cloud page uses values 5/6/7 (AWS-centric: subtract 2 to get v-number)
-      const minNum = parseInt(minGen) || 0;
-      const azureMin = minNum > 4 ? minNum - 2 : minNum;
-      const m = type.match(/v(\d+)/i);
-      if (!m) return azureMin <= 2; // no v-suffix = original old-style, exclude if min≥3
-      return parseInt(m[1]) >= azureMin;
+      // Standard_Dsv3→v3, Standard_D4s_v3→v3, Standard_Esv5→v5. The value IS the
+      // v-number: "5" means v5, not "the fifth position on some other scale".
+      // Was /v(\d+)/ on the TYPE, which took the FIRST match — so the "v" in an
+      // NV/NC series name was read as the version: nv48sv3 (a v3 box) became
+      // generation 48, and nv24 became 24. Both looked absurdly new, so no
+      // MinGen filter could exclude them. See azureVersion.
+      const v = azureVersion(inst);
+      if (v === null) return num <= 2; // no version = original old-style
+      return v >= num;
     }
 
     if (provider === "gcp") {
-      // GCP page uses family-name values ("n2","n4"); multi-cloud uses numbers (5,6,7→2,3,4)
-      const minNum = parseInt(minGen) || 0;
+      // GCP's native value is a FAMILY NAME ("n2", "n4"), which is what every
+      // GCP control now sends — GCP has no v-number a user would type.
+      //
+      // A bare NUMBER only reaches here from a legacy shared "Min Gen" CSV
+      // column written against the old cross-provider scale, so it keeps that
+      // scale's mapping (5→gen 2, 6→gen 3, 7→gen 4) rather than being read as a
+      // GCP ordinal — which would make "7" mean a generation that does not
+      // exist and silently match nothing. Per-provider columns avoid this
+      // entirely; see the "GCP Min Gen" column.
       let gcpMin;
-      if (GCP_GEN_ORDER.hasOwnProperty(minGen)) {
-        gcpMin = GCP_GEN_ORDER[minGen];
+      if (GCP_GEN_ORDER.hasOwnProperty(raw)) {
+        gcpMin = GCP_GEN_ORDER[raw];
       } else {
-        // AWS-centric number: 5→2, 6→3, 7→4
-        gcpMin = Math.max(0, minNum - 3);
+        gcpMin = Math.max(0, num - 3);
       }
       const fam = family.split("-")[0];
       const instGen = GCP_GEN_ORDER[fam] ?? 1;
@@ -437,10 +484,9 @@ const RuleEngine = (() => {
       return m ? parseInt(m[1]) : 0;
     }
     if (provider === "azure") {
-      // The VERSION is the TRAILING v<n> (d4asv7 → 7). Anchor to the end so a
-      // size-embedded "v" like nv72adsv5 isn't misread as generation 72.
-      const m = type.match(/v(\d+)$/i);
-      return m ? parseInt(m[1]) : 2; // no v-suffix = old-style
+      // Same single parser the MinGen filter uses, so the two cannot drift.
+      const v = azureVersion(inst);
+      return v === null ? 2 : v; // no version = old-style
     }
     if (provider === "gcp") {
       const fam = family.split("-")[0]; // e2-standard → e2

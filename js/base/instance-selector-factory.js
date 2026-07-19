@@ -28,6 +28,28 @@ class InstanceSelectorFactory {
     return columnMappings[provider.toLowerCase()];
   }
 
+  // A MinGen value is native to one cloud (AWS family number, Azure v-number,
+  // GCP family name), so a multi-cloud sheet gives each provider its own column
+  // rather than one value that would have to be translated between them.
+  static getProviderMinGenColumn(provider) {
+    const columnMappings = {
+      aws: "AWS Min Gen",
+      azure: "Azure Min Gen",
+      gcp: "GCP Min Gen",
+    };
+    return columnMappings[provider.toLowerCase()];
+  }
+
+  // The per-provider page-default option key that pairs with the column above.
+  static getProviderMinGenOption(provider) {
+    const optionKeys = {
+      aws: "ruleDefaultMinGenAws",
+      azure: "ruleDefaultMinGenAzure",
+      gcp: "ruleDefaultMinGenGcp",
+    };
+    return optionKeys[provider.toLowerCase()];
+  }
+
   static getProviderDefaultRegion(provider) {
     const defaultRegions = {
       aws: "us-east-1",
@@ -168,7 +190,13 @@ window.getInstanceRecommendationWithSelector = async function (
         options.ruleDefaultCompliance ||
         ""
       ).trim();
+      // MinGen is resolved per PROVIDER, most specific first: this cloud's own
+      // CSV column, then this cloud's page default, then the shared column and
+      // shared default that a single-provider page supplies. Each value is
+      // native to the cloud it lands on, so nothing is ever translated.
       const rowMinGen = (
+        row[InstanceSelectorFactory.getProviderMinGenColumn(provider)] ||
+        options[InstanceSelectorFactory.getProviderMinGenOption(provider)] ||
         row["Min Gen"] ||
         row["MinGen"] ||
         options.ruleDefaultMinGen ||
