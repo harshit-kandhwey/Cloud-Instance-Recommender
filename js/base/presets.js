@@ -153,6 +153,57 @@ function callIfFn(name) {
   }
 }
 
+// ─── Legacy multi-cloud Min Gen presets ───────────────────────────────────────
+// Before MinGen went native per provider, the multi-cloud page carried ONE
+// #ruleDefaultMinGen on an AWS-centric scale (5/6/7) and the engine translated
+// it per provider. That id no longer exists on the page, so a preset saved then
+// would apply to nothing and leave all three new selects at "— any —" — which
+// silently DROPS a constraint the user saved. Translate it instead, to exactly
+// what the old engine filtered at:
+//   AWS   n           → 5/6/7  (used as-is)
+//   Azure n>4 ? n-2   → 3/4/5
+//   GCP   max(0,n-3)  → generation rank 2/3/4
+// GCP is the one inexact case: the page offers n2 (rank 2) and n4 (rank 4), so a
+// legacy 6 (rank 3, i.e. C3-era) has no equivalent option. Rather than loosen it
+// to n2 or tighten it to n4 behind the user's back, that one is left unset and
+// reported, so the choice stays theirs.
+const LEGACY_MIN_GEN = {
+  5: { aws: "5", azure: "3", gcp: "n2" },
+  6: { aws: "6", azure: "4", gcp: null },
+  7: { aws: "7", azure: "5", gcp: "n4" },
+};
+
+function migrateLegacyMinGen(texts) {
+  const legacy = texts.ruleDefaultMinGen;
+  // Only the multi-cloud page lost the shared control; where it still exists
+  // (aws/azure/gcp pages) the value is native already and must pass through.
+  if (!legacy || document.getElementById("ruleDefaultMinGen")) return texts;
+  if (!document.getElementById("ruleDefaultMinGenAws")) return texts;
+
+  const map = Object.prototype.hasOwnProperty.call(LEGACY_MIN_GEN, legacy)
+    ? LEGACY_MIN_GEN[legacy]
+    : null;
+  if (!map) return texts;
+
+  const out = { ...texts };
+  delete out.ruleDefaultMinGen;
+  // An explicit per-provider value in the preset always wins: it was saved
+  // against the current design and needs no translation.
+  if (!out.ruleDefaultMinGenAws) out.ruleDefaultMinGenAws = map.aws;
+  if (!out.ruleDefaultMinGenAzure) out.ruleDefaultMinGenAzure = map.azure;
+  if (map.gcp && !out.ruleDefaultMinGenGcp) out.ruleDefaultMinGenGcp = map.gcp;
+
+  if (typeof showToast === "function") {
+    showToast(
+      map.gcp
+        ? `Preset used the old shared Min Gen (${legacy}); applied as AWS ${map.aws}, Azure v${map.azure}, GCP ${map.gcp.toUpperCase()}.`
+        : `Preset used the old shared Min Gen (${legacy}); applied as AWS ${map.aws} and Azure v${map.azure}. GCP had no equivalent option — set it and re-save.`,
+      map.gcp ? "info" : "warning",
+    );
+  }
+  return out;
+}
+
 // Restore a captured config onto the live controls, cascading through the
 // existing UI handlers so derived/rendered state stays consistent.
 function applyPresetConfig(cfg) {
@@ -210,11 +261,9 @@ function applyPresetConfig(cfg) {
   callIfFn("toggleCurrentGenerationFilter");
 
   // Text (rule-engine) inputs + conflict re-check.
-  Object.entries(cfg.texts || {}).forEach(([id, v]) => {
+  const texts = migrateLegacyMinGen(cfg.texts || {});
+  Object.entries(texts).forEach(([id, v]) => {
     const el = document.getElementById(id);
-    // A multi-cloud preset saved before MinGen went per-provider carries the old
-    // shared #ruleDefaultMinGen, which that page no longer has — the id simply
-    // resolves to nothing and the three new selects stay at "— any —".
     if (el) el.value = v;
   });
   callIfFn("checkRuleConflicts");

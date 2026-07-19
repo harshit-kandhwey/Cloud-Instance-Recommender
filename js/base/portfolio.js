@@ -1326,6 +1326,15 @@ function loadScriptOnce(src) {
 }
 function ensurePortfolioXlsx() {
   if (_pfXlsxPromise) return _pfXlsxPromise;
+  // Reuse an engine that can already style (the fork sets style_version) — e.g.
+  // the results export loaded it earlier. Mirrors ensureResultsXlsx in
+  // xlsx-export.js; both loaders collapse into one when the fork is dropped
+  // (see ROADMAP § 3.10).
+  if (window.XLSX && window.XLSX.style_version != null) {
+    window._xlsxWriter = window.XLSX;
+    _pfXlsxPromise = Promise.resolve({ styled: true });
+    return _pfXlsxPromise;
+  }
   // Capture the engine this path loaded — see the note in xlsx-export.js: an
   // .xlsx upload replaces window.XLSX with the full build, which cannot style.
   _pfXlsxPromise = loadScriptOnce("js/vendor/xlsx-js-style.min.js")

@@ -23,10 +23,27 @@ const check = (name, cond, detail) => {
   }
 };
 
-const html = Object.fromEntries(
+// Raw text matching would accept an id that only appears inside a comment or a
+// script string, so a placeholder could be commented out and this suite would
+// still call the page compliant. Drop the non-markup parts first (same approach
+// as step9-test.js) and require the id on a real element.
+const stripNonMarkup = (src) =>
+  src
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, "");
+
+// raw keeps the <script src> tags the module-order check below reads; html is
+// the stripped view everything else matches against.
+const raw = Object.fromEntries(
   PAGES.map((p) => [p, fs.readFileSync(path.join(REPO, p), "utf8")]),
 );
+const html = Object.fromEntries(PAGES.map((p) => [p, stripNonMarkup(raw[p])]));
 const short = (p) => p.replace(".html", "");
+
+// An id is "present" only when it sits on an element tag, not merely in the text.
+const hasElementId = (page, id) =>
+  new RegExp(`<[a-zA-Z][^>]*\\bid="${id}"`, "i").test(html[page]);
 
 // ─── Deliberate divergences ──────────────────────────────────────────────────
 // id → the pages that are SUPPOSED to carry it, and why.
@@ -74,7 +91,7 @@ console.log("[shared modules find their elements on every page]");
   const unexplained = [];
   for (const id of lookedUp) {
     if (generated.has(id)) continue;
-    const present = PAGES.filter((p) => html[p].includes(`id="${id}"`));
+    const present = PAGES.filter((p) => hasElementId(p, id));
     if (present.length === 0 || present.length === PAGES.length) continue;
     const expected = INTENTIONAL[id];
     if (
@@ -101,7 +118,7 @@ console.log("[shared modules find their elements on every page]");
 console.log("[every page loads the same js/base modules in the same order]");
 {
   const baseScripts = (p) =>
-    [...html[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
+    [...raw[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
       .map((m) => m[1])
       .filter((s) => s.includes("/base/"));
   const ref = baseScripts(PAGES[0]);
@@ -154,22 +171,30 @@ console.log("[every page offers the same shared features]");
 // it is the newest divergence and the easiest to half-apply.
 console.log("[MinGen is native per cloud on every page]");
 {
+  // All four ids are counted on every page, so the assertion is "exactly this
+  // set and nothing else" rather than "the one I remembered to exclude".
+  const MINGEN_IDS = [
+    "ruleDefaultMinGen",
+    "ruleDefaultMinGenAws",
+    "ruleDefaultMinGenAzure",
+    "ruleDefaultMinGenGcp",
+  ];
+  const minGenIdsOn = (p) => MINGEN_IDS.filter((id) => hasElementId(p, id));
+
   ["aws.html", "azure.html", "gcp.html"].forEach((p) => {
+    const found = minGenIdsOn(p);
     check(
-      `${short(p)} has exactly one Min Gen control`,
-      html[p].includes('id="ruleDefaultMinGen"') &&
-        !html[p].includes('id="ruleDefaultMinGenAws"'),
-      "a single-provider page should carry only the shared control",
+      `${short(p)} carries exactly one Min Gen control, the shared one`,
+      found.length === 1 && found[0] === "ruleDefaultMinGen",
+      `found: [${found.join(", ") || "none"}]`,
     );
   });
-  const mc = html["multicloud.html"];
+
+  const found = minGenIdsOn("multicloud.html");
   check(
-    "multicloud has one Min Gen control per provider and no shared one",
-    mc.includes('id="ruleDefaultMinGenAws"') &&
-      mc.includes('id="ruleDefaultMinGenAzure"') &&
-      mc.includes('id="ruleDefaultMinGenGcp"') &&
-      !mc.includes('id="ruleDefaultMinGen"'),
-    "multicloud should carry three native controls and no cross-provider one",
+    "multicloud carries exactly the three native controls and no shared one",
+    found.length === 3 && !found.includes("ruleDefaultMinGen"),
+    `found: [${found.join(", ") || "none"}]`,
   );
 }
 

@@ -1250,7 +1250,6 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                         type="button"
                         class="btn btn-secondary"
                         id="csvMenuBtn"
-                        aria-haspopup="true"
                         aria-expanded="false"
                         onclick="toggleCsvMenu()"
                       >
@@ -1259,7 +1258,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       <div
                         id="csvMenu"
                         class="csv-menu hidden"
-                        role="menu"
+                        role="group"
+                        aria-label="Choose CSV exports to download"
                       ></div>
                     </div>
                     <button

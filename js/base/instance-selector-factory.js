@@ -273,7 +273,11 @@ window.getInstanceRecommendationWithSelector = async function (
             memory,
             rowOptions,
           );
-          altSource = likeToLike;
+          // Only when it actually matched. A no-match like-to-like carries no
+          // alternatives, and pinning altSource to it would suppress the ones
+          // the optimized fallback below can still supply on a "both" run.
+          altSource =
+            likeToLike.instanceType === "No data available" ? null : likeToLike;
           result[`${providerUpper} Like-to-Like Instance`] =
             likeToLike.instanceType;
           // The provider's own family category ("General purpose", "Compute

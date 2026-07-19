@@ -646,6 +646,101 @@ check(
   run(`presetsForPage()["Alpha"].savedAt`) === 5,
 );
 
+// ── Legacy multi-cloud Min Gen migration ────────────────────────────────────
+// A preset saved before MinGen went native carries the old shared
+// #ruleDefaultMinGen on an AWS-centric 5/6/7 scale. On multicloud that id no
+// longer exists, so applying it verbatim would set nothing and silently drop
+// the user's constraint. It must be translated to what the OLD engine actually
+// filtered at per provider.
+console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
+{
+  // Simulate the multicloud page: the shared control is gone, the three native
+  // ones are present.
+  const shared = els.ruleDefaultMinGen;
+  delete els.ruleDefaultMinGen;
+  const toasts = [];
+  sandbox.showToast = (msg, kind) => toasts.push({ msg, kind });
+
+  const applyLegacy = (v) => {
+    [
+      "ruleDefaultMinGenAws",
+      "ruleDefaultMinGenAzure",
+      "ruleDefaultMinGenGcp",
+    ].forEach((id) => {
+      els[id].value = "";
+    });
+    toasts.length = 0;
+    sandbox.__cfg = { texts: { ruleDefaultMinGen: String(v) } };
+    run("applyPresetConfig(__cfg)");
+    return {
+      aws: els.ruleDefaultMinGenAws.value,
+      azure: els.ruleDefaultMinGenAzure.value,
+      gcp: els.ruleDefaultMinGenGcp.value,
+    };
+  };
+
+  // Legacy 7 → the old engine filtered AWS gen 7, Azure v5, GCP rank 4 (n4).
+  const g7 = applyLegacy(7);
+  check(
+    "legacy 7 becomes AWS 7 / Azure v5 / GCP n4",
+    g7.aws === "7" && g7.azure === "5" && g7.gcp === "n4",
+    JSON.stringify(g7),
+  );
+  // Legacy 5 → AWS 5, Azure v3 (5>4 → 5-2), GCP rank 2 (n2).
+  const g5 = applyLegacy(5);
+  check(
+    "legacy 5 becomes AWS 5 / Azure v3 / GCP n2",
+    g5.aws === "5" && g5.azure === "3" && g5.gcp === "n2",
+    JSON.stringify(g5),
+  );
+  check("the migration is announced, not silent", toasts.length === 1);
+
+  // Legacy 6 → GCP rank 3 (C3-era), which the page offers no option for.
+  // It must NOT be quietly loosened to n2 or tightened to n4.
+  const g6 = applyLegacy(6);
+  check(
+    "legacy 6 migrates AWS/Azure exactly and leaves GCP unset",
+    g6.aws === "6" && g6.azure === "4" && g6.gcp === "",
+    JSON.stringify(g6),
+  );
+  check(
+    "the inexact GCP case is surfaced as a warning",
+    toasts.length === 1 && toasts[0].kind === "warning",
+    JSON.stringify(toasts),
+  );
+
+  // A preset saved against the CURRENT design must pass through untouched.
+  [
+    "ruleDefaultMinGenAws",
+    "ruleDefaultMinGenAzure",
+    "ruleDefaultMinGenGcp",
+  ].forEach((id) => {
+    els[id].value = "";
+  });
+  sandbox.__cfg = {
+    texts: { ruleDefaultMinGen: "7", ruleDefaultMinGenAws: "5" },
+  };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "an explicit native value wins over the legacy translation",
+    els.ruleDefaultMinGenAws.value === "5",
+    els.ruleDefaultMinGenAws.value,
+  );
+
+  els.ruleDefaultMinGen = shared;
+  // On a single-provider page the shared control still exists and its value is
+  // already native — the migration must not touch it.
+  els.ruleDefaultMinGen.value = "";
+  sandbox.__cfg = { texts: { ruleDefaultMinGen: "5" } };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "a single-provider page applies its native value unchanged",
+    els.ruleDefaultMinGen.value === "5",
+    els.ruleDefaultMinGen.value,
+  );
+  delete sandbox.showToast;
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);

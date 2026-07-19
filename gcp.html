@@ -1267,7 +1267,6 @@ app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,e2-standard-2<
                         type="button"
                         class="btn btn-secondary"
                         id="csvMenuBtn"
-                        aria-haspopup="true"
                         aria-expanded="false"
                         onclick="toggleCsvMenu()"
                       >
@@ -1276,7 +1275,8 @@ app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,e2-standard-2<
                       <div
                         id="csvMenu"
                         class="csv-menu hidden"
-                        role="menu"
+                        role="group"
+                        aria-label="Choose CSV exports to download"
                       ></div>
                     </div>
                     <button

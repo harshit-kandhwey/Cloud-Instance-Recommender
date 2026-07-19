@@ -209,5 +209,61 @@ ctx.rows = [
   } catch (e) {
     check("the factory run completes without throwing", false, e && e.message);
   }
+
+  // ── the alternatives source must follow the pick that actually matched ───────
+  // On a "both" run, like-to-like is tried at the REQUESTED size and optimized at
+  // the utilization-derived target. A huge request with tiny utilization is the
+  // case where they disagree: like-to-like finds nothing, optimized rescues the
+  // row. Sourcing alternatives from like-to-like unconditionally left the three
+  // strategy cells blank on a row that HAS a recommendation.
+  console.log("[alternatives follow the recommendation that matched]");
+  try {
+    const rescued = await run(
+      `getInstanceRecommendationWithSelector(
+         [{
+           "VM Name": "huge-but-idle",
+           "CPU Count": "1600",
+           "Memory (GB)": "20000",
+           "AWS Region": "us-east-1",
+           "CPU Utilization": "1",
+           "Memory Utilization": "1",
+           Workload: "Database"
+         }],
+         ['aws'],
+         {
+           generateLikeToLike: true,
+           generateOptimized: true,
+           cpuBased: true,
+           memoryBased: true,
+           cpuDownsizeMax: 40,
+           memoryDownsizeMax: 40,
+           cpuUpsizeMin: 80,
+           memoryUpsizeMin: 80
+         }
+       )`,
+    );
+    const row = rescued[0];
+    // Guard the premise first — if like-to-like ever starts matching this size,
+    // the assertion below would pass for the wrong reason.
+    const premise =
+      row["AWS Like-to-Like Instance"] === "No data available" &&
+      row["AWS Optimized Instance"] !== "No data available" &&
+      row["AWS Optimized Instance"] !== "Missing data";
+    check(
+      "premise: like-to-like finds nothing, optimized still matches",
+      premise,
+      `l2l=${row["AWS Like-to-Like Instance"]} opt=${row["AWS Optimized Instance"]}`,
+    );
+    if (premise) {
+      check(
+        "the row's alternatives come from the optimized pick, not the empty one",
+        /\(\d+\/\d+\)$/.test(row["AWS Most Cost Optimized"]),
+        `cost=${JSON.stringify(row["AWS Most Cost Optimized"])} gen=${JSON.stringify(row["AWS Newest Generation"])}`,
+      );
+    }
+  } catch (e) {
+    check("the rescued-row run completes without throwing", false, e.message);
+  }
+
   process.exit(state.failures ? 1 : 0);
 })();

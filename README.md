@@ -310,7 +310,7 @@ worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,
 3. Configure optimization thresholds (optional)
 4. Set Rule Engine defaults in Advanced Filtering (optional)
 5. Click **Generate Recommendations**
-6. Download the results CSV (and AWS Bulk Template if on the AWS page)
+6. Click **📊 Download Results (Excel)** — or pick flat CSVs from the **CSV ▾** checklist beside it (and the AWS Bulk Template if on the AWS page)
 
 ---
 
