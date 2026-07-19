@@ -95,11 +95,16 @@ the roadmap and in its version-map heading, em dash included (for example
 numbers otherwise, and a reader deciding whether an upgrade matters to them
 should not have to open each one to find out what it was about.
 
-This settles a drift: earlier lines (`3.4`–`3.6`) were published as bare numbers,
+This settled a drift: earlier lines (`3.4`–`3.6`) were published as bare numbers,
 which is what this document used to prescribe, while `3.7` and `3.8` were both
-published themed. The themed form won on the merits and is now the rule. The
-older releases are left as they are — retitling a published release changes what
-people already hold links to, for no benefit.
+published themed. The themed form won on the merits and is now the rule, and
+`3.4`–`3.6` were retitled to match, so the releases page reads consistently from
+top to bottom.
+
+Retitling a published release is safe: its URL is keyed to the **tag**
+(`/releases/tag/v3.6.15`), not the title, so existing links keep resolving. Only
+the display name changes. Nothing else about a published release may be edited —
+the tag it points at and its notes stay put.
 
 The tag must already be on `origin` — `--verify-tag` will refuse otherwise.
 
