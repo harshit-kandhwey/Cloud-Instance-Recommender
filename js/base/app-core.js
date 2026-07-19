@@ -31,6 +31,14 @@ const COLUMN_MAPPINGS = {
   memory: "Memory (GB)",
   cpuUtilization: "CPU Utilization",
   memoryUtilization: "Memory Utilization",
+  // Percentile/peak utilization, optional and additive. Sizing against an
+  // average silently undersizes a bursty VM: a box averaging 20% with a p95 of
+  // 85% is not a downsize candidate, but the average alone says it is. Which
+  // statistic drives sizing is a per-run choice (see UTILIZATION_STATISTICS).
+  cpuUtilizationP95: "CPU Utilization p95",
+  memoryUtilizationP95: "Memory Utilization p95",
+  cpuUtilizationPeak: "CPU Utilization Peak",
+  memoryUtilizationPeak: "Memory Utilization Peak",
   vmName: "VM Name",
   appName: "App Name",
   // The size a VM runs on TODAY (m5.xlarge, Standard_D4s_v3, n2-standard-4).
@@ -91,7 +99,28 @@ const COLUMN_SYNONYMS = {
     "cpuusage",
     "avgcpu",
     "cpuavg",
+    "meancpu",
+    "cpumean",
+  ],
+  "CPU Utilization p95": [
+    "cpup95",
+    "p95cpu",
+    "cpu95",
+    "95cpu",
+    "cpup95util",
+    "cpupercentile95",
+    "cpu95thpercentile",
+  ],
+  // "maxcpu" used to be a synonym for the AVERAGE column, so a peak reading
+  // drove sizing while being labelled an average. It belongs here.
+  "CPU Utilization Peak": [
     "maxcpu",
+    "cpumax",
+    "peakcpu",
+    "cpupeak",
+    "cpumaximum",
+    "maxcpuutil",
+    "cpumaxutil",
   ],
   "Memory Utilization": [
     "memutil",
@@ -105,7 +134,26 @@ const COLUMN_SYNONYMS = {
     "avgmemory",
     "memavg",
     "ramutil",
+    "meanmemory",
+    "memorymean",
+  ],
+  "Memory Utilization p95": [
+    "memp95",
+    "memoryp95",
+    "p95memory",
+    "p95mem",
+    "memory95",
+    "mem95",
+    "memorypercentile95",
+  ],
+  "Memory Utilization Peak": [
     "maxmemory",
+    "memorymax",
+    "memmax",
+    "peakmemory",
+    "memorypeak",
+    "mempeak",
+    "maxmemoryutil",
   ],
   "VM Name": [
     "vmname",

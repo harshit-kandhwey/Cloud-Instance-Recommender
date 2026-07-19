@@ -41,6 +41,7 @@ const PRESET_NUMBERS = [
   "memoryUpsizeMin",
 ];
 const PRESET_TEXTS = [
+  "utilizationStatistic",
   "ruleDefaultEnv",
   "ruleDefaultOS",
   "ruleDefaultWorkload",

@@ -161,6 +161,10 @@ async function processRecommendations() {
     generateOptimized: generateOptimized,
 
     // Optimization strategy parameters (only used if generateOptimized is true)
+    // Which utilization statistic sizes each row; "avg" is the historical
+    // behaviour and the default when the control is absent.
+    utilizationStatistic:
+      document.getElementById("utilizationStatistic")?.value || "avg",
     cpuBased: document.getElementById("cpuBased")?.checked || false,
     memoryBased: document.getElementById("memoryBased")?.checked || false,
     cpuDownsizeMax: parseInt(

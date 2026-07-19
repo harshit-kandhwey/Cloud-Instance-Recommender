@@ -280,6 +280,49 @@ function onRuleChange() {
   checkRuleConflicts();
 }
 
+// Picking p95 or Peak when the upload carries no such columns is the quiet
+// failure worth catching: every row would fall back to the average and the run
+// would look like a p95 sizing while being nothing of the sort. Say so at the
+// moment of choosing, against the headers actually uploaded.
+function onUtilizationStatisticChange() {
+  const sel = document.getElementById("utilizationStatistic");
+  const hint = document.getElementById("utilizationStatisticHint");
+  if (!sel || !hint) return;
+  const stat =
+    typeof UTILIZATION_STATISTICS !== "undefined"
+      ? UTILIZATION_STATISTICS[sel.value]
+      : null;
+  hint.classList.remove("hint-warning");
+  if (!stat || sel.value === "avg") {
+    hint.textContent = hint.dataset.defaultText || hint.textContent;
+    return;
+  }
+  if (!hint.dataset.defaultText) {
+    hint.dataset.defaultText = hint.textContent.trim();
+  }
+  // No file yet: nothing to check against, so leave the guidance alone.
+  const headers = typeof columnHeaders !== "undefined" ? columnHeaders : [];
+  if (!headers.length) {
+    hint.textContent = hint.dataset.defaultText;
+    return;
+  }
+  const present = [stat.cpu, stat.memory].filter((c) => headers.includes(c));
+  if (present.length === 0) {
+    hint.classList.add("hint-warning");
+    hint.textContent =
+      `The uploaded file has no ${stat.label} columns (${stat.cpu} / ${stat.memory}), ` +
+      `so every row will fall back to the utilization it does carry. Map them in the ` +
+      `column panel, or leave this on Average.`;
+  } else if (present.length === 1) {
+    hint.classList.add("hint-warning");
+    hint.textContent =
+      `Only "${present[0]}" is present, so the other dimension falls back for ` +
+      `every row. The basis used is reported per row in the "Sized On" column.`;
+  } else {
+    hint.textContent = `Sizing against ${stat.label} utilization. Rows missing it fall back, and the basis is reported in the "Sized On" column.`;
+  }
+}
+
 function checkRuleConflicts() {
   const rules = getRuleDefaults();
   const env = rules.env.toLowerCase();

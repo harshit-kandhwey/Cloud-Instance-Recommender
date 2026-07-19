@@ -156,6 +156,20 @@ window.getInstanceRecommendationWithSelector = async function (
     const row = csvData[index];
     const result = { ...row };
 
+    // Utilization is a property of the VM, not of any provider, so it is
+    // resolved once per row and shared by every provider's optimized pass.
+    const util = resolveUtilization(row, options.utilizationStatistic);
+    if (generateOptimized) {
+      // Which statistic actually sized the row. Recorded on every row so a
+      // recommendation that looks small can be traced to its basis instead of
+      // reading as arbitrary — especially where a row fell back.
+      result["Sized On"] =
+        util.cpu > 0 || util.memory > 0
+          ? UTILIZATION_STATISTICS[util.statistic].label +
+            (util.fellBack ? " (fallback)" : "")
+          : "";
+    }
+
     selectedProviders.forEach((provider) => {
       const selector = selectors[provider];
       if (!selector) {
@@ -165,8 +179,8 @@ window.getInstanceRecommendationWithSelector = async function (
 
       const cpu = parseInt(row["CPU Count"]) || 0;
       const memory = parseFloat(row["Memory (GB)"]) || 0;
-      const cpuUtil = parseFloat(row["CPU Utilization"]) || 0;
-      const memoryUtil = parseFloat(row["Memory Utilization"]) || 0;
+      const cpuUtil = util.cpu;
+      const memoryUtil = util.memory;
       const regionColumn =
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const region = row[regionColumn] || "";
@@ -398,6 +412,71 @@ window.getInstanceRecommendationWithSelector = async function (
   console.log("Recommendation generation completed successfully");
   return results;
 };
+
+// The utilization statistic a run sizes against. "avg" is the default and the
+// historical behaviour; p95/peak are opt-in and only do anything when the CSV
+// carries those columns.
+//
+// Defined HERE rather than in app-core.js for the same reason safeMapGet is:
+// this is the one shared-scope module loaded in BOTH the worker and the main
+// thread, and app-core.js is not in the worker's importScripts list.
+const UTILIZATION_STATISTICS = {
+  avg: {
+    label: "Average",
+    cpu: "CPU Utilization",
+    memory: "Memory Utilization",
+  },
+  p95: {
+    label: "p95",
+    cpu: "CPU Utilization p95",
+    memory: "Memory Utilization p95",
+  },
+  peak: {
+    label: "Peak",
+    cpu: "CPU Utilization Peak",
+    memory: "Memory Utilization Peak",
+  },
+};
+
+// Fallback order once the requested statistic is missing for a row. Resolution
+// is per ROW, not per run: a fleet export often carries p95 for the monitored
+// VMs and only an average for the rest, and dropping those rows to "No
+// utilization data" would be worse than sizing them on what they do have.
+// Preferring the HIGHER statistic first is deliberate — sizing against a number
+// lower than the one asked for under-provisions, which is the failure that hurts.
+const UTILIZATION_FALLBACK = {
+  avg: ["avg", "p95", "peak"],
+  p95: ["p95", "peak", "avg"],
+  peak: ["peak", "p95", "avg"],
+};
+
+// Reads the utilization pair for one row under the requested statistic.
+// Returns { cpu, memory, statistic, fellBack } — `statistic` is the one actually
+// used. A row only counts as carrying a statistic when at least one of its two
+// values is a usable number, so an empty p95 column never beats a populated
+// average. Values come from untrusted CSV cells, hence the finite/positive test
+// rather than a bare parseFloat.
+function resolveUtilization(row, requested) {
+  const want = Object.prototype.hasOwnProperty.call(
+    UTILIZATION_STATISTICS,
+    requested,
+  )
+    ? requested
+    : "avg";
+  const num = (v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  for (const key of UTILIZATION_FALLBACK[want]) {
+    const spec = UTILIZATION_STATISTICS[key];
+    const cpu = num(row[spec.cpu]);
+    const memory = num(row[spec.memory]);
+    if (cpu > 0 || memory > 0) {
+      return { cpu, memory, statistic: key, fellBack: key !== want };
+    }
+  }
+  return { cpu: 0, memory: 0, statistic: want, fellBack: false };
+}
 
 // Own-property-only map lookup. Keys here come from untrusted CSV data; a plain
 // object literal / JSON.parse result inherits Object.prototype, so a key like

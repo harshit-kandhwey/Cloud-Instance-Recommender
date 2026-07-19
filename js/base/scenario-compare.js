@@ -230,6 +230,7 @@ function diffScenariosN(scenarios) {
 // Friendly names for the flat controls captured by capturePresetConfig()
 // (unknown ids fall back to the raw id).
 const SCENARIO_CONFIG_LABELS = {
+  utilizationStatistic: "Utilization statistic",
   cpuBased: "CPU-based sizing",
   memoryBased: "Memory-based sizing",
   currentGenerationOnly: "Current generation only",

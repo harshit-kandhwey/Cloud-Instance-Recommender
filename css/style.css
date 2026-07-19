@@ -873,3 +873,18 @@ nav a.active {
     --heading-indigo: #2c3e8c;
   }
 }
+
+/* Guidance under the "Size against" selector. The warning state is used when
+   the chosen utilization statistic has no matching column in the uploaded
+   file, so the run would silently fall back for every row. */
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-soft);
+  font-size: 0.82em;
+  line-height: 1.45;
+}
+.form-hint.hint-warning {
+  color: var(--amber-strong);
+  font-weight: 600;
+}

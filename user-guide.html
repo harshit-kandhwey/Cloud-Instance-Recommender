@@ -1153,8 +1153,46 @@
               </td>
               <td>60</td>
             </tr>
+            <tr>
+              <td>
+                <span class="col-pill">CPU Utilization p95</span>
+                <span class="col-pill">Memory Utilization p95</span>
+              </td>
+              <td>
+                Optional 95th-percentile readings. Used when
+                <strong>Size against</strong> is set to p95 — an average hides
+                bursts, so a VM averaging 20% with a p95 of 85% is not the
+                downsize candidate its average suggests.
+              </td>
+              <td>85</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="col-pill">CPU Utilization Peak</span>
+                <span class="col-pill">Memory Utilization Peak</span>
+              </td>
+              <td>
+                Optional peak/max readings, used when
+                <strong>Size against</strong>
+                is set to Peak. A "Max CPU" column auto-maps here rather than to
+                the average.
+              </td>
+              <td>97</td>
+            </tr>
           </tbody>
         </table>
+
+        <p>
+          <strong>Which statistic sizes a row.</strong> The
+          <strong>Size against</strong> selector in Optimization Settings
+          chooses between Average (the default), p95 and Peak. A row that does
+          not carry the chosen statistic falls back to what it does have —
+          preferring the higher remaining one, since sizing against a lower
+          number than you asked for under-provisions — and every row reports the
+          basis actually used in a
+          <span class="col-pill">Sized On</span> column, so a recommendation can
+          always be traced to the number behind it.
+        </p>
       </div>
 
       <div id="optional-cols">

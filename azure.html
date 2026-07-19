@@ -528,6 +528,30 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v
             <!-- Optimization Controls -->
             <div id="optimizationControls" class="optimization-controls">
               <h3 class="optimization-title">🧠 Optimization Settings</h3>
+              <div class="form-group">
+                <label class="form-label" for="utilizationStatistic"
+                  >Size against:</label
+                >
+                <select
+                  id="utilizationStatistic"
+                  class="form-control"
+                  onchange="onUtilizationStatisticChange()"
+                >
+                  <option value="avg" selected>
+                    Average utilization (default)
+                  </option>
+                  <option value="p95">p95 utilization</option>
+                  <option value="peak">Peak utilization</option>
+                </select>
+                <small class="form-hint" id="utilizationStatisticHint">
+                  Averages hide bursts: a VM averaging 20% with a p95 of 85% is
+                  not a downsize candidate. p95 and Peak use the matching CSV
+                  columns; a row without them falls back to what it has, and the
+                  basis used is reported per row in the
+                  <strong>Sized On</strong>
+                  column.
+                </small>
+              </div>
 
               <div class="form-group">
                 <label class="form-label">Optimization Mode:</label>

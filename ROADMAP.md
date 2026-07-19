@@ -97,12 +97,24 @@ Turn the results grid into something you can explore and present.
 
 Deeper, more accurate right-sizing.
 
-- **Metadata enrichment** — ARM beyond Graviton (Ampere, Tau T2A), GPU flags,
-  network class, and a SAP-certified flag. (M) _Unlocks the items below._
-- GPU workload support. (M) _Needs metadata enrichment._
+- **Metadata enrichment** — network class and a SAP-certified flag. (M)
+  _Blocked on external data:_ neither is in the region files and neither can be
+  derived from them, so this needs a vetted third-party source. **Its original
+  scope was wrong** — it also claimed ARM detection and GPU flags and said it
+  "unlocks the items below". Both are already present: `isGraviton` / `isARM` /
+  `processorArchitecture` cover ARM (and `rule-engine.js` already detects Ampere
+  and T2A), and `familyName` already classifies accelerators — "GPU instance"
+  (AWS), "GPU" (Azure), "Accelerator optimized" (GCP), plus ML ASIC / FPGA /
+  Media Accelerator on AWS. What is genuinely missing is GPU _detail_ (model,
+  count, VRAM), which only matters for a per-GPU-model rule.
+- GPU workload support. (M) _Not blocked_ — a GPU workload can require an
+  accelerator family, and exclude one otherwise so a GPU box is never
+  recommended by accident, using the family classes already in the data.
 - Storage-aware pass-through — carry disk GB/IOPS columns into the outputs and
   the currently-blank storage fields of the AWS bulk template. (M)
-- Percentile utilization — p95/peak columns alongside the average. (M)
+- ~~Percentile utilization — p95/peak columns alongside the average.~~ **Done
+  (3.9.3.)** Three statistics (Average / p95 / Peak) with per-row fallback and a
+  `Sized On` column recording the basis actually used.
 - Burstable-preference rule for Dev/Test at low utilization (the inverse of the
   production exclusion). (M)
 - SQL Server workload rule enforcing minimum core counts. (S)
