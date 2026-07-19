@@ -847,6 +847,12 @@ nav a.active {
   }
   body.printing-report #executiveReportSection {
     display: block;
+    /* The meter and every chart bar carry their value in a background fill, and
+       browsers drop background graphics when printing by default — so without
+       this the report prints as empty outlines, which is the one thing it must
+       never do. Scoped to the report so ordinary printing is unaffected. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
     /* Force the LIGHT tokens the report and its charts read, regardless of the
        on-screen theme — printing a dark surface wastes ink and reads poorly.
        Only the tokens actually used inside the report are redeclared here. */

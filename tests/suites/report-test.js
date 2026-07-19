@@ -204,6 +204,17 @@ console.log("[the print trigger is scoped, not a bare window.print]");
     /body\.printing-report/.test(css) && /@media print/.test(css),
     "print rules are unscoped",
   );
+
+  // The meter and every chart bar carry their value in a background fill, and
+  // browsers omit background graphics when printing unless told otherwise — so
+  // without this the report prints as empty outlines, defeating its purpose.
+  check(
+    "the report forces background fills to print",
+    /body\.printing-report #executiveReportSection[\s\S]*?print-color-adjust:\s*exact/.test(
+      css,
+    ),
+    "print-color-adjust: exact is missing from the report's print scope",
+  );
   const dl = fs.readFileSync(path.join(REPO, "js/base/downloads.js"), "utf8");
   check(
     "printExecutiveReport adds the scoping class before printing",

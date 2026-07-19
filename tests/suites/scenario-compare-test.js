@@ -753,6 +753,40 @@ console.log("[match rate is per run, not per compared cell]");
   );
 }
 
+// ─── The comparison tables carry header semantics ────────────────────────────
+// Both tables are read as a matrix: the pairwise one has a header row, and the
+// N-way one has TWO header levels (recommendation column, then one sub-column
+// per run). Without scope, assistive tech cannot associate a value with the
+// column-and-run it belongs to, and the grid is unreadable.
+console.log("[comparison tables wire up their headers]");
+{
+  const src = fs.readFileSync(
+    path.join(REPO, "js/base/scenario-compare.js"),
+    "utf8",
+  );
+  check(
+    "the N-way group header declares scope=colgroup",
+    /colspan="\$\{list\.length\}" scope="colgroup"/.test(src),
+    "the grouped header has no colgroup scope",
+  );
+  check(
+    "the per-run subheader declares scope=col",
+    /<th scope="col">\$\{sEsc\(s\.label\)\}<\/th>/.test(src),
+    "the per-run header has no col scope",
+  );
+  check(
+    "neither table emits the VM name as a plain data cell",
+    !/<tr><td>\$\{sEsc\(row\.key\)\}<\/td>/.test(src),
+    "a VM row label is still a <td> — it labels its row, so it must be a th",
+  );
+  check(
+    "both tables mark the VM cell as a row header",
+    (src.match(/<th scope="row">\$\{sEsc\(row\.key\)\}<\/th>/g) || [])
+      .length === 2,
+    "expected the pairwise AND N-way tables to use scope=row",
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exit(1);

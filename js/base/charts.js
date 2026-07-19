@@ -277,7 +277,7 @@ window.renderResultsCharts = renderResultsCharts;
 // above the table. It composes headline stat tiles — the single-number form for
 // a verdict, per the dataviz method — with the three charts unchanged.
 //
-// It lives hidden in the page (js/base/report.js wires the button; css/style.css
+// It lives hidden in the page (js/base/downloads.js wires the button; css/style.css
 // hides it on screen and reveals only it on print, forcing light tokens so a
 // dark-theme screen never prints an ink-heavy background). Kept beside the chart
 // builders it reuses rather than in its own file, so those figures are one call

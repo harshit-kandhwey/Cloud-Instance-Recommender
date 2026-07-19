@@ -179,6 +179,61 @@ console.log("[the fit bound is inclusive at exactly 4x memory]");
   );
 }
 
+// The CPU bound, ISOLATED. The cases above either breach both axes at once or
+// only the memory one, so a regression that dropped the vCPU check alone would
+// leave this whole suite green — verified by planting exactly that.
+//
+// Cache VM 2 vCPU / 16 GB → caps are 4 vCPU (2x) and 64 GB (4x). r6g.2xlarge is
+// preferred (cache → r/x) and sits at EXACTLY the memory cap, so only its vCPU
+// count can disqualify it.
+sandbox.awsCacheCpuOnly = [
+  {
+    instanceType: "m6g.xlarge",
+    family: "m6g",
+    familyName: "General purpose",
+    vCpus: 4,
+    memory: 16,
+    price: 0.154,
+  },
+  {
+    instanceType: "r6g.2xlarge",
+    family: "r6g",
+    familyName: "Memory optimized",
+    vCpus: 8, // 4x the requirement — over the 2x cap
+    memory: 64, // exactly 4x — within the memory cap
+    price: 0.4,
+  },
+];
+console.log("[the vCPU bound alone can disqualify a preferred instance]");
+{
+  // Direct: memory is inside its bound, so a false here is the CPU check firing.
+  check(
+    "isWorkloadFit rejects it on vCPUs while memory is within bounds",
+    run("RuleEngine.isWorkloadFit(awsCacheCpuOnly[1], 2, 16)") === false,
+    "the 2x vCPU bound did not reject an 8-vCPU instance for a 2-vCPU VM",
+  );
+  check(
+    "and the same instance passes once the vCPU requirement allows it",
+    run("RuleEngine.isWorkloadFit(awsCacheCpuOnly[1], 4, 16)") === true,
+    "raising reqCpu to 4 (cap 8) should admit it",
+  );
+
+  // And through the real pipeline: the preference must be dropped.
+  const res = run(
+    "RuleEngine.apply(awsCacheCpuOnly, { rowWorkload: 'cache', reqCpu: 2, reqMemory: 16 }, 'aws')",
+  );
+  check(
+    "the general instance wins; the vCPU-heavy preferred one does not",
+    res.instances[0].instanceType === "m6g.xlarge",
+    `picked ${res.instances[0].instanceType} (${res.instances[0].vCpus}/${res.instances[0].memory})`,
+  );
+  check(
+    "the row explains the preference was not applied",
+    res.rules.some((r) => /cache preference not applied/i.test(r)),
+    JSON.stringify(res.rules),
+  );
+}
+
 // Without a requirement (e.g. a caller that doesn't pass one), behaviour is
 // unchanged — the preference applies as before, so nothing regresses for callers
 // that predate the bound.

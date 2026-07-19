@@ -149,6 +149,11 @@ async function processRecommendations() {
   // Read the persisted app→workload map once (used in the options spread below)
   const appWorkloadMap = loadAppWorkloadMap();
 
+  // Likewise the rule defaults: each getter does several DOM reads, and the
+  // spread below tests and then reads eight fields — sixteen re-scans of the
+  // same controls, per generate, for one snapshot that cannot change mid-read.
+  const ruleDefaults = getRuleDefaults();
+
   // Prepare options with comprehensive filtering and recommendation type control
   const options = {
     // **NEW: Recommendation type control**
@@ -209,27 +214,25 @@ async function processRecommendations() {
     selectedGCPMachineTypes: getSelectedGCPMachineTypes(),
 
     // Rule Engine page-level defaults (overridden per-row by CSV columns)
-    ...(getRuleDefaults().env ? { ruleDefaultEnv: getRuleDefaults().env } : {}),
-    ...(getRuleDefaults().os ? { ruleDefaultOS: getRuleDefaults().os } : {}),
-    ...(getRuleDefaults().workload
-      ? { ruleDefaultWorkload: getRuleDefaults().workload }
+    ...(ruleDefaults.env ? { ruleDefaultEnv: ruleDefaults.env } : {}),
+    ...(ruleDefaults.os ? { ruleDefaultOS: ruleDefaults.os } : {}),
+    ...(ruleDefaults.workload
+      ? { ruleDefaultWorkload: ruleDefaults.workload }
       : {}),
-    ...(getRuleDefaults().compliance
-      ? { ruleDefaultCompliance: getRuleDefaults().compliance }
+    ...(ruleDefaults.compliance
+      ? { ruleDefaultCompliance: ruleDefaults.compliance }
       : {}),
-    ...(getRuleDefaults().minGen
-      ? { ruleDefaultMinGen: getRuleDefaults().minGen }
-      : {}),
+    ...(ruleDefaults.minGen ? { ruleDefaultMinGen: ruleDefaults.minGen } : {}),
     // Per-provider MinGen (multi-cloud page). Each is native to its own cloud,
     // and overrides the shared default for that provider only.
-    ...(getRuleDefaults().minGenAws
-      ? { ruleDefaultMinGenAws: getRuleDefaults().minGenAws }
+    ...(ruleDefaults.minGenAws
+      ? { ruleDefaultMinGenAws: ruleDefaults.minGenAws }
       : {}),
-    ...(getRuleDefaults().minGenAzure
-      ? { ruleDefaultMinGenAzure: getRuleDefaults().minGenAzure }
+    ...(ruleDefaults.minGenAzure
+      ? { ruleDefaultMinGenAzure: ruleDefaults.minGenAzure }
       : {}),
-    ...(getRuleDefaults().minGenGcp
-      ? { ruleDefaultMinGenGcp: getRuleDefaults().minGenGcp }
+    ...(ruleDefaults.minGenGcp
+      ? { ruleDefaultMinGenGcp: ruleDefaults.minGenGcp }
       : {}),
 
     // App→workload inheritance: VMs with an App Name but no Workload cell take

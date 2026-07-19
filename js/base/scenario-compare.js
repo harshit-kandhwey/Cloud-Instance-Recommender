@@ -674,8 +674,8 @@ function renderPairwiseComparison(result, A, B) {
   if (!d.changedRows.length) {
     body = `<div class="scenario-note">No recommendation changed between run A (${sEsc(A.label)}) and run B (${sEsc(B.label)}).</div>`;
   } else {
-    const head = `<tr><th>VM</th>${d.cols
-      .map((c) => `<th>${sEsc(c)}</th>`)
+    const head = `<tr><th scope="col">VM</th>${d.cols
+      .map((c) => `<th scope="col">${sEsc(c)}</th>`)
       .join("")}</tr>`;
     const rows = d.changedRows
       .map((row) => {
@@ -686,7 +686,8 @@ function renderPairwiseComparison(result, A, B) {
               : `<td class="scenario-same">${sEsc(c.a || "—")}</td>`,
           )
           .join("");
-        return `<tr><td>${sEsc(row.key)}</td>${cells}</tr>`;
+        // The VM name labels its row, so it is a header cell, not data.
+        return `<tr><th scope="row">${sEsc(row.key)}</th>${cells}</tr>`;
       })
       .join("");
     body = `<div class="scenario-scroll"><table class="scenario-table">
@@ -744,14 +745,22 @@ function renderNWayComparison(result, list) {
   if (!d.changedRows.length) {
     body = `<div class="scenario-note">No recommendation differs across the ${list.length} runs.</div>`;
   } else {
+    // Two header levels — recommendation column, then one sub-column per run —
+    // so every cell belongs to a group AND a run. Without scope, assistive tech
+    // cannot say which pair a cell sits under, and an N-way matrix read as a
+    // flat grid of values is unusable.
     const groupHead = d.cols
-      .map((c) => `<th colspan="${list.length}">${sEsc(c)}</th>`)
+      .map(
+        (c) => `<th colspan="${list.length}" scope="colgroup">${sEsc(c)}</th>`,
+      )
       .join("");
     const runHead = d.cols
-      .map(() => list.map((s) => `<th>${sEsc(s.label)}</th>`).join(""))
+      .map(() =>
+        list.map((s) => `<th scope="col">${sEsc(s.label)}</th>`).join(""),
+      )
       .join("");
     const head = `
-      <tr><th rowspan="2">VM</th>${groupHead}</tr>
+      <tr><th rowspan="2" scope="col">VM</th>${groupHead}</tr>
       <tr>${runHead}</tr>`;
     const rows = d.changedRows
       .map((row) => {
@@ -768,7 +777,8 @@ function renderNWayComparison(result, list) {
               .join(""),
           )
           .join("");
-        return `<tr><td>${sEsc(row.key)}</td>${cells}</tr>`;
+        // The VM name labels its row, so it is a header cell, not data.
+        return `<tr><th scope="row">${sEsc(row.key)}</th>${cells}</tr>`;
       })
       .join("");
     body = `<div class="scenario-scroll"><table class="scenario-table scenario-nway-table">

@@ -590,9 +590,18 @@ function exportFilename(base, extension) {
 // with downloadCsv / exportFilename, so the preview, the result/no-match
 // downloads, and the scenario-comparison export all quote cells identically —
 // one guard, not several that could drift.
+// A plain negative number opens with the same "-" the guard watches for, but it
+// cannot be a formula — and prefixing it makes Excel import it as TEXT, silently
+// breaking any sum or formula the user builds on the export. Every input column
+// is spread into each result row (`const result = { ...row }`), so a user's own
+// negative column really does reach the file. Exempt only a complete numeric
+// literal: "-1+1", "-cmd", "-1e5" and a bare "-" are all still hardened.
+const CSV_FORMULA_START = /^[=+\-@|\t\r]/;
+const CSV_PLAIN_NUMBER = /^-\d+(\.\d+)?$/;
 function escapeCsvCell(val) {
   const s = String(val == null ? "" : val);
-  const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+  const needsHardening = CSV_FORMULA_START.test(s) && !CSV_PLAIN_NUMBER.test(s);
+  const safe = needsHardening ? `'${s}` : s;
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
