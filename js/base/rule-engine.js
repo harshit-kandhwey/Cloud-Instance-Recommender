@@ -15,6 +15,8 @@
 //   OS  Windows: exclude ARM/Graviton; macOS (AWS): mac1/mac2 families only
 //   MG  MinGen: exclude instances older than the specified generation (m5<m6<m7 / Dsv3<Dsv4<Dsv5 / N1<N2<N4)
 //   WL  Workload preference: sort results so workload-appropriate families appear first
+//   GA  Accelerators: ML/AI requires a GPU/ASIC/FPGA instance; every other
+//       workload excludes one, so a GPU box is never recommended by accident
 // @ts-check
 
 /**
@@ -24,6 +26,7 @@
  * @property {number} vCpus
  * @property {number} price
  * @property {string} [family]
+ * @property {string} [familyName] the provider's own class ("GPU instance")
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
@@ -59,6 +62,7 @@ const RuleEngine = (() => {
       "ml/ai": ["p", "g", "trn", "inf"],
       ml: ["p", "g", "trn", "inf"],
       ai: ["p", "g", "trn", "inf"],
+      gpu: ["p", "g", "trn", "inf"],
       batch: ["c", "m"],
       hpc: ["hpc", "c"],
       sap: ["x1", "x2", "r", "u-"],
@@ -72,6 +76,7 @@ const RuleEngine = (() => {
       "ml/ai": ["nc", "nd", "nv"],
       ml: ["nc", "nd", "nv"],
       ai: ["nc", "nd", "nv"],
+      gpu: ["nc", "nd", "nv"],
       batch: ["f", "d"],
       hpc: ["hb", "hc"],
       sap: ["mv2", "msv2", "m"],
@@ -85,11 +90,75 @@ const RuleEngine = (() => {
       "ml/ai": ["a2", "a3", "g2"],
       ml: ["a2", "a3", "g2"],
       ai: ["a2", "a3", "g2"],
+      gpu: ["a2", "a3", "g2"],
       batch: ["c2", "c2d", "c3", "c3d"],
       hpc: ["h3", "c2"],
       sap: ["m1", "m2", "m3", "m4"],
     },
   };
+
+  // ─── Accelerator classification ───────────────────────────────────────────
+  // familyName is the provider's OWN classification and is the only reliable
+  // signal, so it is checked first. The exact strings present in the region
+  // files (verified against us-east-1 / eastus / us-central1):
+  //   AWS    "GPU instance", "Machine Learning ASIC Instances",
+  //          "FPGA Instances", "Media Accelerator Instances"
+  //   Azure  "GPU"
+  //   GCP    "Accelerator optimized"
+  // Matching on substrings of these rather than the whole string, so a renamed
+  // or newly-added accelerator class ("GPU instances", "Accelerator-optimized")
+  // still classifies.
+  const ACCELERATOR_FAMILY_NAME =
+    /\bgpu\b|accelerat|\basic\b|\bfpga\b|\btpu\b/i;
+
+  // Fallback ONLY for an instance whose familyName is blank (sample/fallback
+  // data). Deliberately anchored per provider: the previous provider-agnostic
+  // prefix list classified Azure's Dl-series (General purpose) and G/GS
+  // (Memory optimized) as GPUs — 60 instances in eastus — because "dl" and "g"
+  // are accelerator prefixes on AWS but not on Azure.
+  const ACCELERATOR_FAMILY_PREFIXES = {
+    aws: [
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "g2",
+      "g3",
+      "g4",
+      "g5",
+      "g6",
+      "g7",
+      "gr6",
+      "inf",
+      "trn",
+      "dl1",
+      "vt",
+      "f1",
+      "f2",
+    ],
+    azure: ["nc", "nd", "nv", "np", "nm"],
+    gcp: ["a2", "a3", "a4", "g2"],
+  };
+
+  /**
+   * Is this an accelerator (GPU / ML ASIC / FPGA / media) instance?
+   * @param {Instance} inst
+   * @param {Provider} provider
+   */
+  function isAccelerator(inst, provider) {
+    const familyName = inst.familyName || "";
+    if (familyName) return ACCELERATOR_FAMILY_NAME.test(familyName);
+    const fam = (inst.family || "").toLowerCase();
+    if (!fam) return false;
+    return (ACCELERATOR_FAMILY_PREFIXES[provider] || []).some((f) =>
+      fam.startsWith(f),
+    );
+  }
+
+  // Workloads that MUST land on an accelerator. Every other workload — general
+  // included — must not, so a GPU box is never recommended by accident.
+  const ACCELERATOR_WORKLOADS = ["ml/ai", "ml", "ai", "gpu"];
 
   // AWS instance type size rank — used for size floor (Rule 1c)
   const AWS_SIZE_RANK = { nano: 0, micro: 1, small: 2, medium: 3, large: 4 };
@@ -450,6 +519,28 @@ const RuleEngine = (() => {
       // If filter empties the pool, keep current set and note it
     }
 
+    // ── GPU: require an accelerator, or keep one out of the result ──────────
+    // An accelerator is not a substitute for a general-purpose box of the same
+    // shape: it costs far more and carries hardware the workload will not use.
+    // Both directions degrade rather than force a no-match — if the filter
+    // would empty the pool, the pool stands and the row says the rule did not
+    // apply.
+    if (ACCELERATOR_WORKLOADS.includes(workload)) {
+      const accel = filtered.filter((i) => isAccelerator(i, provider));
+      if (accel.length > 0) {
+        filtered = accel;
+        rules.push("GPU: accelerator required");
+      } else {
+        rules.push("GPU: no accelerator available (not applied)");
+      }
+    } else {
+      const withoutAccel = filtered.filter((i) => !isAccelerator(i, provider));
+      if (withoutAccel.length > 0 && withoutAccel.length < filtered.length) {
+        filtered = withoutAccel;
+        rules.push("GPU: accelerators excluded (non-GPU workload)");
+      }
+    }
+
     // ── Workload preference: sort close-fitting preferred families first ────
     // Only when a preferred-family instance is a close-enough fit — otherwise
     // honouring the preference would force a hugely over-provisioned instance
@@ -509,6 +600,7 @@ const RuleEngine = (() => {
   return {
     apply,
     getPreferredFamilies,
+    isAccelerator,
     isBurstable,
     isCurrentGen,
     isARM,

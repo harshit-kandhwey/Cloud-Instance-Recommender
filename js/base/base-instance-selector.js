@@ -570,19 +570,18 @@ class BaseInstanceSelector {
                 return typeof RuleEngine !== "undefined"
                   ? RuleEngine.isARM(instance)
                   : instance.isGraviton === 1 || instance.isGraviton === 1.0;
+              // One classifier for both the filter and the GPU workload rule,
+              // so "Exclude GPU" and "this row is not a GPU workload" can
+              // never disagree about what an accelerator is.
               case "gpu":
-                return (
-                  familyName.includes("gpu") ||
-                  familyName.includes("accelerated") ||
-                  ["p", "g", "inf", "trn", "dl", "vt"].some((f) =>
-                    fam.startsWith(f),
-                  ) ||
-                  fam.startsWith("nc") ||
-                  fam.startsWith("nd") ||
-                  fam.startsWith("nv")
-                );
+                return typeof RuleEngine !== "undefined"
+                  ? RuleEngine.isAccelerator(instance, providerName)
+                  : familyName.includes("gpu") ||
+                      familyName.includes("accelerat");
               case "fpga":
-                return fam.startsWith("f") && providerName === "aws";
+                return providerName === "aws" && familyName
+                  ? familyName.includes("fpga")
+                  : providerName === "aws" && fam.startsWith("f");
               case "mac":
                 return fam.startsWith("mac");
               case "previous generation":

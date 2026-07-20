@@ -107,9 +107,13 @@ Deeper, more accurate right-sizing.
   (AWS), "GPU" (Azure), "Accelerator optimized" (GCP), plus ML ASIC / FPGA /
   Media Accelerator on AWS. What is genuinely missing is GPU _detail_ (model,
   count, VRAM), which only matters for a per-GPU-model rule.
-- GPU workload support. (M) _Not blocked_ — a GPU workload can require an
-  accelerator family, and exclude one otherwise so a GPU box is never
-  recommended by accident, using the family classes already in the data.
+- ~~GPU workload support.~~ **Done (3.9.4)** — `ML/AI` (or a CSV row that says
+  `GPU`) now requires an accelerator, and every other workload excludes one, so
+  a GPU box is never recommended by accident. Classification reads `familyName`
+  rather than family prefixes, which do not survive crossing providers: the old
+  prefix list called Azure's G/GS and Dl-series accelerators (60 instances in
+  `eastus`) and let GCP's a2/a3 through. Per-GPU-model rules (count, VRAM)
+  remain blocked on the missing GPU detail noted above.
 - Storage-aware pass-through — carry disk GB/IOPS columns into the outputs and
   the currently-blank storage fields of the AWS bulk template. (M)
 - ~~Percentile utilization — p95/peak columns alongside the average.~~ **Done

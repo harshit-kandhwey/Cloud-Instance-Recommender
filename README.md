@@ -28,13 +28,13 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 
 Five interactive dropdowns set global defaults for the entire batch without editing your CSV:
 
-| Dropdown       | Purpose                                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                              |
-| **OS**         | Linux / Windows / macOS — affects ARM eligibility                                                        |
-| **Workload**   | General / Database / Web Server / Cache / ML/AI / Batch / HPC / **SAP** — sorts preferred families first |
-| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)            |
-| **Min Gen**    | Minimum generation number/family, native to each cloud — excludes older instance generations             |
+| Dropdown       | Purpose                                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                                                                                                          |
+| **OS**         | Linux / Windows / macOS — affects ARM eligibility                                                                                                                                    |
+| **Workload**   | General / Database / Web Server / Cache / ML/AI (GPU) / Batch / HPC / **SAP** — sorts preferred families first; **ML/AI requires an accelerator, every other workload excludes one** |
+| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)                                                                                        |
+| **Min Gen**    | Minimum generation number/family, native to each cloud — excludes older instance generations                                                                                         |
 
 Per-row CSV column values always override these global defaults.
 
@@ -298,20 +298,20 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 
 **Optional columns (enable rule-based filtering per row):**
 
-| Column                                           | Values                                                              | Effect                                                                                                    |
-| ------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `App Name`                                       | Any text                                                            | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
-| `CPU Utilization`                                | 0–100                                                               | Average CPU; drives N/2 / N / N+1 optimization                                                            |
-| `Memory Utilization`                             | 0–100                                                               | Average memory; drives N/2 / N / N+1 optimization                                                         |
-| `CPU Utilization p95` `Memory Utilization p95`   | 0–100                                                               | p95 readings, used when the run sizes against p95 (see below)                                             |
-| `CPU Utilization Peak` `Memory Utilization Peak` | 0–100                                                               | Peak/max readings, used when the run sizes against Peak                                                   |
-| `ENV`                                            | Production / Staging / Dev / Test                                   | Tightens burstable and generation rules                                                                   |
-| `OS`                                             | Linux / Windows / macOS                                             | Affects ARM/Graviton eligibility                                                                          |
-| `Workload`                                       | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first                                                                            |
-| `Compliance`                                     | PCI / HIPAA / SOC2 / FIPS                                           | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS)                                                  |
-| `Min Gen`                                        | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4                              | Minimum instance generation to include (single-provider pages)                                            |
-| `AWS Min Gen` `Azure Min Gen` `GCP Min Gen`      | as above, per cloud                                                 | Multi-cloud sheets: one column per provider, each in that cloud's own scale                               |
-| `Exclude`                                        | Comma-separated type names (e.g. `Burstable,GPU`)                   | Exclude specific instance types for this row only                                                         |
+| Column                                           | Values                                                              | Effect                                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `App Name`                                       | Any text                                                            | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance  |
+| `CPU Utilization`                                | 0–100                                                               | Average CPU; drives N/2 / N / N+1 optimization                                                             |
+| `Memory Utilization`                             | 0–100                                                               | Average memory; drives N/2 / N / N+1 optimization                                                          |
+| `CPU Utilization p95` `Memory Utilization p95`   | 0–100                                                               | p95 readings, used when the run sizes against p95 (see below)                                              |
+| `CPU Utilization Peak` `Memory Utilization Peak` | 0–100                                                               | Peak/max readings, used when the run sizes against Peak                                                    |
+| `ENV`                                            | Production / Staging / Dev / Test                                   | Tightens burstable and generation rules                                                                    |
+| `OS`                                             | Linux / Windows / macOS                                             | Affects ARM/Graviton eligibility                                                                           |
+| `Workload`                                       | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first; `ML/AI` (or `GPU`) requires an accelerator, every other value excludes one |
+| `Compliance`                                     | PCI / HIPAA / SOC2 / FIPS                                           | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS)                                                   |
+| `Min Gen`                                        | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n4                              | Minimum instance generation to include (single-provider pages)                                             |
+| `AWS Min Gen` `Azure Min Gen` `GCP Min Gen`      | as above, per cloud                                                 | Multi-cloud sheets: one column per provider, each in that cloud's own scale                                |
+| `Exclude`                                        | Comma-separated type names (e.g. `Burstable,GPU`)                   | Exclude specific instance types for this row only                                                          |
 
 **`Current Instance Type`** (optional, not a rule column) — if your VMs already run in a cloud, this carries what they run on today (`m5.xlarge`, `Standard_D4s_v3`, `n2-standard-4`) through the preview and every export untouched, sitting immediately left of the recommendations so each one can be read against what it replaces. Also recognised as `Instance Type`, `VM Size`, `Machine Type` or `Current Size`. **It does not affect sizing** — CPU Count and Memory (GB) still drive that.
 
