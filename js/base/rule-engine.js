@@ -3,7 +3,7 @@
 // CSV input columns (also settable via UI Rule Engine defaults):
 //   ENV        : Production | Staging | Dev | Test  (blank = no rules)
 //   OS         : Linux | Windows | macOS             (blank = Linux)
-//   Workload   : General | Database | Web Server | Cache | ML/AI | Batch | HPC  (blank = General)
+//   Workload   : General | Database | SQL Server | Web Server | Cache | ML/AI | Batch | HPC  (blank = General)
 //   Compliance : PCI | HIPAA | SOC2 | FIPS           (blank = none)
 //   Min Gen    : AWS gen number (5/6/7), Azure v-number (3/4/5), GCP family (n2/n4)
 //
@@ -19,6 +19,8 @@
 //       workload excludes one, so a GPU box is never recommended by accident
 //   BP  Burstable preference — Dev/Test at low utilization prefers burstable
 //       families (the inverse of 1a's Production/Staging exclusion)
+//   SQL SQL Server: at least 4 vCPUs, because SQL Server is licensed per core
+//       with a 4-core minimum per VM — a smaller box is billed for 4 anyway
 // @ts-check
 
 /**
@@ -62,6 +64,8 @@ const RuleEngine = (() => {
     aws: {
       general: ["m"],
       database: ["r", "x", "z"],
+      "sql server": ["r", "x", "z"],
+      sql: ["r", "x", "z"],
       "web server": ["m", "c"],
       web: ["m", "c"],
       cache: ["r", "x"],
@@ -76,6 +80,8 @@ const RuleEngine = (() => {
     azure: {
       general: ["d"],
       database: ["e", "m"],
+      "sql server": ["e", "m"],
+      sql: ["e", "m"],
       "web server": ["d", "f"],
       web: ["d", "f"],
       cache: ["e", "m"],
@@ -90,6 +96,8 @@ const RuleEngine = (() => {
     gcp: {
       general: ["n2", "e2"],
       database: ["m1", "m2", "m3", "m4"],
+      "sql server": ["m1", "m2", "m3", "m4"],
+      sql: ["m1", "m2", "m3", "m4"],
       "web server": ["n2", "e2", "n4"],
       web: ["n2", "e2", "n4"],
       cache: ["m1", "m2", "m3"],
@@ -161,6 +169,13 @@ const RuleEngine = (() => {
       fam.startsWith(f),
     );
   }
+
+  // SQL Server is licensed per core with a documented minimum of 4 core
+  // licences per VM, so a 1 or 2 vCPU recommendation is billed as 4 regardless
+  // — the smaller box saves no licence money and only costs performance. The
+  // rule raises the floor rather than the pick: an 8 vCPU SQL box stays 8.
+  const SQL_MIN_CORES = 4;
+  const SQL_WORKLOADS = ["sql server", "sql", "sqlserver", "mssql"];
 
   // Falls back to the same 40% the N/2 rules default to, for a run that never
   // set a threshold (a like-to-like-only run carries none).
@@ -551,6 +566,26 @@ const RuleEngine = (() => {
       if (withoutAccel.length > 0 && withoutAccel.length < filtered.length) {
         filtered = withoutAccel;
         rules.push("GPU: accelerators excluded (non-GPU workload)");
+      }
+    }
+
+    // ── SQL: minimum core count for SQL Server licensing ────────────────────
+    // A floor, not a target: this only removes candidates below the licence
+    // minimum, so a SQL box that genuinely needs 16 vCPUs still gets 16. It
+    // runs before the two preference sorts so neither can reorder a candidate
+    // the licence floor should have removed. Degrades like every other filter
+    // — if nothing clears the floor, the pool stands and the row says so.
+    if (SQL_WORKLOADS.includes(workload)) {
+      const licensed = filtered.filter((i) => i.vCpus >= SQL_MIN_CORES);
+      if (licensed.length > 0) {
+        if (licensed.length < filtered.length) {
+          rules.push(`SQL: ${SQL_MIN_CORES}-vCPU licence floor`);
+        }
+        filtered = licensed;
+      } else {
+        rules.push(
+          `SQL: ${SQL_MIN_CORES}-vCPU licence floor not applied (no candidate that large)`,
+        );
       }
     }
 

@@ -128,7 +128,10 @@ Deeper, more accurate right-sizing.
   utilization is below the run's own downsize threshold prefers the burstable
   family. Unknown utilization does not count as low, and an explicit workload
   preference still wins.
-- SQL Server workload rule enforcing minimum core counts. (S)
+- ~~SQL Server workload rule enforcing minimum core counts.~~ **Done
+  (3.9.7)** — a SQL Server workload drops candidates below 4 vCPUs, the
+  documented per-VM licence minimum. A floor, not a target, and it holds on the
+  optimized pass where N/2 would otherwise halve a 4 vCPU box to 2.
 - Multicloud family-equivalence explainers (for example, m5 ≈ Dsv5 ≈
   n2-standard). (M)
 
