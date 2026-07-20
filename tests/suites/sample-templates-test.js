@@ -111,7 +111,10 @@ function generateSample(sample) {
 function previewLines(page) {
   const html = fs.readFileSync(path.join(REPO, page), "utf8");
   const block = html.match(
-    /<div[^>]*class="[^"]*\bsample-csv\b[^"]*"[^>]*>\s*<pre[^>]*>\s*([\s\S]*?)<\/pre>/,
+    // `<\/pre\s*>`, not `<\/pre>`: Prettier reflows a long closing tag onto its
+    // own line (`<\/pre` + newline + `>`), which is identical HTML — the newline
+    // sits inside the tag, not the content — but silently broke this guard once.
+    /<div[^>]*class="[^"]*\bsample-csv\b[^"]*"[^>]*>\s*<pre[^>]*>\s*([\s\S]*?)<\/pre\s*>/,
   );
   if (!block) return null;
   return block[1]
