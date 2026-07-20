@@ -239,6 +239,12 @@ window.getInstanceRecommendationWithSelector = async function (
         rowWorkload,
         rowCompliance,
         rowMinGen,
+        // The row's resolved utilization, so the rule engine can tell a busy
+        // Dev box from an idle one. Resolved once above, and the SAME figures
+        // that drive the N/2 rules — a rule keyed on "low utilization" and a
+        // sizing pass keyed on it must not disagree about what the row read.
+        rowCpuUtil: util.cpu,
+        rowMemoryUtil: util.memory,
         excludeTypes: rowExcludeExtra.length
           ? [...(options.excludeTypes || []), ...rowExcludeExtra]
           : options.excludeTypes,

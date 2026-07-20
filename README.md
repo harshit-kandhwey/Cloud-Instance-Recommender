@@ -30,7 +30,7 @@ Five interactive dropdowns set global defaults for the entire batch without edit
 
 | Dropdown       | Purpose                                                                                                                                                                              |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules                                                                                                          |
+| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules; Dev/Test at low utilization _prefers_ burstable                                                         |
 | **OS**         | Linux / Windows / macOS — affects ARM eligibility                                                                                                                                    |
 | **Workload**   | General / Database / Web Server / Cache / ML/AI (GPU) / Batch / HPC / **SAP** — sorts preferred families first; **ML/AI requires an accelerator, every other workload excludes one** |
 | **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)                                                                                        |

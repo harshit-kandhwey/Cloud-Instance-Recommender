@@ -1651,6 +1651,14 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             <td><code>MinGen: 6+</code></td>
           </tr>
           <tr>
+            <td>BP</td>
+            <td>ENV = Dev/Test + utilization below the downsize threshold</td>
+            <td>Prefer burstable families (the inverse of 1a)</td>
+            <td>
+              <code>BP: Burstable preferred (Dev/Test, low utilization)</code>
+            </td>
+          </tr>
+          <tr>
             <td>GA</td>
             <td>Workload = ML/AI (or GPU)</td>
             <td>Require a GPU / ML ASIC / FPGA instance</td>

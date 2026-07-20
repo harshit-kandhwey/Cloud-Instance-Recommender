@@ -17,6 +17,8 @@
 //   WL  Workload preference: sort results so workload-appropriate families appear first
 //   GA  Accelerators: ML/AI requires a GPU/ASIC/FPGA instance; every other
 //       workload excludes one, so a GPU box is never recommended by accident
+//   BP  Burstable preference — Dev/Test at low utilization prefers burstable
+//       families (the inverse of 1a's Production/Staging exclusion)
 // @ts-check
 
 /**
@@ -43,6 +45,10 @@
  * @property {string} [rowMinGen]
  * @property {number} [reqCpu] required vCPUs — bounds workload over-provisioning
  * @property {number} [reqMemory] required memory (GB) — bounds the same
+ * @property {number} [rowCpuUtil] resolved CPU utilization % (0 = unknown)
+ * @property {number} [rowMemoryUtil] resolved memory utilization % (0 = unknown)
+ * @property {number} [cpuDownsizeMax] the run's "low utilization" threshold
+ * @property {number} [memoryDownsizeMax] the same, for memory
  */
 
 /** @typedef {"aws"|"azure"|"gcp"} Provider */
@@ -155,6 +161,10 @@ const RuleEngine = (() => {
       fam.startsWith(f),
     );
   }
+
+  // Falls back to the same 40% the N/2 rules default to, for a run that never
+  // set a threshold (a like-to-like-only run carries none).
+  const DEFAULT_LOW_UTILIZATION = 40;
 
   // Workloads that MUST land on an accelerator. Every other workload — general
   // included — must not, so a GPU box is never recommended by accident.
@@ -441,6 +451,9 @@ const RuleEngine = (() => {
 
     const isProd = env === "production" || env === "prod";
     const isStaging = env === "staging" || env === "stage";
+    const isDevTest = ["dev", "development", "test", "testing", "qa"].includes(
+      env,
+    );
     const isCompliance = ["pci", "hipaa", "soc2", "fips"].includes(compliance);
     const requiresAwsNitro = ["pci", "hipaa"].includes(compliance);
 
@@ -538,6 +551,60 @@ const RuleEngine = (() => {
       if (withoutAccel.length > 0 && withoutAccel.length < filtered.length) {
         filtered = withoutAccel;
         rules.push("GPU: accelerators excluded (non-GPU workload)");
+      }
+    }
+
+    // ── BP: Dev/Test at low utilization prefers burstable ───────────────────
+    // The inverse of 1a. A Dev box that idles is exactly what a burstable
+    // family is for, and 1a already keeps them out of Production/Staging, so
+    // the two rules can never both fire on one row.
+    //
+    // Deliberately placed BEFORE the workload preference: that sort runs last
+    // and therefore wins, so an explicit workload (a Dev database asking for
+    // memory-optimized) is never silently overridden by this nudge. A general
+    // or blank workload does not sort at all, which is the common Dev/Test
+    // case and where this rule does its work.
+    //
+    // "Low" is the run's OWN downsize threshold, not a new number invented
+    // here, so the rule and the N/2 sizing agree on what low means.
+    if (isDevTest) {
+      const cpuUtil = Number(options.rowCpuUtil) || 0;
+      const memUtil = Number(options.rowMemoryUtil) || 0;
+      const cpuLow = Number(options.cpuDownsizeMax) || DEFAULT_LOW_UTILIZATION;
+      const memLow =
+        Number(options.memoryDownsizeMax) || DEFAULT_LOW_UTILIZATION;
+
+      // Unknown utilization is not low utilization. Without a reading there is
+      // no evidence the box idles, and preferring burstable on no evidence
+      // would quietly hand every Dev row a credit-limited instance.
+      const known = cpuUtil > 0 || memUtil > 0;
+      const isLow =
+        known &&
+        (cpuUtil === 0 || cpuUtil <= cpuLow) &&
+        (memUtil === 0 || memUtil <= memLow);
+
+      if (isLow) {
+        const reqCpu = Number(options.reqCpu) || 0;
+        const reqMemory = Number(options.reqMemory) || 0;
+        const fits = filtered.some(
+          (i) =>
+            isBurstable(i, provider) && isWorkloadFit(i, reqCpu, reqMemory),
+        );
+        if (fits) {
+          filtered = [...filtered].sort((a, b) => {
+            const as =
+              isBurstable(a, provider) && isWorkloadFit(a, reqCpu, reqMemory)
+                ? 0
+                : 1;
+            const bs =
+              isBurstable(b, provider) && isWorkloadFit(b, reqCpu, reqMemory)
+                ? 0
+                : 1;
+            if (as !== bs) return as - bs;
+            return a.price - b.price;
+          });
+          rules.push("BP: Burstable preferred (Dev/Test, low utilization)");
+        }
       }
     }
 

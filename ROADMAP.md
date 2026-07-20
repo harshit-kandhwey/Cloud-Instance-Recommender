@@ -123,8 +123,11 @@ Deeper, more accurate right-sizing.
 - ~~Percentile utilization — p95/peak columns alongside the average.~~ **Done
   (3.9.3.)** Three statistics (Average / p95 / Peak) with per-row fallback and a
   `Sized On` column recording the basis actually used.
-- Burstable-preference rule for Dev/Test at low utilization (the inverse of the
-  production exclusion). (M)
+- ~~Burstable-preference rule for Dev/Test at low utilization (the inverse of
+  the production exclusion).~~ **Done (3.9.6)** — a Dev/Test row whose
+  utilization is below the run's own downsize threshold prefers the burstable
+  family. Unknown utilization does not count as low, and an explicit workload
+  preference still wins.
 - SQL Server workload rule enforcing minimum core counts. (S)
 - Multicloud family-equivalence explainers (for example, m5 ≈ Dsv5 ≈
   n2-standard). (M)
