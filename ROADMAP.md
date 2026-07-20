@@ -114,8 +114,12 @@ Deeper, more accurate right-sizing.
   prefix list called Azure's G/GS and Dl-series accelerators (60 instances in
   `eastus`) and let GCP's a2/a3 through. Per-GPU-model rules (count, VRAM)
   remain blocked on the missing GPU detail noted above.
-- Storage-aware pass-through — carry disk GB/IOPS columns into the outputs and
-  the currently-blank storage fields of the AWS bulk template. (M)
+- ~~Storage-aware pass-through~~ **Done in part (3.9.5)** — an optional
+  `Disk (GB)` column is carried into the outputs and into the bulk template's
+  storage-amount field, converting MB/MiB the way memory does. **IOPS and
+  throughput are deferred**, and Storage Type is left blank: RVTools does not
+  report IOPS, and the bulk importer's accepted vocabulary for Storage Type is
+  not established — a wrong value there fails every row of the import.
 - ~~Percentile utilization — p95/peak columns alongside the average.~~ **Done
   (3.9.3.)** Three statistics (Average / p95 / Peak) with per-row fallback and a
   `Sized On` column recording the basis actually used.

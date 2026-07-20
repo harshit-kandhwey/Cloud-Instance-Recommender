@@ -473,6 +473,15 @@ function downloadAWSBulkTemplate(type) {
       ? "Windows Server"
       : "Linux";
 
+    // Provisioned disk, when the upload carried it. Blank stays blank — the
+    // calculator applies its own default, and a fabricated size would be worse
+    // than an absent one. Storage Type is deliberately left empty: this file is
+    // parsed strictly by the bulk importer, and guessing at its vocabulary
+    // would break every row rather than just this field.
+    const diskGb = parseFloat(row["Disk (GB)"]);
+    const storageAmount =
+      Number.isFinite(diskGb) && diskGb > 0 ? String(Math.round(diskGb)) : "";
+
     const buildRow = (instanceType) => {
       if (
         !instanceType ||
@@ -493,8 +502,8 @@ function downloadAWSBulkTemplate(type) {
         "", // Assumed Usage (blank = Always On)
         "Always On", // Usage Type
         "On-Demand", // Purchasing Options
-        "", // Storage Type
-        "", // Storage amount
+        "", // Storage Type — see above
+        storageAmount, // Storage amount per Instance (GB)
         "", // Provisioning IOPS
         "", // EBS Throughput
         "", // Snapshot Frequency

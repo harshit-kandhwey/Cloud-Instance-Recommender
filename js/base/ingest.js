@@ -924,6 +924,9 @@ const IMPORT_PRESETS = [
       vm: COLUMN_MAPPINGS.vmName, // not "Host" (the ESXi host) or "DNS Name"
       cpus: COLUMN_MAPPINGS.cpu,
       memory: COLUMN_MAPPINGS.memory,
+      // Provisioned, not "In Use": the bulk template asks what to provision.
+      provisionedmib: COLUMN_MAPPINGS.disk,
+      provisionedmb: COLUMN_MAPPINGS.disk,
     },
     // vInfo's "Memory" is MiB, and says so nowhere in the header
     memoryUnit: "MB",
@@ -1130,12 +1133,19 @@ function medianMemory(rows, column) {
 // import preset that knows the format's convention. The values alone are never
 // enough to convert on: they are enough to ask, and asking is what the input
 // check does.
+// Every column whose value is a size in GB, and so converts from MB/MiB the
+// same way. Disk joined memory here rather than growing a parallel path: one
+// list means a new size column cannot be added to the mapping and silently
+// skip the conversion.
+const SIZE_COLUMNS = [COLUMN_MAPPINGS.memory, COLUMN_MAPPINGS.disk];
+
 function detectMemoryUnit(mapping) {
-  const source = Object.keys(mapping).find(
-    (s) => mapping[s] === COLUMN_MAPPINGS.memory,
-  );
-  if (!source) return {};
-  return isMbHeader(source) ? { [COLUMN_MAPPINGS.memory]: "MB" } : {};
+  const units = {};
+  for (const canonical of SIZE_COLUMNS) {
+    const source = Object.keys(mapping).find((s) => mapping[s] === canonical);
+    if (source && isMbHeader(source)) units[canonical] = "MB";
+  }
+  return units;
 }
 
 // Saved mappings: { headerSignature: { v: 2, mapping: {source: canonical},
@@ -1391,8 +1401,14 @@ function ingestRows(headers, rows) {
 // format we have already identified.
 function presetUnits(preset, mapping) {
   if (!preset || !preset.memoryUnit) return null;
-  const hasMemory = Object.values(mapping).includes(COLUMN_MAPPINGS.memory);
-  return hasMemory ? { [COLUMN_MAPPINGS.memory]: preset.memoryUnit } : null;
+  // A format that reports memory in MiB reports its disk sizes in MiB too —
+  // that is the very convention the RVTools preset is keyed on.
+  const mapped = Object.values(mapping);
+  const units = {};
+  for (const canonical of SIZE_COLUMNS) {
+    if (mapped.includes(canonical)) units[canonical] = preset.memoryUnit;
+  }
+  return Object.keys(units).length ? units : null;
 }
 
 // Applies a mapping and runs the normal post-upload pipeline
@@ -1401,14 +1417,15 @@ function applyIngest(headers, rows, mapping, units = {}) {
   columnHeaders = finalHeaders;
   csvData = rewriteRowKeys(rows, mapping);
 
-  // Unit conversion: memory supplied in MB (RVTools-style) → GB
+  // Unit conversion: sizes supplied in MB (RVTools-style) → GB
   const memCol = COLUMN_MAPPINGS.memory;
   const memConverted = units && units[memCol] === "MB";
-  if (memConverted) {
+  for (const col of SIZE_COLUMNS) {
+    if (!units || units[col] !== "MB") continue;
     csvData = csvData.map((row) => {
-      const v = parseFloat(row[memCol]);
+      const v = parseFloat(row[col]);
       if (isNaN(v)) return row;
-      return { ...row, [memCol]: String(Math.round((v / 1024) * 100) / 100) };
+      return { ...row, [col]: String(Math.round((v / 1024) * 100) / 100) };
     });
   }
 

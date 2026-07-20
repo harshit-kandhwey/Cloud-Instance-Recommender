@@ -41,6 +41,11 @@ const COLUMN_MAPPINGS = {
   memoryUtilizationPeak: "Memory Utilization Peak",
   vmName: "VM Name",
   appName: "App Name",
+  // Provisioned disk, carried through to the outputs and into the AWS bulk
+  // template's storage field, which was shipping blank. Optional, and nothing
+  // is derived from it: storage does not influence instance selection, so a
+  // file without it behaves exactly as before.
+  disk: "Disk (GB)",
   // The size a VM runs on TODAY (m5.xlarge, Standard_D4s_v3, n2-standard-4).
   // Optional, and carried through to the outputs untouched, so a recommendation
   // can be read against what it replaces. Nothing is derived from it yet —
@@ -154,6 +159,37 @@ const COLUMN_SYNONYMS = {
     "memorypeak",
     "mempeak",
     "maxmemoryutil",
+  ],
+  // MB/MiB variants convert to GB on ingest exactly as memory does — RVTools
+  // reports "Provisioned MiB", and treating that as GB would overstate every
+  // disk by 1024x.
+  "Disk (GB)": [
+    "disk",
+    "diskgb",
+    "diskgib",
+    "disksize",
+    "disksizegb",
+    "storage",
+    "storagegb",
+    "storagesize",
+    "provisioned",
+    "provisionedgb",
+    "provisionedstorage",
+    "totaldisk",
+    "totaldiskgb",
+    "totalstorage",
+    "capacity",
+    "capacitygb",
+    "diskmb",
+    "diskmib",
+    "disksizemb",
+    "disksizemib",
+    "storagemb",
+    "storagemib",
+    "provisionedmb",
+    "provisionedmib",
+    "capacitymb",
+    "capacitymib",
   ],
   "VM Name": [
     "vmname",

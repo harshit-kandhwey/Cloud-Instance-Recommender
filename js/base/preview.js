@@ -166,6 +166,7 @@ function showResultsPreview(results) {
     "VM Name",
     "CPU Count",
     "Memory (GB)",
+    "Disk (GB)",
     "ENV",
     "OS",
     "Workload",

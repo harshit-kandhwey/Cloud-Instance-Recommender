@@ -305,6 +305,7 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 | `Memory Utilization`                             | 0–100                                                               | Average memory; drives N/2 / N / N+1 optimization                                                          |
 | `CPU Utilization p95` `Memory Utilization p95`   | 0–100                                                               | p95 readings, used when the run sizes against p95 (see below)                                              |
 | `CPU Utilization Peak` `Memory Utilization Peak` | 0–100                                                               | Peak/max readings, used when the run sizes against Peak                                                    |
+| `Disk (GB)`                                      | Number (MB/MiB headers convert automatically)                       | Optional provisioned disk; carried to the outputs and the AWS bulk template. Does not affect sizing        |
 | `ENV`                                            | Production / Staging / Dev / Test                                   | Tightens burstable and generation rules                                                                    |
 | `OS`                                             | Linux / Windows / macOS                                             | Affects ARM/Graviton eligibility                                                                           |
 | `Workload`                                       | General / Database / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first; `ML/AI` (or `GPU`) requires an accelerator, every other value excludes one |
@@ -359,6 +360,8 @@ The in-browser **results preview** table includes sortable columns, a live searc
 ### AWS Bulk Template
 
 Available only on the AWS page. Produces a CSV matching the Amazon EC2 Instances worksheet format for [AWS Pricing Calculator Bulk Import](https://calculator.aws/#/bulk-import). When both L2L and Optimized are generated, two separate files appear — import only one per estimate to avoid double-counting.
+
+If your upload carried a `Disk (GB)` column, its value is written to **Storage amount per Instance (GB)**; rows without one are left blank. **Storage Type, IOPS and throughput are always left blank** for the calculator to default — the bulk importer parses this file strictly, and a wrong value in those fields fails the whole import rather than one column.
 
 ---
 

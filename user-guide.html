@@ -1126,6 +1126,19 @@
               <td>16</td>
             </tr>
             <tr>
+              <td><span class="col-pill col-pill-new">Disk (GB)</span></td>
+              <td>
+                Optional. Provisioned disk, carried through to the outputs and
+                written into the AWS bulk template's
+                <em>Storage amount per Instance (GB)</em> field, which was
+                previously blank. A header ending in MB or MiB (RVTools reports
+                <code>Provisioned MiB</code>) is converted to GB on ingest, the
+                same way memory is. <strong>It does not affect sizing</strong> —
+                CPU Count and Memory (GB) still drive that.
+              </td>
+              <td>512</td>
+            </tr>
+            <tr>
               <td>
                 <span class="col-pill">AWS Region</span> /
                 <span class="col-pill">Azure Region</span> /
