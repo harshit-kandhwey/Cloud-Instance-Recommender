@@ -158,6 +158,12 @@ console.log("[an MiB-suffixed disk header converts to GB on ingest]");
       // A fractional disk must round UP, not to nearest: 1.4 GB provisions 2,
       // never 1 — rounding down would silently under-provision the volume.
       { ...outWithout, "VM Name": "w", "Disk (GB)": "1.4" },
+      // Non-positive and non-numeric disks are "no disk", not a 0-GB volume:
+      // a literal 0, a negative value, and a non-number all stay blank so the
+      // calculator applies its default (a "0" would read as "no volume").
+      { ...outWithout, "VM Name": "v", "Disk (GB)": "0" },
+      { ...outWithout, "VM Name": "u", "Disk (GB)": "-5" },
+      { ...outWithout, "VM Name": "t", "Disk (GB)": "abc" },
     ];
     ctx.document.querySelector = () => null;
     run("processedResults = __results");
@@ -197,8 +203,23 @@ console.log("[an MiB-suffixed disk header converts to GB on ingest]");
       cells[3] && `"${cells[3][amountIdx]}"`,
     );
     check(
+      "a literal 0 disk stays blank (no-volume), never a 0-GB volume",
+      cells[4] && cells[4][amountIdx] === "",
+      cells[4] && `"${cells[4][amountIdx]}"`,
+    );
+    check(
+      "a negative disk stays blank",
+      cells[5] && cells[5][amountIdx] === "",
+      cells[5] && `"${cells[5][amountIdx]}"`,
+    );
+    check(
+      "a non-numeric disk stays blank",
+      cells[6] && cells[6][amountIdx] === "",
+      cells[6] && `"${cells[6][amountIdx]}"`,
+    );
+    check(
       "Storage Type is left blank — its accepted vocabulary is unknown",
-      cells.length === 4 && cells.every((c) => c[typeIdx] === ""),
+      cells.length === 7 && cells.every((c) => c[typeIdx] === ""),
       cells.map((c) => c[typeIdx]).join("|"),
     );
   } catch (e) {
