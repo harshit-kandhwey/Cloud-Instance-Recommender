@@ -10,7 +10,7 @@ shift as the tool evolves. For what has already shipped, see
 The project follows [Semantic Versioning](https://semver.org). This roadmap
 plans **feature releases only**:
 
-- **Minor releases** (`3.6`, `3.7`, …) group related features under a theme.
+- **Minor releases** (`3.10`, `3.11`, …) group related features under a theme.
 - The **next major** (`4.0`) collects the platform-defining changes — the ones
   that alter what the tool fundamentally does or how it is built.
 - **Patches** — individual fixes, small tweaks, and review rounds — are not
@@ -44,96 +44,15 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 ## Minor releases
 
-### 3.7 — Ingestion & input quality
+### 3.9 — Recommendation intelligence (in progress)
 
-Meet users where their inventory actually comes from, and catch bad input early.
+Deeper, more accurate right-sizing. The shipped work — GPU workload support,
+storage pass-through, percentile utilization, the burstable-preference rule, the
+SQL Server licence floor, and the review-round fixes — is recorded in the
+[changelog](CHANGELOG.md). What remains open:
 
-- Import presets for the formats target users already have. **RVTools** and
-  **AWS Application Discovery Service** are done — both built against real
-  exports, which is the only way they could have been: RVTools writes its memory
-  with a thousands separator, and ADS reports memory used in megabytes rather
-  than as the percentage the optimizer needs. Neither fact is discoverable from
-  documentation. **Azure Migrate is not done and is not scheduled**: it needs a
-  real export, and we have no subscription to produce one. A mapping table
-  written from memory would mis-map silently, which is worse than falling back to
-  the mapping panel — the panel already handles these files correctly, and 3.7
-  remembers the answer. Reopen this the day someone can supply a genuine Azure
-  Migrate export. (M)
-
-### 3.8 — Results, visualization & reporting
-
-Turn the results grid into something you can explore and present.
-
-- Full results table beyond the 20-row preview — pagination or virtualization,
-  column show/hide, per-column filters, and a "no-match only" toggle. (M)
-- Hand-built charts (no libraries — the project's choice, not a restriction:
-  `script-src 'self'` permits same-origin scripts, so a vendored charting
-  library would load just as SheetJS does, and `connect-src 'none'` blocks
-  network connections rather than script execution; staying dependency-free
-  keeps the CSP tight with no CDN and no supply-chain surface): a
-  match-rate **meter**, family distribution, and vCPU/RAM before→after. Two
-  deliberate departures from the original sketch: the match rate is a meter and
-  **not a donut**, because a two-slice pie asks the eye to compare angles for
-  something one length states exactly; and before→after is **two charts, not one**
-  — vCPU and GiB are different scales, and a dual-axis chart implies a crossover
-  wherever the two axes happen to be zeroed. Colours are theme tokens whose steps
-  are chosen per mode against that mode's surface and contrast-checked, never
-  flipped automatically. (M)
-- Top-3 alternatives per row — the engine already ranks candidates internally. (M)
-- Fit / headroom indicator per recommendation, flagging over-provisioned
-  matches. (M)
-- Scenario comparison v2 — named scenarios and N-way compare. **Shipped in 3.8**
-  (3.8.11); the "saved across sessions" half is deferred to 3.10 and listed with
-  the Storage manager below, since it needs the runtime quota detection that item
-  adds. (M)
-- Export a scenario's changed rows and its configuration diff as CSV. (S)
-- App Portfolio: in-dashboard filters, cross-app search, and per-app CSV, plus
-  the deferred cosmetic pass. (M)
-- Executive print report — a print-optimized page ("Save as PDF" in the
-  browser) with charts and a per-application rollup. (L) _Needs the charts
-  above._
-
-### 3.9 — Recommendation intelligence
-
-Deeper, more accurate right-sizing.
-
-- **Metadata enrichment** — network class and a SAP-certified flag. (M)
-  _Blocked on external data:_ neither is in the region files and neither can be
-  derived from them, so this needs a vetted third-party source. **Its original
-  scope was wrong** — it also claimed ARM detection and GPU flags and said it
-  "unlocks the items below". Both are already present: `isGraviton` / `isARM` /
-  `processorArchitecture` cover ARM (and `rule-engine.js` already detects Ampere
-  and T2A), and `familyName` already classifies accelerators — "GPU instance"
-  (AWS), "GPU" (Azure), "Accelerator optimized" (GCP), plus ML ASIC / FPGA /
-  Media Accelerator on AWS. What is genuinely missing is GPU _detail_ (model,
-  count, VRAM), which only matters for a per-GPU-model rule.
-- ~~GPU workload support.~~ **Done (3.9.4)** — `ML/AI` (or a CSV row that says
-  `GPU`) now requires an accelerator, and every other workload excludes one, so
-  a GPU box is never recommended by accident. Classification reads `familyName`
-  rather than family prefixes, which do not survive crossing providers: the old
-  prefix list called Azure's G/GS and Dl-series accelerators (60 instances in
-  `eastus`) and let GCP's a2/a3 through. Per-GPU-model rules (count, VRAM)
-  remain blocked on the missing GPU detail noted above.
-- ~~Storage-aware pass-through~~ **Done in part (3.9.5)** — an optional
-  `Disk (GB)` column is carried into the outputs and into the bulk template's
-  storage-amount field, converting MB/MiB the way memory does. **IOPS and
-  throughput are deferred**, and Storage Type is left blank: RVTools does not
-  report IOPS, and the bulk importer's accepted vocabulary for Storage Type is
-  not established — a wrong value there fails every row of the import.
-- ~~Percentile utilization — p95/peak columns alongside the average.~~ **Done
-  (3.9.3.)** Three statistics (Average / p95 / Peak) with per-row fallback and a
-  `Sized On` column recording the basis actually used.
-- ~~Burstable-preference rule for Dev/Test at low utilization (the inverse of
-  the production exclusion).~~ **Done (3.9.6)** — a Dev/Test row whose
-  utilization is below the run's own downsize threshold prefers the burstable
-  family. Unknown utilization does not count as low, and an explicit workload
-  preference still wins.
-- ~~SQL Server workload rule enforcing minimum core counts.~~ **Done
-  (3.9.7)** — a SQL Server workload drops candidates below 4 vCPUs, the
-  documented per-VM licence minimum. A floor, not a target, and it holds on the
-  optimized pass where N/2 would otherwise halve a 4 vCPU box to 2.
-- Multicloud family-equivalence explainers (for example, m5 ≈ Dsv5 ≈
-  n2-standard). (M)
+- **Multicloud family-equivalence explainers** (for example, m5 ≈ Dsv5 ≈
+  n2-standard). Designed once and reverted; still to land. (M)
 
 ### 3.10 — Accessibility, hardening & documentation
 
@@ -289,7 +208,30 @@ they are also where several of them hid. Their weaknesses are known and specific
 - **Golden-test expansion** — Azure-only, GCP-only and nearest-miss goldens, plus
   a structural compare for xlsx. (M) _Moved here from 3.10, where it sat alone._
 
-### 3.13 — Closing out 3.x
+### 3.13 — Data & pricing freshness
+
+Keep the region datasets and the pricing the engine ranks on current —
+automatically, and without the served page ever calling out.
+
+- **Automated data refresh (build-time, CI).** A GitHub Actions job runs the
+  `tools/split-data.js` pipeline on a schedule, refreshing the per-region
+  instance files so a new family or a retired size does not wait for a hand-run.
+  It all happens at build time — `connect-src 'none'` means the page itself never
+  fetches anything. **Dependency:** the third-party source the region files are
+  built from must be vetted first (its links and values verified by hand once),
+  which is why this was deferred rather than shipped with the original split. (M)
+- **Build-time pricing refresh.** The same job refreshes the pricing the engine
+  ranks on, from each provider's public catalogue — **AWS** Price List Bulk API,
+  **Azure** Retail Prices API, **GCP** Cloud Billing Catalog API. All three are
+  free to read; the only real cost is repo and history growth, so the job bakes
+  in **only the instance types × regions the app already ships**, never the whole
+  catalogue. **Pricing stays internal, for ranking only** — the "no pricing in
+  outputs" rule is unchanged; this is freshness, not a number on a report. The
+  GCP catalogue's API key lives in CI secrets. (L) _Feeds 4.0's relative
+  Optimization Impact, which needs current prices to rank well even though it
+  never prints them._
+
+### 3.14 — Closing out 3.x
 
 The last minor before the major. Its only content is **every open item under
 [Known issues](#known-issues-patch-level)** — 4.0 is gated on this list being
@@ -308,18 +250,133 @@ either fixed as a patch when it lands, or it belongs here.
   it the UI the rest of the code already expects, or remove it from all of them.
   (S) _The allow-list work in 3.11 is the natural home for the first option._
 
+## Blocked — awaiting external input
+
+Not scheduled to a release because they cannot proceed on anything in this repo.
+Each reopens the day its external dependency arrives.
+
+- **Azure Migrate import preset** — needs a real Azure Migrate export to build
+  against, and there is no subscription to produce one. A mapping table written
+  from memory would mis-map silently, which is worse than the mapping panel — the
+  panel already handles these files correctly and remembers the answer. Reopen
+  the day someone can supply a genuine export. (M)
+- **Metadata enrichment** — a network class and a SAP-certified flag are in none
+  of the region files and cannot be derived from them, so both need a vetted
+  third-party source. (ARM and accelerator detection, once bundled under this
+  heading, already exist: `isGraviton` / `isARM` / `processorArchitecture` and
+  the `familyName` accelerator classification. What is genuinely missing is GPU
+  _detail_ — model, count, VRAM — which only a per-GPU-model rule would use.) (M)
+
 ## Next major
 
 ### 4.0 — Platform expansion
 
-Changes that redefine what the tool does or how it is built. **Gated on 3.13:**
+Changes that redefine what the tool does or how it is built. **Gated on 3.14:**
 no known issue crosses this line.
+
+- **Performance-based right-sizing engine** — the flagship. Today's Optimization
+  pass sizes on one statistic chosen for the whole run; 3.9.3 gave that statistic
+  three values (Average / p95 / Peak) with per-row fallback and a `Sized On`
+  column, and 3.9.9 made CPU and memory resolve independently. This turns it into
+  a **policy-driven** engine that chooses the sizing statistic **per row** from
+  the workload's risk profile, and combines statistics for a safety check rather
+  than trusting one. (L) _Builds directly on the 3.9.3 / 3.9.9 resolver; stores
+  its policy the way presets and the [4.0 user-defined rules UI](#40--platform-expansion)
+  do._
+
+  **Optimization gains two sub-strategies:**
+
+  - **Explicit metric** — the user names the statistic (Average, p90, p95, p99,
+    Peak) and every row sizes on it, falling back only where a row lacks it. The
+    3.9.3 behaviour, generalised past the three built-in statistics.
+  - **Performance-based** — the statistic is chosen per row from a combination of
+    **ENV × a new `Criticality` column × Workload**, with **ENV as the dominant,
+    capping axis**: within an ENV, Criticality and Workload push toward that
+    ENV's ceiling but never past it, so a Dev database is sized down to p90/p85
+    even though a Prod database takes p95. Partner-standard defaults — Prod +
+    Critical → p99, Prod + High → p95, Prod + Low → p90; Dev / Test / QA →
+    Average; Database → p95/p99; Batch → Peak — **configurable per scenario** and
+    shipping so nobody has to define anything.
+
+  **The statistics are optional and file-only.** The percentile columns
+  (`CPU p95`, `Memory p99`, `Peak CPU`, …) are detected and mapped from the
+  upload through the column-mapping panel that already exists — there is **no
+  form for them**. The users who have this data are enterprises exporting
+  thousands of VMs from a monitoring platform, not someone typing a row; a normal
+  upload carrying only an average still works and sizes on the average. The engine
+  uses whatever the file carries and degrades per dimension (p95 → Peak → Average,
+  recorded in `Sized On`). This is the honest boundary of "parameter-driven": a
+  new percentile _column_ needs no code, a new sizing _rule_ does.
+
+  **Multi-metric safety, not single-metric trust.** The failure mode of
+  aggressive right-sizing is a downsize off a number that hid the busy periods, so
+  the primary metric sizes and a **second metric vetoes**: size on p95, but if
+  Peak CPU or Peak Memory exceeds ~95%, **flag the row for manual review rather
+  than auto-downsizing it**. A one-off two-minute spike must not add an instance
+  size, and a downsize must never fire against a VM that is regularly saturated
+  (p95 > ~85%). The primary thresholds (avg < ~25%, p95 < ~50% → downsize
+  candidate; p95 > ~85% → hold; peak > ~95% → review) are documented defaults and
+  part of the configurable policy — they carry the _"never a plausible wrong
+  answer"_ rule into the sizing math.
+
+  **CPU and memory carry different defaults.** CPU is bursty and memory usually is
+  not, so the default policy sizes CPU on p95 / Peak and memory on p95 / Maximum.
+  The per-dimension resolver from 3.9.9 already sizes and reports the two axes
+  independently, which is exactly the mechanism this needs.
+
+- **Confidence and scale-out advisory** — richer utilization data supports more
+  than a number. Both additions gate on the engine above _and_ on the data
+  actually present:
+
+  - **Confidence, two-tier.** Per-row confidence reflects the richness of _that
+    row's_ data — how many statistics it carried, whether the sizing metric was
+    the policy one or a fallback (`Sized On` already records this), and the spread
+    between percentiles. Portfolio confidence reflects _fleet size_ — a 5,000-VM
+    estate's aggregate estimate is more robust than a 10-VM one. The two are kept
+    separate so neither is gameable: ten thousand average-only rows raise neither.
+    Reported **coarse with a reason** (High / Medium / Low + "sized on average
+    only — bursts invisible"), never a false-precision percentage, and surfaced
+    through the existing `reportInputHygiene` upload-time notice. (M)
+  - **Scale-out vs scale-up advisory.** A workload idle for most of the window
+    that spikes predictably is a horizontal-scaling candidate — a smaller base
+    instance behind an ASG / load balancer — not a permanently larger box.
+    Detecting it needs two points of the distribution (a low sustained percentile
+    and a high peak), so it is naturally gated on that data being present. It
+    surfaces as an **advisory on the Portfolio page and the app summary**, only
+    on performance-based runs, framed as guidance with its reasoning ("low p50,
+    high Peak") — **not** an action. The tool sizes instances; it does not
+    configure an ASG, and that line has to stay explicit or the advice
+    overpromises. (M) _Portfolio and summary already exist — a new advisory column
+    and a rollup, no new page._
+
+- **Not 4.0: predictive / ML sizing.** Two structural blockers. `connect-src
+'none'` means no model can be called over the network, so anything predictive
+  would run client-side against a vendored model; and, more fundamentally,
+  prediction needs a **time series**, while the input is a single snapshot per VM.
+  Per-VM history is a data-model change, not a sizing tweak. Revisit only if the
+  input format ever grows a time dimension.
 
 - **Cloud-to-cloud mode** — derive a VM's specs from its current instance type
   using our own data, instead of requiring CPU and memory columns, and right-size
   across providers. The biggest missing use case. (L) _The `Current Instance
 Type` column landed in 3.7 and is carried through to the outputs; what remains
   is deriving specs FROM it._
+- **Multi-sheet Excel input & validated template** — a guided `.xlsx` workbook
+  shipped as a default sample alongside the CSV: an `Inventory` sheet for the VM
+  rows, reference sheets holding the closed-enum lists (ENV, OS, Workload,
+  Compliance, the new Criticality column, and the Region keys already in the
+  provider manifests) that back data-validation dropdowns, and a read-me sheet.
+  A typo in a closed-enum column becomes unselectable rather than the silent
+  no-op it is today. The reader picks the data sheet by name and ignores the
+  reference sheets; the workbook is generated by a `tools/make-template.js`
+  script and committed as an artifact, the way the region files are, with a guard
+  suite that fails if a dropdown offers a value the engine does not recognise —
+  a dropdown the engine ignores is worse than free text, because the user trusts
+  it. The 4.0 evolution of the 3.11 validated template: multi-sheet, and carrying
+  the Criticality and percentile columns the performance engine adds. (M) _Open
+  question: SheetJS Community's data-validation **write** support is limited, so
+  authoring the dropdowns may need a second tool; reading the workbook is
+  unaffected._
 - **GCP custom machine types** — recommend custom vCPU/RAM shapes when standard
   sizes waste resources. (L)
 - **User-defined rules UI** — "if ENV = X, exclude family Y", stored and
@@ -332,7 +389,7 @@ Type` column landed in 3.7 and is carried through to the outputs; what remains
 ## Known issues (patch-level)
 
 Tracked and fixed continuously rather than scheduled into a release — but this
-list is also the whole content of [3.13](#313--closing-out-3x), and **4.0 does
+list is also the whole content of [3.14](#314--closing-out-3x), and **4.0 does
 not ship while anything is on it**. A known defect carried into a major release
 says the new path was reached for instead of the old one being finished.
 
