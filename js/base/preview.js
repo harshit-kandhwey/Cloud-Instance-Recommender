@@ -180,6 +180,10 @@ function showResultsPreview(results) {
     // has to be named here — displayCols is an explicit allow-list, not a
     // passthrough of every key.
     "Sized On",
+    // Cross-provider family-class summary, present only on multi-cloud runs (the
+    // factory adds it when more than one provider is selected). Like "Sized On"
+    // it is in the download already, and must be named here or it will not render.
+    "Family Equivalence",
   ].filter((c) => allKeys.includes(c));
 
   const displayCols = [...inputCols];

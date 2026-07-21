@@ -89,15 +89,12 @@ Not tied to any release — adopted once, then maintained every cycle:
 
 ## Minor releases
 
-### 3.9 — Recommendation intelligence (in progress)
+### 3.9 — Recommendation intelligence (complete)
 
-Deeper, more accurate right-sizing. The shipped work — GPU workload support,
-storage pass-through, percentile utilization, the burstable-preference rule, the
-SQL Server licence floor, and the review-round fixes — is recorded in the
-[changelog](CHANGELOG.md). What remains open:
-
-- **Multicloud family-equivalence explainers** (for example, m5 ≈ Dsv5 ≈
-  n2-standard). Designed once and reverted; still to land. (M)
+Deeper, more accurate right-sizing: GPU workload support, storage pass-through,
+percentile utilization, the burstable-preference rule, the SQL Server licence
+floor, multicloud family-equivalence explainers, and the review-round fixes —
+all recorded in the [changelog](CHANGELOG.md).
 
 ### 3.10 — Test foundation & CI gates
 

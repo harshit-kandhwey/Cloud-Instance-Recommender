@@ -400,6 +400,17 @@ window.getInstanceRecommendationWithSelector = async function (
       }
     });
 
+    // Family Equivalence: one summary column, multi-cloud runs only — reads each
+    // provider's chosen family class and says whether the clouds agree on the
+    // KIND of machine. Written onto result (so downloads carry it); the preview
+    // allow-list in preview.js names it too, or it would not render.
+    if (selectedProviders.length > 1) {
+      result["Family Equivalence"] = describeFamilyEquivalence(
+        result,
+        selectedProviders,
+      );
+    }
+
     results.push(result);
 
     if (
@@ -522,6 +533,48 @@ function describeSizedOn(util) {
   if (hasMem)
     bits.push(`Mem: ${part(util.memoryStatistic, util.memoryFellBack)}`);
   return bits.join(", ");
+}
+
+// Fold a provider's own family-class name to a shared class, so a multi-cloud
+// row can be read as "did the clouds land on the same KIND of machine?". The
+// three clouds already write "General purpose", "Compute optimized", "Memory
+// optimized" and "Storage optimized" verbatim, so those pass through unchanged;
+// only the accelerator class has three different names (AWS "GPU instance" /
+// "…ASIC…" / "FPGA…", Azure "GPU", GCP "Accelerator optimized"), which fold to
+// one label. Anything unrecognised passes through unmapped rather than being
+// guessed into a bucket. The accelerator test mirrors RuleEngine.isAccelerator's
+// familyName pattern — `\basic\b`, not "basic", so "Basic tier" is not swept in.
+function normalizeFamilyClass(familyName) {
+  const n = String(familyName || "").trim();
+  if (!n) return "";
+  if (/\bgpu\b|accelerat|\basic\b|\bfpga\b|\btpu\b/i.test(n))
+    return "Accelerator";
+  return n;
+}
+
+// The "Family Equivalence" cell for a multi-cloud row: each provider's chosen
+// family class, folded and compared. Reads the like-to-like family when the run
+// made one, else the optimized family — ONE column, not one per pass. Reports
+// "General purpose on AWS, AZURE, GCP" when the clouds agree, and the more
+// informative "Differs — AWS General purpose, GCP Memory optimized" when they do
+// not. Empty when no provider produced a family to compare.
+function describeFamilyEquivalence(result, providers) {
+  const usable = (v) => v && v !== "N/A" && v !== "Error";
+  const entries = [];
+  for (const provider of providers) {
+    const P = provider.toUpperCase();
+    const l2l = result[`${P} Like-to-Like Family`];
+    const opt = result[`${P} Optimized Family`];
+    const chosen = usable(l2l) ? l2l : usable(opt) ? opt : "";
+    const cls = normalizeFamilyClass(chosen);
+    if (cls) entries.push([P, cls]);
+  }
+  if (!entries.length) return "";
+  const classes = entries.map(([, cls]) => cls);
+  const allSame = classes.every((c) => c === classes[0]);
+  return allSame
+    ? `${classes[0]} on ${entries.map(([P]) => P).join(", ")}`
+    : `Differs — ${entries.map(([P, cls]) => `${P} ${cls}`).join(", ")}`;
 }
 
 // Own-property-only map lookup. Keys here come from untrusted CSV data; a plain
