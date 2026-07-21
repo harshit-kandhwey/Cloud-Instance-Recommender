@@ -155,6 +155,8 @@ check(
 check(
   "a CSV row that just says GPU is treated the same as ML/AI",
   applyWith("GPU").instances.length === 1 &&
+    applyWith("GPU").instances[0].instanceType === "g6.24xlarge" &&
+    applyWith("gpu").instances.length === 1 &&
     applyWith("gpu").instances[0].instanceType === "g6.24xlarge",
 );
 
