@@ -163,22 +163,27 @@ const COLUMN_SYNONYMS = {
   // MB/MiB variants convert to GB on ingest exactly as memory does — RVTools
   // reports "Provisioned MiB", and treating that as GB would overstate every
   // disk by 1024x.
+  //
+  // Bare generic words — "storage", "provisioned", "capacity" — are deliberately
+  // NOT here. No other canonical shares them, so a header that normalizes to one
+  // of those matches silently (it never trips the ambiguous-column review), and a
+  // column literally named "Capacity" that has nothing to do with disk would flow
+  // straight into the AWS bulk export's storage field undetected. Only the
+  // disk-qualified forms (storagegb, provisionedstorage, capacitygb, …) and the
+  // unambiguous "disk" are kept; a truly generic header goes to the mapping panel.
   "Disk (GB)": [
     "disk",
     "diskgb",
     "diskgib",
     "disksize",
     "disksizegb",
-    "storage",
     "storagegb",
     "storagesize",
-    "provisioned",
     "provisionedgb",
     "provisionedstorage",
     "totaldisk",
     "totaldiskgb",
     "totalstorage",
-    "capacity",
     "capacitygb",
     "diskmb",
     "diskmib",

@@ -340,18 +340,20 @@ worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,
 
 The results CSV contains your original columns plus per-provider recommendation columns:
 
-| Column                                            | Description                                                                        |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                                               |
-| `AWS Like-to-Like Family`                         | Family category of that instance — `General purpose`, `Compute optimized`, …       |
-| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                                                 |
-| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                                                     |
-| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                                                   |
-| `AWS Optimized Family`                            | Family category of the optimized instance                                          |
-| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired                                |
-| `AWS No Match Reason`                             | Explains why no instance was found (when applicable)                               |
-| `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax |
-| _(Azure and GCP columns follow the same pattern)_ |                                                                                    |
+| Column                                            | Description                                                                                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                                                                                                         |
+| `AWS Like-to-Like Family`                         | Family category of that instance — `General purpose`, `Compute optimized`, …                                                                 |
+| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                                                                                                           |
+| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                                                                                                               |
+| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                                                                                                             |
+| `AWS Optimized Family`                            | Family category of the optimized instance                                                                                                    |
+| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired                                                                                          |
+| `AWS No Match Reason`                             | Explains why no instance was found (when applicable)                                                                                         |
+| `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax                                                           |
+| _(Azure and GCP columns follow the same pattern)_ |                                                                                                                                              |
+| `Sized On`                                        | _Optimized runs:_ which utilization statistic sized the row — `Average`, `p95`, `Peak`, `… (fallback)`, or split per axis (`CPU: …, Mem: …`) |
+| `Family Equivalence`                              | _Multi-cloud runs:_ whether the clouds landed on the same family class — `General purpose on AWS, AZURE, GCP`, or `Differs — AWS …, GCP …`   |
 
 The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), a **fit/headroom flag** (a ▲% beside a like-for-like match, showing how far the chosen instance over-provisions its worst axis versus the requested size — the discrete-sizing and ratio-mismatch waste), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **CSV ▾** menu's **No-Match Rows** item for fix-and-re-upload remediation. The grid downloads primarily as a styled Excel workbook (**📊 Download Results (Excel)**, with a sheet per alternative strategy) — with the flat CSVs behind the **CSV ▾** checklist — and any two runs can be pinned and diffed with **Scenario comparison** to see exactly what a filter change did — including a one-click **Export comparison CSV** that writes the configuration changes and the changed recommendation rows to a single file. A **🖨️ Print Report** button opens a print-ready one-page executive summary (headline stats plus the match-rate, family, and before → after charts) to print or save as PDF.
 

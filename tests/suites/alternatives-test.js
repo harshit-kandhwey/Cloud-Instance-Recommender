@@ -257,7 +257,8 @@ ctx.rows = [
     if (premise) {
       check(
         "the row's alternatives come from the optimized pick, not the empty one",
-        /\(\d+\/\d+\)$/.test(row["AWS Most Cost Optimized"]),
+        /\(\d+\/\d+\)$/.test(row["AWS Most Cost Optimized"]) &&
+          /\(\d+\/\d+\)$/.test(row["AWS Newest Generation"]),
         `cost=${JSON.stringify(row["AWS Most Cost Optimized"])} gen=${JSON.stringify(row["AWS Newest Generation"])}`,
       );
     }

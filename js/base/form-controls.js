@@ -294,16 +294,21 @@ function onUtilizationStatisticChange() {
       : null;
   hint.classList.remove("hint-warning");
   if (!stat || sel.value === "avg") {
-    hint.textContent = hint.dataset.defaultText || hint.textContent;
+    hint.innerHTML = hint.dataset.defaultHtml || hint.innerHTML;
     return;
   }
-  if (!hint.dataset.defaultText) {
-    hint.dataset.defaultText = hint.textContent.trim();
+  // Snapshot as HTML, not text: the default hint carries a <strong>Sized On</strong>
+  // emphasis, and capturing it with textContent would strip the markup for good —
+  // the first excursion away from Average and back would leave a plain-text hint.
+  // Safe to restore via innerHTML because it is the hint's OWN static markup; the
+  // dynamic warnings below stay on textContent since they interpolate a header name.
+  if (!hint.dataset.defaultHtml) {
+    hint.dataset.defaultHtml = hint.innerHTML;
   }
   // No file yet: nothing to check against, so leave the guidance alone.
   const headers = typeof columnHeaders !== "undefined" ? columnHeaders : [];
   if (!headers.length) {
-    hint.textContent = hint.dataset.defaultText;
+    hint.innerHTML = hint.dataset.defaultHtml;
     return;
   }
   const present = [stat.cpu, stat.memory].filter((c) => headers.includes(c));

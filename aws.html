@@ -152,8 +152,7 @@
 VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
 web-server-01,Storefront,4,16,45,60,us-east-1,Production,Linux,Web Server,,,,m5.xlarge
 db-server-02,Billing,8,32,70,80,us-west-2,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge
-app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre
-              >
+app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre>
             </div>
 
             <details style="margin-top: 10px">
@@ -1271,6 +1270,50 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre
                       >
                         Excludes m5/c5/r5 (Gen 5) and older; keeps m6i/m7i and
                         newer only. Useful as m5 approaches EOL.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        Workload=SQL Server
+                      </td>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
+                        Enforces a 4-vCPU licence floor — SQL Server is licensed
+                        per core (minimum four), so a smaller box saves no
+                        licence cost; never sized below 4 vCPU.
+                      </td>
+                    </tr>
+                    <tr style="background: var(--surface-tint)">
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                          font-family: monospace;
+                          font-weight: 600;
+                        "
+                      >
+                        Workload=ML/AI (GPU)
+                      </td>
+                      <td
+                        style="
+                          padding: 5px 8px;
+                          border: 1px solid var(--border-slate);
+                        "
+                      >
+                        Requires a GPU/accelerator instance; every other
+                        workload excludes accelerators, so a GPU box is never
+                        recommended by accident.
                       </td>
                     </tr>
                   </tbody>

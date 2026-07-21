@@ -1140,6 +1140,15 @@ function medianMemory(rows, column) {
 // skip the conversion.
 const SIZE_COLUMNS = [COLUMN_MAPPINGS.memory, COLUMN_MAPPINGS.disk];
 
+// The mapping panel's per-size-column unit dropdown ids. A map keyed by canonical
+// rather than a mem/disk ternary, so a third SIZE_COLUMN cannot silently collide
+// on the disk id — it simply needs an entry here (and the render/confirm below
+// walk this map, so nothing else has to change).
+const SIZE_UNIT_IDS = {
+  [COLUMN_MAPPINGS.memory]: "colmap_unit_mem",
+  [COLUMN_MAPPINGS.disk]: "colmap_unit_disk",
+};
+
 function detectSizeUnits(mapping) {
   const units = {};
   for (const canonical of SIZE_COLUMNS) {
@@ -1885,7 +1894,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
     .map((canonical, idx) => {
       const isSize = SIZE_COLUMNS.includes(canonical);
       const isMemory = canonical === COLUMN_MAPPINGS.memory;
-      const unitId = isMemory ? "colmap_unit_mem" : "colmap_unit_disk";
+      const unitId = SIZE_UNIT_IDS[canonical];
       const sizeNoun = isMemory ? "memory" : "disk";
       const options = [
         `<option value="">— not present —</option>`,
@@ -2034,11 +2043,7 @@ function applyColumnMapping() {
   // insists the values really are GB, and is a no-op in the conversion below.
   const preset = pending.match && pending.match.preset;
   const units = presetUnits(preset, mapping) || detectSizeUnits(mapping) || {};
-  const sizeUnitSelectors = [
-    [COLUMN_MAPPINGS.memory, "colmap_unit_mem"],
-    [COLUMN_MAPPINGS.disk, "colmap_unit_disk"],
-  ];
-  for (const [canonical, id] of sizeUnitSelectors) {
+  for (const [canonical, id] of Object.entries(SIZE_UNIT_IDS)) {
     if (!Object.values(mapping).includes(canonical)) {
       delete units[canonical];
       continue;

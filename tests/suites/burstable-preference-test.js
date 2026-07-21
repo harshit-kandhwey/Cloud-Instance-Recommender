@@ -114,6 +114,16 @@ check(
   firstOf(apply({ rowEnv: "Dev", rowCpuUtil: 10, rowMemoryUtil: 0 })) ===
     "t3.large",
 );
+// ...but only when that reading is CPU. Burstable families are CPU-credit-
+// limited, so a low MEMORY reading while CPU is UNMEASURED is not evidence the
+// box idles — the preference must withhold, or a possibly-hot box gets a
+// credit-limited instance on memory evidence alone.
+const cpuBlind = apply({ rowEnv: "Dev", rowCpuUtil: 0, rowMemoryUtil: 10 });
+check(
+  "low memory with CPU unmeasured does NOT prefer burstable",
+  firstOf(cpuBlind) === "m7i.large" && !fired(cpuBlind),
+  `${firstOf(cpuBlind)} | ${cpuBlind.rules.join(" | ")}`,
+);
 
 console.log("[the run's own threshold defines low, not a number of our own]");
 check(

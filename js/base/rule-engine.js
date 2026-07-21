@@ -622,13 +622,18 @@ const RuleEngine = (() => {
       const memLow =
         Number(options.memoryDownsizeMax) || DEFAULT_LOW_UTILIZATION;
 
-      // Unknown utilization is not low utilization. Without a reading there is
-      // no evidence the box idles, and preferring burstable on no evidence
-      // would quietly hand every Dev row a credit-limited instance.
-      const known = cpuUtil > 0 || memUtil > 0;
+      // Unknown utilization is not low utilization. Burstable families are
+      // CPU-credit-limited, so the CPU axis is the one that must be confirmed
+      // idle: an UNMEASURED CPU is "no evidence it idles", not "low", and
+      // preferring burstable on it would hand a possibly-hot box a credit-limited
+      // instance — the exact failure the guarantee above warns against. So CPU
+      // must be measured AND low. Memory, which burstable does not throttle, may
+      // be unknown, but a KNOWN-high memory means the box is working and is not a
+      // burstable candidate. (Previously a low memory reading alone could fire
+      // this while CPU was unmeasured — the case CodeRabbit flagged.)
       const isLow =
-        known &&
-        (cpuUtil === 0 || cpuUtil <= cpuLow) &&
+        cpuUtil > 0 &&
+        cpuUtil <= cpuLow &&
         (memUtil === 0 || memUtil <= memLow);
 
       if (isLow) {

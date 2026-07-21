@@ -162,7 +162,7 @@ rather than quietly becoming decorative.
 safety here rests on it never parsing input. Until it is replaced, any change
 that gives it a file to read reintroduces both CVEs — the rule contributors need
 is in [CONTRIBUTING.md](CONTRIBUTING.md) under Code Style ("Only one engine may
-parse a file"). Replacing it is scheduled in **[ROADMAP.md](ROADMAP.md) § 3.10 —
+parse a file"). Replacing it is scheduled in **[ROADMAP.md](ROADMAP.md) § 3.11 —
 "Replace the unpatched styling engine"**, which also lists the dependent work
 (both styled writers, this assessment and the checksum table, the isolation
 suite, and a `sw.js` `CACHE` bump for the removed bundle).
