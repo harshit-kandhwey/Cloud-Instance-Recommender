@@ -1128,8 +1128,9 @@ function medianMemory(rows, column) {
   return values[Math.floor(values.length / 2)];
 }
 
-// Memory unit detection for a mapping: an MB source is converted to GB on
-// ingest. Only EXPLICIT evidence counts here — a header that says MB, or an
+// Size-column (memory AND disk) unit detection for a mapping: an MB source is
+// converted to GB on ingest. Only EXPLICIT evidence counts here — a header that
+// says MB, or an
 // import preset that knows the format's convention. The values alone are never
 // enough to convert on: they are enough to ask, and asking is what the input
 // check does.
@@ -1139,7 +1140,7 @@ function medianMemory(rows, column) {
 // skip the conversion.
 const SIZE_COLUMNS = [COLUMN_MAPPINGS.memory, COLUMN_MAPPINGS.disk];
 
-function detectMemoryUnit(mapping) {
+function detectSizeUnits(mapping) {
   const units = {};
   for (const canonical of SIZE_COLUMNS) {
     const source = Object.keys(mapping).find((s) => mapping[s] === canonical);
@@ -1394,7 +1395,7 @@ function ingestRows(headers, rows) {
     headers,
     rows,
     match.mapping,
-    presetUnits(match.preset, match.mapping) || detectMemoryUnit(match.mapping),
+    presetUnits(match.preset, match.mapping) || detectSizeUnits(match.mapping),
   );
 }
 
@@ -1845,7 +1846,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
         match.mapping,
         match.units ||
           presetUnits(match.preset, match.mapping) ||
-          detectMemoryUnit(match.mapping),
+          detectSizeUnits(match.mapping),
       );
     }
     return;
@@ -1876,7 +1877,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   const prefillUnits =
     match.units ||
     presetUnits(match.preset, match.mapping) ||
-    detectMemoryUnit(match.mapping);
+    detectSizeUnits(match.mapping);
   const unitFor = (canonical) =>
     prefillUnits[canonical] === "MB" ? "MB" : "GB";
 
@@ -2032,7 +2033,7 @@ function applyColumnMapping() {
   // explicitly is deliberate: it overrides an auto-detected "MB" when the user
   // insists the values really are GB, and is a no-op in the conversion below.
   const preset = pending.match && pending.match.preset;
-  const units = presetUnits(preset, mapping) || detectMemoryUnit(mapping) || {};
+  const units = presetUnits(preset, mapping) || detectSizeUnits(mapping) || {};
   const sizeUnitSelectors = [
     [COLUMN_MAPPINGS.memory, "colmap_unit_mem"],
     [COLUMN_MAPPINGS.disk, "colmap_unit_disk"],

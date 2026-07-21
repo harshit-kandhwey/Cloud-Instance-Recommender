@@ -451,6 +451,25 @@ check(
   "styling fork loaded (XLSX.utils + style_version)",
   !!(sandbox.XLSX && sandbox.XLSX.utils) && sandbox.XLSX.style_version != null,
 );
+
+// The reuse short-circuit in ensurePortfolioXlsx: when an engine that can
+// already style is present (the fork sets style_version — e.g. the results
+// export loaded it earlier), the portfolio loader adopts it as the writer
+// instead of loading a second copy. The load path assigns _xlsxWriter only
+// AFTER an async script load, so a synchronous writer assignment right after
+// the call is the tell that the short-circuit fired (loadScriptOnce is never
+// reached — document.head.appendChild here is a no-op that would never resolve).
+run("window._xlsxWriter = null;");
+run("__pfReuse = ensurePortfolioXlsx();");
+check(
+  "reuse: an already-styling engine becomes the writer without loading a second copy",
+  run("window._xlsxWriter === window.XLSX"),
+);
+check(
+  "reuse: the resolved promise is cached (a second call returns the same one)",
+  run("ensurePortfolioXlsx() === __pfReuse"),
+);
+
 run("__wb = writeWorkbook(buildPortfolioWorkbookModel(__m), true);");
 check(
   "workbook carries all sheet names",

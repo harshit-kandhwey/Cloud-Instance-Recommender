@@ -747,6 +747,48 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
     els.ruleDefaultMinGenAws.value,
   );
 
+  // Legacy "— any —" ("") is a saved no-constraint state too, not a missing
+  // one: it must actively CLEAR the three native selects, not be dropped (which
+  // would leave whatever stale generation a prior preset or manual edit put
+  // there — the same "constraint silently changed on apply" bug in its inverse
+  // form). Seed stale values and confirm all three blank out.
+  els.ruleDefaultMinGenAws.value = "6";
+  els.ruleDefaultMinGenAzure.value = "4";
+  els.ruleDefaultMinGenGcp.value = "n4";
+  toasts.length = 0;
+  sandbox.__cfg = { texts: { ruleDefaultMinGen: "" } };
+  run("applyPresetConfig(__cfg)");
+  check(
+    'legacy "— any —" clears all three native Min Gen selects, not just some',
+    els.ruleDefaultMinGenAws.value === "" &&
+      els.ruleDefaultMinGenAzure.value === "" &&
+      els.ruleDefaultMinGenGcp.value === "",
+    JSON.stringify({
+      aws: els.ruleDefaultMinGenAws.value,
+      azure: els.ruleDefaultMinGenAzure.value,
+      gcp: els.ruleDefaultMinGenGcp.value,
+    }),
+  );
+
+  // ...but an explicit native value saved alongside the legacy "— any —" still
+  // wins (presence, not truthiness), so the clearing never overwrites a choice
+  // the preset actually recorded.
+  els.ruleDefaultMinGenAws.value = "";
+  els.ruleDefaultMinGenGcp.value = "n4"; // stale, should clear
+  sandbox.__cfg = {
+    texts: { ruleDefaultMinGen: "", ruleDefaultMinGenAws: "6" },
+  };
+  run("applyPresetConfig(__cfg)");
+  check(
+    'legacy "— any —" clears unset natives but keeps an explicit native override',
+    els.ruleDefaultMinGenAws.value === "6" &&
+      els.ruleDefaultMinGenGcp.value === "",
+    JSON.stringify({
+      aws: els.ruleDefaultMinGenAws.value,
+      gcp: els.ruleDefaultMinGenGcp.value,
+    }),
+  );
+
   els.ruleDefaultMinGen = shared;
   // On a single-provider page the shared control still exists and its value is
   // already native — the migration must not touch it.

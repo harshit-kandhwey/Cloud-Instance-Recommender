@@ -175,16 +175,18 @@ const LEGACY_MIN_GEN = {
 };
 
 function migrateLegacyMinGen(texts) {
+  // A legacy multi-cloud preset is one that carries the old shared key AT ALL.
+  // Presence, not truthiness: "" is the old "— any —" state — a real saved
+  // no-constraint value that must still be applied (by clearing the native
+  // fields), not skipped. A modern preset never carries this key (its state
+  // lives in the three native ones), so its ABSENCE is the pass-through signal.
+  if (!Object.prototype.hasOwnProperty.call(texts, "ruleDefaultMinGen"))
+    return texts;
   const legacy = texts.ruleDefaultMinGen;
   // Only the multi-cloud page lost the shared control; where it still exists
   // (aws/azure/gcp pages) the value is native already and must pass through.
-  if (!legacy || document.getElementById("ruleDefaultMinGen")) return texts;
+  if (document.getElementById("ruleDefaultMinGen")) return texts;
   if (!document.getElementById("ruleDefaultMinGenAws")) return texts;
-
-  const map = Object.prototype.hasOwnProperty.call(LEGACY_MIN_GEN, legacy)
-    ? LEGACY_MIN_GEN[legacy]
-    : null;
-  if (!map) return texts;
 
   const out = { ...texts };
   delete out.ruleDefaultMinGen;
@@ -193,6 +195,23 @@ function migrateLegacyMinGen(texts) {
   // truthiness — a modern preset that deliberately saved "— any —" ("") for a
   // provider must keep it, not be re-translated from the legacy value.
   const savedNative = (id) => Object.prototype.hasOwnProperty.call(out, id);
+
+  // Legacy "— any —" ("") is itself a saved state: CLEAR the three native
+  // selects rather than dropping the key. Dropping it leaves whatever stale
+  // generation the controls happen to show (a prior preset or a manual edit) —
+  // the same "constraint silently changed on apply" bug this function exists to
+  // prevent, in its inverse (no-constraint) form.
+  if (!legacy) {
+    if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = "";
+    if (!savedNative("ruleDefaultMinGenAzure")) out.ruleDefaultMinGenAzure = "";
+    if (!savedNative("ruleDefaultMinGenGcp")) out.ruleDefaultMinGenGcp = "";
+    return out;
+  }
+
+  const map = Object.prototype.hasOwnProperty.call(LEGACY_MIN_GEN, legacy)
+    ? LEGACY_MIN_GEN[legacy]
+    : null;
+  if (!map) return texts;
   if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = map.aws;
   if (!savedNative("ruleDefaultMinGenAzure"))
     out.ruleDefaultMinGenAzure = map.azure;
