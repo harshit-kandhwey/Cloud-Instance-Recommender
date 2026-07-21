@@ -1181,12 +1181,13 @@ function readSavedMapping(entry) {
 
 function saveColumnMapping(signature, mapping, units) {
   const recorded = { ...(units || {}) };
-  // Record the unit even when it is the default. An absent unit is ambiguous —
-  // it could mean "GB" or "nobody ever decided" — and that ambiguity is what let
-  // a MiB column be reapplied as GB.
-  if (Object.values(mapping).includes(COLUMN_MAPPINGS.memory)) {
-    recorded[COLUMN_MAPPINGS.memory] =
-      recorded[COLUMN_MAPPINGS.memory] === "MB" ? "MB" : "GB";
+  // Record the unit even when it is the default, for every size column. An
+  // absent unit is ambiguous — it could mean "GB" or "nobody ever decided" —
+  // and that ambiguity is what let a MiB column be reapplied as GB.
+  for (const canonical of SIZE_COLUMNS) {
+    if (Object.values(mapping).includes(canonical)) {
+      recorded[canonical] = recorded[canonical] === "MB" ? "MB" : "GB";
+    }
   }
 
   const all = loadColumnMappings();
@@ -1872,16 +1873,19 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   // GB. Prefilling GB for a file we have already identified as MiB invites the
   // user to confirm a 1024x error, with only the median-based hygiene question
   // left to catch it.
-  const memUnit =
-    (match.units ||
-      presetUnits(match.preset, match.mapping) ||
-      detectMemoryUnit(match.mapping))[COLUMN_MAPPINGS.memory] === "MB"
-      ? "MB"
-      : "GB";
+  const prefillUnits =
+    match.units ||
+    presetUnits(match.preset, match.mapping) ||
+    detectMemoryUnit(match.mapping);
+  const unitFor = (canonical) =>
+    prefillUnits[canonical] === "MB" ? "MB" : "GB";
 
   const selectRows = canonicals
     .map((canonical, idx) => {
+      const isSize = SIZE_COLUMNS.includes(canonical);
       const isMemory = canonical === COLUMN_MAPPINGS.memory;
+      const unitId = isMemory ? "colmap_unit_mem" : "colmap_unit_disk";
+      const sizeNoun = isMemory ? "memory" : "disk";
       const options = [
         `<option value="">— not present —</option>`,
         ...headers.map((h, i) => {
@@ -1895,11 +1899,13 @@ function showColumnMappingPanel(headers, match, opts = {}) {
       const ambiguousNote = ambiguousByCanonical[canonical]
         ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
         : "";
-      const syncAttr = isMemory ? ` onchange="window._syncMemUnit(this)"` : "";
-      const unitSelect = isMemory
-        ? ` <select id="colmap_unit_mem" class="form-control" style="max-width: 190px;" aria-label="Unit of the memory values in your file" title="RVTools-style exports list memory in MB — pick MB to convert to GB automatically">
-            <option value="GB"${memUnit === "GB" ? " selected" : ""}>values are GB</option>
-            <option value="MB"${memUnit === "MB" ? " selected" : ""}>values are MB → ÷1024</option>
+      const syncAttr = isSize
+        ? ` onchange="window._syncSizeUnit('${unitId}', this)"`
+        : "";
+      const unitSelect = isSize
+        ? ` <select id="${unitId}" class="form-control" style="max-width: 190px;" aria-label="Unit of the ${sizeNoun} values in your file" title="RVTools-style exports list ${sizeNoun} in MB — pick MB to convert to GB automatically">
+            <option value="GB"${unitFor(canonical) === "GB" ? " selected" : ""}>values are GB</option>
+            <option value="MB"${unitFor(canonical) === "MB" ? " selected" : ""}>values are MB → ÷1024</option>
           </select>`
         : "";
       return `
@@ -1938,10 +1944,10 @@ function showColumnMappingPanel(headers, match, opts = {}) {
   }
 }
 
-// Keeps the memory-unit dropdown in step with the chosen source column:
-// picking a column whose name ends in MB/MiB flips the unit to MB
-window._syncMemUnit = function (select) {
-  const unitSelect = document.getElementById("colmap_unit_mem");
+// Keeps a size-unit dropdown (memory or disk) in step with the chosen source
+// column: picking a column whose name ends in MB/MiB flips that unit to MB.
+window._syncSizeUnit = function (unitId, select) {
+  const unitSelect = document.getElementById(unitId);
   if (!unitSelect || !select || !select.options) return;
   const label = select.options[select.selectedIndex]
     ? select.options[select.selectedIndex].text || ""
@@ -2019,22 +2025,25 @@ function applyColumnMapping() {
     return;
   }
 
-  // Memory unit: explicit dropdown choice wins; auto-detect otherwise
-  const units = {};
-  if (Object.values(mapping).includes(COLUMN_MAPPINGS.memory)) {
-    const unitSelect = document.getElementById("colmap_unit_mem");
-    if (unitSelect && unitSelect.value === "MB") {
-      units[COLUMN_MAPPINGS.memory] = "MB";
-    } else if (!unitSelect || !unitSelect.value) {
-      // No dropdown to speak for the user (a page without the panel): fall back
-      // to the recognised format before the header name, for the same reason the
-      // prefill does.
-      const preset = pending.match && pending.match.preset;
-      Object.assign(
-        units,
-        presetUnits(preset, mapping) || detectMemoryUnit(mapping),
-      );
+  // Size-column units (memory AND disk). Start from what the recognised format
+  // or the header names imply for every size column — so a disk in MiB is never
+  // silently left unconverted just because the memory dropdown resolved first —
+  // then let each manual dropdown override its own column. Writing "GB"
+  // explicitly is deliberate: it overrides an auto-detected "MB" when the user
+  // insists the values really are GB, and is a no-op in the conversion below.
+  const preset = pending.match && pending.match.preset;
+  const units = presetUnits(preset, mapping) || detectMemoryUnit(mapping) || {};
+  const sizeUnitSelectors = [
+    [COLUMN_MAPPINGS.memory, "colmap_unit_mem"],
+    [COLUMN_MAPPINGS.disk, "colmap_unit_disk"],
+  ];
+  for (const [canonical, id] of sizeUnitSelectors) {
+    if (!Object.values(mapping).includes(canonical)) {
+      delete units[canonical];
+      continue;
     }
+    const sel = document.getElementById(id);
+    if (sel && sel.value) units[canonical] = sel.value === "MB" ? "MB" : "GB";
   }
 
   // The signature of the FILE, captured before any derived column was added.

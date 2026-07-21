@@ -332,10 +332,68 @@ function setSelects(ctx, values) {
   {
     const unitSel = ctx.document.getElementById("colmap_unit_mem");
     unitSel.value = "GB";
-    ctx._syncMemUnit({ options: [{ text: "Memory (MB)" }], selectedIndex: 0 });
+    ctx._syncSizeUnit("colmap_unit_mem", {
+      options: [{ text: "Memory (MB)" }],
+      selectedIndex: 0,
+    });
     check("selecting an MB column flips unit", unitSel.value === "MB");
-    ctx._syncMemUnit({ options: [{ text: "Memory" }], selectedIndex: 0 });
+    ctx._syncSizeUnit("colmap_unit_mem", {
+      options: [{ text: "Memory" }],
+      selectedIndex: 0,
+    });
     check("selecting a GB column flips back", unitSel.value === "GB");
+  }
+
+  // Disk carries the same MB→GB path as memory, but the confirm handler used to
+  // resolve units for memory only — so a disk in MiB, mapped through the panel,
+  // was renamed to "Disk (GB)" and never divided by 1024 (a silent 1024x error,
+  // the very corruption the memory unit control exists to prevent). This drives
+  // the confirm path with a disk-in-MiB column and asserts it converts and
+  // persists like memory does. Indices are resolved from the real panel order,
+  // not assumed, so the check cannot drift if the canonical list is reordered.
+  console.log("[confirm: a disk column in MiB converts, and persists]");
+  {
+    const fresh = buildContext();
+    const c = fresh.ctx;
+    const DISK_CSV = `VM Name,CPU Count,Memory,Memory (MB),Disk MiB,AWS Region
+web-01,4,16,16384,102400,us-east-1`;
+    vm.runInContext(`parseCSV(${JSON.stringify(DISK_CSV)})`, c);
+    // Ambiguous memory forces the panel and a pending ingest to confirm.
+    check(
+      "panel shown for the disk file",
+      !fresh.elements.columnMappingSection.classes.has("hidden"),
+    );
+    const order = vm.runInContext("pageCanonicals()", c);
+    const at = (canonical) => order.indexOf(canonical);
+    const setCol = (canonical, headerIdx) => {
+      c.document.getElementById(`colmap_${at(canonical)}`).value =
+        String(headerIdx);
+    };
+    setCol("VM Name", 0);
+    setCol("CPU Count", 1);
+    setCol("Memory (GB)", 3); // the MB column
+    setCol("Disk (GB)", 4); // Disk MiB
+    setCol("AWS Region", 5);
+    c.document.getElementById("colmap_unit_mem").value = "MB";
+    c.document.getElementById("colmap_unit_disk").value = "MB";
+    vm.runInContext("applyColumnMapping()", c);
+    const row = vm.runInContext("csvData", c)[0];
+    check(
+      "102400 MiB disk → 100 GB",
+      row["Disk (GB)"] === "100",
+      JSON.stringify(row),
+    );
+    check(
+      "16384 MB memory → 16 GB (unchanged behaviour)",
+      row["Memory (GB)"] === "16",
+    );
+    check(
+      "disk unit persisted for replay",
+      (fresh.storage["cloudInstanceRecommenderColumnMaps"] || "").includes(
+        '"Disk (GB)":"MB"',
+      ),
+      fresh.storage["cloudInstanceRecommenderColumnMaps"],
+    );
   }
 
   process.exit(failures ? 1 : 0);
