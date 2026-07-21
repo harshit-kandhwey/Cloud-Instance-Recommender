@@ -479,14 +479,18 @@ function downloadAWSBulkTemplate(type) {
     // parsed strictly by the bulk importer, and guessing at its vocabulary
     // would break every row rather than just this field.
     //
-    // Round FIRST, then decide blank: a sub-1GB disk (0.4) rounds to 0, and a
-    // literal "0" is not "blank" to the importer — it means "no volume", the
-    // opposite of the intended default. So anything that rounds to 0 stays
-    // blank and lets the calculator apply its own default.
+    // Round UP, never down: the importer wants an integer GB, and rounding a
+    // real 1.4 GB disk down to 1 — or a 0.4 GB disk down to 0/blank — silently
+    // under-provisions the volume. A passthrough must never hand back LESS than
+    // the upload carried, so Math.ceil floors any present, positive disk at
+    // 1 GB. Only a genuinely absent or non-positive disk stays blank, letting
+    // the calculator apply its own default; a literal "0" would read as "no
+    // volume" to the importer, the opposite of that intent.
     const diskGb = parseFloat(row["Disk (GB)"]);
-    const roundedDiskGb =
-      Number.isFinite(diskGb) && diskGb > 0 ? Math.round(diskGb) : 0;
-    const storageAmount = roundedDiskGb > 0 ? String(roundedDiskGb) : "";
+    const provisionedDiskGb =
+      Number.isFinite(diskGb) && diskGb > 0 ? Math.ceil(diskGb) : 0;
+    const storageAmount =
+      provisionedDiskGb > 0 ? String(provisionedDiskGb) : "";
 
     const buildRow = (instanceType) => {
       if (

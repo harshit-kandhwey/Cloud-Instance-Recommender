@@ -172,6 +172,13 @@ function toggleOptimizationMode() {
   } else {
     memoryRanges.classList.add("hidden");
   }
+
+  // The statistic hint is scoped to the enabled axes, so re-evaluate it when
+  // the axes change — otherwise disabling Memory-Based would leave a stale
+  // "the other dimension falls back" warning about a dimension no longer read.
+  if (typeof onUtilizationStatisticChange === "function") {
+    onUtilizationStatisticChange();
+  }
 }
 
 // Update CPU range inputs
@@ -311,18 +318,37 @@ function onUtilizationStatisticChange() {
     hint.innerHTML = hint.dataset.defaultHtml;
     return;
   }
-  const present = [stat.cpu, stat.memory].filter((c) => headers.includes(c));
-  if (present.length === 0) {
+  // Only the enabled optimization axes matter. With Memory-Based off, a file
+  // carrying CPU alone fully supports the run — warning that "the other
+  // dimension falls back" would be a false alarm about a dimension the run
+  // never consults. So judge the selected statistic against the ACTIVE axes'
+  // columns, not both unconditionally.
+  const axisColumn = (id, col) =>
+    document.getElementById(id)?.checked ? col : null;
+  const active = [
+    axisColumn("cpuBased", stat.cpu),
+    axisColumn("memoryBased", stat.memory),
+  ].filter(Boolean);
+  if (!active.length) {
+    // No axis enabled — the generate flow blocks that separately; keep the
+    // guidance neutral rather than warn about a column the run won't read.
+    hint.innerHTML = hint.dataset.defaultHtml;
+    return;
+  }
+  const missing = active.filter((c) => !headers.includes(c));
+  if (missing.length === active.length) {
     hint.classList.add("hint-warning");
     hint.textContent =
-      `The uploaded file has no ${stat.label} columns (${stat.cpu} / ${stat.memory}), ` +
-      `so every row will fall back to the utilization it does carry. Map them in the ` +
-      `column panel, or leave this on Average.`;
-  } else if (present.length === 1) {
+      `The uploaded file has no ${stat.label} column${active.length > 1 ? "s" : ""} ` +
+      `(${active.join(" / ")}) for the enabled optimization ${active.length > 1 ? "axes" : "axis"}, ` +
+      `so every row falls back to the utilization it does carry. Map ${active.length > 1 ? "them" : "it"} ` +
+      `in the column panel, or leave this on Average.`;
+  } else if (missing.length) {
     hint.classList.add("hint-warning");
     hint.textContent =
-      `Only "${present[0]}" is present, so the other dimension falls back for ` +
-      `every row. The basis used is reported per row in the "Sized On" column.`;
+      `"${missing.join('", "')}" ${missing.length > 1 ? "are" : "is"} missing, so ` +
+      `${missing.length > 1 ? "those dimensions fall" : "that dimension falls"} back ` +
+      `for every row. The basis used is reported per row in the "Sized On" column.`;
   } else {
     hint.textContent = `Sizing against ${stat.label} utilization. Rows missing it fall back, and the basis is reported in the "Sized On" column.`;
   }

@@ -570,9 +570,15 @@ class BaseInstanceSelector {
                 return typeof RuleEngine !== "undefined"
                   ? RuleEngine.isARM(instance)
                   : instance.isGraviton === 1 || instance.isGraviton === 1.0;
-              // One classifier for both the filter and the GPU workload rule,
-              // so "Exclude GPU" and "this row is not a GPU workload" can
-              // never disagree about what an accelerator is.
+              // "Exclude GPU" is deliberately the BROAD accelerator exclude:
+              // one classifier (isAccelerator) backs both this filter and the
+              // GPU-workload rule, so the two can never disagree about what an
+              // accelerator is — and excluding "GPU" therefore also drops FPGA,
+              // ML-ASIC and media accelerators. That is the safe reading: it
+              // stops the workload rule from silently substituting an FPGA for
+              // a GPU workload. The narrower "fpga" case below is the escape
+              // hatch for dropping FPGA alone; the UI descriptions spell out
+              // this breadth so the two controls are not read as independent.
               case "gpu":
                 return typeof RuleEngine !== "undefined"
                   ? RuleEngine.isAccelerator(instance, providerName)

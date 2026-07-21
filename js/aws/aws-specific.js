@@ -268,8 +268,8 @@ function getAWSExcludeTypeDescription(type) {
       "ARM-based instances (t4g, m6g, c6g, r6g, etc.) - Often 10-20% cheaper",
     Mac: "macOS instances for iOS/macOS development",
     Nitro: "Latest generation with enhanced networking",
-    GPU: "Graphics processing instances",
-    FPGA: "Field-programmable gate array instances",
+    GPU: "GPU & accelerator instances (also drops FPGA, ML ASIC, media)",
+    FPGA: "FPGA instances only — narrower than GPU/accelerator",
     Burstable: "Variable performance instances (t2, t3, t4g)",
   };
   return descriptions[type] || `Exclude ${type} instance types`;

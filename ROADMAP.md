@@ -225,11 +225,16 @@ Broaden reach and shore up quality.
   ~4 MB, close to the commonly seen ~5 MB ceiling, so the manager should measure
   actual usage rather than assume a fixed budget. Doubles as a privacy
   feature. (M)
-- **Safe opt-in feedback.** The tool is client-side and collects nothing; an
-  _optional_, explicitly user-initiated "was this recommendation useful?" export
-  or a prefilled GitHub issue link would surface confusing workflows without ever
-  touching inventory data. Off by default, no telemetry, no network — the
-  "nothing leaves your browser" premise is unchanged. (S)
+- **Safe opt-in feedback.** The tool is client-side and collects nothing, and
+  this must not change it. The only in-app path is a local, explicitly
+  user-initiated "was this recommendation useful?" **export** — a file written
+  to disk, no request made. If a "report an issue" affordance is offered at all,
+  it is a plain GitHub link the user chooses to click: the browser's own
+  navigation, which the user initiates and sees, never a background request the
+  app issues — and its prefilled body carries a **free-text template only**, with
+  no inventory, no recommendation rows, and nothing derived from the upload. Off
+  by default; the app itself still makes no network call, so "nothing leaves your
+  browser" holds unless the user deliberately navigates away. (S)
 - `docs/ARCHITECTURE.md` — module map, data flow, worker protocol, storage
   keys. (M)
 - Screenshots and short GIFs in the README and user guide (text-only today). (M)
