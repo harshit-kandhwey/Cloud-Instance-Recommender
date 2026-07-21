@@ -20,6 +20,45 @@ plans **feature releases only**:
 Effort is a rough t-shirt size: **S** (hours), **M** (a few days), **L** (a
 week or more). Dependencies are called out where one item needs another first.
 
+## Now / Next / Later
+
+A priority view over the sections below. The order is deliberate: the test and
+accessibility scaffolding comes **before** the feature-heavy minors, because
+this project's dominant, documented failure mode is a silent defect that only a
+test catches — so the safety net is built first and every later release lands on
+top of it.
+
+- **Now** — _3.10 Test foundation & CI gates_ · _3.11 Accessibility, hardening
+  & docs_. Real-browser end-to-end coverage, an accessibility regression gate,
+  and the hardening/logging/bootstrap groundwork that makes every later feature
+  cheaper and safer to ship.
+- **Next** — _3.12 Input authoring & rules_ · _3.13 Cross-provider sizing_ ·
+  _3.14 Data & pricing freshness_. The user-facing capability jumps that do not
+  need the 4.0 engine: better inputs and rule expression, cloud-to-cloud and GCP
+  custom shapes, and always-current data.
+- **Later** — _3.15 Closing out 3.x_ → _4.0 Performance-based right-sizing_. Empty
+  the known-issues list, then ship the one platform-defining major: a
+  policy-driven, per-row sizing engine.
+
+**Success measures.** Targets, not yet commitments — set the exact numbers when
+each item is scheduled:
+
+- **Browser coverage** — Playwright end-to-end green on all four tool pages
+  across at least two engines (Chromium + WebKit or Firefox) in CI, covering
+  upload → map → validate → generate → export → offline.
+- **Accessibility** — zero `axe` violations on each page's critical path, full
+  keyboard operability of the mapping dialog / filters / tables / exports, and a
+  Lighthouse accessibility score ≥ 95.
+- **Initial load** — cold load and first-generate under an agreed budget on a
+  mid-tier laptop, XLSX code not fetched until an `.xlsx` is actually chosen, and
+  a Lighthouse performance score ≥ 90.
+- **Data-freshness SLA** — region and pricing datasets refreshed automatically at
+  least monthly, every provider showing a visible "data updated" date, and a diff
+  report accompanying each refresh.
+- **Test integrity** — every exported function and every user-visible feature is
+  covered or explicitly waived with a reason, and every guard has been proven to
+  fail.
+
 ## Engineering practices (continuous)
 
 Not tied to any release — adopted once, then maintained every cycle:
@@ -35,6 +74,12 @@ Not tied to any release — adopted once, then maintained every cycle:
   0.20.3 and `xlsx-js-style` 0.18.5); refresh `SECURITY.md`, and keep an
   explicit "nothing leaves your browser" privacy statement current on the
   landing page. (S)
+- **Deliberate logging policy** — the base and provider modules carry many
+  `console.log` calls that clutter a normal user's console and make a real
+  diagnostic hard to spot. Route diagnostics through one central logger gated by
+  a `debug` flag (querystring or localStorage), silent by default, so logs are
+  enabled intentionally rather than shipped on. Adopt once, then hold the line in
+  review. (S)
 - **Release hygiene** — keep [RELEASING.md](RELEASING.md) current: it is the
   release process (versioning, changelog, tagging, the pre-publish checklist)
   and it points at the service-worker cache rules in
@@ -54,12 +99,84 @@ SQL Server licence floor, and the review-round fixes — is recorded in the
 - **Multicloud family-equivalence explainers** (for example, m5 ≈ Dsv5 ≈
   n2-standard). Designed once and reverted; still to land. (M)
 
-### 3.10 — Accessibility, hardening & documentation
+### 3.10 — Test foundation & CI gates
+
+The suites are the reason the defects in this project get caught at all — and
+they are also where several of them hid. This minor is pulled **ahead** of the
+feature-heavy ones on purpose: build the safety net first, then land features on
+it. Their weaknesses are known and specific.
+
+- **End-to-end browser tests.** The Node suites verify logic but never a real
+  browser: upload `.xlsx` → map columns → validate regions → generate → export,
+  plus offline / PWA use. Add Playwright coverage for the four tool pages and a
+  small cross-browser smoke matrix (Chromium + WebKit or Firefox) in CI. This
+  also retires the standing manual browser-smoke debt and de-risks the 4.0 engine
+  work before it begins. (L)
+- **Accessibility regression gate.** Automated `axe` checks plus keyboard-only
+  scenarios for the mapping dialog, filter controls, results tables, and exports,
+  so the skip link, live regions, dark mode, and focus management already built
+  cannot silently regress. Pairs with the accessibility audit in 3.11. (M)
+- **One suite per unit, named for what it tests.** Suites are currently organised
+  by the step of the plan that produced them (`step6`, `step8`, `step9`), so the
+  name says when it was written, not what it covers — and the banned-dialog guard,
+  the theme-token guard and the page-parity guard all live in files whose names
+  reveal none of that. Rename by subject, and give each module's behaviour a home
+  a reader can find from the filename alone. (M)
+- **Coverage per function _and_ per feature.** Every exported function gets a
+  suite that pins its behaviour, so a regression fails a named check rather than
+  surfacing three modules downstream — or, as has happened here, not at all. And
+  every user-visible feature gets one that exercises it end to end, because a
+  feature can be broken while every function it is built from still passes: the
+  units were fine when a page's sample preview drifted from the file it previews,
+  when a panel was commented out of a page, and when the mapping panel offered two
+  choices that were secretly the same column. Both layers, not one. (L)
+- **Exhaustive cases, not happy paths.** General, edge, corner and — the ones most
+  often missing — **negative** cases: the malformed file, the empty sheet, the
+  header that repeats, the value that is absent rather than zero, the unit that is
+  a lie, the row that cannot size. Nearly every defect this project has shipped
+  lived in one of those and not in the happy path. (L)
+- **A coverage inventory, and a gate that enforces it.** Exhaustive is a claim,
+  and a claim needs a ledger. Enumerate every exported function, every page, every
+  documented column and input format, and every user-visible feature, and record
+  each as covered, not yet covered, or deliberately not covered _with the reason_.
+  CI fails on an export that no suite names. The point is not the paperwork: it is
+  that **nothing is ever skipped by accident — only by a decision someone wrote
+  down.** Every silent defect in this project's history got in through a gap
+  nobody knew was there. (M)
+- **Smoke and functional tiers.** A fast smoke pass over each page's critical
+  path (load → ingest → generate → export), separable from the exhaustive suites,
+  so the quick check stays quick and the thorough one stays thorough. (M)
+- **A guard must be proven to fail.** Plant the defect, watch it go red, remove
+  the plant — every guard, no exceptions. Guards that never looked at the thing
+  they claimed to check are the single largest bug class in this repo's history:
+  a header matcher that caught 1 of 3 planted bugs, an `alert()` ban blind to
+  `confirm()`, a comment stripper that passed a file _because_ it contained a URL,
+  a panel check satisfied by a commented-out panel. Each was found by planting;
+  none was found by reading. (S, continuous)
+- **Golden-test expansion** — Azure-only, GCP-only and nearest-miss goldens, plus
+  a structural compare for xlsx. (M)
+
+### 3.11 — Accessibility, hardening & documentation
 
 Broaden reach and shore up quality.
 
 - Mobile / responsive audit — the PWA is installable, so phones are real users
   now. (M)
+- **Shared page bootstrap.** `aws/azure/gcp/multicloud.html` each hard-code a
+  long, near-identical ordered `<script>` list; `page-parity-test.js` only
+  _detects_ the drift that invites. Extract one bootstrap that declares the base
+  module set and load order once, so a new base module is added in a single place
+  and the four pages cannot diverge — and new features get cheaper to ship. (M)
+  _Pairs with the CSP handler rewrite below: both rewrite page wiring, so do them
+  together._
+- **Strict CSP migration.** Replace the generated HTML's inline `onclick` /
+  `oninput` handlers with delegated listeners, and move the inline theme / UI
+  styles into stylesheets, then drop `script-src 'unsafe-inline'` and
+  `style-src 'unsafe-inline'` — the single biggest remaining hardening step. The
+  handler rewrite pairs with the shared bootstrap above; the final flag-drop is a
+  one-line CSP change once nothing inline remains. (L) _Preponed from 4.0 so the
+  major stays the performance engine alone; use hashes / nonces where a handful of
+  inline bits cannot practically move out._
 - **Replace the unpatched styling engine.** `js/vendor/xlsx-js-style` is a fork
   of SheetJS 0.18.x and sits below the fixes for **CVE-2023-30533** (prototype
   pollution) and **CVE-2024-22363** (ReDoS). Both are read-path issues, and the
@@ -94,6 +211,12 @@ Broaden reach and shore up quality.
   recent fix), and localStorage tampering. **Should absorb the engine-isolation
   guard** so one suite owns "untrusted input never reaches an unpatched parser",
   whichever engines are vendored at the time. (M) _Pairs with the item above._
+- **Initial-load performance.** Region files are already lazy-loaded and XLSX
+  code loads on demand, but individual region files run 250–400 KB and the two
+  vendored spreadsheet bundles are ~1.4 MB together. Measure real cold-load and
+  first-import times, confirm the XLSX bundles stay deferred until an `.xlsx` is
+  chosen, and evaluate compressing or generating more compact data artifacts.
+  Feeds the Lighthouse target below. (M)
 - **Scenarios saved across sessions** (deferred from 3.8) — pinned scenarios are
   session-only today. Persisting them means storing whole result sets, which is
   what makes this a storage problem rather than a scenario one: it needs the
@@ -105,6 +228,11 @@ Broaden reach and shore up quality.
   ~4 MB, close to the commonly seen ~5 MB ceiling, so the manager should measure
   actual usage rather than assume a fixed budget. Doubles as a privacy
   feature. (M)
+- **Safe opt-in feedback.** The tool is client-side and collects nothing; an
+  _optional_, explicitly user-initiated "was this recommendation useful?" export
+  or a prefilled GitHub issue link would surface confusing workflows without ever
+  touching inventory data. Off by default, no telemetry, no network — the
+  "nothing leaves your browser" premise is unchanged. (S)
 - `docs/ARCHITECTURE.md` — module map, data flow, worker protocol, storage
   keys. (M)
 - Screenshots and short GIFs in the README and user guide (text-only today). (M)
@@ -112,7 +240,7 @@ Broaden reach and shore up quality.
   storage full). (S)
 - SEO / OpenGraph tags and a Lighthouse ≥ 95 target. (S)
 
-### 3.11 — Input authoring & rule expression
+### 3.12 — Input authoring & rule expression
 
 Make a correct input file easy to produce, and make the rules say what they mean.
 
@@ -160,55 +288,31 @@ Make a correct input file easy to produce, and make the rules say what they mean
   test. (S)
 - **Rule-fired transparency** — `Rules Applied` reports which rules fired; extend
   it to say which candidates a rule _removed_, so a surprising recommendation can
-  be explained without reading the engine. (M) _Feeds the user-defined rules UI in
-  4.0._
+  be explained without reading the engine. (M) _Feeds the user-defined rules UI
+  below._
+- **User-defined rules UI** — "if ENV = X, exclude family Y", stored and exported
+  like presets. The engine already carries the underlying filters; this is the
+  authoring surface over them. (L) _Preponed from 4.0: it is a rules-expression
+  feature, not part of the sizing engine, and it belongs beside the rule work
+  above. Builds on rule-fired transparency._
 
-### 3.12 — Test suite: structure and coverage
+### 3.13 — Cross-provider sizing
 
-The suites are the reason the defects in this project get caught at all — and
-they are also where several of them hid. Their weaknesses are known and specific.
+Size across providers, not just within one — preponed from 4.0 so the major
+stays the performance engine alone. Neither item depends on that engine; both
+build on data and columns the tool already has.
 
-- **One suite per unit, named for what it tests.** Suites are currently organised
-  by the step of the plan that produced them (`step6`, `step8`, `step9`), so the
-  name says when it was written, not what it covers — and the banned-dialog guard,
-  the theme-token guard and the page-parity guard all live in files whose names
-  reveal none of that. Rename by subject, and give each module's behaviour a home
-  a reader can find from the filename alone. (M)
-- **Coverage per function _and_ per feature.** Every exported function gets a
-  suite that pins its behaviour, so a regression fails a named check rather than
-  surfacing three modules downstream — or, as has happened here, not at all. And
-  every user-visible feature gets one that exercises it end to end, because a
-  feature can be broken while every function it is built from still passes: the
-  units were fine when a page's sample preview drifted from the file it previews,
-  when a panel was commented out of a page, and when the mapping panel offered two
-  choices that were secretly the same column. Both layers, not one. (L)
-- **Exhaustive cases, not happy paths.** General, edge, corner and — the ones most
-  often missing — **negative** cases: the malformed file, the empty sheet, the
-  header that repeats, the value that is absent rather than zero, the unit that is
-  a lie, the row that cannot size. Nearly every defect this project has shipped
-  lived in one of those and not in the happy path. (L)
-- **A coverage inventory, and a gate that enforces it.** Exhaustive is a claim,
-  and a claim needs a ledger. Enumerate every exported function, every page, every
-  documented column and input format, and every user-visible feature, and record
-  each as covered, not yet covered, or deliberately not covered _with the reason_.
-  CI fails on an export that no suite names. The point is not the paperwork: it is
-  that **nothing is ever skipped by accident — only by a decision someone wrote
-  down.** Every silent defect in this project's history got in through a gap
-  nobody knew was there. (M)
-- **Smoke and functional tiers.** A fast smoke pass over each page's critical
-  path (load → ingest → generate → export), separable from the exhaustive suites,
-  so the quick check stays quick and the thorough one stays thorough. (M)
-- **A guard must be proven to fail.** Plant the defect, watch it go red, remove
-  the plant — every guard, no exceptions. Guards that never looked at the thing
-  they claimed to check are the single largest bug class in this repo's history:
-  a header matcher that caught 1 of 3 planted bugs, an `alert()` ban blind to
-  `confirm()`, a comment stripper that passed a file _because_ it contained a URL,
-  a panel check satisfied by a commented-out panel. Each was found by planting;
-  none was found by reading. (S, continuous)
-- **Golden-test expansion** — Azure-only, GCP-only and nearest-miss goldens, plus
-  a structural compare for xlsx. (M) _Moved here from 3.10, where it sat alone._
+- **Cloud-to-cloud mode** — derive a VM's specs from its current instance type
+  using our own data, instead of requiring CPU and memory columns, and right-size
+  across providers. The biggest missing use case. (L) _The `Current Instance
+Type` column landed in 3.7 and is carried through to the outputs; what remains
+  is deriving specs FROM it. Independent of the 4.0 engine — it changes what the
+  tool can take as input, not how it chooses a size._
+- **GCP custom machine types** — recommend custom vCPU/RAM shapes when standard
+  sizes waste resources. (L) _A GCP candidate-generation enhancement, independent
+  of the sizing policy engine._
 
-### 3.13 — Data & pricing freshness
+### 3.14 — Data & pricing freshness
 
 Keep the region datasets and the pricing the engine ranks on current —
 automatically, and without the served page ever calling out.
@@ -220,6 +324,13 @@ automatically, and without the served page ever calling out.
   fetches anything. **Dependency:** the third-party source the region files are
   built from must be vetted first (its links and values verified by hand once),
   which is why this was deferred rather than shipped with the original split. (M)
+- **Data-updated visibility & diff report.** Surface a clear "data updated" date
+  per provider — and per region where they differ — so a user can see how current
+  the basis of a recommendation is, and have each automated refresh emit a diff
+  report (families added, sizes retired, prices moved) so a reviewer can judge not
+  just how current the data is but how much it changed. Freshness is a confidence
+  signal, and today it is only partly visible. (M) _The refresh job above produces
+  the diff as a by-product._
 - **Build-time pricing refresh.** The same job refreshes the pricing the engine
   ranks on, from each provider's public catalogue — **AWS** Price List Bulk API,
   **Azure** Retail Prices API, **GCP** Cloud Billing Catalog API. All three are
@@ -231,7 +342,7 @@ automatically, and without the served page ever calling out.
   Optimization Impact, which needs current prices to rank well even though it
   never prints them._
 
-### 3.14 — Closing out 3.x
+### 3.15 — Closing out 3.x
 
 The last minor before the major. Its only content is **every open item under
 [Known issues](#known-issues-patch-level)** — 4.0 is gated on this list being
@@ -248,7 +359,7 @@ either fixed as a patch when it lands, or it belongs here.
   presets and the scenario diff, but no page renders its checkbox — so the filter
   can never be switched on, and its nearest-miss probe can never fire. Either give
   it the UI the rest of the code already expects, or remove it from all of them.
-  (S) _The allow-list work in 3.11 is the natural home for the first option._
+  (S) _The allow-list work in 3.12 is the natural home for the first option._
 
 ## Blocked — awaiting external input
 
@@ -269,10 +380,13 @@ Each reopens the day its external dependency arrives.
 
 ## Next major
 
-### 4.0 — Platform expansion
+### 4.0 — Performance-based right-sizing engine
 
-Changes that redefine what the tool does or how it is built. **Gated on 3.14:**
-no known issue crosses this line.
+One platform-defining shift: a policy-driven, per-row sizing engine — and only
+the work built directly on it. Cloud-to-cloud, GCP custom shapes, the
+user-defined rules UI, and the strict-CSP migration have been **preponed into the
+3.x series** so this major stays a single coherent theme rather than a bundle.
+**Gated on 3.15:** no known issue crosses this line.
 
 - **Performance-based right-sizing engine** — the flagship. Today's Optimization
   pass sizes on one statistic chosen for the whole run; 3.9.3 gave that statistic
@@ -281,7 +395,7 @@ no known issue crosses this line.
   a **policy-driven** engine that chooses the sizing statistic **per row** from
   the workload's risk profile, and combines statistics for a safety check rather
   than trusting one. (L) _Builds directly on the 3.9.3 / 3.9.9 resolver; stores
-  its policy the way presets and the [4.0 user-defined rules UI](#40--platform-expansion)
+  its policy the way presets and the [3.12 user-defined rules UI](#312--input-authoring--rule-expression)
   do._
 
   **Optimization gains two sub-strategies:**
@@ -349,18 +463,6 @@ no known issue crosses this line.
     overpromises. (M) _Portfolio and summary already exist — a new advisory column
     and a rollup, no new page._
 
-- **Not 4.0: predictive / ML sizing.** Two structural blockers. `connect-src
-'none'` means no model can be called over the network, so anything predictive
-  would run client-side against a vendored model; and, more fundamentally,
-  prediction needs a **time series**, while the input is a single snapshot per VM.
-  Per-VM history is a data-model change, not a sizing tweak. Revisit only if the
-  input format ever grows a time dimension.
-
-- **Cloud-to-cloud mode** — derive a VM's specs from its current instance type
-  using our own data, instead of requiring CPU and memory columns, and right-size
-  across providers. The biggest missing use case. (L) _The `Current Instance
-Type` column landed in 3.7 and is carried through to the outputs; what remains
-  is deriving specs FROM it._
 - **Multi-sheet Excel input & validated template** — a guided `.xlsx` workbook
   shipped as a default sample alongside the CSV: an `Inventory` sheet for the VM
   rows, reference sheets holding the closed-enum lists (ENV, OS, Workload,
@@ -372,24 +474,24 @@ Type` column landed in 3.7 and is carried through to the outputs; what remains
   script and committed as an artifact, the way the region files are, with a guard
   suite that fails if a dropdown offers a value the engine does not recognise —
   a dropdown the engine ignores is worse than free text, because the user trusts
-  it. The 4.0 evolution of the 3.11 validated template: multi-sheet, and carrying
+  it. The 4.0 evolution of the 3.12 validated template: multi-sheet, and carrying
   the Criticality and percentile columns the performance engine adds. (M) _Open
   question: SheetJS Community's data-validation **write** support is limited, so
   authoring the dropdowns may need a second tool; reading the workbook is
-  unaffected._
-- **GCP custom machine types** — recommend custom vCPU/RAM shapes when standard
-  sizes waste resources. (L)
-- **User-defined rules UI** — "if ENV = X, exclude family Y", stored and
-  exported like presets. (L)
-- **Strict CSP migration** — replace the generated HTML's inline
-  `onclick`/`oninput` handlers with delegated listeners, then drop
-  `script-src 'unsafe-inline'` (and evaluate the same for styles). The single
-  biggest remaining hardening step. (L)
+  unaffected. This is the one 4.0 input feature kept here rather than preponed,
+  because it exists to carry the engine's own new columns._
+
+- **Not 4.0: predictive / ML sizing.** Two structural blockers. `connect-src
+'none'` means no model can be called over the network, so anything predictive
+  would run client-side against a vendored model; and, more fundamentally,
+  prediction needs a **time series**, while the input is a single snapshot per VM.
+  Per-VM history is a data-model change, not a sizing tweak. Revisit only if the
+  input format ever grows a time dimension.
 
 ## Known issues (patch-level)
 
 Tracked and fixed continuously rather than scheduled into a release — but this
-list is also the whole content of [3.14](#314--closing-out-3x), and **4.0 does
+list is also the whole content of [3.15](#315--closing-out-3x), and **4.0 does
 not ship while anything is on it**. A known defect carried into a major release
 says the new path was reached for instead of the old one being finished.
 
@@ -397,8 +499,8 @@ says the new path was reached for instead of the old one being finished.
   is read by the engine, the option gatherer, the presets, and the scenario diff,
   but no page renders its checkbox — so the filter can never be switched on, and
   its nearest-miss probe can never fire. Either give it the UI the rest of the
-  code already expects, or remove it from all of them. _Scheduled in 3.12; the
-  allow-list work in 3.11 is the natural home for the first option._
+  code already expects, or remove it from all of them. _Scheduled in 3.15; the
+  allow-list work in 3.12 is the natural home for the first option._
 
 ## Suggesting an item
 
