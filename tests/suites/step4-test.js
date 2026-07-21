@@ -13,6 +13,7 @@ function buildContext({ pageScripts, storageThrows } = {}) {
       elements[id] = {
         id,
         innerHTML: "",
+        dataset: {},
         className: "",
         textContent: "",
         style: {},

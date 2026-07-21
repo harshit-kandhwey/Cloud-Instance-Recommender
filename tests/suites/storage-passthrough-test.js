@@ -148,7 +148,14 @@ console.log("[an MiB-suffixed disk header converts to GB on ingest]");
     // ctx.processedResults would be a different, unread property.
     const capture = [];
     ctx.__capture = capture;
-    ctx.__results = [outWith, { ...outWithout, "VM Name": "y" }];
+    ctx.__results = [
+      outWith,
+      { ...outWithout, "VM Name": "y" },
+      // A real but sub-1GB disk. It must round to blank, not to a literal "0":
+      // the importer reads "0" as "no volume", the opposite of the intended
+      // "leave it blank and let the calculator apply its default".
+      { ...outWithout, "VM Name": "z", "Disk (GB)": "0.4" },
+    ];
     ctx.document.querySelector = () => null;
     run("processedResults = __results");
     run("downloadCsv = (content) => __capture.push(content)");
@@ -177,8 +184,13 @@ console.log("[an MiB-suffixed disk header converts to GB on ingest]");
       cells[1] && `"${cells[1][amountIdx]}"`,
     );
     check(
+      "a sub-1GB disk rounds to blank, not to a literal 0 (no-volume)",
+      cells[2] && cells[2][amountIdx] === "",
+      cells[2] && `"${cells[2][amountIdx]}"`,
+    );
+    check(
       "Storage Type is left blank — its accepted vocabulary is unknown",
-      cells.length === 2 && cells.every((c) => c[typeIdx] === ""),
+      cells.length === 3 && cells.every((c) => c[typeIdx] === ""),
       cells.map((c) => c[typeIdx]).join("|"),
     );
   } catch (e) {

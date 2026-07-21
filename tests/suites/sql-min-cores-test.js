@@ -74,6 +74,39 @@ check(
   types(apply("PostgreSQL")).join(","),
 );
 
+// The floor recognises "sqlserver"/"mssql"; the workload-preference sort must
+// recognise them too, or those rows get the licence floor but are nudged toward
+// general-purpose instead of the memory-optimized r/x/z families "sql server"
+// gets. The two recognition lists have to agree.
+console.log("[every SQL synonym also gets the memory-optimized preference]");
+const FAM_POOL = [
+  inst("m7i.xlarge", 4, 16, 1), // general purpose, cheapest
+  inst("r7i.xlarge", 4, 32, 3), // memory optimized (family "r7i")
+];
+const famApply = (workload) =>
+  RuleEngine.apply(
+    FAM_POOL,
+    { rowWorkload: workload, reqCpu: 4, reqMemory: 16 },
+    "aws",
+  );
+const leads = (r) => r.instances[0] && r.instances[0].instanceType;
+// Premise: cheapest-adequate leads with the general box, so only the workload
+// preference can move the memory-optimized one to the front.
+check(
+  "premise: without a SQL workload the cheaper general box leads",
+  leads(famApply("General")) === "m7i.xlarge",
+  leads(famApply("General")),
+);
+for (const w of ["SQL Server", "sql", "sqlserver", "mssql"]) {
+  const r = famApply(w);
+  check(
+    `"${w}" leads with the memory-optimized family`,
+    leads(r) === "r7i.xlarge" &&
+      r.rules.some((x) => /Workload:.*preference/i.test(x)),
+    `${leads(r)} | ${r.rules.join(" | ")}`,
+  );
+}
+
 console.log("[it is a floor, not a target]");
 check(
   "an 8 vCPU candidate is not pulled down to the minimum",

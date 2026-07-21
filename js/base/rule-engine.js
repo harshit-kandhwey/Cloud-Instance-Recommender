@@ -66,6 +66,8 @@ const RuleEngine = (() => {
       database: ["r", "x", "z"],
       "sql server": ["r", "x", "z"],
       sql: ["r", "x", "z"],
+      sqlserver: ["r", "x", "z"],
+      mssql: ["r", "x", "z"],
       "web server": ["m", "c"],
       web: ["m", "c"],
       cache: ["r", "x"],
@@ -82,6 +84,8 @@ const RuleEngine = (() => {
       database: ["e", "m"],
       "sql server": ["e", "m"],
       sql: ["e", "m"],
+      sqlserver: ["e", "m"],
+      mssql: ["e", "m"],
       "web server": ["d", "f"],
       web: ["d", "f"],
       cache: ["e", "m"],
@@ -98,6 +102,8 @@ const RuleEngine = (() => {
       database: ["m1", "m2", "m3", "m4"],
       "sql server": ["m1", "m2", "m3", "m4"],
       sql: ["m1", "m2", "m3", "m4"],
+      sqlserver: ["m1", "m2", "m3", "m4"],
+      mssql: ["m1", "m2", "m3", "m4"],
       "web server": ["n2", "e2", "n4"],
       web: ["n2", "e2", "n4"],
       cache: ["m1", "m2", "m3"],
@@ -174,6 +180,13 @@ const RuleEngine = (() => {
   // licences per VM, so a 1 or 2 vCPU recommendation is billed as 4 regardless
   // — the smaller box saves no licence money and only costs performance. The
   // rule raises the floor rather than the pick: an 8 vCPU SQL box stays 8.
+  //
+  // Source: Microsoft "Licensing SQL Server 2022" datasheet — "a minimum of
+  // four core licenses is required for each physical processor on the server"
+  // and, for a virtual machine, "a minimum of four core licenses per virtual
+  // machine". If Microsoft revises that floor, or a customer's agreement (e.g.
+  // a subscription/SA term) sets a different one, this single constant is the
+  // one place to change — it is not derived from anything in the repo.
   const SQL_MIN_CORES = 4;
   const SQL_WORKLOADS = ["sql server", "sql", "sqlserver", "mssql"];
 

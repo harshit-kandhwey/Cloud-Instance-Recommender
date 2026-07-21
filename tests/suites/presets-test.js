@@ -709,6 +709,26 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
     JSON.stringify(toasts),
   );
 
+  // Regression: legacy 6 must ACTIVELY clear a prior GCP selection, not retain
+  // whatever the control happened to show. applyLegacy zeroes the controls
+  // first, so it can't catch this — seed a stale value and confirm it's blanked.
+  [
+    "ruleDefaultMinGenAws",
+    "ruleDefaultMinGenAzure",
+    "ruleDefaultMinGenGcp",
+  ].forEach((id) => {
+    els[id].value = "";
+  });
+  els.ruleDefaultMinGenGcp.value = "n4"; // left over from a previous preset
+  toasts.length = 0;
+  sandbox.__cfg = { texts: { ruleDefaultMinGen: "6" } };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "legacy 6 clears a stale GCP selection rather than leaving it active",
+    els.ruleDefaultMinGenGcp.value === "",
+    els.ruleDefaultMinGenGcp.value,
+  );
+
   // A preset saved against the CURRENT design must pass through untouched.
   [
     "ruleDefaultMinGenAws",

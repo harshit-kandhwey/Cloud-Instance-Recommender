@@ -174,6 +174,12 @@ function showResultsPreview(results) {
     // Last of the input columns, so it lands immediately left of the recommended
     // instances: the point of the column is to read one against the other.
     "Current Instance Type",
+    // Which utilization statistic sized each row (optimized runs only). Present
+    // in the download all along; it must render too, or a row sized on a
+    // fallback statistic looks arbitrary on screen. Any future row-level column
+    // has to be named here — displayCols is an explicit allow-list, not a
+    // passthrough of every key.
+    "Sized On",
   ].filter((c) => allKeys.includes(c));
 
   const displayCols = [...inputCols];

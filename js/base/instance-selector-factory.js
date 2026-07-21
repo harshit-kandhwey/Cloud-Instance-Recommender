@@ -162,12 +162,9 @@ window.getInstanceRecommendationWithSelector = async function (
     if (generateOptimized) {
       // Which statistic actually sized the row. Recorded on every row so a
       // recommendation that looks small can be traced to its basis instead of
-      // reading as arbitrary — especially where a row fell back.
-      result["Sized On"] =
-        util.cpu > 0 || util.memory > 0
-          ? UTILIZATION_STATISTICS[util.statistic].label +
-            (util.fellBack ? " (fallback)" : "")
-          : "";
+      // reading as arbitrary — especially where a row fell back, or where CPU
+      // and memory were sized on different statistics.
+      result["Sized On"] = describeSizedOn(util);
     }
 
     selectedProviders.forEach((provider) => {
@@ -456,12 +453,30 @@ const UTILIZATION_FALLBACK = {
   peak: ["peak", "p95", "avg"],
 };
 
-// Reads the utilization pair for one row under the requested statistic.
-// Returns { cpu, memory, statistic, fellBack } — `statistic` is the one actually
-// used. A row only counts as carrying a statistic when at least one of its two
-// values is a usable number, so an empty p95 column never beats a populated
-// average. Values come from untrusted CSV cells, hence the finite/positive test
-// rather than a bare parseFloat.
+// Reads one dimension (cpu or memory) for a row, walking its OWN fallback chain
+// from the requested statistic. `dim` is "cpu" or "memory". Returns
+// { value, statistic, fellBack } — `statistic` is the one actually used for
+// THIS dimension. Values come from untrusted CSV cells, hence the
+// finite/positive test rather than a bare parseFloat.
+function resolveDimension(row, want, dim) {
+  const num = (v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  for (const key of UTILIZATION_FALLBACK[want]) {
+    const value = num(row[UTILIZATION_STATISTICS[key][dim]]);
+    if (value > 0) return { value, statistic: key, fellBack: key !== want };
+  }
+  return { value: 0, statistic: want, fellBack: false };
+}
+
+// Resolves utilization for a row under the requested statistic. CPU and memory
+// are resolved INDEPENDENTLY, each through its own fallback chain: a fleet
+// export often carries an average for one dimension and only a p95 for the
+// other, and pinning both to whichever statistic the CPU column happened to
+// satisfy would silently discard the memory reading the file actually has —
+// under-sizing the memory-based pass. Returns
+// { cpu, memory, cpuStatistic, memoryStatistic, cpuFellBack, memoryFellBack }.
 function resolveUtilization(row, requested) {
   const want = Object.prototype.hasOwnProperty.call(
     UTILIZATION_STATISTICS,
@@ -469,19 +484,44 @@ function resolveUtilization(row, requested) {
   )
     ? requested
     : "avg";
-  const num = (v) => {
-    const n = parseFloat(v);
-    return Number.isFinite(n) && n > 0 ? n : 0;
+  const cpu = resolveDimension(row, want, "cpu");
+  const memory = resolveDimension(row, want, "memory");
+  return {
+    cpu: cpu.value,
+    memory: memory.value,
+    cpuStatistic: cpu.statistic,
+    memoryStatistic: memory.statistic,
+    cpuFellBack: cpu.fellBack,
+    memoryFellBack: memory.fellBack,
   };
-  for (const key of UTILIZATION_FALLBACK[want]) {
-    const spec = UTILIZATION_STATISTICS[key];
-    const cpu = num(row[spec.cpu]);
-    const memory = num(row[spec.memory]);
-    if (cpu > 0 || memory > 0) {
-      return { cpu, memory, statistic: key, fellBack: key !== want };
-    }
+}
+
+// The "Sized On" label for a row. When both dimensions used the same statistic
+// (the common case — a file with only averages, or a full p95 run) it reads as
+// one clean word: "Average", "p95", "Peak", with " (fallback)" when the
+// requested statistic was absent. When the two dimensions diverge, or only one
+// carries a reading, it names each so a recommendation is never traceable to a
+// basis it did not use: "CPU: Average, Mem: p95". Empty when the row carries no
+// utilization at all.
+function describeSizedOn(util) {
+  const hasCpu = util.cpu > 0;
+  const hasMem = util.memory > 0;
+  if (!hasCpu && !hasMem) return "";
+  const part = (stat, fellBack) =>
+    UTILIZATION_STATISTICS[stat].label + (fellBack ? " (fallback)" : "");
+  if (
+    hasCpu &&
+    hasMem &&
+    util.cpuStatistic === util.memoryStatistic &&
+    util.cpuFellBack === util.memoryFellBack
+  ) {
+    return part(util.cpuStatistic, util.cpuFellBack);
   }
-  return { cpu: 0, memory: 0, statistic: want, fellBack: false };
+  const bits = [];
+  if (hasCpu) bits.push(`CPU: ${part(util.cpuStatistic, util.cpuFellBack)}`);
+  if (hasMem)
+    bits.push(`Mem: ${part(util.memoryStatistic, util.memoryFellBack)}`);
+  return bits.join(", ");
 }
 
 // Own-property-only map lookup. Keys here come from untrusted CSV data; a plain

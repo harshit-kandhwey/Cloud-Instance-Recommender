@@ -53,7 +53,8 @@ check(
 );
 check(
   "nothing is flagged as a fallback when the statistic was present",
-  !resolve(full, "p95").fellBack && resolve(full, "p95").statistic === "p95",
+  !resolve(full, "p95").cpuFellBack &&
+    resolve(full, "p95").cpuStatistic === "p95",
 );
 
 console.log("[a row missing the requested statistic falls back, and says so]");
@@ -61,7 +62,7 @@ const avgOnly = { "CPU Utilization": "20", "Memory Utilization": "30" };
 const r1 = resolve(avgOnly, "p95");
 check(
   "p95 requested but absent → uses the average",
-  r1.cpu === 20 && r1.statistic === "avg" && r1.fellBack === true,
+  r1.cpu === 20 && r1.cpuStatistic === "avg" && r1.cpuFellBack === true,
   JSON.stringify(r1),
 );
 
@@ -76,14 +77,14 @@ const p95AndPeak = {
 const r2 = resolve(p95AndPeak, "avg");
 check(
   "average absent → prefers p95 over peak, rather than the lowest available",
-  r2.statistic === "p95" && r2.cpu === 85 && r2.fellBack === true,
+  r2.cpuStatistic === "p95" && r2.cpu === 85 && r2.cpuFellBack === true,
   JSON.stringify(r2),
 );
 const peakOnly = { "CPU Utilization Peak": "97" };
 const r3 = resolve(peakOnly, "p95");
 check(
   "p95 absent → falls to peak before average",
-  r3.statistic === "peak" && r3.cpu === 97,
+  r3.cpuStatistic === "peak" && r3.cpu === 97,
   JSON.stringify(r3),
 );
 
@@ -97,34 +98,73 @@ const blankP95 = {
 const r4 = resolve(blankP95, "p95");
 check(
   "an empty p95 column does not beat a populated average",
-  r4.statistic === "avg" && r4.cpu === 20,
+  r4.cpuStatistic === "avg" && r4.cpu === 20,
   JSON.stringify(r4),
 );
 check(
   "a non-numeric cell is ignored, not treated as 0-and-present",
   resolve({ "CPU Utilization p95": "n/a", "CPU Utilization": "20" }, "p95")
-    .statistic === "avg",
+    .cpuStatistic === "avg",
 );
 check(
   "a negative reading is ignored",
   resolve({ "CPU Utilization p95": "-5", "CPU Utilization": "20" }, "p95")
-    .statistic === "avg",
+    .cpuStatistic === "avg",
 );
 check(
   "a row with no utilization at all resolves to zero, not a crash",
   resolve({ "VM Name": "x" }, "p95").cpu === 0 &&
-    resolve({ "VM Name": "x" }, "p95").fellBack === false,
+    resolve({ "VM Name": "x" }, "p95").cpuFellBack === false,
 );
 check(
   "an unknown statistic name degrades to the average rather than throwing",
-  resolve(full, "nonsense").statistic === "avg" &&
-    resolve(full, undefined).statistic === "avg",
+  resolve(full, "nonsense").cpuStatistic === "avg" &&
+    resolve(full, undefined).cpuStatistic === "avg",
 );
 // Keys come from untrusted CSV headers, so the lookup must not reach the
 // prototype chain.
 check(
   "a prototype-chain key cannot masquerade as a reading",
-  resolve({}, "constructor").statistic === "avg",
+  resolve({}, "constructor").cpuStatistic === "avg",
+);
+
+// CPU and memory each walk their OWN fallback chain: a populated reading for
+// one dimension must never be discarded because the other dimension happened
+// to satisfy the requested statistic first. This is the case that under-sizes
+// a memory-based pass — the file HAS a memory figure, and joined resolution
+// threw it away.
+console.log("[cpu and memory resolve independently — no reading is discarded]");
+const cpuAvgMemP95 = {
+  "CPU Utilization": "20",
+  "Memory Utilization p95": "70",
+};
+const r5 = resolve(cpuAvgMemP95, "avg");
+check(
+  "cpu uses its average; memory falls back to its own p95, not to 0",
+  r5.cpu === 20 && r5.memory === 70,
+  JSON.stringify(r5),
+);
+check(
+  "each dimension names its own basis, and only memory is flagged a fallback",
+  r5.cpuStatistic === "avg" &&
+    r5.memoryStatistic === "p95" &&
+    r5.cpuFellBack === false &&
+    r5.memoryFellBack === true,
+  JSON.stringify(r5),
+);
+// The reverse split, to prove neither dimension is privileged.
+const memAvgCpuPeak = {
+  "Memory Utilization": "30",
+  "CPU Utilization Peak": "90",
+};
+const r6 = resolve(memAvgCpuPeak, "avg");
+check(
+  "memory uses its average; cpu falls back to its own peak",
+  r6.memory === 30 &&
+    r6.cpu === 90 &&
+    r6.memoryStatistic === "avg" &&
+    r6.cpuStatistic === "peak",
+  JSON.stringify(r6),
 );
 
 // ── The behaviour that justifies the feature ─────────────────────────────────
@@ -212,6 +252,32 @@ ctx.__bursty = [
       "a row that fell back is marked, not silently reported as p95",
       fellBack["Sized On"] === "Average (fallback)",
       `"${fellBack["Sized On"]}"`,
+    );
+
+    // When CPU and memory are sized on different statistics, Sized On names
+    // each — the recommendation is never traceable to a basis it did not use.
+    ctx.__split = [
+      {
+        "VM Name": "split",
+        "CPU Count": "8",
+        "Memory (GB)": "32",
+        "AWS Region": "us-east-1",
+        "CPU Utilization": "20",
+        "Memory Utilization p95": "70",
+      },
+    ];
+    ctx.__opts = { ...OPTS, utilizationStatistic: "avg" };
+    const split = (
+      await run(
+        "getInstanceRecommendationWithSelector(__split, ['aws'], __opts)",
+      )
+    )[0];
+    check(
+      "a row split across statistics names each dimension's basis",
+      // Memory's requested Average was absent, so it fell back to p95 and says
+      // so per-dimension — CPU, which had its Average, does not.
+      split["Sized On"] === "CPU: Average, Mem: p95 (fallback)",
+      `"${split["Sized On"]}"`,
     );
 
     // Schema parity: the column belongs to the optimized pass only.

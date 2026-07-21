@@ -215,6 +215,7 @@ function fakeElement(id) {
     elements[id] = {
       id,
       innerHTML: "",
+      dataset: {},
       className: "",
       style: {},
       value: "",

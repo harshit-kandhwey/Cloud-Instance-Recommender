@@ -189,10 +189,19 @@ function migrateLegacyMinGen(texts) {
   const out = { ...texts };
   delete out.ruleDefaultMinGen;
   // An explicit per-provider value in the preset always wins: it was saved
-  // against the current design and needs no translation.
-  if (!out.ruleDefaultMinGenAws) out.ruleDefaultMinGenAws = map.aws;
-  if (!out.ruleDefaultMinGenAzure) out.ruleDefaultMinGenAzure = map.azure;
-  if (map.gcp && !out.ruleDefaultMinGenGcp) out.ruleDefaultMinGenGcp = map.gcp;
+  // against the current design and needs no translation. Presence, not
+  // truthiness — a modern preset that deliberately saved "— any —" ("") for a
+  // provider must keep it, not be re-translated from the legacy value.
+  const savedNative = (id) => Object.prototype.hasOwnProperty.call(out, id);
+  if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = map.aws;
+  if (!savedNative("ruleDefaultMinGenAzure"))
+    out.ruleDefaultMinGenAzure = map.azure;
+  // GCP is written unconditionally when the preset carries no native value —
+  // including the legacy-6 case where map.gcp is null. Writing "" actively
+  // clears any prior GCP selection, so the "left unset" promise holds instead
+  // of silently retaining whatever the control happened to show.
+  if (!savedNative("ruleDefaultMinGenGcp"))
+    out.ruleDefaultMinGenGcp = map.gcp || "";
 
   if (typeof showToast === "function") {
     showToast(

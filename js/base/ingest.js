@@ -1417,11 +1417,15 @@ function applyIngest(headers, rows, mapping, units = {}) {
   columnHeaders = finalHeaders;
   csvData = rewriteRowKeys(rows, mapping);
 
-  // Unit conversion: sizes supplied in MB (RVTools-style) → GB
-  const memCol = COLUMN_MAPPINGS.memory;
-  const memConverted = units && units[memCol] === "MB";
+  // Unit conversion: sizes supplied in MB (RVTools-style) → GB. Every size
+  // column converts the same way; collect the ones that actually did so the
+  // note below can name each. A disk rescaled by 1024× with no mention of it is
+  // exactly the silent surprise this note exists to prevent, so it must not be
+  // keyed on memory alone.
+  const convertedCols = [];
   for (const col of SIZE_COLUMNS) {
     if (!units || units[col] !== "MB") continue;
+    convertedCols.push(col);
     csvData = csvData.map((row) => {
       const v = parseFloat(row[col]);
       if (isNaN(v)) return row;
@@ -1464,8 +1468,8 @@ function applyIngest(headers, rows, mapping, units = {}) {
   const uploadNote = window._uploadNote
     ? `<br>📄 ${escapeHtml(window._uploadNote)}`
     : "";
-  const memNote = memConverted
-    ? `<br>📐 Memory values converted from MB to GB`
+  const sizeNote = convertedCols.length
+    ? `<br>📐 ${convertedCols.join(" and ")} values converted from MB to GB`
     : "";
   const editBtn = ` <button onclick="editColumnMapping()" title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
   const okLabel = window._ingestLabel || "File loaded successfully";
@@ -1475,11 +1479,11 @@ function applyIngest(headers, rows, mapping, units = {}) {
       .map(escapeHtml)
       .join(
         ", ",
-      )}. Please check your file format.${renameNote}${uploadNote}${memNote}${editBtn}`;
+      )}. Please check your file format.${renameNote}${uploadNote}${sizeNote}${editBtn}`;
     console.warn("Missing required columns:", missingColumns);
   } else {
     fileStatus.className = "alert alert-success";
-    fileStatus.innerHTML = `✅ ${okLabel}: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}${memNote}${editBtn}`;
+    fileStatus.innerHTML = `✅ ${okLabel}: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}${sizeNote}${editBtn}`;
     console.log("File validation successful");
   }
   fileStatus.classList.remove("hidden");
@@ -1498,6 +1502,14 @@ function applyIngest(headers, rows, mapping, units = {}) {
   // If the file groups VMs by application but has no per-row Workload, offer
   // the app→workload mapping panel so those VMs can inherit a workload.
   maybeShowAppMappingPanel();
+
+  // Re-check the "Size against" hint against the columns just loaded. The hint
+  // only refreshes on the select's own onchange, so a p95/Peak choice made for
+  // an earlier file would otherwise keep reading "Sizing against p95" over a
+  // new upload that carries no p95 columns — the exact stale state it warns of.
+  if (typeof onUtilizationStatisticChange === "function") {
+    onUtilizationStatisticChange();
+  }
 
   // Any results still on screen were generated from the data this just replaced.
   // They are not cleared — the user may want to look at them — but they must not

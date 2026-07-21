@@ -62,6 +62,9 @@ function buildContext({
         focused: false,
         classes: new Set(["hidden"]),
         attrs: {},
+        // Real elements always expose a dataset; a stub without one throws the
+        // moment any code reads el.dataset.foo (e.g. the utilization hint).
+        dataset: {},
         classList: {
           add: (c) => elements[id].classes.add(c),
           remove: (c) => elements[id].classes.delete(c),

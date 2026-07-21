@@ -478,9 +478,15 @@ function downloadAWSBulkTemplate(type) {
     // than an absent one. Storage Type is deliberately left empty: this file is
     // parsed strictly by the bulk importer, and guessing at its vocabulary
     // would break every row rather than just this field.
+    //
+    // Round FIRST, then decide blank: a sub-1GB disk (0.4) rounds to 0, and a
+    // literal "0" is not "blank" to the importer — it means "no volume", the
+    // opposite of the intended default. So anything that rounds to 0 stays
+    // blank and lets the calculator apply its own default.
     const diskGb = parseFloat(row["Disk (GB)"]);
-    const storageAmount =
-      Number.isFinite(diskGb) && diskGb > 0 ? String(Math.round(diskGb)) : "";
+    const roundedDiskGb =
+      Number.isFinite(diskGb) && diskGb > 0 ? Math.round(diskGb) : 0;
+    const storageAmount = roundedDiskGb > 0 ? String(roundedDiskGb) : "";
 
     const buildRow = (instanceType) => {
       if (

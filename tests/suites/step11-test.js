@@ -14,6 +14,7 @@ function buildContext(seedStorage) {
       elements[id] = {
         id,
         innerHTML: "",
+        dataset: {},
         className: "",
         style: {},
         value: "",
