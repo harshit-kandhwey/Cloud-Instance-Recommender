@@ -200,9 +200,11 @@ ctx.rows = [
     check(
       "a no-match row carries the columns empty (schema parity)",
       results[1]["AWS Most Cost Optimized"] === "" &&
+        results[1]["AWS Workload Based"] === "" &&
         results[1]["AWS Newest Generation"] === "",
       JSON.stringify({
         cost: results[1]["AWS Most Cost Optimized"],
+        workload: results[1]["AWS Workload Based"],
         gen: results[1]["AWS Newest Generation"],
       }),
     );
@@ -261,9 +263,60 @@ ctx.rows = [
           /\(\d+\/\d+\)$/.test(row["AWS Newest Generation"]),
         `cost=${JSON.stringify(row["AWS Most Cost Optimized"])} gen=${JSON.stringify(row["AWS Newest Generation"])}`,
       );
+      // The third cell is asserted too, but the expectation is EMPTY and that is
+      // not a gap: Workload Based is the cheapest member of the workload's
+      // preferred family, and AWS database prefers r/x/z. A 1600-vCPU/20000-GB
+      // requirement leaves only u7i in the pool, so no r/x/z member exists to
+      // pick — the documented "none in the family" outcome. Pinning it here
+      // stops a future change from quietly filling this cell with a family the
+      // workload never asked for, which would look like an improvement.
+      check(
+        "and Workload Based is empty because no r/x/z member survives at this size",
+        row["AWS Workload Based"] === "",
+        JSON.stringify(row["AWS Workload Based"]),
+      );
     }
   } catch (e) {
     check("the rescued-row run completes without throwing", false, e.message);
+  }
+
+  // ── Workload Based, populated, at the COLUMN level ──────────────────────────
+  // computeAlternatives().workload is covered directly above (the GCP cache
+  // pool). What had no populated case was the output COLUMN: every row-level
+  // assertion of "${P} Workload Based" expected "", so the wiring from
+  // alt.workload through formatAlternative into the result cell was only ever
+  // exercised on its empty path. Blanking that one assignment leaves the unit
+  // check green and the exports silently short a column. An ordinary Database
+  // row at a size the r/x/z families actually reach is what closes it.
+  console.log("[Workload Based names a member of the preferred family]");
+  try {
+    const normal = await run(
+      `getInstanceRecommendationWithSelector(
+         [{
+           "VM Name": "ordinary-db",
+           "CPU Count": "8",
+           "Memory (GB)": "64",
+           "AWS Region": "us-east-1",
+           Workload: "Database"
+         }],
+         ['aws'],
+         { generateLikeToLike: true }
+       )`,
+    );
+    const cell = normal[0]["AWS Workload Based"];
+    check(
+      "the workload pick is a compact 'type (v/m)' cell, not blank",
+      /\(\d+\/\d+\)$/.test(cell),
+      JSON.stringify(cell),
+    );
+    // The point of the column is the FAMILY, not merely that something is there.
+    check(
+      "and it belongs to a database-preferred family (r/x/z)",
+      /^[rxz]/i.test(String(cell)),
+      JSON.stringify(cell),
+    );
+  } catch (e) {
+    check("the workload-pick run completes without throwing", false, e.message);
   }
 
   process.exit(state.failures ? 1 : 0);

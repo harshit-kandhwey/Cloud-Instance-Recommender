@@ -42,8 +42,16 @@ const html = Object.fromEntries(PAGES.map((p) => [p, stripNonMarkup(raw[p])]));
 const short = (p) => p.replace(".html", "");
 
 // An id is "present" only when it sits on an element tag, not merely in the text.
+// The separator must be whitespace, NOT \b: a word boundary also fires at the
+// hyphen→i transition inside data-id=, aria-*-id=, and this repo's own
+// data-section-id=, so \bid=" would accept a page that carries
+// data-section-id="downloadBtnsRow" as if it had the real element. That is the
+// false positive this whole helper exists to prevent — it would report a
+// placeholder present on a page that never renders it, and the parity check
+// would then either pass a genuine divergence or, when the id is in INTENTIONAL,
+// stop verifying that divergence at all.
 const hasElementId = (page, id) =>
-  new RegExp(`<[a-zA-Z][^>]*\\bid="${id}"`, "i").test(html[page]);
+  new RegExp(`<[a-zA-Z][^>]*\\sid="${id}"`, "i").test(html[page]);
 
 // ─── Deliberate divergences ──────────────────────────────────────────────────
 // id → the pages that are SUPPOSED to carry it, and why.

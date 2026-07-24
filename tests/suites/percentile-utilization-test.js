@@ -121,11 +121,43 @@ check(
   resolve(full, "nonsense").cpuStatistic === "avg" &&
     resolve(full, undefined).cpuStatistic === "avg",
 );
-// Keys come from untrusted CSV headers, so the lookup must not reach the
-// prototype chain.
+// TWO lookups here can reach the prototype chain, from two different sources,
+// and they need separate cases — the one below used to carry a comment about
+// CSV headers while actually exercising the statistic argument, so the row side
+// went untested.
+//
+// (1) The STATISTIC indexes UTILIZATION_STATISTICS. It arrives from the run's
+// options, which presets persist to localStorage and replay, so it is not
+// self-authored input either.
 check(
-  "a prototype-chain key cannot masquerade as a reading",
+  "a prototype-chain statistic name degrades to avg rather than resolving",
   resolve({}, "constructor").cpuStatistic === "avg",
+);
+
+// (2) The ROW is indexed by the six fixed column names. resolveDimension asks
+// every row for "CPU Utilization p95" and friends, so an INHERITED property of
+// that name would be handed back for every VM in the file — one polluted
+// prototype silently re-sizing an entire fleet off a utilization number that
+// appears in nobody's upload. Own properties only.
+let inherited;
+Object.prototype["CPU Utilization p95"] = "999";
+Object.prototype["Memory Utilization p95"] = "999";
+try {
+  inherited = resolve({}, "p95");
+} finally {
+  delete Object.prototype["CPU Utilization p95"];
+  delete Object.prototype["Memory Utilization p95"];
+}
+check(
+  "an inherited utilization column is never read as a reading",
+  inherited.cpu === 0 && inherited.memory === 0,
+  JSON.stringify(inherited),
+);
+// The mirror case: own properties still resolve normally, so the hasOwnProperty
+// guard cannot be satisfied by simply reading nothing.
+check(
+  "an own utilization column on a row carrying a literal `constructor` header still resolves",
+  resolve({ constructor: "x", "CPU Utilization p95": "85" }, "p95").cpu === 85,
 );
 
 // CPU and memory each walk their OWN fallback chain: a populated reading for

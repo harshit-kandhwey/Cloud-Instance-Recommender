@@ -475,7 +475,14 @@ function resolveDimension(row, want, dim) {
     return Number.isFinite(n) && n > 0 ? n : 0;
   };
   for (const key of UTILIZATION_FALLBACK[want]) {
-    const value = num(row[UTILIZATION_STATISTICS[key][dim]]);
+    const column = UTILIZATION_STATISTICS[key][dim];
+    // Own properties only. Every row is asked for the same six column names, so
+    // an INHERITED property of one of those names would be returned for every VM
+    // in the file — a single polluted prototype re-sizing a whole fleet off a
+    // reading that appears in nobody's upload.
+    const value = Object.prototype.hasOwnProperty.call(row, column)
+      ? num(row[column])
+      : 0;
     if (value > 0) return { value, statistic: key, fellBack: key !== want };
   }
   return { value: 0, statistic: want, fellBack: false };
