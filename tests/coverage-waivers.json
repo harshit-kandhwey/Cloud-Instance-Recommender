@@ -1,0 +1,4 @@
+{
+  "_README": "Deliberate non-coverage of a BEHAVIORAL name — one a user can reach that no suite asserts. Each key is a global name; each value is the reason it needs no direct suite. Internal helpers are NOT listed here: the gate never fails on them, so waiving them would be noise. A behavioral name belongs here only when a direct suite would add no protection a feature-level suite or the golden compare does not already give — say so, specifically. Regenerate tests/coverage-inventory.md after editing (node tools/build-coverage-inventory.js). Keys starting with _ are notes, not waivers.",
+  "_status": "3.10.3 ships this file empty on purpose: the read-only inventory shows the true 28-gap number before anything is promised. The gate that reads it arrives in 3.10.4, and the gaps are closed — covered or waived with a reason here — before it is switched on."
+}
