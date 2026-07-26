@@ -1,4 +1,4 @@
-// Step 4 verification: column mapping auto-match, panel flow, persistence.
+// Column mapping: auto-match, panel flow, persistence.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

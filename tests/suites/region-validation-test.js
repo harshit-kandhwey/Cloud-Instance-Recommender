@@ -1,4 +1,4 @@
-// Step 2 verification: region validation panel + fuzzy lazy-load path.
+// Region validation panel + fuzzy lazy-load path.
 // Loads main-script.js with a minimal DOM stub and drives parseCSV directly.
 const fs = require("fs");
 const path = require("path");

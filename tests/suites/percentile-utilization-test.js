@@ -10,7 +10,7 @@
 //
 // resolveUtilization lives in the factory rather than app-core.js on purpose:
 // app-core.js is not in recommendation-worker.js's importScripts list, so a
-// resolver defined there would throw on every worker run. step3-test covers the
+// resolver defined there would throw on every worker run. worker-protocol-test covers the
 // worker end to end; this suite covers the resolution rules.
 const vm = require("vm");
 const { buildContext, makeChecker } = require("./harness");

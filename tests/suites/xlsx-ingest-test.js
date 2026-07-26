@@ -1,4 +1,4 @@
-// Step 5 verification: .xlsx ingestion via vendored SheetJS.
+// .xlsx ingestion via vendored SheetJS.
 // Builds real xlsx files with the vendored library, then feeds them through
 // ingestFile() in the simulated-DOM context (including lazy script load).
 const fs = require("fs");

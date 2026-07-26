@@ -86,7 +86,8 @@ function buildContext({
         // Attributes are remembered, for the same reason classList.toggle and
         // localStorage are real: a set that cannot be read back is a stub that
         // would let an attribute assertion pass without ever testing anything.
-        // Named `attrs` to match the context step9-test builds for the pages.
+        // Named `attrs` to match the context accessibility-affordances-test
+        // builds for the pages.
         setAttribute: (name, value) => {
           elements[id].attrs[name] = String(value);
         },

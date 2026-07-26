@@ -113,7 +113,7 @@ sandbox.currentSourcePage = () => sandbox.__page;
 // Provided by app-core.js on a real page. Stubbed rather than loaded, because
 // app-core's `let selectedProviders` would shadow the sandbox array these tests
 // assert against. The real helper is covered by the suites that do load
-// app-core.js (step7, app-summary, portfolio).
+// app-core.js (nomatch-export, app-summary, portfolio).
 sandbox.exportFilename = (base, extension) =>
   `${base}_${new Date().toISOString().slice(0, 10)}.${extension}`;
 

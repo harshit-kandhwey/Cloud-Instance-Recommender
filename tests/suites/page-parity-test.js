@@ -26,7 +26,7 @@ const check = (name, cond, detail) => {
 // Raw text matching would accept an id that only appears inside a comment or a
 // script string, so a placeholder could be commented out and this suite would
 // still call the page compliant. Drop the non-markup parts first (same approach
-// as step9-test.js) and require the id on a real element.
+// as accessibility-affordances-test.js) and require the id on a real element.
 const stripNonMarkup = (src) =>
   src
     .replace(/<!--[\s\S]*?-->/g, "")

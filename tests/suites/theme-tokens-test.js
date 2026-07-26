@@ -1,4 +1,4 @@
-// Step 8 verification: token coverage + boot script behavior.
+// Dark-mode theme tokens: token coverage + boot script behavior.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

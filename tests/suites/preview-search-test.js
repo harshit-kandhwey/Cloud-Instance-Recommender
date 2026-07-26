@@ -1,4 +1,4 @@
-// Step 6 verification: preview search filter — filtering, counts, sort
+// Preview search filter — filtering, counts, sort
 // interaction, focus restore, debounce.
 const fs = require("fs");
 const path = require("path");

@@ -1,4 +1,4 @@
-// Step 3 verification: simulates the recommendation worker end-to-end
+// Recommendation worker end-to-end: simulates the worker
 // (importScripts shim + postMessage protocol) and the hooked main-thread
 // fallback, comparing both against the golden multicloud output.
 const fs = require("fs");

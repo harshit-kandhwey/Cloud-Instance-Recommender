@@ -1,4 +1,4 @@
-// Step 7 verification: no-match remediation export.
+// No-match remediation export.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
