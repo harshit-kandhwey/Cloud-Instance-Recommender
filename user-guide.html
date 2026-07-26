@@ -1674,7 +1674,11 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           </tr>
           <tr>
             <td>BP</td>
-            <td>ENV = Dev/Test + utilization below the downsize threshold</td>
+            <td>
+              ENV = Dev/Test + measured CPU below the downsize threshold;
+              known-high memory withholds the preference (unknown memory is
+              allowed)
+            </td>
             <td>Prefer burstable families (the inverse of 1a)</td>
             <td>
               <code>BP: Burstable preferred (Dev/Test, low utilization)</code>

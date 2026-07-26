@@ -63,11 +63,12 @@ each item is scheduled:
 
 Not tied to any release — adopted once, then maintained every cycle:
 
-- **Formatting gate in CI** — run `prettier --check` on every push and pull
-  request, failing the build on anything unformatted. Auto-formatting and
+- **Formatting gate in CI** — _in place._ `.github/workflows/ci.yml` runs
+  `prettier --check` (alongside the test and type-check jobs) on every push and
+  pull request, failing the build on anything unformatted. Auto-formatting and
   committing the fix from CI was considered and rejected: a bot commit would
   land without a changelog row or a version tag, putting holes in the
-  per-commit version map. `npm run format` fixes it locally instead. (S)
+  per-commit version map. `npm run format` fixes it locally instead.
 - **Dependency-CVE watch** — monthly, and before each release, check the
   vendored SheetJS builds under `js/vendor/` for advisories, treating the
   versions embedded in those artifacts as the source of truth (today `xlsx.full`
