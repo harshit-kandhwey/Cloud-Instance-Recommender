@@ -223,11 +223,20 @@ check(
     downloads.some((d) => (d.name || "").includes("no_match_rows")),
   downloads.map((d) => d.name).join(", "),
 );
-// Nothing checked → a warning, no downloads.
+// Nothing checked → a warning, no downloads. Assert BOTH halves: the toast is
+// the user-visible half, and checking only downloads.length would pass even if
+// the warning quietly stopped firing.
 elements.csvMenu.querySelectorAll = () => [];
 downloads.length = 0;
+const toastStack = ctx.document.getElementById("toastStack");
+toastStack.innerHTML = "";
 vm.runInContext("downloadSelectedCsvs()", ctx);
 check("an empty selection downloads nothing", downloads.length === 0);
+check(
+  "an empty selection warns the user",
+  toastStack.innerHTML.length > 0,
+  toastStack.innerHTML,
+);
 
 console.log("[export content]");
 vm.runInContext("downloadNoMatchRows()", ctx);
@@ -240,7 +249,11 @@ check(
 const raw = downloads[0].blob.content;
 // Excel needs the BOM to read the file as UTF-8; everything else ignores it
 check("CSV starts with a UTF-8 BOM", raw.charCodeAt(0) === 0xfeff);
-const csv = raw.replace(/^﻿/, "");
+// ﻿, not a literal BOM: an invisible U+FEFF in the pattern is unreviewable
+// in a diff, and any "strip zero-width characters" formatter would turn it into
+// /^/ — which strips nothing and makes the header assertion below fail for a
+// reason no one could see.
+const csv = raw.replace(/^\uFEFF/, "");
 const lines = csv.split("\n");
 check(
   "header = input cols + diagnostics",
@@ -268,4 +281,14 @@ check(
 );
 check("no second download", downloads.length === 1);
 
-process.exit(failures ? 1 : 0);
+// The sandbox captures alert() so a stray native dialog from a loaded module
+// does not vanish silently — but capturing is only worth it if we assert it.
+check(
+  "no module reached for a native alert()",
+  sandbox.alerts.length === 0,
+  sandbox.alerts.join(" | "),
+);
+
+// process.exitCode, not process.exit(): exit() can truncate buffered stdout when
+// it is a pipe — exactly the CI case — losing the FAIL: lines this suite emits.
+process.exitCode = failures ? 1 : 0;

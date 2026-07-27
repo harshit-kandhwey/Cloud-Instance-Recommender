@@ -510,8 +510,8 @@ function check(name, cond, detail) {
   );
 
   // Auto-dismiss
-  // Generous margin: a 30ms timeout with an 80ms wait is only 50ms of slack, and
-  // a loaded CI box will lose that
+  // Generous margin: a 20ms timeout with a 250ms wait leaves 230ms of slack, so
+  // a loaded CI box still clears it
   const tempId = ctx.showToast("Briefly", "info", 20);
   check("timed toast shown", stack.innerHTML.includes("Briefly"));
   await new Promise((r) => setTimeout(r, 250));
@@ -567,6 +567,10 @@ function check(name, cond, detail) {
     );
 
     ctx.document.createElement = realCreateElement;
+    // Blob/URL are deliberately left installed: this suite's fake DOM has no real
+    // ones to restore to, and downloadCsv calls URL.revokeObjectURL from a
+    // deferred timer that would throw against undefined. The dead-array risk the
+    // asymmetry might invite does not apply — `captured` is block-scoped here.
 
     // Round trip: users are told to fix the no-match export and re-upload it, so
     // our own parser must cope with the BOM we now write
@@ -601,7 +605,10 @@ function check(name, cond, detail) {
     ctx.copyPreviewToClipboard();
     await new Promise((r) => setTimeout(r, 20));
 
-    const lines = copied.split("\n");
+    // A clipboard break should fail this one check, not throw on the split below
+    // and abort every block after it (savings, relax-suggestion, dialog guard).
+    check("clipboard was written", copied !== null);
+    const lines = (copied || "").split("\n");
     check(
       "tab-separated, so it pastes into spreadsheet cells",
       lines[0].includes("\t") && !lines[0].includes(","),
@@ -763,7 +770,7 @@ function check(name, cond, detail) {
 
     // 3 rows blocked by current-gen alone, 1 by exclude types alone, and 1 by
     // BOTH — the last cannot be rescued by a single change and must not count.
-    const results = [
+    const relaxRows = [
       row("a", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
       row("b", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
       row("c", "m7i.large (2 vCPU / 8 GB) — relax: current-generation only"),
@@ -773,7 +780,7 @@ function check(name, cond, detail) {
         "m7i.large (2 vCPU / 8 GB) — relax: current-generation only, exclude types",
       ),
     ];
-    const suggestion = ctx.computeRelaxSuggestion(results);
+    const suggestion = ctx.computeRelaxSuggestion(relaxRows);
     check(
       "picks the filter that rescues the most rows",
       suggestion &&
@@ -799,7 +806,7 @@ function check(name, cond, detail) {
       ]) === null,
     );
 
-    ctx.updateRelaxSuggestion(results);
+    ctx.updateRelaxSuggestion(relaxRows);
     const panel = ctx.document.getElementById("relaxSuggestion");
     check(
       "panel offers the action",
@@ -831,15 +838,33 @@ function check(name, cond, detail) {
   // silently stops covering whatever is added next (it had already missed the
   // three provider-specific files, which is exactly where alert() lived).
   //
+  // The pages carry inline <script> too (the theme boot script, at minimum), and
+  // a confirm() added to page markup would pass a js-only scan for exactly the
+  // reason the comment above warns about. So scan the inline script bodies of the
+  // HTML pages as well — stripping to the <script> contents first, and skipping
+  // <script src=…> tags, which point back at files already in the list.
+  //
   // ALL THREE are banned, not just alert(). Banning only alert() is how a
   // confirm() in the manual-entry list survived the 3.5 migration and lived
   // until 3.7: the guard was never looking for it.
-  const productSources = [];
+  const scanTargets = [];
   for (const dir of ["js/base", "js/aws", "js/azure", "js/gcp"]) {
     for (const file of fs.readdirSync(path.join(REPO, dir))) {
       if (file.endsWith(".js") && !file.endsWith("-data.js")) {
-        productSources.push(`${dir}/${file}`);
+        scanTargets.push({
+          label: `${dir}/${file}`,
+          text: fs.readFileSync(path.join(REPO, dir, file), "utf8"),
+        });
       }
+    }
+  }
+  for (const file of fs.readdirSync(REPO)) {
+    if (!file.endsWith(".html")) continue;
+    const html = fs.readFileSync(path.join(REPO, file), "utf8");
+    let n = 0;
+    for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      if (/\bsrc\s*=/i.test(m[1])) continue; // external file, scanned above
+      scanTargets.push({ label: `${file} <script #${n++}>`, text: m[2] });
     }
   }
   // The guard is only as honest as its stripper, so test the stripper. Each of
@@ -926,10 +951,9 @@ function check(name, cond, detail) {
     // \b, not [^.\w]: the latter treats the dot as a word character, so
     // `window.alert(` — the very thing being banned — would slip through.
     const pattern = new RegExp(`\\b${dialog}\\s*\\(`);
-    const offenders = productSources.filter((rel) => {
-      const src = fs.readFileSync(path.join(REPO, rel), "utf8");
-      return pattern.test(stripComments(src));
-    });
+    const offenders = scanTargets
+      .filter((t) => pattern.test(stripComments(t.text)))
+      .map((t) => t.label);
     check(
       `no window.${dialog}() left in the product`,
       offenders.length === 0,

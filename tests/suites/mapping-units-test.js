@@ -186,9 +186,12 @@ function setSelects(ctx, values) {
   );
   check(
     "units persisted",
-    (storage["cloudInstanceRecommenderColumnMaps"] || "").includes(
-      '"units":{"Memory (GB)":"MB"}',
-    ),
+    // Parse and read the value — a substring match on the serialized JSON breaks
+    // if the object gains another unit key or the property order shifts, even
+    // though the behaviour under test is unchanged.
+    Object.values(
+      JSON.parse(storage["cloudInstanceRecommenderColumnMaps"] || "{}"),
+    ).some((e) => e?.units?.["Memory (GB)"] === "MB"),
     storage["cloudInstanceRecommenderColumnMaps"],
   );
   check(
@@ -364,7 +367,20 @@ web-01,4,16,16384,102400,us-east-1`;
       !fresh.elements.columnMappingSection.classes.has("hidden"),
     );
     const order = vm.runInContext("pageCanonicals()", c);
-    const at = (canonical) => order.indexOf(canonical);
+    // Fail loudly if a canonical this scenario needs is absent from the panel:
+    // indexOf would return -1, setCol would write to colmap_-1 (which fakeElement
+    // happily creates), the mapping would never apply, and the 1024x disk
+    // regression this guards against would slip through as an opaque assertion
+    // failure — or pass by accident if the column also auto-maps.
+    const at = (canonical) => {
+      const i = order.indexOf(canonical);
+      if (i < 0) {
+        throw new Error(
+          `canonical "${canonical}" missing from panel order: ${order.join(", ")}`,
+        );
+      }
+      return i;
+    };
     const setCol = (canonical, headerIdx) => {
       c.document.getElementById(`colmap_${at(canonical)}`).value =
         String(headerIdx);
@@ -389,9 +405,9 @@ web-01,4,16,16384,102400,us-east-1`;
     );
     check(
       "disk unit persisted for replay",
-      (fresh.storage["cloudInstanceRecommenderColumnMaps"] || "").includes(
-        '"Disk (GB)":"MB"',
-      ),
+      Object.values(
+        JSON.parse(fresh.storage["cloudInstanceRecommenderColumnMaps"] || "{}"),
+      ).some((e) => e?.units?.["Disk (GB)"] === "MB"),
       fresh.storage["cloudInstanceRecommenderColumnMaps"],
     );
   }

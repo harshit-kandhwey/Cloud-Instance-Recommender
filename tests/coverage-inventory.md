@@ -300,7 +300,7 @@ waiver still records the reason.
 | `manualConfirmClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
 | `manualEditVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
 | `manualEditingRow` | js/base/manual-entry.js | function | internal | uncovered | — |
-| `manualFieldDefs` | js/base/manual-entry.js | function | internal | covered | manual-entry-bulk-edit-test.js |
+| `manualFieldDefs` | js/base/manual-entry.js | function | internal | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
 | `manualRemoveVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
 | `manualSaveEdit` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
 | `matchBadge` | js/base/portfolio.js | function | internal | uncovered | — |

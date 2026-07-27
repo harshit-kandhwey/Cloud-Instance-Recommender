@@ -74,6 +74,13 @@ sandbox.document = {
           vm.runInContext(code, ctx, { filename: script.src });
           script.onload && script.onload();
         } catch (e) {
+          // Surface loader faults: requestedSrcs.push already happened, so a
+          // missing/renamed region file would otherwise pass the prefetch checks
+          // and only reappear later as a confusing "got 0 instances" — this keeps
+          // test-infra faults distinguishable from app faults.
+          process.stderr.write(
+            `  [loader] failed to run ${script.src}: ${e.message}\n`,
+          );
           script.onerror && script.onerror(e);
         }
       }, 0);
@@ -129,20 +136,26 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   console.log("[window._regionValidation]");
   const v = ctx._regionValidation;
   check("validation stored", v && v.aws && v.azure && v.gcp);
-  check("aws us-east-1 exact", v.aws["us-east-1"].status === "exact");
+  // Optional-chain every lookup: a missing key would otherwise throw a TypeError
+  // that unwinds to the outer catch, skipping the panel/prefetch/lazy-load checks
+  // below and printing a stack trace instead of a named FAIL.
+  check("aws us-east-1 exact", v?.aws?.["us-east-1"]?.status === "exact");
   check(
     "aws us-east-1a fuzzy → us_east_1",
-    v.aws["us-east-1a"].status === "fuzzy" &&
-      v.aws["us-east-1a"].key === "us_east_1",
-    JSON.stringify(v.aws["us-east-1a"]),
+    v?.aws?.["us-east-1a"]?.status === "fuzzy" &&
+      v?.aws?.["us-east-1a"]?.key === "us_east_1",
+    JSON.stringify(v?.aws?.["us-east-1a"]),
   );
-  check("aws narnia-99 unknown", v.aws["narnia-99"].status === "unknown");
-  check("azure East US exact", v.azure["East US"].status === "exact");
-  check("azure East US 2 exact", v.azure["East US 2"].status === "exact");
-  check("azure Atlantis unknown", v.azure["Atlantis"].status === "unknown");
-  check("gcp zone exact", v.gcp["us-central1-a"].status === "exact");
-  check("gcp europe-west1-c exact", v.gcp["europe-west1-c"].status === "exact");
-  check("gcp mordor1-x unknown", v.gcp["mordor1-x"].status === "unknown");
+  check("aws narnia-99 unknown", v?.aws?.["narnia-99"]?.status === "unknown");
+  check("azure East US exact", v?.azure?.["East US"]?.status === "exact");
+  check("azure East US 2 exact", v?.azure?.["East US 2"]?.status === "exact");
+  check("azure Atlantis unknown", v?.azure?.["Atlantis"]?.status === "unknown");
+  check("gcp zone exact", v?.gcp?.["us-central1-a"]?.status === "exact");
+  check(
+    "gcp europe-west1-c exact",
+    v?.gcp?.["europe-west1-c"]?.status === "exact",
+  );
+  check("gcp mordor1-x unknown", v?.gcp?.["mordor1-x"]?.status === "unknown");
 
   console.log("[panel rendering]");
   const panel = elements["regionValidationSection"];
@@ -179,9 +192,9 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   console.log("[prefetch] requested: " + requestedSrcs.join(", "));
   check(
     "prefetch loaded valid + fuzzy regions only",
-    requestedSrcs.includes("js/aws/regions/us_east_1.js") &&
-      requestedSrcs.includes("js/azure/regions/eastus.js") &&
-      requestedSrcs.includes("js/gcp/regions/us_central1.js"),
+    // Reuse expectedSrcs so the predicate here cannot drift from the poll above.
+    expectedSrcs.every((s) => requestedSrcs.includes(s)),
+    `missing: ${expectedSrcs.filter((s) => !requestedSrcs.includes(s)).join(", ")}`,
   );
   check(
     "no request for unknown regions",

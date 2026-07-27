@@ -1260,9 +1260,11 @@ app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,e2-standard-2<
                           border: 1px solid var(--border-slate);
                         "
                       >
-                        Enforces a 4-vCPU licence floor — SQL Server is licensed
-                        per core (minimum four), so a smaller box saves no
-                        licence cost; never sized below 4 vCPU.
+                        Enforces a 4-vCPU licence floor when it can — SQL Server
+                        is licensed per core (minimum four), so a smaller box
+                        saves no licence cost. If no eligible candidate is that
+                        large, the fallback pick is kept and the rule is
+                        reported as not applied.
                       </td>
                     </tr>
                     <tr>
@@ -1283,8 +1285,10 @@ app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,e2-standard-2<
                         "
                       >
                         Requires a GPU/accelerator instance; every other
-                        workload excludes accelerators, so a GPU box is never
-                        recommended by accident.
+                        workload excludes accelerators, so a GPU box is not
+                        recommended by accident. If the pool has no accelerator
+                        to offer, the fallback pick is kept and the rule is
+                        reported as not applied.
                       </td>
                     </tr>
                   </tbody>

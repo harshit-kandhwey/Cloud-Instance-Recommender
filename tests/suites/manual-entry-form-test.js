@@ -113,10 +113,17 @@ function check(name, cond, detail) {
   }
 }
 
-// Field order on an AWS page: VM Name(0), CPU(1), Mem(2), CPU%(3), Mem%(4), AWS Region(5)
+// Fill by field KEY, not slot: a positional array silently misassigns if
+// manualFieldDefs() gains a canonical or renders differently per page, shifting
+// every value one input. Reading d.key ties each value to its field.
 function fill(ctx, values) {
-  values.forEach((v, i) => {
-    ctx.document.getElementById(`manual_${i}`).value = v;
+  // Clear every field first (ctx is shared across blocks), then set the named
+  // ones — matching the old positional fill, which wrote all six slots each call.
+  ctx.manualFieldDefs().forEach((d, i) => {
+    ctx.document.getElementById(`manual_${i}`).value =
+      Object.prototype.hasOwnProperty.call(values, d.key)
+        ? String(values[d.key])
+        : "";
   });
 }
 
@@ -144,7 +151,14 @@ function fill(ctx, values) {
   check("empty list hint", section.innerHTML.includes("No VMs added yet"));
 
   console.log("[add + validation]");
-  fill(ctx, ["web-01", "4", "16", "45", "60", "us-east-1"]);
+  fill(ctx, {
+    "VM Name": "web-01",
+    "CPU Count": "4",
+    "Memory (GB)": "16",
+    "CPU Utilization": "45",
+    "Memory Utilization": "60",
+    "AWS Region": "us-east-1",
+  });
   ctx.manualAddVM();
   check("first VM added", vm.runInContext("manualVMs.length", ctx) === 1);
   check("list rendered", section.innerHTML.includes("web-01"));
@@ -153,7 +167,11 @@ function fill(ctx, values) {
     section.innerHTML.includes("Use these 1 VM(s)"),
   );
 
-  fill(ctx, ["bad-vm", "", "8", "", "", "us-east-1"]);
+  fill(ctx, {
+    "VM Name": "bad-vm",
+    "Memory (GB)": "8",
+    "AWS Region": "us-east-1",
+  });
   ctx.manualAddVM();
   check(
     "missing CPU rejected",
@@ -162,7 +180,11 @@ function fill(ctx, values) {
     elements.toastStack.innerHTML,
   );
 
-  fill(ctx, ["", "2", "8", "", "", "eu-west-1"]);
+  fill(ctx, {
+    "CPU Count": "2",
+    "Memory (GB)": "8",
+    "AWS Region": "eu-west-1",
+  });
   ctx.manualAddVM();
   check(
     "auto name for blank VM Name",
@@ -183,7 +205,14 @@ function fill(ctx, values) {
   check("row removed", vm.runInContext("manualVMs.length", ctx) === 1);
 
   console.log("[apply → shared pipeline]");
-  fill(ctx, ["db-01", "8", "32", "70", "80", "us-west-2"]);
+  fill(ctx, {
+    "VM Name": "db-01",
+    "CPU Count": "8",
+    "Memory (GB)": "32",
+    "CPU Utilization": "70",
+    "Memory Utilization": "80",
+    "AWS Region": "us-west-2",
+  });
   ctx.manualAddVM();
   ctx.manualApplyVMs();
   const data = vm.runInContext("csvData", ctx);

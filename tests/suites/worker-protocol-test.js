@@ -111,6 +111,37 @@ for (const p of PROVIDERS) {
   }
 }
 
+// REGION_FILES is hand-coupled to the regions SAMPLE_CSV references. If the
+// sample later gains a region not listed here, the worker would silently load
+// incomplete data and fall back to sample rows — surfacing only as a golden
+// mismatch with no pointer to the cause. Fail loudly instead: every listed key
+// must resolve to real data, and the count of distinct sample regions per
+// provider must match the list. (A new sample region that shares a normalized
+// key with an existing one would trip the count check — update the list then.)
+const SAMPLE_REGION_COL = {
+  aws: "AWS Region",
+  azure: "Azure Region",
+  gcp: "GCP Region",
+};
+for (const p of PROVIDERS) {
+  for (const key of REGION_FILES[p]) {
+    if (!regionData[key]) {
+      throw new Error(`REGION_FILES[${p}] key "${key}" loaded no data`);
+    }
+  }
+  const distinct = new Set(
+    parseSample()
+      .map((r) => r[SAMPLE_REGION_COL[p]])
+      .filter(Boolean),
+  );
+  if (distinct.size !== REGION_FILES[p].length) {
+    throw new Error(
+      `SAMPLE_CSV references ${distinct.size} distinct ${p} regions but ` +
+        `REGION_FILES lists ${REGION_FILES[p].length} — add the missing region file(s).`,
+    );
+  }
+}
+
 // ── Worker sandbox with importScripts shim ──────────────────────────────────
 const posted = [];
 const workerSandbox = {
@@ -148,17 +179,18 @@ vm.runInContext(
     typeof workerCtx.getInstanceRecommendationWithSelector === "function",
   );
 
-  // Simulate structured clone (worker gets copies, not references)
-  const clonedMsg = JSON.parse(
-    JSON.stringify({
-      type: "run",
-      csvData: parseSample(),
-      providers: PROVIDERS,
-      options: OPTIONS,
-      regionData,
-      flags,
-    }),
-  );
+  // The worker gets copies, not references. structuredClone is the algorithm
+  // postMessage actually uses — more faithful than a JSON round-trip, which would
+  // stringify Dates and drop undefined/functions, exercising a different shape
+  // than a real worker receives.
+  const clonedMsg = structuredClone({
+    type: "run",
+    csvData: parseSample(),
+    providers: PROVIDERS,
+    options: OPTIONS,
+    regionData,
+    flags,
+  });
   await workerCtx.onmessage({ data: clonedMsg });
 
   // Wait for the async handler's postMessage(result)
@@ -183,7 +215,14 @@ vm.runInContext(
     path.join(GOLD, "multicloud-both.csv"),
     "utf8",
   );
-  check("worker output matches golden", toCsv(result.results) === golden);
+  // Guard result before serializing: if the worker posted an error or the poll
+  // timed out, result is undefined and toCsv(result.results) would throw, aborting
+  // the IIFE before the fallback checks below ever run — losing their granular
+  // pass/fail. A missing result should be one clean failure, not a crash.
+  check(
+    "worker output matches golden",
+    !!result && toCsv(result.results) === golden,
+  );
 
   console.log("[main-thread fallback with hooks]");
   const mainCtx = vm.createContext({
@@ -228,9 +267,12 @@ vm.runInContext(
     JSON.stringify(calls) === "[[3,8],[6,8],[8,8]]",
     JSON.stringify(calls),
   );
-  check("fallback output matches golden", toCsv(results2) === golden);
+  check(
+    "fallback output matches golden",
+    !!results2 && toCsv(results2) === golden,
+  );
 
-  process.exit(failures ? 1 : 0);
+  process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
   process.exit(1);

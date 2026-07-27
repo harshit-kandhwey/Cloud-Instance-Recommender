@@ -42,6 +42,13 @@ function fakeElement(id) {
   }
   return elements[id];
 }
+// elements and ctx are module-level and shared across blocks, so a check that
+// reads fileStatus/sheetPicker can pass on state a PRIOR block left behind — a
+// regression that stopped writing fileStatus would go unnoticed. Clear the DOM
+// between blocks that assert on it, so each starts from a blank slate.
+function resetUi() {
+  for (const key of Object.keys(elements)) delete elements[key];
+}
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   setTimeout,
@@ -119,6 +126,7 @@ const AOA = [
 (async () => {
   console.log("[a multi-sheet workbook offers the choice]");
   {
+    resetUi();
     // Every sheet here has data. A sheet with headers and no rows is a template,
     // not a candidate, and is excluded — see sheet-picker-test.
     const buf = makeXlsx([
@@ -147,13 +155,21 @@ const AOA = [
 
   console.log("[single sheet → no note]");
   {
+    resetUi();
     const buf = makeXlsx([{ name: "Only", aoa: AOA }]);
     await ctx.ingestFile({
       name: "one.xlsx",
       size: buf.byteLength,
       arrayBuffer: async () => buf,
     });
-    check("no note", !elements.fileStatus.innerHTML.includes("sheets"));
+    // Assert the positive (it ingested) AND the absence, so the "no note" half
+    // cannot pass merely because the code stopped writing fileStatus at all.
+    check(
+      "single sheet ingests with no multi-sheet note",
+      elements.fileStatus.className.includes("alert-success") &&
+        !elements.fileStatus.innerHTML.includes("sheets"),
+      elements.fileStatus.innerHTML,
+    );
   }
 
   console.log("[size/empty guards]");
@@ -319,10 +335,14 @@ const AOA = [
 
     // A workbook with no extension at all: the drop handler no longer gates on
     // the name, so ingestFile must still accept it on its bytes
+    resetUi();
     await ctx.ingestFile(fakeFile("inventory", xlsxBytes));
     check(
       "an extensionless workbook is still read as Excel",
-      elements.fileStatus.className.includes("alert-success"),
+      // Assert the row count too — alert-success alone would pass on a prior
+      // successful ingest's leftover class if this path wrote nothing.
+      elements.fileStatus.className.includes("alert-success") &&
+        elements.fileStatus.innerHTML.includes("1 rows"),
       elements.fileStatus.innerHTML,
     );
   }

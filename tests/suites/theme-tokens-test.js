@@ -46,7 +46,10 @@ console.log("[token coverage]");
   ];
   let missing = [];
   for (const f of filesSharedTokens) {
-    const used = [...read(f).matchAll(/var\(--([a-z0-9-]+)[,)]/gi)].map(
+    // \s* around the token: var(--foo ) and var(--foo\n) are valid references,
+    // and a bare [,)] would skip them — silently leaving an undefined token
+    // unvalidated.
+    const used = [...read(f).matchAll(/var\(\s*--([a-z0-9-]+)\s*[,)]/gi)].map(
       (m) => m[1],
     );
     for (const u of used) if (!defined.has(u)) missing.push(`${f}: --${u}`);
@@ -57,7 +60,7 @@ console.log("[token coverage]");
     missing.join(", "),
   );
 
-  const guideUsed = [...guide.matchAll(/var\(--([a-z0-9-]+)[,)]/gi)].map(
+  const guideUsed = [...guide.matchAll(/var\(\s*--([a-z0-9-]+)\s*[,)]/gi)].map(
     (m) => m[1],
   );
   const guideMissing = guideUsed.filter((u) => !guideDefined.has(u));
@@ -81,8 +84,13 @@ console.log("[token coverage]");
     "grad-accent",
     "table-head-text",
   ]);
-  const rootBlock = themeCss.split('[data-theme="dark"]')[0];
-  const darkBlock = themeCss.split('[data-theme="dark"]')[1] || "";
+  // split()[1] is only the text BETWEEN the first and second dark selector, so a
+  // token defined in a later [data-theme="dark"] rule would be invisible here and
+  // report a false "unthemed" the moment theme.css grows a second dark block.
+  // Take everything from the first dark selector to the end instead.
+  const darkStart = themeCss.indexOf('[data-theme="dark"]');
+  const rootBlock = darkStart === -1 ? themeCss : themeCss.slice(0, darkStart);
+  const darkBlock = darkStart === -1 ? "" : themeCss.slice(darkStart);
   const rootTokens = [...rootBlock.matchAll(/--([a-z0-9-]+)\s*:/gi)].map(
     (m) => m[1],
   );
@@ -129,10 +137,26 @@ console.log("[page wiring]");
     g.includes("cloudInstanceRecommenderTheme") &&
       g.includes('id="themeToggle"'),
   );
-  // Selector must appear inside the @media screen block, not merely after it
+  // Selector must appear inside the @media screen block, not merely after it.
+  // A `[^}]*` regex only matches when the dark selector is the FIRST rule in the
+  // media block — reordering unrelated CSS before it would break this with a
+  // misleading failure. Brace-scan the block instead, so the check is faithful to
+  // "the selector is somewhere inside @media screen", wherever it sits.
+  const mediaStart = g.indexOf("@media screen");
+  let screenBlock = "";
+  if (mediaStart !== -1) {
+    let depth = 0;
+    for (let i = g.indexOf("{", mediaStart); i < g.length; i++) {
+      if (g[i] === "{") depth++;
+      else if (g[i] === "}" && --depth === 0) {
+        screenBlock = g.slice(mediaStart, i + 1);
+        break;
+      }
+    }
+  }
   check(
     "user-guide: dark overrides screen-scoped",
-    /@media screen\s*\{[^}]*\[data-theme="dark"\][^}]*\}/.test(g),
+    screenBlock.includes('[data-theme="dark"]'),
   );
 }
 
@@ -143,92 +167,99 @@ console.log("[boot script behavior]");
     /<script>\s*\/\/ Set theme before first paint[\s\S]*?<\/script>/,
   );
   check("boot script extracted", !!m);
-  const src = m[0].replace(/<\/?script>/g, "");
+  // Bail cleanly if the marker changed: m[0] would throw and abort the whole
+  // block — including the cross-page consistency check below — turning one
+  // failure into a stack trace that hides the rest of the suite.
+  if (!m) {
+    console.error("  boot script not found — skipping behaviour checks");
+  } else {
+    const src = m[0].replace(/<\/?script>/g, "");
 
-  function runBoot({ stored, osDark, storageThrows }) {
-    const listeners = [];
-    const storage = {};
-    if (stored != null) storage.cloudInstanceRecommenderTheme = stored;
-    const sandbox = {
-      document: {
-        documentElement: { dataset: {} },
-        getElementById: () => null,
-      },
-      localStorage: storageThrows
-        ? {
-            getItem: () => {
-              throw new Error("private");
+    function runBoot({ stored, osDark, storageThrows }) {
+      const listeners = [];
+      const storage = {};
+      if (stored != null) storage.cloudInstanceRecommenderTheme = stored;
+      const sandbox = {
+        document: {
+          documentElement: { dataset: {} },
+          getElementById: () => null,
+        },
+        localStorage: storageThrows
+          ? {
+              getItem: () => {
+                throw new Error("private");
+              },
+              setItem: () => {
+                throw new Error("private");
+              },
+            }
+          : {
+              getItem: (k) => (k in storage ? storage[k] : null),
+              setItem: (k, v) => {
+                storage[k] = String(v);
+              },
             },
-            setItem: () => {
-              throw new Error("private");
-            },
-          }
-        : {
-            getItem: (k) => (k in storage ? storage[k] : null),
-            setItem: (k, v) => {
-              storage[k] = String(v);
-            },
-          },
-    };
-    sandbox.window = sandbox;
-    sandbox.window.matchMedia = () => ({
-      matches: osDark,
-      addEventListener: (t, fn) => listeners.push(fn),
-    });
-    const ctx = vm.createContext(sandbox);
-    vm.runInContext(src, ctx);
-    return { ctx, sandbox, listeners, storage };
+      };
+      sandbox.window = sandbox;
+      sandbox.window.matchMedia = () => ({
+        matches: osDark,
+        addEventListener: (t, fn) => listeners.push(fn),
+      });
+      const ctx = vm.createContext(sandbox);
+      vm.runInContext(src, ctx);
+      return { ctx, sandbox, listeners, storage };
+    }
+
+    let r = runBoot({ stored: null, osDark: true });
+    check(
+      "no saved pref + OS dark → dark",
+      r.sandbox.document.documentElement.dataset.theme === "dark",
+    );
+    r.listeners[0]({ matches: false });
+    check(
+      "follows OS change while unset",
+      r.sandbox.document.documentElement.dataset.theme === "light",
+    );
+
+    r = runBoot({ stored: "light", osDark: true });
+    check(
+      "saved light beats OS dark",
+      r.sandbox.document.documentElement.dataset.theme === "light",
+    );
+    r.listeners[0]({ matches: true });
+    check(
+      "OS change ignored once saved",
+      r.sandbox.document.documentElement.dataset.theme === "light",
+    );
+
+    r = runBoot({ stored: null, osDark: false });
+    r.ctx.toggleTheme();
+    check(
+      "toggle light→dark",
+      r.sandbox.document.documentElement.dataset.theme === "dark",
+    );
+    check(
+      "toggle persists choice",
+      r.storage.cloudInstanceRecommenderTheme === "dark",
+    );
+    r.ctx.toggleTheme();
+    check(
+      "toggle back to light",
+      r.sandbox.document.documentElement.dataset.theme === "light" &&
+        r.storage.cloudInstanceRecommenderTheme === "light",
+    );
+
+    r = runBoot({ stored: null, osDark: true, storageThrows: true });
+    check(
+      "private mode: still themes from OS",
+      r.sandbox.document.documentElement.dataset.theme === "dark",
+    );
+    r.ctx.toggleTheme();
+    check(
+      "private mode: toggle still works",
+      r.sandbox.document.documentElement.dataset.theme === "light",
+    );
   }
-
-  let r = runBoot({ stored: null, osDark: true });
-  check(
-    "no saved pref + OS dark → dark",
-    r.sandbox.document.documentElement.dataset.theme === "dark",
-  );
-  r.listeners[0]({ matches: false });
-  check(
-    "follows OS change while unset",
-    r.sandbox.document.documentElement.dataset.theme === "light",
-  );
-
-  r = runBoot({ stored: "light", osDark: true });
-  check(
-    "saved light beats OS dark",
-    r.sandbox.document.documentElement.dataset.theme === "light",
-  );
-  r.listeners[0]({ matches: true });
-  check(
-    "OS change ignored once saved",
-    r.sandbox.document.documentElement.dataset.theme === "light",
-  );
-
-  r = runBoot({ stored: null, osDark: false });
-  r.ctx.toggleTheme();
-  check(
-    "toggle light→dark",
-    r.sandbox.document.documentElement.dataset.theme === "dark",
-  );
-  check(
-    "toggle persists choice",
-    r.storage.cloudInstanceRecommenderTheme === "dark",
-  );
-  r.ctx.toggleTheme();
-  check(
-    "toggle back to light",
-    r.sandbox.document.documentElement.dataset.theme === "light" &&
-      r.storage.cloudInstanceRecommenderTheme === "light",
-  );
-
-  r = runBoot({ stored: null, osDark: true, storageThrows: true });
-  check(
-    "private mode: still themes from OS",
-    r.sandbox.document.documentElement.dataset.theme === "dark",
-  );
-  r.ctx.toggleTheme();
-  check(
-    "private mode: toggle still works",
-    r.sandbox.document.documentElement.dataset.theme === "light",
-  );
 }
 
 console.log("[boot scripts identical on all 6 pages]");

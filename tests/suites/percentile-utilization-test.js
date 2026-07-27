@@ -139,15 +139,16 @@ check(
 // that name would be handed back for every VM in the file — one polluted
 // prototype silently re-sizing an entire fleet off a utilization number that
 // appears in nobody's upload. Own properties only.
-let inherited;
-Object.prototype["CPU Utilization p95"] = "999";
-Object.prototype["Memory Utilization p95"] = "999";
-try {
-  inherited = resolve({}, "p95");
-} finally {
-  delete Object.prototype["CPU Utilization p95"];
-  delete Object.prototype["Memory Utilization p95"];
-}
+// Model the inheritance with a dedicated prototype rather than mutating the
+// global Object.prototype — the latter would leak into every other object for
+// the window between set and delete and could clobber a pre-existing property.
+const inherited = resolve(
+  Object.create({
+    "CPU Utilization p95": "999",
+    "Memory Utilization p95": "999",
+  }),
+  "p95",
+);
 check(
   "an inherited utilization column is never read as a reading",
   inherited.cpu === 0 && inherited.memory === 0,
