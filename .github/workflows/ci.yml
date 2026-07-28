@@ -36,6 +36,9 @@ jobs:
       - name: Test suites + golden compare
         run: node tests/run-all.js
 
+      - name: Coverage gate (behavioral surface covered or waived)
+        run: node tools/build-coverage-inventory.js --check
+
   typecheck:
     runs-on: ubuntu-latest
     steps:

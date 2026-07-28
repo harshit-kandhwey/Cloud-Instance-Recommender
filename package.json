@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node tests/run-all.js",
     "syntax-check": "node tests/syntax-check.js",
+    "coverage:check": "node tools/build-coverage-inventory.js --check",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

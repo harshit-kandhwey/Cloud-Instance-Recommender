@@ -134,9 +134,11 @@ const waiverPath = path.join(REPO, "tests", "coverage-waivers.json");
 const waivers = fs.existsSync(waiverPath)
   ? JSON.parse(fs.readFileSync(waiverPath, "utf8"))
   : {};
-// Keys starting with "_" are documentation notes, not waivers (JSON has no
-// comments), so they never satisfy a name.
-for (const k of Object.keys(waivers)) if (k.startsWith("_")) delete waivers[k];
+// Keys starting with "//" are documentation notes, not waivers (JSON has no
+// comments), so they never satisfy a name. "//" cannot begin a JS identifier,
+// so — unlike an "_" prefix — the note marker can never collide with a real
+// global (e.g. _csvMenuOutsideClick, _syncSizeUnit), which must stay waivable.
+for (const k of Object.keys(waivers)) if (k.startsWith("//")) delete waivers[k];
 
 // ── Build the rows ───────────────────────────────────────────────────────────
 const rows = [...surface.keys()].sort().map((name) => {
