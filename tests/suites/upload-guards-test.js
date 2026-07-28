@@ -174,6 +174,7 @@ const AOA = [
 
   console.log("[size/empty guards]");
   {
+    resetUi();
     await ctx.ingestFile({
       name: "big.xlsx",
       size: 11 * 1024 * 1024,
@@ -202,6 +203,7 @@ const AOA = [
   // renamed .csv used to be read as text and parsed into garbage rows.
   console.log("[content sniffing beats the extension]");
   {
+    resetUi();
     // A file whose bytes are actually readable, unlike the mocks above (which
     // have no slice() and therefore fall back to routing by extension)
     const fakeFile = (name, bytes) => {
@@ -349,6 +351,7 @@ const AOA = [
 
   console.log("[csv reader.onerror]");
   {
+    resetUi();
     ctx.FileReader = class {
       readAsText() {
         const self = this;
@@ -368,6 +371,7 @@ const AOA = [
   // file handler used to be the only thing enforcing this on the CSV path
   console.log("[csv size/emptiness validation]");
   {
+    resetUi();
     await ctx.ingestFile({ name: "big.csv", size: 11 * 1024 * 1024 });
     check(
       "oversized csv rejected",

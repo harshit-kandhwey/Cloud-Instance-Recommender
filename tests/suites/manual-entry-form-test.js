@@ -228,8 +228,15 @@ function fill(ctx, values) {
       "AWS Region" in data[0],
   );
   check(
+    // fakeElement seeds every element with "hidden", so has("hidden") alone
+    // passes even if the panel was never rendered or the element never existed.
+    // Pair it with innerHTML === "" so this distinguishes "correctly suppressed"
+    // from "never touched": undefined short-circuits to a FAIL, and a panel that
+    // was rendered then hidden trips the emptiness half.
     "no mapping panel (canonical headers)",
-    elements.columnMappingSection.classes.has("hidden"),
+    elements.columnMappingSection?.classes.has("hidden") &&
+      elements.columnMappingSection.innerHTML === "",
+    elements.columnMappingSection?.innerHTML,
   );
   check(
     "manual label in status",

@@ -218,10 +218,12 @@ vm.runInContext(
   // Guard result before serializing: if the worker posted an error or the poll
   // timed out, result is undefined and toCsv(result.results) would throw, aborting
   // the IIFE before the fallback checks below ever run — losing their granular
-  // pass/fail. A missing result should be one clean failure, not a crash.
+  // pass/fail. A missing result should be one clean failure, not a crash. Guard
+  // .results.length too: toCsv dereferences results[0], so an empty results array
+  // crashes the same way a missing message would.
   check(
     "worker output matches golden",
-    !!result && toCsv(result.results) === golden,
+    !!result?.results?.length && toCsv(result.results) === golden,
   );
 
   console.log("[main-thread fallback with hooks]");
@@ -269,7 +271,7 @@ vm.runInContext(
   );
   check(
     "fallback output matches golden",
-    !!results2 && toCsv(results2) === golden,
+    !!results2?.length && toCsv(results2) === golden,
   );
 
   process.exitCode = failures ? 1 : 0;

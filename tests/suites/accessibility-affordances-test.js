@@ -152,31 +152,30 @@ check(
   headerCollapsed.attrs["aria-expanded"] === "false",
 );
 
-// Keyboard: Enter on open header collapses it and syncs aria-expanded
+// Keyboard: Enter on open header collapses it and syncs aria-expanded.
+// Look the handler up defensively: if enhanceAccessibility() ever stops
+// attaching a keydown listener, indexing [0] on an empty list throws and aborts
+// the run with a stack trace instead of a readable FAIL, skipping every check
+// below.
 let prevented = 0;
-headerOpen.listeners.keydown[0]({
-  key: "Enter",
-  preventDefault: () => prevented++,
-});
+const onKeydown = (headerOpen.listeners.keydown || [])[0];
+check("keydown handler attached", typeof onKeydown === "function");
+const fireKey = (key) =>
+  onKeydown && onKeydown({ key, preventDefault: () => prevented++ });
+fireKey("Enter");
 check("Enter triggers toggle", sectionOpen.classes.has("collapsed"));
 check(
   "aria-expanded synced after toggle",
   headerOpen.attrs["aria-expanded"] === "false",
 );
 check("default prevented", prevented === 1);
-headerOpen.listeners.keydown[0]({
-  key: " ",
-  preventDefault: () => prevented++,
-});
+fireKey(" ");
 check(
   "Space toggles back",
   !sectionOpen.classes.has("collapsed") &&
     headerOpen.attrs["aria-expanded"] === "true",
 );
-headerOpen.listeners.keydown[0]({
-  key: "a",
-  preventDefault: () => prevented++,
-});
+fireKey("a");
 check("other keys ignored", prevented === 2);
 
 console.log("[live regions]");
@@ -279,6 +278,10 @@ console.log("[floating controls]");
   // unrelated code and could fail (or pass) for reasons that have nothing to do
   // with the button
   const start = shell.indexOf("function setupBackToTop");
+  // Fail on the missing anchor itself: if the function is renamed, indexOf
+  // returns -1, slice(-1, …) yields a bogus tail fragment, and the position
+  // check below fails blaming CSS placement rather than the absent function.
+  check("setupBackToTop found in ui-shell.js", start !== -1);
   const end = shell.indexOf("\nfunction ", start + 1);
   const backToTop = shell.slice(start, end === -1 ? undefined : end);
   check(

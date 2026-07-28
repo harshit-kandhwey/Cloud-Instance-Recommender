@@ -19,7 +19,15 @@ function makeXlsx(sheets) {
 }
 
 function fakeFile(name, arrayBuffer) {
-  return { name, arrayBuffer: async () => arrayBuffer };
+  // size mirrors a real File: ingest.js checks it against the empty/oversize
+  // guards. Without it the fixtures only pass because the guard reads
+  // `file.size === 0`; a tightening to `!file.size` would reject every one of
+  // these as empty. Set it so the fixtures behave like real File objects.
+  return {
+    name,
+    size: arrayBuffer.byteLength,
+    arrayBuffer: async () => arrayBuffer,
+  };
 }
 
 function buildContext() {
@@ -239,7 +247,11 @@ db-server-02,8,32,70,80,us-west-2`;
         setTimeout(() => self.onload({ target: { result: file._text } }), 0);
       }
     };
-    await ctx.ingestFile({ name: "plain.csv", _text: CSV_EQUIV });
+    await ctx.ingestFile({
+      name: "plain.csv",
+      size: Buffer.byteLength(CSV_EQUIV, "utf8"),
+      _text: CSV_EQUIV,
+    });
     await new Promise((r) => setTimeout(r, 50));
     check(
       "csv ingested via parseCSV",

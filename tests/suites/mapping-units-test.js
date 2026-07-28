@@ -277,6 +277,47 @@ function setSelects(ctx, values) {
     );
   }
 
+  console.log(
+    "[positive control: a current-version entry for the same sig IS replayed]",
+  );
+  {
+    // The negative case above cannot, on its own, tell "stale entry rejected"
+    // from "entry never matched": a typo in the sig, or a change to how the app
+    // normalizes header keys, would leave BOTH entries unmatched and "not
+    // replayed" would pass while testing nothing. Seed the SAME signature with a
+    // CURRENT-version entry and assert it replays — that pins the sig format, so
+    // the rejection above is provably about the version, not a mismatch. The
+    // version is read from the module constant, not hard-coded, so a future bump
+    // cannot silently turn this back into a tautology.
+    const sig = ["vm name", "vcpu", "memory", "memory (mb)", "aws region"]
+      .sort()
+      .join("|");
+    const { ctx: c6, elements: e6, storage: s6 } = buildContext();
+    const V = vm.runInContext("SAVED_MAPPING_VERSION", c6);
+    s6["cloudInstanceRecommenderColumnMaps"] = JSON.stringify({
+      [sig]: {
+        v: V,
+        mapping: {
+          "VM Name": "VM Name",
+          vCPU: "CPU Count",
+          Memory: "Memory (GB)",
+          "AWS Region": "AWS Region",
+        },
+      },
+    });
+    vm.runInContext(`parseCSV(${JSON.stringify(CSV)})`, c6);
+    const d6 = vm.runInContext("csvData", c6);
+    check(
+      "the current-version answer is replayed (no panel)",
+      e6.columnMappingSection.classes.has("hidden"),
+    );
+    check(
+      "and the saved mapping is applied",
+      d6.length === 1 && d6[0]["Memory (GB)"] === "16",
+      JSON.stringify(d6),
+    );
+  }
+
   console.log("[MB-only file → silent auto-map + auto-convert]");
   {
     const { ctx: c3, elements: e3 } = buildContext();

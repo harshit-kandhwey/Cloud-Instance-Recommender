@@ -5,6 +5,7 @@ Plain-Node test harness — no framework, no npm install.
 ```bash
 node tests/run-all.js       # all suites + golden byte-compare
 node tests/syntax-check.js  # node --check over first-party JS
+npm run coverage:check      # behavioral surface must be covered or waived
 node tests/suites/column-mapping-test.js   # a single suite
 ```
 

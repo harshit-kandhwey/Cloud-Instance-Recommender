@@ -143,10 +143,15 @@ console.log("[page wiring]");
   // misleading failure. Brace-scan the block instead, so the check is faithful to
   // "the selector is somewhere inside @media screen", wherever it sits.
   const mediaStart = g.indexOf("@media screen");
+  // Start the scan at the block's opening brace. If there is no `{` after the
+  // at-rule (a malformed or renamed block), braceStart is -1 and we skip the
+  // scan entirely — starting the loop at -1 would count braces from index 0 and
+  // fabricate a bogus screenBlock rather than leaving it empty.
+  const braceStart = mediaStart === -1 ? -1 : g.indexOf("{", mediaStart);
   let screenBlock = "";
-  if (mediaStart !== -1) {
+  if (braceStart !== -1) {
     let depth = 0;
-    for (let i = g.indexOf("{", mediaStart); i < g.length; i++) {
+    for (let i = braceStart; i < g.length; i++) {
       if (g[i] === "{") depth++;
       else if (g[i] === "}" && --depth === 0) {
         screenBlock = g.slice(mediaStart, i + 1);
@@ -210,12 +215,22 @@ console.log("[boot script behavior]");
       return { ctx, sandbox, listeners, storage };
     }
 
+    // Fire the registered OS-change listener, or report it never registered — a
+    // boot script that switched to addListener (or registered conditionally)
+    // would otherwise throw on listeners[0] and abort the remaining checks, the
+    // same crash-vs-clean-failure concern this file guards elsewhere.
+    const fireOsChange = (rb, matches) => {
+      if (typeof rb.listeners[0] !== "function") return false;
+      rb.listeners[0]({ matches });
+      return true;
+    };
+
     let r = runBoot({ stored: null, osDark: true });
     check(
       "no saved pref + OS dark → dark",
       r.sandbox.document.documentElement.dataset.theme === "dark",
     );
-    r.listeners[0]({ matches: false });
+    check("OS change listener registered", fireOsChange(r, false));
     check(
       "follows OS change while unset",
       r.sandbox.document.documentElement.dataset.theme === "light",
@@ -226,7 +241,7 @@ console.log("[boot script behavior]");
       "saved light beats OS dark",
       r.sandbox.document.documentElement.dataset.theme === "light",
     );
-    r.listeners[0]({ matches: true });
+    check("OS change listener registered (saved case)", fireOsChange(r, true));
     check(
       "OS change ignored once saved",
       r.sandbox.document.documentElement.dataset.theme === "light",
@@ -288,4 +303,6 @@ console.log("[boot scripts identical on all 6 pages]");
   check("identical boot script everywhere", allSame && ref !== null);
 }
 
-process.exit(failures ? 1 : 0);
+// process.exitCode, not process.exit(): exit() can truncate buffered stdout
+// when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+process.exitCode = failures ? 1 : 0;

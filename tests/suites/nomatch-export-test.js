@@ -270,6 +270,9 @@ check("formula-injection hardened", lines[1].includes("'=2+2"), lines[1]);
 check("reasons included", lines[1].includes("Region 'narnia' not found"));
 
 console.log("[all-match export guard]");
+// The stack still holds the empty-selection warning from the block above; clear
+// it so this assertion reads only the toast (if any) from the call under test.
+toastStack.innerHTML = "";
 vm.runInContext(
   `processedResults = [${JSON.stringify(results[0])}]; downloadNoMatchRows();`,
   ctx,

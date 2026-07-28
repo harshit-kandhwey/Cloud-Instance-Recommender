@@ -160,20 +160,23 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   console.log("[panel rendering]");
   const panel = elements["regionValidationSection"];
   check("panel visible", panel && !panel.classes.has("hidden"));
-  check("panel has exact chip", panel.innerHTML.includes("us-east-1 ✓"));
+  // Read innerHTML through a guarded local: elements is populated lazily, so if
+  // the app never rendered the panel, `panel` is undefined and every chip check
+  // below would throw on .innerHTML — unwinding to the outer catch and skipping
+  // the rest of the suite, the exact crash-vs-clean-failure the visibility check
+  // above is meant to report as one FAIL.
+  const panelHtml = panel?.innerHTML ?? "";
+  check("panel has exact chip", panelHtml.includes("us-east-1 ✓"));
   check(
     "panel has fuzzy chip",
-    panel.innerHTML.includes("us-east-1a → us-east-1"),
-    panel.innerHTML.slice(0, 300),
+    panelHtml.includes("us-east-1a → us-east-1"),
+    panelHtml.slice(0, 300),
   );
-  check("panel has unknown chip", panel.innerHTML.includes("narnia-99 ✗"));
-  check(
-    "panel warns about sample data",
-    panel.innerHTML.includes("sample data"),
-  );
+  check("panel has unknown chip", panelHtml.includes("narnia-99 ✗"));
+  check("panel warns about sample data", panelHtml.includes("sample data"));
   check(
     "unknown count is 3",
-    /3 region name\(s\) not recognized/.test(panel.innerHTML),
+    /3 region name\(s\) not recognized/.test(panelHtml),
   );
 
   // Poll for the fire-and-forget prefetch instead of a fixed sleep (CI-safe)
@@ -222,7 +225,7 @@ d,4,16,us-west-2`;
     "no warning when all valid",
     !panel.innerHTML.includes("not recognized"),
   );
-  check("validation replaced", !ctx._regionValidation.azure);
+  check("validation replaced", !ctx._regionValidation?.azure);
 
   process.exit(failures ? 1 : 0);
 })().catch((e) => {

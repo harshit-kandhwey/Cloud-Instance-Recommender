@@ -363,7 +363,7 @@ The in-browser **results preview** table includes sortable columns, a live searc
 
 Available only on the AWS page. Produces a CSV matching the Amazon EC2 Instances worksheet format for [AWS Pricing Calculator Bulk Import](https://calculator.aws/#/bulk-import). When both L2L and Optimized are generated, two separate files appear — import only one per estimate to avoid double-counting.
 
-If your upload carried a `Disk (GB)` column, a positive value is written to **Storage amount per Instance (GB)**, rounded up to a whole GB (minimum 1 GB); missing, zero, and negative values are left blank. **Storage Type, IOPS and throughput are always left blank** for the calculator to default — the bulk importer parses this file strictly, and a wrong value in those fields fails the whole import rather than one column.
+If your upload carried a `Disk (GB)` column, a positive value is written to **Storage amount per Instance (GB)**, rounded up to a whole GB (minimum 1 GB); missing, zero, negative, and non-numeric values are left blank. **Storage Type, IOPS and throughput are always left blank** for the calculator to default — the bulk importer parses this file strictly, and a wrong value in those fields fails the whole import rather than one column.
 
 ---
 
