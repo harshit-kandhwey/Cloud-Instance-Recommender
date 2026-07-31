@@ -36,17 +36,40 @@ const APP_SCRIPTS = [
  *   null for, to model a page that lacks that placeholder
  * @param {object} [options.seedStorage] initial localStorage contents
  * @param {string} [options.dataScript] provider data file (decides page providers)
+ * @param {string[]} [options.dataScripts] several provider data files, for a
+ *   multicloud page; overrides dataScript when given
+ * @param {boolean} [options.storageThrows] model a browser where localStorage
+ *   throws (private mode), so a suite can prove the flow survives it
  */
 function buildContext({
   missingElements = [],
   seedStorage = {},
   dataScript = "js/aws/aws-data.js",
+  dataScripts,
+  storageThrows = false,
 } = {}) {
+  const scripts = dataScripts || [dataScript];
   const elements = {};
   const toasts = [];
+  // Scripts the app asked to inject (via document.head.appendChild) — a suite
+  // asserts here that, e.g., the xlsx vendor bundle loads only on demand.
+  const requested = [];
+  const alerts = [];
   // A REAL store. Suites that assert what survives an upload need one; a stub
   // that forgets would let those assertions pass without testing anything.
   const store = new Map(Object.entries(seedStorage));
+  // A plain-object VIEW over the same store, for suites written against the
+  // `storage["key"]` idiom (read, write, `in`, delete) — every op forwards to
+  // the Map, so it and localStorage never fall out of sync.
+  const storage = new Proxy(
+    {},
+    {
+      get: (_t, k) => (store.has(k) ? store.get(k) : undefined),
+      set: (_t, k, v) => (store.set(k, String(v)), true),
+      has: (_t, k) => store.has(k),
+      deleteProperty: (_t, k) => (store.delete(k), true),
+    },
+  );
   const absent = new Set(missingElements);
 
   function fakeElement(id) {
@@ -104,11 +127,27 @@ function buildContext({
     clearTimeout,
     setInterval: () => 0,
     clearInterval: () => {},
-    localStorage: {
-      getItem: (k) => (store.has(k) ? store.get(k) : null),
-      setItem: (k, v) => store.set(k, String(v)),
-      removeItem: (k) => store.delete(k),
-    },
+    localStorage: storageThrows
+      ? {
+          getItem: () => {
+            throw new Error("private mode");
+          },
+          setItem: () => {
+            throw new Error("private mode");
+          },
+          removeItem: () => {},
+        }
+      : {
+          getItem: (k) => (store.has(k) ? store.get(k) : null),
+          setItem: (k, v) => store.set(k, String(v)),
+          removeItem: (k) => store.delete(k),
+        },
+    // Capture alerts/confirm rather than needing a real window. confirm returns
+    // true so a "really delete?" path proceeds; a suite that needs the other
+    // branch overrides ctx.confirm.
+    alerts,
+    alert: (m) => alerts.push(m),
+    confirm: () => true,
     // The CSV branch of ingestFile goes through FileReader, which Node has not
     FileReader: class {
       readAsText(file) {
@@ -123,11 +162,12 @@ function buildContext({
     createElement: (tag) => ({ tag, style: {}, setAttribute: () => {} }),
     getElementById: (id) => (absent.has(id) ? null : fakeElement(id)),
     querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: dataScript }] : [],
+      sel === "script[src]" ? scripts.map((s) => ({ src: s })) : [],
     addEventListener: () => {},
     head: {
       appendChild(script) {
         if (script.tag !== "script") return;
+        requested.push(script.src);
         setTimeout(() => {
           try {
             const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
@@ -147,13 +187,13 @@ function buildContext({
     vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
       filename: rel,
     });
-  load(dataScript);
+  for (const s of scripts) load(s);
   for (const f of APP_SCRIPTS) load(f);
 
   // Capture toasts instead of rendering them
   ctx.showToast = (message, type) => toasts.push({ message, type });
 
-  return { ctx, elements, toasts, store };
+  return { ctx, elements, toasts, store, storage, requested, alerts };
 }
 
 function makeChecker() {

@@ -1,115 +1,6 @@
 // Column mapping: auto-match, panel flow, persistence.
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
-
-const REPO = path.resolve(__dirname, "..", "..");
-
-function buildContext({ pageScripts, storageThrows } = {}) {
-  const elements = {};
-  const storage = {};
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        dataset: {},
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: (c) => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    alerts: [],
-    localStorage: storageThrows
-      ? {
-          getItem: () => {
-            throw new Error("private mode");
-          },
-          setItem: () => {
-            throw new Error("private mode");
-          },
-          removeItem: () => {},
-        }
-      : {
-          getItem: (k) => (k in storage ? storage[k] : null),
-          setItem: (k, v) => {
-            storage[k] = String(v);
-          },
-          removeItem: (k) => {
-            delete storage[k];
-          },
-        },
-  };
-  sandbox.alert = (m) => sandbox.alerts.push(m);
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]"
-        ? (pageScripts || ["js/aws/aws-data.js"]).map((s) => ({ src: s }))
-        : [],
-    addEventListener: () => {},
-    head: {
-      appendChild(script) {
-        if (script.tag !== "script") return;
-        setTimeout(() => {
-          try {
-            const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-            vm.runInContext(code, ctx, { filename: script.src });
-            script.onload && script.onload();
-          } catch (e) {
-            script.onerror && script.onerror(e);
-          }
-        }, 0);
-      },
-    },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  for (const s of pageScripts || ["js/aws/aws-data.js"]) load(s);
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  return { ctx, elements, storage };
-}
+const { buildContext } = require("./harness");
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -140,7 +31,13 @@ function getHeaders(ctx) {
       "headers unchanged",
       getHeaders(ctx).join(",") === "VM Name,CPU Count,Memory (GB),AWS Region",
     );
-    check("panel hidden", elements.columnMappingSection.classes.has("hidden"));
+    // Pair has("hidden") — true for every seeded element — with innerHTML === ""
+    // so this tells "panel correctly suppressed" from "panel never rendered".
+    check(
+      "panel hidden",
+      elements.columnMappingSection.classes.has("hidden") &&
+        elements.columnMappingSection.innerHTML === "",
+    );
     check(
       "no rename note",
       !elements.fileStatus.innerHTML.includes("Mapped columns"),
@@ -165,7 +62,11 @@ function getHeaders(ctx) {
       data[0]["CPU Count"] === "8" && data[0]["VM Name"] === "srv1",
     );
     check("headers rewritten", getHeaders(ctx).includes("CPU Count"));
-    check("panel hidden", elements.columnMappingSection.classes.has("hidden"));
+    check(
+      "panel hidden",
+      elements.columnMappingSection.classes.has("hidden") &&
+        elements.columnMappingSection.innerHTML === "",
+    );
     check(
       "rename note shown",
       elements.fileStatus.innerHTML.includes("Mapped columns"),
@@ -179,7 +80,7 @@ function getHeaders(ctx) {
 
   console.log("[3. ambiguous (collision) → panel, deferred pipeline]");
   {
-    const { ctx, elements } = buildContext();
+    const { ctx, elements, toasts } = buildContext();
     parse(ctx, "CPU Count,vCPUs,Memory (GB),VM Name\n4,4,16,a");
     check("csvData EMPTY while pending", getCsvData(ctx).length === 0);
     check("panel shown", !elements.columnMappingSection.classes.has("hidden"));
@@ -195,25 +96,18 @@ function getHeaders(ctx) {
         // selectedProviders default? ensure non-empty to reach csvData gate
         vm.runInContext("selectedProviders = ['aws']", ctx);
         vm.runInContext("generateRecommendations()", ctx);
-        return elements.toastStack.innerHTML.includes("column mapping");
+        // The shared harness captures toasts into `toasts`, not #toastStack.
+        return toasts.some((t) => /column mapping/.test(t.message));
       })(),
-      elements.toastStack.innerHTML,
+      JSON.stringify(toasts),
     );
 
-    // Simulate user: CPU Count ← "CPU Count" (index 0), Memory ← index 2, VM Name ← index 3
-    const headers = ["CPU Count", "vCPUs", "Memory (GB)", "VM Name"];
-    const canonicals = [
-      "CPU Count",
-      "Memory (GB)",
-      "CPU Utilization",
-      "Memory Utilization",
-      "VM Name",
-      "App Name",
-      "AWS Region",
-      "Azure Region",
-      "GCP Region",
-    ];
-    canonicals.forEach((c, idx) => {
+    // Simulate user: CPU Count ← "CPU Count" (index 0), Memory ← index 2, VM Name ← index 3.
+    // Drive the select ids off the panel's REAL canonical order, not a hard-coded
+    // list — a stale list writes to the wrong colmap_${idx} (which fakeElement
+    // happily invents), so the mapping applies to nothing and the test passes for
+    // the wrong reason, or by accident via auto-mapping.
+    ctx.pageCanonicals().forEach((c, idx) => {
       const el = ctx.document.getElementById(`colmap_${idx}`);
       if (c === "CPU Count") el.value = "0";
       else if (c === "Memory (GB)") el.value = "2";
@@ -253,7 +147,8 @@ function getHeaders(ctx) {
     );
     check(
       "panel not shown",
-      elements.columnMappingSection.classes.has("hidden"),
+      elements.columnMappingSection.classes.has("hidden") &&
+        elements.columnMappingSection.innerHTML === "",
     );
   }
 
@@ -268,18 +163,7 @@ function getHeaders(ctx) {
     // Panel path + confirm (saveColumnMapping throws internally, must not break)
     parse(ctx, "CPU Count,vCPUs,Memory (GB)\n4,4,16");
     check("panel shown", !elements.columnMappingSection.classes.has("hidden"));
-    const canonicals = [
-      "CPU Count",
-      "Memory (GB)",
-      "CPU Utilization",
-      "Memory Utilization",
-      "VM Name",
-      "App Name",
-      "AWS Region",
-      "Azure Region",
-      "GCP Region",
-    ];
-    canonicals.forEach((c, idx) => {
+    ctx.pageCanonicals().forEach((c, idx) => {
       const el = ctx.document.getElementById(`colmap_${idx}`);
       if (c === "CPU Count") el.value = "0";
       else if (c === "Memory (GB)") el.value = "2";
@@ -302,7 +186,7 @@ function getHeaders(ctx) {
   }
   {
     const { ctx, elements } = buildContext({
-      pageScripts: [
+      dataScripts: [
         "js/aws/aws-data.js",
         "js/azure/azure-data.js",
         "js/gcp/gcp-data.js",
@@ -317,7 +201,8 @@ function getHeaders(ctx) {
     );
     check(
       "multicloud: no panel for optional-only mismatch",
-      elements.columnMappingSection.classes.has("hidden"),
+      elements.columnMappingSection.classes.has("hidden") &&
+        elements.columnMappingSection.innerHTML === "",
     );
   }
 

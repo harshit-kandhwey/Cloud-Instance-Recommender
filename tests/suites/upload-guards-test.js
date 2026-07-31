@@ -1,8 +1,7 @@
 // Verification of the xlsx/CSV upload hardening: multi-sheet UI note,
 // size/empty guards, and reader.onerror.
-const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const { buildContext } = require("./harness");
 
 const REPO = path.resolve(__dirname, "..", "..");
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
@@ -16,98 +15,14 @@ function makeXlsx(sheets) {
   return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 }
 
-const elements = {};
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      dataset: {},
-      className: "",
-      style: {},
-      value: "",
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {},
-        contains: (c) => elements[id].classes.has(c),
-      },
-      addEventListener: () => {},
-      querySelectorAll: () => [],
-      focus: () => {},
-      setSelectionRange: () => {},
-      scrollIntoView: () => {},
-    };
-  }
-  return elements[id];
-}
-// elements and ctx are module-level and shared across blocks, so a check that
-// reads fileStatus/sheetPicker can pass on state a PRIOR block left behind — a
-// regression that stopped writing fileStatus would go unnoticed. Clear the DOM
-// between blocks that assert on it, so each starts from a blank slate.
+const { ctx, elements } = buildContext();
+// elements is shared across blocks, so a check that reads fileStatus/sheetPicker
+// can pass on state a PRIOR block left behind — a regression that stopped writing
+// fileStatus would go unnoticed. Clear the DOM between blocks that assert on it,
+// so each starts from a blank slate.
 function resetUi() {
   for (const key of Object.keys(elements)) delete elements[key];
 }
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alert: () => {},
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: (tag) => ({ tag, style: {} }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  head: {
-    appendChild(script) {
-      if (script.tag !== "script") return;
-      setTimeout(() => {
-        try {
-          const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-          vm.runInContext(code, ctx, { filename: script.src });
-          script.onload && script.onload();
-        } catch (e) {
-          script.onerror && script.onerror(e);
-        }
-      }, 0);
-    },
-  },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
 
 let failures = 0;
 function check(name, cond, detail) {

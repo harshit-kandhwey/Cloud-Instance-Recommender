@@ -1,9 +1,9 @@
 // .xlsx ingestion via vendored SheetJS.
 // Builds real xlsx files with the vendored library, then feeds them through
 // ingestFile() in the simulated-DOM context (including lazy script load).
-const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { buildContext } = require("./harness");
 
 const REPO = path.resolve(__dirname, "..", "..");
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
@@ -28,96 +28,6 @@ function fakeFile(name, arrayBuffer) {
     size: arrayBuffer.byteLength,
     arrayBuffer: async () => arrayBuffer,
   };
-}
-
-function buildContext() {
-  const elements = {};
-  const requested = [];
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        dataset: {},
-        className: "",
-        textContent: "",
-        style: {},
-        value: "",
-        checked: false,
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    alert: () => {},
-    localStorage: {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    },
-  };
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: {
-      appendChild(script) {
-        if (script.tag !== "script") return;
-        requested.push(script.src);
-        setTimeout(() => {
-          try {
-            const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-            vm.runInContext(code, ctx, { filename: script.src });
-            script.onload && script.onload();
-          } catch (e) {
-            script.onerror && script.onerror(e);
-          }
-        }, 0);
-      },
-    },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  return { ctx, elements, requested };
 }
 
 let failures = 0;

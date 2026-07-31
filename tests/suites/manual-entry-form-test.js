@@ -1,108 +1,7 @@
 // Manual VM entry verification: form flow, validation, persistence, and
 // hand-off into the shared ingest pipeline.
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
-
-const REPO = path.resolve(__dirname, "..", "..");
-
-function buildContext(seedStorage) {
-  const elements = {};
-  const storage = Object.assign({}, seedStorage || {});
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        dataset: {},
-        className: "",
-        style: {},
-        value: "",
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-        focus: () => {},
-        setSelectionRange: () => {},
-        scrollIntoView: () => {},
-        setAttribute: () => {},
-        getAttribute: () => null,
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    alerts: [],
-    localStorage: {
-      getItem: (k) => (k in storage ? storage[k] : null),
-      setItem: (k, v) => {
-        storage[k] = String(v);
-      },
-      removeItem: (k) => {
-        delete storage[k];
-      },
-    },
-  };
-  sandbox.alert = (m) => sandbox.alerts.push(m);
-  sandbox.confirm = () => true;
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {}, setAttribute: () => {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-    addEventListener: () => {},
-    head: {
-      appendChild(script) {
-        if (script.tag !== "script") return;
-        setTimeout(() => {
-          try {
-            const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-            vm.runInContext(code, ctx, { filename: script.src });
-            script.onload && script.onload();
-          } catch (e) {
-            script.onerror && script.onerror(e);
-          }
-        }, 0);
-      },
-    },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  load("js/aws/aws-data.js");
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  return { ctx, elements, storage };
-}
+const { buildContext } = require("./harness");
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -128,7 +27,7 @@ function fill(ctx, values) {
 }
 
 (async () => {
-  const { ctx, elements, storage } = buildContext();
+  const { ctx, elements, storage, toasts } = buildContext();
 
   console.log("[toggle + form render]");
   ctx.toggleManualEntry();
@@ -174,10 +73,12 @@ function fill(ctx, values) {
   });
   ctx.manualAddVM();
   check(
+    // Toasts are captured by the shared harness into `toasts`, not rendered to
+    // #toastStack (which it never creates), so assert against that array.
     "missing CPU rejected",
     vm.runInContext("manualVMs.length", ctx) === 1 &&
-      elements.toastStack.innerHTML.includes("greater than 0"),
-    elements.toastStack.innerHTML,
+      toasts.some((t) => /greater than 0/.test(t.message)),
+    JSON.stringify(toasts),
   );
 
   fill(ctx, {
@@ -287,8 +188,10 @@ function fill(ctx, values) {
   console.log("[restore from localStorage in a fresh session]");
   {
     const { ctx: c2, elements: e2 } = buildContext({
-      cloudInstanceRecommenderManualVMs:
-        storage["cloudInstanceRecommenderManualVMs"],
+      seedStorage: {
+        cloudInstanceRecommenderManualVMs:
+          storage["cloudInstanceRecommenderManualVMs"],
+      },
     });
     c2.toggleManualEntry();
     check("saved VMs restored", vm.runInContext("manualVMs.length", c2) === 2);

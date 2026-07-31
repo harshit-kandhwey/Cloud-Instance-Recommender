@@ -1,110 +1,8 @@
 // Mapping edit + MB→GB conversion verification.
 // Scenario: both "Memory" (GB) and "Memory (MB)" present — now ambiguous by
 // design; panel offers a unit selector; conversions and persistence checked.
-const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
-
-const REPO = path.resolve(__dirname, "..", "..");
-
-function buildContext(seedStorage, pageScripts) {
-  const scripts = pageScripts || ["js/aws/aws-data.js"];
-  const elements = {};
-  const storage = Object.assign({}, seedStorage || {});
-  function fakeElement(id) {
-    if (!elements[id]) {
-      elements[id] = {
-        id,
-        innerHTML: "",
-        dataset: {},
-        className: "",
-        style: {},
-        value: "",
-        classes: new Set(["hidden"]),
-        classList: {
-          add: (c) => elements[id].classes.add(c),
-          remove: (c) => elements[id].classes.delete(c),
-          toggle: () => {},
-          contains: (c) => elements[id].classes.has(c),
-        },
-        addEventListener: () => {},
-        querySelectorAll: () => [],
-        focus: () => {},
-        setSelectionRange: () => {},
-        scrollIntoView: () => {},
-        setAttribute: () => {},
-        getAttribute: () => null,
-      };
-    }
-    return elements[id];
-  }
-  const sandbox = {
-    console: { log: () => {}, warn: () => {}, error: () => {} },
-    setTimeout,
-    clearTimeout,
-    setInterval: () => 0,
-    clearInterval: () => {},
-    alerts: [],
-    localStorage: {
-      getItem: (k) => (k in storage ? storage[k] : null),
-      setItem: (k, v) => {
-        storage[k] = String(v);
-      },
-      removeItem: (k) => {
-        delete storage[k];
-      },
-    },
-  };
-  sandbox.alert = (m) => sandbox.alerts.push(m);
-  sandbox.confirm = () => true;
-  sandbox.window = sandbox;
-  sandbox.document = {
-    createElement: (tag) => ({ tag, style: {}, setAttribute: () => {} }),
-    getElementById: (id) => fakeElement(id),
-    querySelectorAll: (sel) =>
-      sel === "script[src]" ? scripts.map((s) => ({ src: s })) : [],
-    addEventListener: () => {},
-    head: {
-      appendChild(script) {
-        if (script.tag !== "script") return;
-        setTimeout(() => {
-          try {
-            const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-            vm.runInContext(code, ctx, { filename: script.src });
-            script.onload && script.onload();
-          } catch (e) {
-            script.onerror && script.onerror(e);
-          }
-        }, 0);
-      },
-    },
-    body: { appendChild: () => {}, removeChild: () => {} },
-  };
-  const ctx = vm.createContext(sandbox);
-  const load = (rel) =>
-    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-      filename: rel,
-    });
-  for (const s of scripts) load(s);
-  for (const f of [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/downloads.js",
-  ])
-    load(f);
-  return { ctx, elements, storage };
-}
+const { buildContext } = require("./harness");
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -118,20 +16,13 @@ function check(name, cond, detail) {
 // Headers: VM Name(0), vCPU(1), Memory(2), Memory (MB)(3), AWS Region(4)
 const CSV = `VM Name,vCPU,Memory,Memory (MB),AWS Region
 web-01,4,16,16384,us-east-1`;
-const CANONICALS = [
-  "CPU Count",
-  "Memory (GB)",
-  "CPU Utilization",
-  "Memory Utilization",
-  "VM Name",
-  "AWS Region",
-  "Azure Region",
-  "GCP Region",
-];
-
 function setSelects(ctx, values) {
-  // values: { canonical: headerIndexString or "" }, plus optional unit
-  CANONICALS.forEach((c, idx) => {
+  // values: { canonical: headerIndexString or "" }, plus optional unit.
+  // Drive the select ids off the panel's REAL canonical order (pageCanonicals),
+  // not a hard-coded list — a stale list would write to the wrong colmap_${idx}
+  // and the mapping would silently apply to the wrong column (fakeElement would
+  // even invent a phantom select for a canonical the page never renders).
+  ctx.pageCanonicals().forEach((c, idx) => {
     const el = ctx.document.getElementById(`colmap_${idx}`);
     el.value = values[c] != null ? values[c] : "";
   });
@@ -259,7 +150,9 @@ function setSelects(ctx, values) {
       "AWS Region": "AWS Region",
     };
     const { ctx: c2, elements: e2 } = buildContext({
-      cloudInstanceRecommenderColumnMaps: JSON.stringify({ [sig]: legacy }),
+      seedStorage: {
+        cloudInstanceRecommenderColumnMaps: JSON.stringify({ [sig]: legacy }),
+      },
     });
     vm.runInContext(`parseCSV(${JSON.stringify(CSV)})`, c2);
     const d2 = vm.runInContext("csvData", c2);
@@ -356,11 +249,13 @@ function setSelects(ctx, values) {
 
   console.log("[multicloud page shows all region rows]");
   {
-    const { ctx: c5, elements: e5 } = buildContext(null, [
-      "js/aws/aws-data.js",
-      "js/azure/azure-data.js",
-      "js/gcp/gcp-data.js",
-    ]);
+    const { ctx: c5, elements: e5 } = buildContext({
+      dataScripts: [
+        "js/aws/aws-data.js",
+        "js/azure/azure-data.js",
+        "js/gcp/gcp-data.js",
+      ],
+    });
     vm.runInContext(`parseCSV(${JSON.stringify(CSV)})`, c5);
     const p5 = e5.columnMappingSection;
     check("panel shown on multicloud too", !p5.classes.has("hidden"));

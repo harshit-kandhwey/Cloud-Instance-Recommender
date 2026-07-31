@@ -291,7 +291,7 @@ waiver still records the reason.
 | `onUtilizationStatisticChange` | js/base/form-controls.js | function | behavioral | covered | utilization-hint-test.js |
 | `openAppPortfolio` | js/base/downloads.js | function | behavioral | waived | _waived: Serializes the portfolio payload into a size-guarded localStorage copy and opens the App Portfolio window (postMessage is the primary handoff). Cross-window behavior that needs a real window; E2E-verified (3.10.x)._ |
 | `pEsc` | js/base/presets.js | function | internal | uncovered | — |
-| `pageCanonicals` | js/base/app-core.js | function | internal | covered | app-mapping-test.js, mapping-units-test.js |
+| `pageCanonicals` | js/base/app-core.js | function | internal | covered | app-mapping-test.js, column-mapping-test.js, mapping-units-test.js |
 | `parseCSV` | js/base/ingest.js | function | internal | covered | column-mapping-test.js, current-instance-test.js, mapping-units-test.js, preview-search-test.js, region-validation-test.js, storage-passthrough-test.js, xlsx-ingest-test.js |
 | `parseCSVLine` | js/base/ingest.js | function | internal | uncovered | — |
 | `parseDelimitedText` | js/base/ingest.js | function | internal | uncovered | — |
