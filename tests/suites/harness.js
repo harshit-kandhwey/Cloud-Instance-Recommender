@@ -12,7 +12,7 @@
 //
 // Not named *-test.js, so run-all.js does not pick it up as a suite.
 //
-// buildContext existed as four verbatim copies that had already begun to drift —
+// buildContext existed as five verbatim copies that had already begun to drift —
 // one grew a working classList.toggle, one a scrollIntoView, one a real
 // localStorage — which meant a suite could pass or fail on which copy it happened
 // to hold, rather than on the code under test.
@@ -217,8 +217,9 @@ function buildContext({
     // parts.join("") keeps the exact content so a suite can assert what was in
     // the file (BOM, header row, escaped cells) without touching a disk.
     Blob: class {
-      constructor(parts) {
+      constructor(parts, options) {
         this.content = (parts || []).join("");
+        this.type = (options && options.type) || "";
       }
     },
     // createObjectURL records the Blob as a download; the <a>.click() below fills
