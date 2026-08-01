@@ -3,90 +3,13 @@
 //   - resolveRowWorkload precedence (Workload cell > app map > default > General)
 //   - app→workload map persistence round-trip
 //   - the app mapping panel (shown only with App Name + no Workload)
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
-const elements = {};
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      className: "",
-      style: {},
-      value: "",
-      textContent: "",
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {},
-        contains: (c) => elements[id].classes.has(c),
-      },
-      _qsa: [],
-      querySelectorAll: () => elements[id]._qsa,
-      addEventListener: () => {},
-      focus: () => {},
-      setSelectionRange: () => {},
-      scrollIntoView: () => {},
-    };
-  }
-  return elements[id];
-}
-
-const store = {};
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  localStorage: {
-    getItem: (k) => (k in store ? store[k] : null),
-    setItem: (k, v) => {
-      store[k] = String(v);
-    },
-    removeItem: (k) => {
-      delete store[k];
-    },
-  },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: () => ({ style: {}, click() {} }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  head: { appendChild: () => {} },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Full app on the AWS page. localStorage is the harness's real Map-backed store,
+// so the app→workload map round-trips; a block below swaps in a throwing setItem
+// to prove a failed save is surfaced, then restores it. A mapping panel's <select>
+// list is simulated by reassigning an element's querySelectorAll.
+const { ctx, run, elements } = buildContext();
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -96,7 +19,6 @@ function check(name, cond, detail) {
     console.error(`  FAIL: ${name}${detail ? " — " + detail : ""}`);
   }
 }
-const run = (expr) => vm.runInContext(expr, ctx);
 
 console.log("[App Name is a mappable canonical]");
 check(
@@ -254,7 +176,7 @@ check(
 console.log("[applyAppMapping]");
 // Start from a known map, then simulate the panel's selects
 run('saveAppWorkloadMap({ web: "Cache" })');
-elements.appMappingSection._qsa = [
+elements.appMappingSection.querySelectorAll = () => [
   { getAttribute: () => "Billing", value: "Database" },
   { getAttribute: () => "Web", value: "" }, // blank clears the app
 ];
@@ -270,8 +192,8 @@ check(
 console.log("[persistence failure is surfaced, not reported as saved]");
 // Simulate storage being unavailable (quota exceeded / private browsing):
 // saveAppWorkloadMap must report failure and applyAppMapping must say so.
-const realSetItem = sandbox.localStorage.setItem;
-sandbox.localStorage.setItem = () => {
+const realSetItem = ctx.localStorage.setItem;
+ctx.localStorage.setItem = () => {
   throw new Error("storage unavailable");
 };
 try {
@@ -279,7 +201,7 @@ try {
     "saveAppWorkloadMap returns false when storage throws",
     run('saveAppWorkloadMap({ x: "Cache" })') === false,
   );
-  elements.appMappingSection._qsa = [
+  elements.appMappingSection.querySelectorAll = () => [
     { getAttribute: () => "Billing", value: "Database" },
   ];
   run("applyAppMapping()");
@@ -291,7 +213,7 @@ try {
   );
 } finally {
   // Restore even if a check throws, so later suites see a working setItem.
-  sandbox.localStorage.setItem = realSetItem;
+  ctx.localStorage.setItem = realSetItem;
 }
 
 process.exit(failures ? 1 : 0);

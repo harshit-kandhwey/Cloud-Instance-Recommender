@@ -4,106 +4,11 @@
 //   - the App Summary item's presence + count in the CSV menu (renderCsvMenu)
 //   - downloadAppSummary CSV content + formula-injection hardening
 //   - "N apps" chip in the stats bar
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
-const elements = {};
-const downloads = [];
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      className: "",
-      style: {},
-      value: "",
-      textContent: "",
-      title: "",
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {},
-        contains: (c) => elements[id].classes.has(c),
-      },
-      addEventListener: () => {},
-      querySelectorAll: () => [],
-      focus: () => {},
-      setSelectionRange: () => {},
-      scrollIntoView: () => {},
-    };
-  }
-  return elements[id];
-}
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alerts: [],
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-  Blob: class {
-    constructor(parts) {
-      this.content = parts.join("");
-    }
-  },
-};
-sandbox.alert = (m) => sandbox.alerts.push(m);
-sandbox.window = sandbox;
-sandbox.URL = {
-  createObjectURL: (blob) => {
-    downloads.push({ blob });
-    return "blob:x";
-  },
-  revokeObjectURL: () => {},
-};
-sandbox.document = {
-  createElement: (tag) => ({
-    tag,
-    style: {},
-    click() {
-      if (this.tag === "a")
-        downloads[downloads.length - 1].name = this.download;
-    },
-  }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  head: { appendChild: () => {} },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Full app on the AWS page; the shared harness captures the App Summary CSV
+// download (Blob content + filename via the <a> click) into `downloads`.
+const { ctx, run, elements, downloads } = buildContext();
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -182,10 +87,10 @@ const results = [
     "AWS Like-to-Like Instance": "t3.small",
   },
 ];
-vm.runInContext(`processedResults = ${JSON.stringify(results)};`, ctx);
+run(`processedResults = ${JSON.stringify(results)};`);
 
 console.log("[getAppSummary]");
-const summary = vm.runInContext("getAppSummary(processedResults)", ctx);
+const summary = run("getAppSummary(processedResults)");
 check(
   "6 named apps (blank + whitespace-only skipped)",
   summary.length === 6,
@@ -216,20 +121,17 @@ check(
 console.log("[no App Name column → empty]");
 check(
   "getAppSummary returns [] without App Name",
-  vm.runInContext(
-    'getAppSummary([{ "VM Name": "x", "CPU Count": "2" }]).length === 0',
-    ctx,
-  ),
+  run('getAppSummary([{ "VM Name": "x", "CPU Count": "2" }]).length === 0'),
 );
 
 console.log("[CSV menu state]");
-vm.runInContext("renderCsvMenu(processedResults)", ctx);
+run("renderCsvMenu(processedResults)");
 check(
   "App Summary item listed with app count",
   elements.csvMenu.innerHTML.includes("App Summary CSV (6)"),
   elements.csvMenu.innerHTML,
 );
-vm.runInContext('renderCsvMenu([{ "VM Name": "x", "CPU Count": "2" }])', ctx);
+run('renderCsvMenu([{ "VM Name": "x", "CPU Count": "2" }])');
 check(
   "App Summary item absent when no App Name column",
   !elements.csvMenu.innerHTML.includes("App Summary CSV"),
@@ -237,7 +139,7 @@ check(
 );
 
 console.log("[export content]");
-vm.runInContext("downloadAppSummary()", ctx);
+run("downloadAppSummary()");
 check(
   "file named app_summary_<date>.csv",
   downloads.length === 1 &&
@@ -269,15 +171,14 @@ check(
 );
 
 console.log("[stats bar chip]");
-const statsHtml = vm.runInContext("_buildStatsHtml(processedResults)", ctx);
+const statsHtml = run("_buildStatsHtml(processedResults)");
 check(
   '"6 apps" chip rendered',
   statsHtml.includes("<strong>6</strong> apps"),
   statsHtml,
 );
-const noAppStats = vm.runInContext(
+const noAppStats = run(
   '_buildStatsHtml([{ "VM Name": "x", "CPU Count": "2", "AWS Like-to-Like Instance": "m5.large" }])',
-  ctx,
 );
 check("no apps chip without App Name column", !noAppStats.includes("apps"));
 

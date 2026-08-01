@@ -2,7 +2,7 @@
 // interaction, focus restore, debounce.
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const { buildContext, REPO } = require("../harness");
 
 // Remove comments the way JavaScript actually reads them, tracking strings,
 // template literals AND regex literals as it goes.
@@ -206,84 +206,13 @@ function stripComments(source) {
   return out;
 }
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
-const elements = {};
-let focusCalls = 0;
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      dataset: {},
-      className: "",
-      style: {},
-      value: "",
-      selectionStart: null,
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {},
-        contains: (c) => elements[id].classes.has(c),
-      },
-      addEventListener: () => {},
-      querySelectorAll: () => [],
-      focus: () => focusCalls++,
-      setSelectionRange: (a) => (elements[id]._cursor = a),
-      scrollIntoView: () => {},
-    };
-  }
-  return elements[id];
-}
-
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alert: () => {},
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: (tag) => ({ tag, style: {} }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  head: { appendChild: () => {} },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-function load(rel) {
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-}
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Full app on the AWS page. captureToasts:false keeps the app's real showToast,
+// so the [toasts] block asserts its DOM rendering (escaping, stacking,
+// auto-dismiss); focus restoration is read off elements.previewSearch.focusCount.
+// fs / path / REPO stay for the no-alert source scan at the end of the file.
+const { ctx, run, elements, downloads } = buildContext({
+  captureToasts: false,
+});
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -322,7 +251,7 @@ function check(name, cond, detail) {
     });
   }
 
-  vm.runInContext(`showResultsPreview(${JSON.stringify(results)})`, ctx);
+  run(`showResultsPreview(${JSON.stringify(results)})`);
   const container = elements.resultsPreviewSection;
 
   console.log("[initial render]");
@@ -346,18 +275,18 @@ function check(name, cond, detail) {
       container.innerHTML.includes("db-05"),
   );
   check("input value restored", elements.previewSearch.value === "db-");
-  check("focus restored", focusCalls > 0);
+  check("focus restored", elements.previewSearch.focusCount > 0);
 
   console.log("[debounce coalesces]");
-  const renders0 = focusCalls;
+  const renders0 = elements.previewSearch.focusCount;
   ctx._previewFilterChanged("r");
   ctx._previewFilterChanged("r6");
   ctx._previewFilterChanged("r6i");
   await new Promise((r) => setTimeout(r, 250));
   check(
     "three keystrokes → one re-render",
-    focusCalls === renders0 + 1,
-    `focusCalls=${focusCalls}`,
+    elements.previewSearch.focusCount === renders0 + 1,
+    `elements.previewSearch.focusCount=${elements.previewSearch.focusCount}`,
   );
   check(
     "value filter matches instance col",
@@ -422,8 +351,8 @@ function check(name, cond, detail) {
   // so they must be assigned inside the context — a property on the sandbox
   // object would just sit there, shadowed.
   const setProviders = (list) =>
-    vm.runInContext(`selectedProviders = ${JSON.stringify(list)}`, ctx);
-  vm.runInContext(`processedResults = ${JSON.stringify(results)}`, ctx);
+    run(`selectedProviders = ${JSON.stringify(list)}`);
+  run(`processedResults = ${JSON.stringify(results)}`);
   setProviders(["aws", "azure"]);
   ctx._resultsProviders = ["aws", "azure"];
   ctx.updateStaleResultsNotice();
@@ -455,7 +384,7 @@ function check(name, cond, detail) {
     elements.resultsStaleNotice.classes.has("hidden"),
   );
 
-  vm.runInContext("processedResults = null", ctx);
+  run("processedResults = null");
   setProviders(["gcp"]);
   ctx.updateStaleResultsNotice();
   check(
@@ -532,21 +461,11 @@ function check(name, cond, detail) {
   // reads the file as UTF-8 instead of the local ANSI codepage
   console.log("[csv encoding]");
   {
-    // This suite's fake DOM has no URL/Blob and its nodes have no click(),
-    // since nothing else here downloads anything
-    const captured = [];
-    const realCreateElement = ctx.document.createElement;
-    ctx.Blob = class {
-      constructor(parts) {
-        this.content = parts.join("");
-        captured.push(this.content);
-      }
-    };
-    ctx.URL = { createObjectURL: () => "blob:x", revokeObjectURL: () => {} };
-    ctx.document.createElement = (tag) => ({ tag, style: {}, click() {} });
-
+    // downloadCsv wraps its bytes in a Blob and clicks an <a>; the shared harness
+    // captures both, so downloads[last].blob.content is exactly what was written.
+    downloads.length = 0;
     ctx.downloadCsv("VM Name\nweb-münchen-01\n日本-db-02", "x.csv");
-    const out = captured[0];
+    const out = downloads[0].blob.content;
     check("BOM is the first character", out.charCodeAt(0) === 0xfeff);
     check(
       "non-ASCII names survive intact",
@@ -556,29 +475,20 @@ function check(name, cond, detail) {
 
     // The AWS bulk template is parsed by the Pricing Calculator, not opened in
     // Excel — a BOM would corrupt the first header it reads
-    captured.length = 0;
+    downloads.length = 0;
     ctx.downloadCsv("Service Name,Region\nEC2,us-east-1", "bulk.csv", {
       bom: false,
     });
     check(
       "bom:false omits it, so a machine-read file starts at its header",
-      captured[0].startsWith("Service Name"),
-      JSON.stringify(captured[0].slice(0, 20)),
+      downloads[0].blob.content.startsWith("Service Name"),
+      JSON.stringify(downloads[0].blob.content.slice(0, 20)),
     );
-
-    ctx.document.createElement = realCreateElement;
-    // Blob/URL are deliberately left installed: this suite's fake DOM has no real
-    // ones to restore to, and downloadCsv calls URL.revokeObjectURL from a
-    // deferred timer that would throw against undefined. The dead-array risk the
-    // asymmetry might invite does not apply — `captured` is block-scoped here.
 
     // Round trip: users are told to fix the no-match export and re-upload it, so
     // our own parser must cope with the BOM we now write
-    vm.runInContext(
-      'parseCSV("\\uFEFFVM Name,CPU Count,Memory (GB)\\nweb-1,2,8")',
-      ctx,
-    );
-    const reHeaders = vm.runInContext("columnHeaders", ctx);
+    run('parseCSV("\\uFEFFVM Name,CPU Count,Memory (GB)\\nweb-1,2,8")');
+    const reHeaders = run("columnHeaders");
     check(
       "re-uploading our own BOM'd CSV keeps the first header intact",
       reHeaders[0] === "VM Name",

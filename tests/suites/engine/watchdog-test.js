@@ -1,87 +1,23 @@
 // Watchdog verification: a Worker that never responds must trigger the
 // watchdog rejection, terminate, and fall back to the main-thread path,
 // still producing correct results.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
+// The worker the app will construct: it accepts the run but never replies, so
+// the watchdog timer is what has to fire. It counts the post and the terminate
+// the app is expected to make.
 let terminated = 0;
 let posted = 0;
-
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alert: () => {},
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-  Worker: class FakeStalledWorker {
-    constructor() {}
+const { ctx } = buildContext({
+  worker: class FakeStalledWorker {
     postMessage() {
-      posted++;
-      // never replies — simulates a stalled worker
+      posted++; // never replies — simulates a stalled worker
     }
     terminate() {
       terminated++;
     }
   },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: (tag) => ({ tag, style: {} }),
-  getElementById: () => null,
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  head: {
-    appendChild(script) {
-      if (script.tag !== "script") return;
-      setTimeout(() => {
-        try {
-          const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-          vm.runInContext(code, ctx, { filename: script.src });
-          script.onload && script.onload();
-        } catch (e) {
-          script.onerror && script.onerror(e);
-        }
-      }, 0);
-    },
-  },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-
-function load(rel) {
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-}
-
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+});
 
 let failures = 0;
 function check(name, cond, detail) {

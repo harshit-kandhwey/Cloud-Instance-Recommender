@@ -1,9 +1,8 @@
 // Accessibility affordances.
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const { buildContext, REPO } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
 let failures = 0;
 function check(name, cond, detail) {
   if (cond) console.log(`  ok: ${name}`);
@@ -68,73 +67,23 @@ const sectionCollapsed = makeAttrElement();
 sectionCollapsed.classes.add("collapsed");
 const headerCollapsed = makeAttrElement();
 headerCollapsed.parentElement = sectionCollapsed;
-headerOpen.onclick = () => ctx.toggleSection(headerOpen);
-headerCollapsed.onclick = () => ctx.toggleSection(headerCollapsed);
-
 // The section list the fake document reports; swapped out by the collapse tests
 let sectionHeaders = [headerOpen, headerCollapsed];
 
-const elements = {};
-function fakeElement(id) {
-  if (!elements[id]) elements[id] = makeAttrElement({ id });
-  return elements[id];
-}
+// Full app on the AWS page. The by-id elements the app looks up come from the
+// shared harness (their .attrs are all these checks read); the section-header
+// list is reported through a querySelectorAll override, and location.pathname
+// keys the stored collapse state under "aws".
+const { ctx, run, elements } = buildContext();
+ctx.location = { pathname: "/aws.html" };
+const baseQSA = ctx.document.querySelectorAll;
+ctx.document.querySelectorAll = (sel) =>
+  sel === ".section-header[onclick]" ? sectionHeaders : baseQSA(sel);
 
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alert: () => {},
-  // A real store: section collapse state has to survive a "reload"
-  localStorage: (() => {
-    const store = {};
-    return {
-      getItem: (k) => (k in store ? store[k] : null),
-      setItem: (k, v) => {
-        store[k] = String(v);
-      },
-      removeItem: (k) => {
-        delete store[k];
-      },
-    };
-  })(),
-  location: { pathname: "/aws.html" },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: () => makeAttrElement({ tag: "div" }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) => {
-    if (sel === "script[src]") return [{ src: "js/aws/aws-data.js" }];
-    if (sel === ".section-header[onclick]") return sectionHeaders;
-    return [];
-  },
-  addEventListener: () => {},
-  head: { appendChild: () => {} },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-const load = (rel) => vm.runInContext(read(rel), ctx, { filename: rel });
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Wired now that ctx exists: enhanceAccessibility's keydown handler clicks the
+// header, and click() fires this onclick.
+headerOpen.onclick = () => ctx.toggleSection(headerOpen);
+headerCollapsed.onclick = () => ctx.toggleSection(headerCollapsed);
 
 console.log("[section headers]");
 ctx.enhanceAccessibility();
@@ -213,7 +162,7 @@ const results = [
     "AWS Like-to-Like Instance": "r6i.large",
   },
 ];
-vm.runInContext(`showResultsPreview(${JSON.stringify(results)})`, ctx);
+run(`showResultsPreview(${JSON.stringify(results)})`);
 const container = elements.resultsPreviewSection;
 check(
   "th has tabindex + aria-sort=none initially",

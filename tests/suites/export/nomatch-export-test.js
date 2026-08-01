@@ -1,110 +1,11 @@
 // No-match remediation export.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
-const elements = {};
-const downloads = [];
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      className: "",
-      style: {},
-      value: "",
-      textContent: "",
-      title: "",
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: () => {},
-        contains: (c) => elements[id].classes.has(c),
-      },
-      addEventListener: () => {},
-      querySelectorAll: () => [],
-      focus: () => {},
-      setSelectionRange: () => {},
-      scrollIntoView: () => {},
-      setAttribute: () => {},
-    };
-  }
-  return elements[id];
-}
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alerts: [],
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-  Blob: class {
-    constructor(parts) {
-      this.content = parts.join("");
-    }
-  },
-};
-sandbox.alert = (m) => sandbox.alerts.push(m);
-sandbox.window = sandbox;
-sandbox.URL = {
-  createObjectURL: (blob) => {
-    downloads.push({ blob });
-    return "blob:x";
-  },
-  revokeObjectURL: () => {},
-};
-sandbox.document = {
-  createElement: (tag) => {
-    const el = {
-      tag,
-      style: {},
-      click() {
-        if (this.tag === "a")
-          downloads[downloads.length - 1].name = this.download;
-      },
-    };
-    return el;
-  },
-  getElementById: (id) => fakeElement(id),
-  querySelector: () => null,
-  querySelectorAll: (sel) =>
-    sel === "script[src]" ? [{ src: "js/aws/aws-data.js" }] : [],
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  head: { appendChild: () => {} },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-load("js/aws/aws-data.js");
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Full app on the AWS page. The shared harness captures downloads (Blob +
+// URL.createObjectURL, the filename filled in when the <a> is clicked), toasts,
+// and native alert()s — so this suite asserts against `downloads`, `toasts` and
+// `alerts` instead of a real disk or a rendered toast stack.
+const { ctx, run, elements, toasts, alerts, downloads } = buildContext();
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -170,16 +71,13 @@ const results = [
   },
 ];
 
-vm.runInContext(
-  `
+run(`
   columnHeaders = ["VM Name", "CPU Count"];
   processedResults = ${JSON.stringify(results)};
-`,
-  ctx,
-);
+`);
 
 console.log("[getNoMatchRows]");
-const rows = vm.runInContext("getNoMatchRows(processedResults)", ctx);
+const rows = run("getNoMatchRows(processedResults)");
 check(
   "2 of 5 rows qualify",
   rows.length === 2,
@@ -191,14 +89,14 @@ check(
 );
 
 console.log("[CSV menu state]");
-vm.runInContext("renderCsvMenu(processedResults)", ctx);
+run("renderCsvMenu(processedResults)");
 check(
   "No-Match item listed with count",
   elements.csvMenu.innerHTML.includes("No-Match Rows CSV (2)"),
   elements.csvMenu.innerHTML,
 );
 
-vm.runInContext(`renderCsvMenu([${JSON.stringify(results[0])}])`, ctx);
+run(`renderCsvMenu([${JSON.stringify(results[0])}])`);
 check(
   "No-Match item absent on an all-match run",
   !elements.csvMenu.innerHTML.includes("No-Match Rows CSV"),
@@ -206,14 +104,14 @@ check(
 );
 
 console.log("[download selected CSVs]");
-vm.runInContext("renderCsvMenu(processedResults)", ctx);
+run("renderCsvMenu(processedResults)");
 // Simulate the two checked boxes the browser's ':checked' selector would return.
 elements.csvMenu.querySelectorAll = () => [
   { value: "results" },
   { value: "nomatch" },
 ];
 downloads.length = 0;
-vm.runInContext("downloadSelectedCsvs()", ctx);
+run("downloadSelectedCsvs()");
 check(
   "exactly the checked exports fire (results + no-match, not app summary)",
   downloads.length === 2 &&
@@ -228,18 +126,17 @@ check(
 // the warning quietly stopped firing.
 elements.csvMenu.querySelectorAll = () => [];
 downloads.length = 0;
-const toastStack = ctx.document.getElementById("toastStack");
-toastStack.innerHTML = "";
-vm.runInContext("downloadSelectedCsvs()", ctx);
+toasts.length = 0;
+run("downloadSelectedCsvs()");
 check("an empty selection downloads nothing", downloads.length === 0);
 check(
   "an empty selection warns the user",
-  toastStack.innerHTML.length > 0,
-  toastStack.innerHTML,
+  toasts.length > 0,
+  JSON.stringify(toasts),
 );
 
 console.log("[export content]");
-vm.runInContext("downloadNoMatchRows()", ctx);
+run("downloadNoMatchRows()");
 check(
   "file named no_match_rows_<date>.csv",
   downloads.length === 1 &&
@@ -270,26 +167,25 @@ check("formula-injection hardened", lines[1].includes("'=2+2"), lines[1]);
 check("reasons included", lines[1].includes("Region 'narnia' not found"));
 
 console.log("[all-match export guard]");
-// The stack still holds the empty-selection warning from the block above; clear
-// it so this assertion reads only the toast (if any) from the call under test.
-toastStack.innerHTML = "";
-vm.runInContext(
+// toasts still holds the empty-selection warning from the block above; clear it
+// so this assertion reads only the toast (if any) from the call under test.
+toasts.length = 0;
+run(
   `processedResults = [${JSON.stringify(results[0])}]; downloadNoMatchRows();`,
-  ctx,
 );
 check(
   "toast instead of empty file",
-  elements.toastStack.innerHTML.includes("nothing to export"),
-  elements.toastStack.innerHTML,
+  toasts.some((t) => /nothing to export/.test(t.message)),
+  JSON.stringify(toasts),
 );
 check("no second download", downloads.length === 1);
 
-// The sandbox captures alert() so a stray native dialog from a loaded module
+// The harness captures alert() so a stray native dialog from a loaded module
 // does not vanish silently — but capturing is only worth it if we assert it.
 check(
   "no module reached for a native alert()",
-  sandbox.alerts.length === 0,
-  sandbox.alerts.join(" | "),
+  alerts.length === 0,
+  alerts.join(" | "),
 );
 
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout when

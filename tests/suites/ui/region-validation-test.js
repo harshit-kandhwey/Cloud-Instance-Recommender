@@ -1,124 +1,19 @@
 // Region validation panel + fuzzy lazy-load path.
 // Loads main-script.js with a minimal DOM stub and drives parseCSV directly.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildContext, parse } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-const requestedSrcs = [];
-const loaderErrors = [];
-const elements = {};
-
-function fakeElement(id) {
-  if (!elements[id]) {
-    elements[id] = {
-      id,
-      innerHTML: "",
-      dataset: {},
-      className: "",
-      textContent: "",
-      style: { cssText: "", opacity: "" },
-      classes: new Set(["hidden"]),
-      classList: {
-        add: (c) => elements[id].classes.add(c),
-        remove: (c) => elements[id].classes.delete(c),
-        toggle: (c) =>
-          elements[id].classes.has(c)
-            ? elements[id].classes.delete(c)
-            : elements[id].classes.add(c),
-        contains: (c) => elements[id].classes.has(c),
-      },
-      addEventListener: () => {},
-      appendChild: () => {},
-      remove: () => {},
-      querySelectorAll: () => [],
-      checked: false,
-      value: "",
-    };
-  }
-  return elements[id];
-}
-
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-  setTimeout,
-  clearTimeout,
-  setInterval: () => 0,
-  clearInterval: () => {},
-  alert: () => {},
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-};
-sandbox.window = sandbox;
-sandbox.document = {
-  createElement: (tag) => ({ tag, style: {} }),
-  getElementById: (id) => fakeElement(id),
-  querySelectorAll: (sel) =>
-    sel === "script[src]"
-      ? [
-          { src: "js/aws/aws-data.js" },
-          { src: "js/azure/azure-data.js" },
-          { src: "js/gcp/gcp-data.js" },
-        ]
-      : [],
-  addEventListener: () => {},
-  head: {
-    appendChild(script) {
-      if (script.tag !== "script") return;
-      requestedSrcs.push(script.src);
-      setTimeout(() => {
-        try {
-          const code = fs.readFileSync(path.join(REPO, script.src), "utf8");
-          vm.runInContext(code, ctx, { filename: script.src });
-          script.onload && script.onload();
-        } catch (e) {
-          // Surface loader faults: requestedSrcs.push already happened, so a
-          // missing/renamed region file would otherwise pass the prefetch checks
-          // and only reappear later as a confusing "got 0 instances" — this keeps
-          // test-infra faults distinguishable from app faults.
-          process.stderr.write(
-            `  [loader] failed to run ${script.src}: ${e.message}\n`,
-          );
-          // Record it too — writing to stderr alone let a missing/renamed region
-          // file still pass every prefetch check (the push already ran), so the
-          // suite could exit 0 having loaded nothing. Asserted after the poll.
-          loaderErrors.push(`${script.src}: ${e.message}`);
-          script.onerror && script.onerror(e);
-        }
-      }, 0);
-    },
-  },
-  body: { appendChild: () => {}, removeChild: () => {} },
-};
-const ctx = vm.createContext(sandbox);
-
-function load(rel) {
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-}
-
-for (const p of ["aws", "azure", "gcp"]) load(`js/${p}/${p}-data.js`);
-for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
-])
-  load(f);
+// Multicloud page: all three providers present, so parseCSV validates the AWS,
+// Azure and GCP region columns at once. The shared loader records both the
+// scripts it injects (requested) and any that fail to run (loaderErrors) — the
+// same faults this suite used to track by hand, so a missing/renamed region
+// file surfaces as a named FAIL instead of a silent "0 instances".
+const { ctx, elements, requested, loaderErrors } = buildContext({
+  dataScripts: [
+    "js/aws/aws-data.js",
+    "js/azure/azure-data.js",
+    "js/gcp/gcp-data.js",
+  ],
+});
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -136,7 +31,7 @@ a,4,16,us-east-1,East US,us-central1-a
 b,2,8,us-east-1a,East US 2,europe-west1-c
 c,2,4,narnia-99,Atlantis,mordor1-x`;
 
-  vm.runInContext("parseCSV(" + JSON.stringify(csv) + ")", ctx);
+  parse(ctx, csv);
 
   console.log("[window._regionValidation]");
   const v = ctx._regionValidation;
@@ -193,11 +88,11 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   const deadline = Date.now() + 2000;
   while (
     Date.now() < deadline &&
-    !expectedSrcs.every((s) => requestedSrcs.includes(s))
+    !expectedSrcs.every((s) => requested.includes(s))
   ) {
     await new Promise((r) => setTimeout(r, 25));
   }
-  console.log("[prefetch] requested: " + requestedSrcs.join(", "));
+  console.log("[prefetch] requested: " + requested.join(", "));
   check(
     "no loader faults while fetching region files",
     loaderErrors.length === 0,
@@ -206,12 +101,12 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   check(
     "prefetch loaded valid + fuzzy regions only",
     // Reuse expectedSrcs so the predicate here cannot drift from the poll above.
-    expectedSrcs.every((s) => requestedSrcs.includes(s)),
-    `missing: ${expectedSrcs.filter((s) => !requestedSrcs.includes(s)).join(", ")}`,
+    expectedSrcs.every((s) => requested.includes(s)),
+    `missing: ${expectedSrcs.filter((s) => !requested.includes(s)).join(", ")}`,
   );
   check(
     "no request for unknown regions",
-    !requestedSrcs.some((s) => /narnia|atlantis|mordor/i.test(s)),
+    !requested.some((s) => /narnia|atlantis|mordor/i.test(s)),
   );
 
   console.log("[fuzzy lazy-load truthfulness]");
@@ -227,7 +122,7 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   // Re-upload with all-valid regions replaces the panel without warning
   const csv2 = `VM Name,CPU Count,Memory (GB),AWS Region
 d,4,16,us-west-2`;
-  vm.runInContext("parseCSV(" + JSON.stringify(csv2) + ")", ctx);
+  parse(ctx, csv2);
   console.log("[re-upload]");
   check("panel still visible", !!panel && !panel.classes.has("hidden"));
   // Same guarded read as the first render: an unrendered panel is one FAIL, not

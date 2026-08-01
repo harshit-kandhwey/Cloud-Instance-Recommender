@@ -50,6 +50,13 @@ const APP_SCRIPTS = [
  *   multicloud page; overrides dataScript when given
  * @param {boolean} [options.storageThrows] model a browser where localStorage
  *   throws (private mode), so a suite can prove the flow survives it
+ * @param {Function} [options.worker] a Worker class to expose on the sandbox, so
+ *   a suite can model the recommendation worker (e.g. one that stalls). Omitted
+ *   by default, exactly as before, so the app takes its no-Worker fallback path.
+ * @param {boolean} [options.captureToasts] when true (the default) showToast is
+ *   replaced by a capture into the returned `toasts` array; set false to keep the
+ *   app's real showToast, for a suite that tests toast RENDERING into #toastStack
+ *   (escaping, stacking, auto-dismiss) rather than just the messages emitted.
  */
 function buildContext({
   missingElements = [],
@@ -57,6 +64,8 @@ function buildContext({
   dataScript = "js/aws/aws-data.js",
   dataScripts,
   storageThrows = false,
+  worker,
+  captureToasts = true,
 } = {}) {
   const scripts = dataScripts || [dataScript];
   const elements = {};
@@ -64,6 +73,15 @@ function buildContext({
   // Scripts the app asked to inject (via document.head.appendChild) — a suite
   // asserts here that, e.g., the xlsx vendor bundle loads only on demand.
   const requested = [];
+  // Faults thrown while running an injected script (a missing/renamed region
+  // file). requested[] records the ATTEMPT, so without this a broken lazy-load
+  // would pass every prefetch check and only resurface later as "0 instances";
+  // a suite asserts loaderErrors stays empty.
+  const loaderErrors = [];
+  // Blobs handed to URL.createObjectURL, i.e. files the app tried to download.
+  // A download suite asserts filename + content against these instead of hitting
+  // a real disk. name is filled in when the <a> is clicked (see createElement).
+  const downloads = [];
   const alerts = [];
   // A REAL store. Suites that assert what survives an upload need one; a stub
   // that forgets would let those assertions pass without testing anything.
@@ -102,10 +120,14 @@ function buildContext({
         innerHTML: "",
         className: "",
         textContent: "",
+        title: "",
         style: {},
         value: "",
         checked: false,
         focused: false,
+        // How many times focus() ran — a suite that re-renders an input asserts
+        // focus was restored, and exactly once per (debounced) render.
+        focusCount: 0,
         classes: new Set(["hidden"]),
         attrs: {},
         // Real elements always expose a dataset; a stub without one throws the
@@ -124,11 +146,19 @@ function buildContext({
         },
         focus: () => {
           elements[id].focused = true;
+          elements[id].focusCount++;
         },
         addEventListener: () => {},
+        removeEventListener: () => {},
         querySelectorAll: () => [],
+        querySelector: () => null,
         setSelectionRange: () => {},
         scrollIntoView: () => {},
+        // Container ops the render paths call on a panel element. No-ops: a
+        // suite asserts against innerHTML/classes, not a live child list.
+        appendChild: () => {},
+        removeChild: () => {},
+        remove: () => {},
         // Attributes are remembered, for the same reason classList.toggle and
         // localStorage are real: a set that cannot be read back is a stub that
         // would let an attribute assertion pass without ever testing anything.
@@ -183,14 +213,53 @@ function buildContext({
         });
       }
     },
+    // A download's payload: the export code wraps its CSV/xlsx bytes in a Blob.
+    // parts.join("") keeps the exact content so a suite can assert what was in
+    // the file (BOM, header row, escaped cells) without touching a disk.
+    Blob: class {
+      constructor(parts) {
+        this.content = (parts || []).join("");
+      }
+    },
+    // createObjectURL records the Blob as a download; the <a>.click() below fills
+    // in its name. revokeObjectURL is a no-op. This is real download plumbing:
+    // several export suites assert filename + content against `downloads`.
+    URL: {
+      createObjectURL: (blob) => {
+        downloads.push({ blob });
+        return "blob:x";
+      },
+      revokeObjectURL: () => {},
+    },
   };
+  // A Worker only when a suite asks for one; otherwise absent, so the app takes
+  // its no-Worker main-thread path exactly as before this option existed.
+  if (worker) sandbox.Worker = worker;
   sandbox.window = sandbox;
   sandbox.document = {
-    createElement: (tag) => ({ tag, style: {}, setAttribute: () => {} }),
+    // An <a> download node captures its filename when clicked, matched to the
+    // Blob URL.createObjectURL just recorded; every other element is inert.
+    createElement: (tag) => {
+      const el = {
+        tag,
+        style: {},
+        setAttribute: (name, value) => {
+          el[name] = String(value);
+        },
+        click() {
+          if (this.tag === "a" && downloads.length) {
+            downloads[downloads.length - 1].name = this.download;
+          }
+        },
+      };
+      return el;
+    },
     getElementById: (id) => (absent.has(id) ? null : fakeElement(id)),
+    querySelector: () => null,
     querySelectorAll: (sel) =>
       sel === "script[src]" ? scripts.map((s) => ({ src: s })) : [],
     addEventListener: () => {},
+    removeEventListener: () => {},
     head: {
       appendChild(script) {
         if (script.tag !== "script") return;
@@ -201,6 +270,10 @@ function buildContext({
             vm.runInContext(code, ctx, { filename: script.src });
             script.onload && script.onload();
           } catch (e) {
+            // Record the fault, not just surface it to onerror: requested.push
+            // already ran, so a missing/renamed region file would otherwise pass
+            // every prefetch check and only reappear as "0 instances" later.
+            loaderErrors.push(`${script.src}: ${e.message}`);
             script.onerror && script.onerror(e);
           }
         }, 0);
@@ -217,10 +290,30 @@ function buildContext({
   for (const s of scripts) load(s);
   for (const f of APP_SCRIPTS) load(f);
 
-  // Capture toasts instead of rendering them
-  ctx.showToast = (message, type) => toasts.push({ message, type });
+  // Evaluate an expression/statement IN the context — the only way to reach the
+  // module-scoped `let`s and top-level functions app-core.js declares (ctx.foo is
+  // a different, stale binding). Suites use it to seed globals and call internals.
+  const run = (expr) =>
+    vm.runInContext(expr, ctx, { filename: "harness-eval" });
 
-  return { ctx, elements, toasts, store, storage, requested, alerts };
+  // Capture toasts instead of rendering them — unless a suite opts out to test
+  // the real showToast's DOM rendering.
+  if (captureToasts) {
+    ctx.showToast = (message, type) => toasts.push({ message, type });
+  }
+
+  return {
+    ctx,
+    run,
+    elements,
+    toasts,
+    store,
+    storage,
+    requested,
+    alerts,
+    downloads,
+    loaderErrors,
+  };
 }
 
 /**
