@@ -21,19 +21,12 @@
 // between clouds — the multi-cloud page supplies three values, one per provider.
 // The two scales used to share one number space, which made the Azure page's own
 // "v5+" option filter to v3+; that is pinned below.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildEngineContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-const sandbox = { console: { log() {}, warn() {}, error() {} } };
-sandbox.window = sandbox;
-const ctx = vm.createContext(sandbox);
-vm.runInContext(
-  fs.readFileSync(path.join(REPO, "js/base/rule-engine.js"), "utf8"),
-  ctx,
-  { filename: "rule-engine.js" },
-);
+const { ctx } = buildEngineContext({
+  scripts: ["js/base/rule-engine.js"],
+  label: "min-generation",
+});
 const RE = ctx.RuleEngine;
 
 let failures = 0;

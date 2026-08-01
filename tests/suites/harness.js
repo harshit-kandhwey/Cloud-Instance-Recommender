@@ -1,11 +1,21 @@
-// Shared simulated-DOM harness for the ingest-side suites.
+// Shared test contexts.
+//
+// Two factories live here, both because a forked copy that drifts is the classic
+// silent-guard risk (a suite passing or failing on which copy it held, not on the
+// code under test):
+//   - buildContext:       the full simulated-DOM harness — loads the whole app
+//                         into a vm with a fake page, for the ingest/UI suites.
+//   - buildEngineContext: a minimal, DOM-free vm — for the pure-engine suites
+//                         (rule-engine and the instance selectors compute over
+//                         injected data, no page), which had each forked the same
+//                         createContext + load + run boilerplate.
 //
 // Not named *-test.js, so run-all.js does not pick it up as a suite.
 //
-// This existed as four verbatim copies that had already begun to drift — one
-// grew a working classList.toggle, one a scrollIntoView, one a real localStorage
-// — which meant a suite could pass or fail on which copy it happened to hold,
-// rather than on the code under test.
+// buildContext existed as four verbatim copies that had already begun to drift —
+// one grew a working classList.toggle, one a scrollIntoView, one a real
+// localStorage — which meant a suite could pass or fail on which copy it happened
+// to hold, rather than on the code under test.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
@@ -213,6 +223,35 @@ function buildContext({
   return { ctx, elements, toasts, store, storage, requested, alerts };
 }
 
+/**
+ * A minimal, DOM-free vm context for the pure-engine suites. These load only the
+ * engine files they name and compute over data the suite injects on the context
+ * — there is no page, so none of buildContext's DOM/localStorage/data machinery
+ * applies. Returns { ctx, load, run }:
+ *   - ctx:  the contextified sandbox; assign fixtures with `ctx.foo = …` and read
+ *           globals the loaded code defines as `ctx.RuleEngine`, etc.
+ *   - load: run another app file into the same context later (filename = the
+ *           repo-relative path, so its BASENAME drives V8 coverage attribution —
+ *           the same basename the suite would have used loading it directly).
+ *   - run:  evaluate an expression string in the context and return its value.
+ *
+ * @param {object} [options]
+ * @param {string[]} [options.scripts] repo-relative app files to load up front
+ * @param {string} [options.label] filename for `run` evals (stack readability only)
+ */
+function buildEngineContext({ scripts = [], label = "engine-eval" } = {}) {
+  const sandbox = { console: { log() {}, warn() {}, error() {} } };
+  sandbox.window = sandbox;
+  const ctx = vm.createContext(sandbox);
+  const load = (rel) =>
+    vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
+      filename: rel,
+    });
+  const run = (expr) => vm.runInContext(expr, ctx, { filename: label });
+  for (const s of scripts) load(s);
+  return { ctx, load, run };
+}
+
 function makeChecker() {
   const state = { failures: 0 };
   const check = (name, cond, detail) => {
@@ -266,6 +305,7 @@ function confirmMapping(ctx, choices) {
 module.exports = {
   REPO,
   buildContext,
+  buildEngineContext,
   makeChecker,
   rowsOf,
   headersOf,

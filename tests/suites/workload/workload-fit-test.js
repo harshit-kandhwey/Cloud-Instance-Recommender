@@ -6,20 +6,12 @@
 // because GCP's memory-optimized m-series has no small member. The fix bounds a
 // preferred pick to <=2x vCPU and <=4x memory of the requirement; past that the
 // preference is dropped and the cheapest-adequate pick stands.
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+const { buildEngineContext } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-const sandbox = { console: { log() {}, warn() {}, error() {} } };
-sandbox.window = sandbox;
-const ctx = vm.createContext(sandbox);
-vm.runInContext(
-  fs.readFileSync(path.join(REPO, "js/base/rule-engine.js"), "utf8"),
-  ctx,
-  { filename: "rule-engine.js" },
-);
-const run = (expr) => vm.runInContext(expr, ctx, { filename: "workload-fit" });
+const { ctx, run } = buildEngineContext({
+  scripts: ["js/base/rule-engine.js"],
+  label: "workload-fit",
+});
 
 let failures = 0;
 const check = (name, cond, detail) => {
@@ -34,7 +26,7 @@ const check = (name, cond, detail) => {
 // memory-optimized one that "fits" only because it exceeds the requirement on
 // every axis. The general one is listed first (cheapest), as the real pipeline
 // hands it over price-sorted.
-sandbox.gcpCache = [
+ctx.gcpCache = [
   {
     instanceType: "e2-standard-2",
     family: "e2",
@@ -78,7 +70,7 @@ console.log(
 
 // A GCP Database VM (8/32): the memory-optimized m4-hypermem-16 (16/248) is
 // 2x cpu but ~7.75x memory — past the memory bound, so it is not preferred.
-sandbox.gcpDb = [
+ctx.gcpDb = [
   {
     instanceType: "e2-standard-8",
     family: "e2",
@@ -111,7 +103,7 @@ console.log("[memory over-provisioning past 4x also drops the preference]");
 // A close-fit preferred family IS still honoured: an AWS Database VM (8/32) with
 // r5.2xlarge (8/64) — 1x cpu, 2x memory, within bounds — must be preferred over
 // the cheaper general instance.
-sandbox.awsDb = [
+ctx.awsDb = [
   {
     instanceType: "m5.2xlarge",
     family: "m5",
@@ -149,7 +141,7 @@ console.log("[a close-fit preferred family is still honoured]");
 
 // The memory bound is inclusive at exactly 4x: an AWS Cache VM (2/4) with
 // r6g.large (2/16) — exactly 4x memory — is still preferred.
-sandbox.awsCache = [
+ctx.awsCache = [
   {
     instanceType: "m6g.large",
     family: "m6g",
@@ -186,7 +178,7 @@ console.log("[the fit bound is inclusive at exactly 4x memory]");
 // Cache VM 2 vCPU / 16 GB → caps are 4 vCPU (2x) and 64 GB (4x). r6g.2xlarge is
 // preferred (cache → r/x) and sits at EXACTLY the memory cap, so only its vCPU
 // count can disqualify it.
-sandbox.awsCacheCpuOnly = [
+ctx.awsCacheCpuOnly = [
   {
     instanceType: "m6g.xlarge",
     family: "m6g",

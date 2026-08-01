@@ -14,24 +14,18 @@
 // keys in under the SAME label — so one RELAX_CONTROLS entry serves all three.
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const { buildEngineContext, REPO } = require("../harness");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
-
-const sandbox = {
-  console: { log: () => {}, warn: () => {}, error: () => {} },
-};
-sandbox.window = sandbox;
-const ctx = vm.createContext(sandbox);
-const load = (rel) =>
-  vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
-    filename: rel,
-  });
-const run = (expr) =>
-  vm.runInContext(expr, ctx, { filename: "nearest-miss-test" });
-
-load("js/base/base-instance-selector.js");
-load("js/base/instance-selector-factory.js");
+// Base filters live in base-instance-selector; the factory adds the no-match
+// wiring. The provider selectors are loaded later (via `load`), for the
+// probe-coupling source scan at the end.
+const { ctx, load, run } = buildEngineContext({
+  scripts: [
+    "js/base/base-instance-selector.js",
+    "js/base/instance-selector-factory.js",
+  ],
+  label: "nearest-miss",
+});
 
 // A bare concrete selector (base filters only) with injected data.
 run(`
@@ -41,7 +35,7 @@ run(`
 `);
 
 // Price-sorted instances; both are current-gen 2 and Intel.
-sandbox.instA = [
+ctx.instA = [
   {
     instanceType: "t3.medium",
     vCpus: 2,
