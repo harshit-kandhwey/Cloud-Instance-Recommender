@@ -114,10 +114,18 @@ console.log("[the write paths are pinned to their own engine]");
     check(
       `${name} writes through the captured engine, not the bare global`,
       // Reject a bare XLSX.writeFile( too, not only the window.-prefixed one —
-      // both resolve to the same mutable global. The [^_\w] guard lets the
-      // captured alias XLSXW.writeFile( through (XLSX followed by W, not a dot).
-      !/(?:^|[^_\w])XLSX\.writeFile\(/m.test(src) && /writeFile\(/.test(src),
-      "a bare XLSX.writeFile( remains — it may be the unstyled parser",
+      // both resolve to the same mutable global. Tolerate whitespace and an
+      // optional chain (XLSX .writeFile, XLSX?.writeFile) so neither slips a
+      // bare call past the guard; the leading [^_\w] still lets the captured
+      // alias XLSXW.writeFile( through (XLSX followed by W, not a dot/space).
+      // The positive control asserts the alias form is actually present, so the
+      // rejection can't pass vacuously on a file that writes through nothing.
+      // (A full JS tokenizer would be the airtight check, but this is a no-build
+      // static site with no parser dependency — the tightened pattern closes the
+      // realistic evasions without one.)
+      !/(?:^|[^_\w])XLSX\s*\??\.\s*writeFile\s*\(/m.test(src) &&
+        /\bXLSXW\s*\??\.\s*writeFile\s*\(/.test(src),
+      "no bare XLSX.writeFile( and the styled XLSXW.writeFile( alias is used",
     );
   }
 }

@@ -226,13 +226,17 @@ console.log(
     const picks = out.map((r) => r["GCP Like-to-Like Instance"]);
     check(
       "48c/192g no longer picks g2-standard-48",
-      typeof picks[0] === "string" && !/^g2-/.test(picks[0]),
-      picks[0],
+      Array.isArray(picks) &&
+        typeof picks[0] === "string" &&
+        !/^g2-/.test(picks[0]),
+      JSON.stringify(picks),
     );
     check(
       "64c/1024g no longer picks an a2/a3 GPU box",
-      typeof picks[1] === "string" && !/^a[234]-/.test(picks[1]),
-      picks[1],
+      Array.isArray(picks) &&
+        typeof picks[1] === "string" &&
+        !/^a[234]-/.test(picks[1]),
+      JSON.stringify(picks),
     );
   } catch (e) {
     check(

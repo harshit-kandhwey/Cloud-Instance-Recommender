@@ -106,7 +106,7 @@ function generateSample(sample) {
     try {
       ctx[sample.fn]();
     } catch (e) {
-      error = `${sample.fn} threw: ${e.message}`;
+      error = `${sample.fn} threw: ${String(e)}`;
     }
   }
   return { ctx, elements, csv, error };

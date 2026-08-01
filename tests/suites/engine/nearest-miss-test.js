@@ -109,7 +109,7 @@ const r3 = run(
 );
 check(
   "names every blocking filter group",
-  !!r3 &&
+  Array.isArray(r3?.blockedBy) &&
     JSON.stringify(r3.blockedBy.slice().sort()) ===
       JSON.stringify(["current-generation only", "processor manufacturer"]),
   JSON.stringify(r3 && r3.blockedBy),

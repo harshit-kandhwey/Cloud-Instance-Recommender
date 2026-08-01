@@ -268,7 +268,7 @@ console.log("[boot script behavior]");
       "toggle persists choice",
       r.storage.cloudInstanceRecommenderTheme === "dark",
     );
-    callToggle(r);
+    check("second toggle succeeds", callToggle(r) === null);
     check(
       "toggle back to light",
       r.sandbox.document.documentElement.dataset.theme === "light" &&
@@ -280,7 +280,7 @@ console.log("[boot script behavior]");
       "private mode: still themes from OS",
       r.sandbox.document.documentElement.dataset.theme === "dark",
     );
-    callToggle(r);
+    check("private-mode toggle succeeds", callToggle(r) === null);
     check(
       "private mode: toggle still works",
       r.sandbox.document.documentElement.dataset.theme === "light",
