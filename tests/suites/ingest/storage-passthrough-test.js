@@ -226,5 +226,8 @@ console.log("[an MiB-suffixed disk header converts to GB on ingest]");
     check("the storage runs complete without throwing", false, e && e.message);
   }
 
-  process.exit(state.failures ? 1 : 0);
-})();
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

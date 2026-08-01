@@ -621,8 +621,8 @@ function check(name, cond, detail) {
     );
     check(
       "respects the filter (no web- rows)",
-      !copied.includes("web-"),
-      copied.slice(0, 120),
+      !(copied || "").includes("web-"),
+      (copied || "").slice(0, 120),
     );
     check(
       "follows the preview's sort order",
@@ -636,8 +636,8 @@ function check(name, cond, detail) {
     await new Promise((r) => setTimeout(r, 20));
     check(
       "unfiltered copy takes all 25 rows",
-      copied.split("\n").length === 26,
-      `${copied.split("\n").length} lines`,
+      (copied || "").split("\n").length === 26,
+      `${(copied || "").split("\n").length} lines`,
     );
 
     // A pasted cell lands in a spreadsheet exactly like a downloaded one, so the

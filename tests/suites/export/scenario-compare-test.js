@@ -40,7 +40,7 @@ function check(name, cond, detail) {
   if (cond) console.log(`  ok: ${name}`);
   else {
     failures++;
-    console.log(`  FAIL: ${name}${detail ? "\n        " + detail : ""}`);
+    console.error(`  FAIL: ${name}${detail ? "\n        " + detail : ""}`);
   }
 }
 const AWS = "AWS Like-to-Like Instance";

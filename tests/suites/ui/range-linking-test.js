@@ -35,9 +35,6 @@ const { check, state } = makeChecker();
 // ── CPU: keepMax below 100 → bands link, upsizing enabled ──────────────────────
 {
   const { ctx } = buildContext();
-  ["cpuDownsizeMax", "cpuKeepMin", "cpuKeepMax", "cpuUpsizeMin"].forEach((id) =>
-    ctx.document.getElementById(id),
-  );
   setVal(ctx, "cpuDownsizeMax", 20);
   setVal(ctx, "cpuKeepMax", 80);
   const label = attachUpsizeLabel(ctx, "cpuUpsizeMin");
@@ -65,9 +62,6 @@ const { check, state } = makeChecker();
 // ── CPU: keepMax at 100 → upsizing disabled ────────────────────────────────────
 {
   const { ctx } = buildContext();
-  ["cpuDownsizeMax", "cpuKeepMin", "cpuKeepMax", "cpuUpsizeMin"].forEach((id) =>
-    ctx.document.getElementById(id),
-  );
   setVal(ctx, "cpuDownsizeMax", 30);
   setVal(ctx, "cpuKeepMax", 100);
   const label = attachUpsizeLabel(ctx, "cpuUpsizeMin");
@@ -106,12 +100,6 @@ const { check, state } = makeChecker();
 // ── Memory: keepMax below 100 → bands link, upsizing enabled ───────────────────
 {
   const { ctx } = buildContext();
-  [
-    "memoryDownsizeMax",
-    "memoryKeepMin",
-    "memoryKeepMax",
-    "memoryUpsizeMin",
-  ].forEach((id) => ctx.document.getElementById(id));
   setVal(ctx, "memoryDownsizeMax", 15);
   setVal(ctx, "memoryKeepMax", 75);
   const label = attachUpsizeLabel(ctx, "memoryUpsizeMin");
@@ -139,12 +127,6 @@ const { check, state } = makeChecker();
 // ── Memory: keepMax at 100 → upsizing disabled ─────────────────────────────────
 {
   const { ctx } = buildContext();
-  [
-    "memoryDownsizeMax",
-    "memoryKeepMin",
-    "memoryKeepMax",
-    "memoryUpsizeMin",
-  ].forEach((id) => ctx.document.getElementById(id));
   setVal(ctx, "memoryDownsizeMax", 40);
   setVal(ctx, "memoryKeepMax", 100);
   const label = attachUpsizeLabel(ctx, "memoryUpsizeMin");

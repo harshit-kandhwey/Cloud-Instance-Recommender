@@ -4,6 +4,7 @@
 // revealed only when printing.
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 const { REPO, buildContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
@@ -210,20 +211,44 @@ console.log("[the print trigger is scoped, not a bare window.print]");
   // without this the report prints as empty outlines, defeating its purpose.
   check(
     "the report forces background fills to print",
-    /body\.printing-report #executiveReportSection[\s\S]*?print-color-adjust:\s*exact/.test(
+    /body\.printing-report #executiveReportSection[^{]*\{[^}]*print-color-adjust:\s*exact/.test(
       css,
     ),
     "print-color-adjust: exact is missing from the report's print scope",
   );
-  const dl = fs.readFileSync(path.join(REPO, "js/base/downloads.js"), "utf8");
+  // Run the real trigger, not a grep of it: seed results, capture the print call
+  // and the afterprint handler, and prove the scoping class is applied exactly
+  // while printing and dropped once the dialog closes — the ORDER the two
+  // source-text checks this replaced could never actually see.
+  const { ctx } = buildContext();
+  const bodyClasses = new Set();
+  ctx.document.body.classList = {
+    add: (c) => bodyClasses.add(c),
+    remove: (c) => bodyClasses.delete(c),
+    contains: (c) => bodyClasses.has(c),
+  };
+  const afterprint = [];
+  ctx.addEventListener = (evt, fn) => {
+    if (evt === "afterprint") afterprint.push(fn);
+  };
+  let classedAtPrint = null;
+  ctx.print = () => {
+    classedAtPrint = bodyClasses.has("printing-report");
+  };
+  ctx.renderExecutiveReport = () => {}; // its output is pinned by the blocks above
+  vm.runInContext('processedResults = [{ "VM Name": "a" }]', ctx);
+  ctx.printExecutiveReport();
   check(
-    "printExecutiveReport adds the scoping class before printing",
-    /printing-report/.test(dl) && /window\.print\(\)/.test(dl),
+    "printExecutiveReport presses print with the scoping class applied",
+    classedAtPrint === true,
+    `classedAtPrint=${classedAtPrint}`,
   );
   check(
-    "and it removes the class again on afterprint",
-    /afterprint/.test(dl) && /remove\(["']printing-report["']\)/.test(dl),
+    "the class is dropped again when afterprint fires",
+    afterprint.length > 0 &&
+      (afterprint.forEach((fn) => fn()), !bodyClasses.has("printing-report")),
+    `handlers=${afterprint.length}, still=${bodyClasses.has("printing-report")}`,
   );
 }
 
-process.exit(state.failures ? 1 : 0);
+process.exitCode = state.failures ? 1 : 0;

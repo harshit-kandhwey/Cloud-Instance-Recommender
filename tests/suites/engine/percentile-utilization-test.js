@@ -331,5 +331,8 @@ ctx.__bursty = [
     check("the sizing runs complete without throwing", false, e && e.message);
   }
 
-  process.exit(state.failures ? 1 : 0);
-})();
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

@@ -90,7 +90,7 @@ function toggle(ctx, { cpu, memory }) {
     r.text,
   );
 
-  console.log("[Memory-Based off: the finding-4 fix]");
+  console.log("[Memory-Based off: no warning for the disabled axis]");
   r = drive(ctx, { stat: "p95", cpu: true, memory: false, headers: [CPU95] });
   check(
     "memory axis off + CPU present → NO warning (was a false alarm)",
@@ -175,5 +175,8 @@ function toggle(ctx, { cpu, memory }) {
     r.html,
   );
 
-  process.exit(state.failures ? 1 : 0);
-})();
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

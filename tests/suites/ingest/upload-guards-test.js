@@ -238,6 +238,10 @@ const AOA = [
       elements.fileStatus.innerHTML,
     );
 
+    // Clear first: the PNG case above asserts the same substring, so without a
+    // reset a PDF path that stopped writing fileStatus would pass on the PNG's
+    // leftover message.
+    resetUi();
     await ctx.ingestFile(
       fakeFile(
         "report.csv",

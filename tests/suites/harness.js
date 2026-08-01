@@ -68,6 +68,19 @@ function buildContext({
       set: (_t, k, v) => (store.set(k, String(v)), true),
       has: (_t, k) => store.has(k),
       deleteProperty: (_t, k) => (store.delete(k), true),
+      // Enumeration traps too, so Object.keys / for…in / spread / JSON.stringify
+      // over the view report what the Map actually holds — without these a suite
+      // that enumerates instead of indexing sees zero keys and passes falsely.
+      ownKeys: () => [...store.keys()],
+      getOwnPropertyDescriptor: (_t, k) =>
+        store.has(k)
+          ? {
+              value: store.get(k),
+              enumerable: true,
+              configurable: true,
+              writable: true,
+            }
+          : undefined,
     },
   );
   const absent = new Set(missingElements);
@@ -135,7 +148,11 @@ function buildContext({
           setItem: () => {
             throw new Error("private mode");
           },
-          removeItem: () => {},
+          // A real private-mode/quota-blocked browser throws on removeItem too,
+          // so any clear-a-key path stays exercised under storageThrows.
+          removeItem: () => {
+            throw new Error("private mode");
+          },
         }
       : {
           getItem: (k) => (store.has(k) ? store.get(k) : null),

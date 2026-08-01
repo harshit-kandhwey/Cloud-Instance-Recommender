@@ -343,8 +343,8 @@ check(
 );
 
 // ── Corrupt-config guard (applySelectedPreset must not falsely report success) ─
-reg({ id: "presetSelect", value: "" });
-reg({ id: "presetStatus", textContent: "", style: {} });
+makeEl({ id: "presetSelect", value: "" });
+makeEl({ id: "presetStatus", textContent: "" });
 sandbox.__page = "aws";
 run(`savePresetsStore({ aws: { "Broken": { savedAt: 1 } } })`); // entry with no config
 els.presetSelect.value = "Broken";

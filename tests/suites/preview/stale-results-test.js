@@ -149,8 +149,9 @@ console.log("[data replaced WHILE the run is in flight]");
 }
 {
   // And the same seam, done the wrong way: recording the LIVE token at the end.
-  // If this ever passes, generate.js has gone back to reading window._ingestToken
-  // after the await.
+  // This models the bug, so it is EXPECTED to pass — it exercises a hand-built
+  // seam, not generate.js. The guard that would actually catch the regression in
+  // generate.js is the source-level check below.
   const { ctx, elements } = buildContext();
   parse(ctx, FILE_A);
   vm.runInContext(

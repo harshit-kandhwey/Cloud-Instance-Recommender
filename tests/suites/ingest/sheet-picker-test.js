@@ -112,9 +112,10 @@ const RVTOOLS = [
         elements.sheetPickerSection.innerHTML,
       ),
     );
+    ctx.selectSheet("nope");
     check(
       "an unknown sheet name is ignored rather than blanking the data",
-      (ctx.selectSheet("nope"), rowsOf(ctx).length === 2),
+      rowsOf(ctx).length === 2,
     );
   }
 

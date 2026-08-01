@@ -277,7 +277,11 @@ ctx.rows = [
       );
     }
   } catch (e) {
-    check("the rescued-row run completes without throwing", false, e.message);
+    check(
+      "the rescued-row run completes without throwing",
+      false,
+      e && e.message,
+    );
   }
 
   // ── Workload Based, populated, at the COLUMN level ──────────────────────────
@@ -316,8 +320,15 @@ ctx.rows = [
       JSON.stringify(cell),
     );
   } catch (e) {
-    check("the workload-pick run completes without throwing", false, e.message);
+    check(
+      "the workload-pick run completes without throwing",
+      false,
+      e && e.message,
+    );
   }
 
-  process.exit(state.failures ? 1 : 0);
-})();
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

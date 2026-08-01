@@ -112,7 +112,7 @@ console.log("[memory utilization is derived, because ADS does not report it]");
   // shrink the machine to nothing; an empty cell means "unknown", and memory is
   // left alone.
   const withoutUsage = [...SAMPLE];
-  withoutUsage[10] = ""; // RAM.UsedSizeInMB.Avg
+  withoutUsage[ADS_HEADERS.indexOf("RAM.UsedSizeInMB.Avg")] = "";
   const { ctx } = buildContext();
   parse(ctx, adsFile(withoutUsage));
   check(

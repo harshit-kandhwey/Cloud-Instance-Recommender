@@ -104,7 +104,12 @@ db-server-02,8,32,70,80,us-west-2`;
     );
   }
 
-  console.log("[3. multi-sheet → first sheet]");
+  // The best-SCORING sheet is chosen, not the positionally first — here "First"
+  // carries six mappable columns and "Second" only three, so First wins on score
+  // and happens to also be first. The score-vs-order tiebreak itself lives in
+  // sheet-picker-test; this only pins that a multi-sheet workbook ingests the
+  // winning sheet's rows end to end.
+  console.log("[3. multi-sheet → the best-scoring sheet is ingested]");
   {
     const { ctx } = buildContext();
     const wb = makeXlsx([
@@ -120,7 +125,7 @@ db-server-02,8,32,70,80,us-west-2`;
     await ctx.ingestFile(fakeFile("multi.xlsx", wb));
     const data = vm.runInContext("csvData", ctx);
     check(
-      "first sheet used",
+      "best-scoring sheet used (First: 6 mappable cols vs Second: 3)",
       data.length === 2 && data[0]["VM Name"] === "web-server-01",
     );
   }

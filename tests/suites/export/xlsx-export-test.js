@@ -144,8 +144,8 @@ check(
 );
 check(
   "numeric CPU cell is typed as a number",
-  run('__wb.Sheets["Recommendations"]["B3"].t') === "n" &&
-    run('__wb.Sheets["Recommendations"]["B3"].v') === 16,
+  run('(__wb.Sheets["Recommendations"]["B3"] || {}).t') === "n" &&
+    run('(__wb.Sheets["Recommendations"]["B3"] || {}).v') === 16,
 );
 check(
   "workbook serializes to xlsx bytes",
@@ -219,7 +219,7 @@ check(
 );
 check(
   "a strategy sheet holds its pick cell",
-  run('__wb2.Sheets["Workload Based"]["D2"].v') === "r6g.xlarge (4/32)",
+  run('(__wb2.Sheets["Workload Based"]["D2"] || {}).v') === "r6g.xlarge (4/32)",
   run(
     '__wb2.Sheets["Workload Based"]["D2"] && __wb2.Sheets["Workload Based"]["D2"].v',
   ),

@@ -539,4 +539,4 @@ check(
   run("__evil"),
 );
 
-process.exit(failures ? 1 : 0);
+process.exitCode = failures ? 1 : 0;

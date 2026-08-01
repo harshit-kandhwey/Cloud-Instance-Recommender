@@ -33,7 +33,7 @@ waiver still records the reason.
 | `RuleEngine` | js/base/rule-engine.js | window | internal | covered | engine/alternatives-test.js, engine/min-generation-test.js, engine/nearest-miss-test.js, workload/burstable-preference-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js, workload/workload-fit-test.js |
 | `_beforeAfter` | js/base/charts.js | function | internal | uncovered | — |
 | `_buildStatsHtml` | js/base/preview.js | function | internal | covered | preview/stats-consistency-test.js, workload/app-summary-test.js |
-| `_csvMenuOutsideClick` | js/base/downloads.js | function | behavioral | waived | _waived: Outside-click handler that closes the CSV dropdown and resets aria-expanded. Pure interaction wiring, paired with toggleCsvMenu; E2E-verified (3.10.x)._ |
+| `_csvMenuOutsideClick` | js/base/downloads.js | function | behavioral | waived | _waived: Outside-click handler that closes the CSV dropdown and resets aria-expanded. Pure interaction wiring, paired with toggleCsvMenu; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `_duplicatesAcknowledged` | js/base/ingest.js | window | internal | uncovered | — |
 | `_familyDistribution` | js/base/charts.js | function | internal | uncovered | — |
 | `_fileSignature` | js/base/ingest.js | window | internal | uncovered | — |
@@ -118,7 +118,7 @@ waiver still records the reason.
 | `capturePresetConfig` | js/base/presets.js | function | internal | covered | export/scenario-compare-test.js, ui/presets-test.js |
 | `checkRuleConflicts` | js/base/form-controls.js | function | internal | uncovered | — |
 | `clearScenarios` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
-| `compareScenarios` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. E2E-verified (3.10.x)._ |
+| `compareScenarios` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `complianceTags` | js/base/portfolio.js | function | internal | uncovered | — |
 | `computeAppStats` | js/base/portfolio.js | function | internal | uncovered | — |
 | `computeFitHeadroom` | js/base/app-core.js | function | internal | covered | engine/fit-headroom-test.js |
@@ -140,20 +140,20 @@ waiver still records the reason.
 | `diffScenarios` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `diffScenariosN` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `disarmAllPresetButtons` | js/base/presets.js | function | internal | uncovered | — |
-| `disarmPresetButton` | js/base/presets.js | function | behavioral | waived | _waived: Timer/DOM disarm of a two-click preset button — restores the label, drops the armed class, clears the arming hint only if unchanged. Interaction/timer wiring with no computed output; E2E-verified (3.10.x)._ |
+| `disarmPresetButton` | js/base/presets.js | function | behavioral | waived | _waived: Timer/DOM disarm of a two-click preset button — restores the label, drops the armed class, clears the arming hint only if unchanged. Interaction/timer wiring with no computed output; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `dismissToast` | js/base/app-core.js | function+window | behavioral | covered | preview/preview-search-test.js |
 | `downloadAWSBulkTemplate` | js/base/downloads.js | function | behavioral | covered | ingest/storage-passthrough-test.js |
 | `downloadAWSSampleCSV` | js/aws/aws-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
-| `downloadAppCsv` | js/base/portfolio.js | function | behavioral | waived | _waived: Builds a per-app VM CSV from the portfolio model (columns via vmDetailColumns, covered by portfolio-test.js) and triggers an anchor download. Adds only the download plumbing; E2E-verified (3.10.x)._ |
+| `downloadAppCsv` | js/base/portfolio.js | function | behavioral | waived | _waived: Builds a per-app VM CSV from the portfolio model (columns via vmDetailColumns, covered by portfolio-test.js) and triggers an anchor download. Adds only the download plumbing; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `downloadAppSummary` | js/base/downloads.js | function | internal | covered | workload/app-summary-test.js |
 | `downloadAzureSampleCSV` | js/azure/azure-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadCsv` | js/base/app-core.js | function | internal | covered | ingest/storage-passthrough-test.js, preview/preview-search-test.js, ui/sample-templates-test.js |
 | `downloadGCPSampleCSV` | js/gcp/gcp-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadNoMatchRows` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResults` | js/base/downloads.js | function | internal | uncovered | — |
-| `downloadResultsXlsx` | js/base/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX export of the results table — ensure engine, build, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the row content is pinned by the golden CSV compare. E2E-verified (3.10.x)._ |
+| `downloadResultsXlsx` | js/base/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX export of the results table — ensure engine, build, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the row content is pinned by the golden CSV compare. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `downloadSampleCSV` | js/base/ingest.js | function | behavioral | covered | ui/sample-templates-test.js |
-| `downloadScenarioComparison` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard then buildScenarioComparisonCsv / buildScenarioComparisonCsvN (both covered by scenario-compare-test.js) piped to an anchor download. The CSV body is pinned by that suite; this adds only the anchor-download plumbing. E2E-verified (3.10.x)._ |
+| `downloadScenarioComparison` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard then buildScenarioComparisonCsv / buildScenarioComparisonCsvN (both covered by scenario-compare-test.js) piped to an anchor download. The CSV body is pinned by that suite; this adds only the anchor-download plumbing. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `downloadSelectedCsvs` | js/base/downloads.js | function | behavioral | covered | export/nomatch-export-test.js |
 | `editColumnMapping` | js/base/ingest.js | function | behavioral | covered | ingest/mapping-units-test.js, ui/ads-preset-test.js |
 | `enhanceAccessibility` | js/base/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
@@ -165,7 +165,7 @@ waiver still records the reason.
 | `excludedColsNote` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `exportDateStamp` | js/base/app-core.js | function | internal | uncovered | — |
 | `exportFilename` | js/base/app-core.js | function | internal | covered | ui/presets-test.js |
-| `exportPortfolioWorkbook` | js/base/portfolio.js | function | behavioral | waived | _waived: Async XLSX export — ensurePortfolioXlsx, build the workbook, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the portfolio model it serializes is covered by portfolio-test.js. E2E-verified (3.10.x)._ |
+| `exportPortfolioWorkbook` | js/base/portfolio.js | function | behavioral | waived | _waived: Async XLSX export — ensurePortfolioXlsx, build the workbook, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the portfolio model it serializes is covered by portfolio-test.js. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `exportPresets` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `extractFamily` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `extractUniqueRegions` | js/base/instance-selector-factory.js | function | internal | uncovered | — |
@@ -224,12 +224,12 @@ waiver still records the reason.
 | `getSelectedInstanceFamilyNames` | js/aws/aws-specific.js | function | internal | uncovered | — |
 | `getSelectedMainFamilies` | js/aws/aws-specific.js | function | internal | uncovered | — |
 | `getSelectedProcessorManufacturers` | js/aws/aws-specific.js | function | internal | uncovered | — |
-| `handleFileUpload` | js/base/ingest.js | function | behavioral | waived | _waived: input[type=file] change wrapper that hands the File to ingestFile. ingestFile is covered by upload-guards-test.js, xlsx-ingest-test.js and sheet-picker-test.js; this is the one-line event wiring. E2E-verified (3.10.x)._ |
-| `handlePresetImportFile` | js/base/presets.js | function | behavioral | waived | _waived: FileReader wrapper that hands the file text to applyPresetImportText (covered by presets-test.js) and resets the input so the same file re-fires. FileReader/DOM wiring only; E2E-verified (3.10.x)._ |
-| `handleRecommendationTypeChange` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #optimizationControls off the recommendation-type radio. Visibility-only wiring; E2E-verified (3.10.x)._ |
+| `handleFileUpload` | js/base/ingest.js | function | behavioral | waived | _waived: input[type=file] change wrapper that hands the File to ingestFile. ingestFile is covered by upload-guards-test.js, xlsx-ingest-test.js and sheet-picker-test.js; this is the one-line event wiring. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `handlePresetImportFile` | js/base/presets.js | function | behavioral | waived | _waived: FileReader wrapper that hands the file text to applyPresetImportText (covered by presets-test.js) and resets the input so the same file re-fires. FileReader/DOM wiring only; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `handleRecommendationTypeChange` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #optimizationControls off the recommendation-type radio. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `headerSignature` | js/base/ingest.js | function | internal | uncovered | — |
 | `hideDataToast` | js/base/app-core.js | function | internal | uncovered | — |
-| `importPresets` | js/base/presets.js | function | behavioral | waived | _waived: Opens the hidden preset-import file input (input.click()). Trivial file-picker trigger; the import parse/apply is covered by presets-test.js via applyPresetImportText. E2E-verified (3.10.x)._ |
+| `importPresets` | js/base/presets.js | function | behavioral | waived | _waived: Opens the hidden preset-import file input (input.click()). Trivial file-picker trigger; the import parse/apply is covered by presets-test.js via applyPresetImportText. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `ingestPastedData` | js/base/ingest.js | function | behavioral | covered | ingest/paste-test.js, preview/stale-results-test.js |
 | `ingestRows` | js/base/ingest.js | function | internal | covered | manual-entry/manual-entry-form-test.js |
 | `initFilterPresets` | js/base/presets.js | function | internal | uncovered | — |
@@ -262,7 +262,7 @@ waiver still records the reason.
 | `manualAddVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `manualApplyVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `manualCancelClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
-| `manualCancelEdit` | js/base/manual-entry.js | function | behavioral | waived | _waived: Clears window._manualEditIndex and re-renders the manual-entry form. One-line cancel + DOM-render wiring; E2E-verified (3.10.x)._ |
+| `manualCancelEdit` | js/base/manual-entry.js | function | behavioral | waived | _waived: Clears window._manualEditIndex and re-renders the manual-entry form. One-line cancel + DOM-render wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `manualClearVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `manualConfirmClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
 | `manualEditVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
@@ -284,12 +284,12 @@ waiver still records the reason.
 | `normalizeFamilyClass` | js/base/instance-selector-factory.js | function | internal | covered | engine/family-equivalence-test.js |
 | `normalizeHeader` | js/base/ingest.js | function | internal | uncovered | — |
 | `num` | js/base/portfolio.js | function | internal | uncovered | — |
-| `onPortfolioMessage` | js/base/portfolio.js | function | behavioral | waived | _waived: Cross-window message router — enforces origin === location.origin and source === window.opener, then hands the payload to receivePortfolio (covered by portfolio-test.js). The routing/guard needs a real opener + postMessage; E2E-verified (3.10.x)._ |
-| `onPresetNameKeydown` | js/base/presets.js | function | behavioral | waived | _waived: Enter/Escape keyboard wiring for the preset-name field, delegating to confirmSavePreset (covered by presets-test.js) / cancelSavePreset. Keyboard wiring only; E2E-verified (3.10.x)._ |
+| `onPortfolioMessage` | js/base/portfolio.js | function | behavioral | waived | _waived: Cross-window message router — enforces origin === location.origin and source === window.opener, then hands the payload to receivePortfolio (covered by portfolio-test.js). The routing/guard needs a real opener + postMessage; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `onPresetNameKeydown` | js/base/presets.js | function | behavioral | waived | _waived: Enter/Escape keyboard wiring for the preset-name field, delegating to confirmSavePreset (covered by presets-test.js) / cancelSavePreset. Keyboard wiring only; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `onPresetSelectChange` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
-| `onRuleChange` | js/base/form-controls.js | function | behavioral | waived | _waived: One-line delegator to checkRuleConflicts, which flags rule conflicts by restyling rule groups and toggling conflict-message elements. DOM-messaging wiring with no computed output a node/vm sandbox can assert; E2E-verified (3.10.x)._ |
+| `onRuleChange` | js/base/form-controls.js | function | behavioral | waived | _waived: One-line delegator to checkRuleConflicts, which flags rule conflicts by restyling rule groups and toggling conflict-message elements. DOM-messaging wiring with no computed output a node/vm sandbox can assert; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `onUtilizationStatisticChange` | js/base/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |
-| `openAppPortfolio` | js/base/downloads.js | function | behavioral | waived | _waived: Serializes the portfolio payload into a size-guarded localStorage copy and opens the App Portfolio window (postMessage is the primary handoff). Cross-window behavior that needs a real window; E2E-verified (3.10.x)._ |
+| `openAppPortfolio` | js/base/downloads.js | function | behavioral | waived | _waived: Serializes the portfolio payload into a size-guarded localStorage copy and opens the App Portfolio window (postMessage is the primary handoff). Cross-window behavior that needs a real window; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `pEsc` | js/base/presets.js | function | internal | uncovered | — |
 | `pageCanonicals` | js/base/app-core.js | function | internal | covered | ingest/column-mapping-test.js, ingest/mapping-units-test.js, workload/app-mapping-test.js |
 | `parseCSV` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/mapping-units-test.js, ingest/storage-passthrough-test.js, ingest/xlsx-ingest-test.js, preview/preview-search-test.js, ui/region-validation-test.js |
@@ -391,28 +391,28 @@ waiver still records the reason.
 | `sniffDelimiter` | js/base/ingest.js | function | internal | uncovered | — |
 | `sniffFileKind` | js/base/ingest.js | function | internal | covered | ingest/upload-guards-test.js |
 | `sortApps` | js/base/portfolio.js | function | internal | uncovered | — |
-| `sortPortfolioApps` | js/base/portfolio.js | function | behavioral | waived | _waived: Flips overviewState sort key/direction and re-renders the app table. Sort-state wiring with no computed output beyond the render; E2E-verified (3.10.x)._ |
+| `sortPortfolioApps` | js/base/portfolio.js | function | behavioral | waived | _waived: Flips overviewState sort key/direction and re-renders the app table. Sort-state wiring with no computed output beyond the render; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `sortResultRows` | js/base/app-core.js | function | internal | covered | export/scenario-compare-test.js |
 | `sortableTh` | js/base/portfolio.js | function | internal | uncovered | — |
 | `startPreWarm` | js/base/app-core.js | function | internal | uncovered | — |
 | `strategyIdColumns` | js/base/xlsx-export.js | function | internal | uncovered | — |
 | `styleRow` | js/base/portfolio.js | function | internal | uncovered | — |
-| `switchPortfolioTab` | js/base/portfolio.js | function | behavioral | waived | _waived: Tab active-class + aria-selected + panel show/hide across .pf-tab/.pf-panel. Visibility/aria wiring; E2E-verified (3.10.x)._ |
+| `switchPortfolioTab` | js/base/portfolio.js | function | behavioral | waived | _waived: Tab active-class + aria-selected + panel show/hide across .pf-tab/.pf-panel. Visibility/aria wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `tally` | js/base/portfolio.js | function | internal | uncovered | — |
 | `toNum` | js/base/portfolio.js | function | internal | uncovered | — |
 | `toWsCell` | js/base/portfolio.js | function | internal | uncovered | — |
-| `toggleCloudProvider` | js/base/form-controls.js | function | behavioral | waived | _waived: Checkbox → selectedProviders push/filter, then refreshes the exclude controls. Pure DOM-state wiring with no computed output to assert; the provider checkboxes are driven end-to-end by the Playwright E2E suite (3.10.x)._ |
-| `toggleCsvMenu` | js/base/downloads.js | function | behavioral | waived | _waived: Open/close of the CSV download dropdown — sets aria-expanded and arms/disarms an outside-click listener. DOM/interaction wiring with no computed output; E2E-verified (3.10.x)._ |
-| `toggleCurrentGenerationFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Reads the current-generation checkbox and logs it; the filter value is consumed by the generate path, which the golden compare pins. No standalone output to assert; E2E-verified (3.10.x)._ |
-| `toggleExcludeTypes` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #excludeControls off a checkbox, delegating the render to updateExcludeControls. Visibility-only wiring; E2E-verified (3.10.x)._ |
+| `toggleCloudProvider` | js/base/form-controls.js | function | behavioral | waived | _waived: Checkbox → selectedProviders push/filter, then refreshes the exclude controls. Pure DOM-state wiring with no computed output to assert; the provider checkboxes are to be driven end-to-end by the Playwright E2E suite (3.10, not yet built)._ |
+| `toggleCsvMenu` | js/base/downloads.js | function | behavioral | waived | _waived: Open/close of the CSV download dropdown — sets aria-expanded and arms/disarms an outside-click listener. DOM/interaction wiring with no computed output; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `toggleCurrentGenerationFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Reads the current-generation checkbox and logs it; the filter value is consumed by the generate path, which the golden compare pins. No standalone output to assert; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `toggleExcludeTypes` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #excludeControls off a checkbox, delegating the render to updateExcludeControls. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `toggleInstanceFamilyNameFilter` | js/aws/aws-specific.js | function | internal | uncovered | — |
-| `toggleMainFamiliesFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; E2E-verified (3.10.x)._ |
+| `toggleMainFamiliesFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `toggleManualEntry` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `toggleOptimizationMode` | js/base/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |
-| `togglePastePanel` | js/base/ingest.js | function | behavioral | waived | _waived: Show/hide of the paste panel plus focus of the textarea. Visibility/focus wiring; E2E-verified (3.10.x)._ |
+| `togglePastePanel` | js/base/ingest.js | function | behavioral | waived | _waived: Show/hide of the paste panel plus focus of the textarea. Visibility/focus wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `togglePortfolioAppRow` | js/base/portfolio.js | function | behavioral | covered | export/portfolio-test.js |
-| `togglePortfolioFilter` | js/base/portfolio.js | function | behavioral | waived | _waived: Sets a boolean overviewState filter (noMatchOnly / complianceOnly) and re-renders the app table. Filter-state wiring; E2E-verified (3.10.x)._ |
-| `toggleProcessorManufacturerFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the processor-manufacturer restriction controls off a checkbox. Visibility-only wiring; E2E-verified (3.10.x)._ |
+| `togglePortfolioFilter` | js/base/portfolio.js | function | behavioral | waived | _waived: Sets a boolean overviewState filter (noMatchOnly / complianceOnly) and re-renders the app table. Filter-state wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `toggleProcessorManufacturerFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the processor-manufacturer restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `toggleSection` | js/base/ui-shell.js | function | behavioral | covered | ui/accessibility-affordances-test.js |
 | `uniqueSheetName` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `updateAnalysisGroupVisibility` | js/base/downloads.js | function | internal | uncovered | — |

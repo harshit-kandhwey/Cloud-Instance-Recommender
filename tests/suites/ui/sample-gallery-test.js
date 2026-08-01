@@ -4,7 +4,6 @@
 const { buildContext, makeChecker, rowsOf } = require("../harness");
 
 const { check, state } = makeChecker();
-const rows = rowsOf;
 
 console.log("[the gallery offers the three samples]");
 {
@@ -29,7 +28,11 @@ console.log("[the clean sample is genuinely clean]");
 {
   const { ctx, elements } = buildContext();
   ctx.loadSampleDataset(0);
-  check("it loads 8 rows", rows(ctx).length === 8, String(rows(ctx).length));
+  check(
+    "it loads 8 rows",
+    rowsOf(ctx).length === 8,
+    String(rowsOf(ctx).length),
+  );
   check(
     "the input check finds nothing to say about it",
     elements.inputHygieneSection.classes.has("hidden"),
@@ -45,15 +48,23 @@ console.log("[the large sample is large, and deterministic]");
 {
   const { ctx } = buildContext();
   ctx.loadSampleDataset(1);
-  check("500 rows", rows(ctx).length === 500, String(rows(ctx).length));
+  check("500 rows", rowsOf(ctx).length === 500, String(rowsOf(ctx).length));
 
   // Two people clicking "Large" must be looking at the same file, or comparing
   // notes about it is meaningless.
   const second = buildContext();
   second.ctx.loadSampleDataset(1);
+  const a = rowsOf(ctx);
+  const b = rowsOf(second.ctx);
+  const firstDiff = a.findIndex(
+    (row, i) => JSON.stringify(row) !== JSON.stringify(b[i]),
+  );
   check(
     "the same file every time",
-    JSON.stringify(rows(ctx)) === JSON.stringify(rowsOf(second.ctx)),
+    a.length === b.length && firstDiff === -1,
+    firstDiff === -1
+      ? `lengths ${a.length} vs ${b.length}`
+      : `row ${firstDiff} differs: ${JSON.stringify(a[firstDiff])} vs ${JSON.stringify(b[firstDiff])}`,
   );
 }
 
@@ -85,28 +96,28 @@ console.log("[the messy sample really is messy — it trips the checks]");
     html,
   );
   check(
-    "and it asks whether the memory column is MiB",
+    "and it asks whether the memory column is MB",
     /Is the memory column in MB\?/.test(html),
     html,
   );
   check(
     "the memory is left untouched until that question is answered",
-    rows(ctx)[0]["Memory (GB)"] === "16384",
-    JSON.stringify(rows(ctx)[0]),
+    rowsOf(ctx)[0]["Memory (GB)"] === "16384",
+    JSON.stringify(rowsOf(ctx)[0]),
   );
 
   // The questions are answerable, and answering them fixes the file.
   ctx.convertMemoryToGb();
   check(
     "answering MB converts it",
-    rows(ctx)[0]["Memory (GB)"] === "16",
-    JSON.stringify(rows(ctx)[0]),
+    rowsOf(ctx)[0]["Memory (GB)"] === "16",
+    JSON.stringify(rowsOf(ctx)[0]),
   );
   ctx.mergeDuplicateVmNames();
   check(
     "and merging the duplicate leaves one web-01",
-    rows(ctx).filter((r) => r["VM Name"] === "web-01").length === 1,
-    JSON.stringify(rows(ctx).map((r) => r["VM Name"])),
+    rowsOf(ctx).filter((r) => r["VM Name"] === "web-01").length === 1,
+    JSON.stringify(rowsOf(ctx).map((r) => r["VM Name"])),
   );
 }
 
@@ -122,9 +133,11 @@ console.log("[a sample replaces whatever was loaded before]");
   );
   check(
     "and the status says which sample is loaded",
-    /Sample loaded \(Small & clean\)/.test(elements.fileStatus.innerHTML),
+    /Sample loaded \(Small (?:&|&amp;) clean\)/.test(
+      elements.fileStatus.innerHTML,
+    ),
     elements.fileStatus.innerHTML,
   );
 }
 
-process.exit(state.failures ? 1 : 0);
+process.exitCode = state.failures ? 1 : 0;

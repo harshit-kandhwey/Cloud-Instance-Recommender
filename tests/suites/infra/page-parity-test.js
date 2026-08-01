@@ -51,7 +51,7 @@ const short = (p) => p.replace(".html", "");
 // would then either pass a genuine divergence or, when the id is in INTENTIONAL,
 // stop verifying that divergence at all.
 const hasElementId = (page, id) =>
-  new RegExp(`<[a-zA-Z][^>]*\\sid="${id}"`, "i").test(html[page]);
+  new RegExp(`<[a-zA-Z][^>]*\\sid=["']${id}["']`, "i").test(html[page]);
 
 // ─── Deliberate divergences ──────────────────────────────────────────────────
 // id → the pages that are SUPPOSED to carry it, and why.

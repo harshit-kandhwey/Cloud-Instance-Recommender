@@ -149,10 +149,10 @@ function check(name, cond, detail) {
   );
   check(
     "fallback used real region data",
-    results[0]["AWS Like-to-Like Instance"] &&
+    !!results?.[0]?.["AWS Like-to-Like Instance"] &&
       results[0]["AWS Like-to-Like Instance"] !== "No data available" &&
       results[0]["AWS Like-to-Like Instance"] !== "Missing data",
-    JSON.stringify(results[0]["AWS Like-to-Like Instance"]),
+    JSON.stringify(results?.[0]?.["AWS Like-to-Like Instance"]),
   );
 
   process.exit(failures ? 1 : 0);

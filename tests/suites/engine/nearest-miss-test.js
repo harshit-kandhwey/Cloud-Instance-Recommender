@@ -86,8 +86,10 @@ check(
 );
 check(
   "attributes the block to current-generation only",
-  JSON.stringify(r1.blockedBy) === JSON.stringify(["current-generation only"]),
-  JSON.stringify(r1.blockedBy),
+  !!r1 &&
+    JSON.stringify(r1.blockedBy) ===
+      JSON.stringify(["current-generation only"]),
+  JSON.stringify(r1 && r1.blockedBy),
 );
 
 // ── processor filter removes everything (want AMD, all Intel) ──────────────────
@@ -96,8 +98,9 @@ const r2 = run(
 );
 check(
   "attributes the block to processor manufacturer",
-  JSON.stringify(r2.blockedBy) === JSON.stringify(["processor manufacturer"]),
-  JSON.stringify(r2.blockedBy),
+  !!r2 &&
+    JSON.stringify(r2.blockedBy) === JSON.stringify(["processor manufacturer"]),
+  JSON.stringify(r2 && r2.blockedBy),
 );
 
 // ── two filters block the nearest → both named ─────────────────────────────────
@@ -106,9 +109,10 @@ const r3 = run(
 );
 check(
   "names every blocking filter group",
-  JSON.stringify(r3.blockedBy.slice().sort()) ===
-    JSON.stringify(["current-generation only", "processor manufacturer"]),
-  JSON.stringify(r3.blockedBy),
+  !!r3 &&
+    JSON.stringify(r3.blockedBy.slice().sort()) ===
+      JSON.stringify(["current-generation only", "processor manufacturer"]),
+  JSON.stringify(r3 && r3.blockedBy),
 );
 
 // ── nothing meets the size → null (not a filter problem) ───────────────────────
@@ -128,13 +132,13 @@ const lt = run(
 );
 check(
   "getLikeToLikeInstance reports no match under the filter",
-  lt.instanceType === "No data available",
-  lt.instanceType,
+  !!lt && lt.instanceType === "No data available",
+  lt && lt.instanceType,
 );
 check(
   "no-match result carries the nearest miss",
-  lt.nearestMiss && lt.nearestMiss.instanceType === "t3.medium",
-  JSON.stringify(lt.nearestMiss),
+  !!lt && lt.nearestMiss && lt.nearestMiss.instanceType === "t3.medium",
+  JSON.stringify(lt && lt.nearestMiss),
 );
 
 // ── a genuine match must NOT carry a nearest miss ──────────────────────────────
@@ -169,8 +173,9 @@ const rFam = run(
 );
 check(
   "attributes the block to instance-family name",
-  JSON.stringify(rFam.blockedBy) === JSON.stringify(["instance-family name"]),
-  JSON.stringify(rFam.blockedBy),
+  !!rFam &&
+    JSON.stringify(rFam.blockedBy) === JSON.stringify(["instance-family name"]),
+  JSON.stringify(rFam && rFam.blockedBy),
 );
 
 // ── family/series filter runs through a provider applyFilters override ─────────
@@ -313,10 +318,17 @@ console.log("[relax controls cover every probe label]");
     path.join(REPO, "js/base/app-core.js"),
     "utf8",
   );
-  const mapSrc = coreSrc.slice(
-    coreSrc.indexOf("const RELAX_CONTROLS"),
-    coreSrc.indexOf("function parseRelaxLabels"),
+  // Assert both markers were found first — a rename/reorder makes an indexOf
+  // return -1, and the slice then goes empty or backwards. The `every` checks
+  // below pass vacuously on an empty map, so without this the guard is silent.
+  const mapStart = coreSrc.indexOf("const RELAX_CONTROLS");
+  const mapEnd = coreSrc.indexOf("function parseRelaxLabels");
+  check(
+    "the relax map markers still exist in app-core.js",
+    mapStart >= 0 && mapEnd > mapStart,
+    `start=${mapStart} end=${mapEnd}`,
   );
+  const mapSrc = coreSrc.slice(mapStart, mapEnd);
 
   check(
     "every probe label has a relax control",

@@ -106,6 +106,18 @@ function cacheApi(map) {
       if (res && res.ok) map.set(urlKey(url), res);
       else throw new Error("add failed: " + url);
     },
+    // The rest of the Cache surface sw.js may reach for. Missing them turned a
+    // worker call into a TypeError the outer catch reported as a nameless crash,
+    // pointing at the mock instead of the worker.
+    async addAll(urls) {
+      for (const u of urls) await this.add(u);
+    },
+    async keys() {
+      return [...map.keys()];
+    },
+    async delete(req) {
+      return map.delete(urlKey(req));
+    },
   };
 }
 const sandbox = {

@@ -84,19 +84,17 @@ console.log("[token coverage]");
     "grad-accent",
     "table-head-text",
   ]);
-  // split()[1] is only the text BETWEEN the first and second dark selector, so a
-  // token defined in a later [data-theme="dark"] rule would be invisible here and
-  // report a false "unthemed" the moment theme.css grows a second dark block.
-  // Take everything from the first dark selector to the end instead.
-  const darkStart = themeCss.indexOf('[data-theme="dark"]');
-  const rootBlock = darkStart === -1 ? themeCss : themeCss.slice(0, darkStart);
-  const darkBlock = darkStart === -1 ? "" : themeCss.slice(darkStart);
-  const rootTokens = [...rootBlock.matchAll(/--([a-z0-9-]+)\s*:/gi)].map(
-    (m) => m[1],
-  );
-  const darkTokens = new Set(
-    [...darkBlock.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((m) => m[1]),
-  );
+  // Scan by rule body, not by a leading/trailing slice, so the order and count
+  // of :root and [data-theme="dark"] rules cannot fool this: a token counts as
+  // themed only when it is declared inside a dark rule, and EVERY :root token
+  // wherever it sits must have one. theme.css already has two dark blocks, and a
+  // :root added after the first would otherwise slip past the old slice.
+  const tokensIn = (re) =>
+    [...themeCss.matchAll(re)].flatMap((m) =>
+      [...m[1].matchAll(/--([a-z0-9-]+)\s*:/gi)].map((x) => x[1]),
+    );
+  const rootTokens = tokensIn(/:root\s*\{([^}]*)\}/g);
+  const darkTokens = new Set(tokensIn(/\[data-theme="dark"\]\s*\{([^}]*)\}/g));
   const unthemed = rootTokens.filter(
     (t) => !darkTokens.has(t) && !invariant.has(t),
   );
@@ -247,8 +245,21 @@ console.log("[boot script behavior]");
       r.sandbox.document.documentElement.dataset.theme === "light",
     );
 
+    // Route every toggle through this: if the boot script stops exporting a
+    // global toggleTheme, or the call throws under storageThrows, that becomes
+    // one named FAIL instead of a TypeError that skips the cross-page checks.
+    const callToggle = (rb) => {
+      if (typeof rb.ctx.toggleTheme !== "function") return "not a function";
+      try {
+        rb.ctx.toggleTheme();
+        return null;
+      } catch (e) {
+        return e.message;
+      }
+    };
+
     r = runBoot({ stored: null, osDark: false });
-    r.ctx.toggleTheme();
+    check("toggleTheme is callable", callToggle(r) === null);
     check(
       "toggle light→dark",
       r.sandbox.document.documentElement.dataset.theme === "dark",
@@ -257,7 +268,7 @@ console.log("[boot script behavior]");
       "toggle persists choice",
       r.storage.cloudInstanceRecommenderTheme === "dark",
     );
-    r.ctx.toggleTheme();
+    callToggle(r);
     check(
       "toggle back to light",
       r.sandbox.document.documentElement.dataset.theme === "light" &&
@@ -269,7 +280,7 @@ console.log("[boot script behavior]");
       "private mode: still themes from OS",
       r.sandbox.document.documentElement.dataset.theme === "dark",
     );
-    r.ctx.toggleTheme();
+    callToggle(r);
     check(
       "private mode: toggle still works",
       r.sandbox.document.documentElement.dataset.theme === "light",

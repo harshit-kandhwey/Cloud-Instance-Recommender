@@ -12,7 +12,12 @@ const names = (ctx) => list(ctx).map((v) => v["VM Name"]);
 
 // Fill the entry form the way a user would, then press a button.
 function fill(ctx, values, copies) {
-  ctx.toggleManualEntry(); // renders the form
+  // Open the form if it is closed, rather than blindly toggling: toggleManualEntry
+  // flips visibility, so a block that calls fill() more than once (or in a loop)
+  // would otherwise close it on the next call — and skip the re-render — leaving
+  // later reads on stale, hidden state. Idempotent: always ends up open.
+  const section = ctx.document.getElementById("manualEntrySection");
+  if (section.classes.has("hidden")) ctx.toggleManualEntry();
   const defs = ctx.manualFieldDefs();
   defs.forEach((d, i) => {
     const input = ctx.document.getElementById(`manual_${i}`);

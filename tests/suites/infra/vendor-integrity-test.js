@@ -48,6 +48,13 @@ const bundles = fs
   .map((f) => `js/vendor/${f}`);
 const present = new Set(bundles);
 
+console.log("[the vendor directory still holds bundles]");
+check(
+  "js/vendor contains at least one bundle to verify",
+  bundles.length > 0,
+  `no .js files under ${VENDOR_DIR} — this suite would otherwise pass vacuously`,
+);
+
 console.log("[the table and the directory agree, both ways]");
 check(
   "every vendored bundle has a recorded checksum",
@@ -76,13 +83,20 @@ check(
 // matters, per file: will git rewrite this file's bytes on checkout?
 console.log("[git will not rewrite the bytes these checksums describe]");
 let attrOut = null;
-try {
-  attrOut = execFileSync("git", ["check-attr", "text", "--", ...bundles], {
-    cwd: REPO,
-    encoding: "utf8",
-  });
-} catch {
-  attrOut = null; // no git on PATH, or this is not a checkout
+if (bundles.length) {
+  try {
+    attrOut = execFileSync("git", ["check-attr", "text", "--", ...bundles], {
+      cwd: REPO,
+      encoding: "utf8",
+    });
+  } catch (e) {
+    // ENOENT means no git on PATH (a real skip). Anything else is a genuine git
+    // failure and must not masquerade as "cannot verify here" — report it.
+    if (e.code !== "ENOENT") {
+      check("git check-attr ran", false, String(e.message || e));
+    }
+    attrOut = null;
+  }
 }
 if (attrOut === null) {
   console.log(

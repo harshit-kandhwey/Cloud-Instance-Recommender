@@ -6,6 +6,7 @@ const vm = require("vm");
 
 const REPO = path.resolve(__dirname, "..", "..", "..");
 const requestedSrcs = [];
+const loaderErrors = [];
 const elements = {};
 
 function fakeElement(id) {
@@ -81,6 +82,10 @@ sandbox.document = {
           process.stderr.write(
             `  [loader] failed to run ${script.src}: ${e.message}\n`,
           );
+          // Record it too — writing to stderr alone let a missing/renamed region
+          // file still pass every prefetch check (the push already ran), so the
+          // suite could exit 0 having loaded nothing. Asserted after the poll.
+          loaderErrors.push(`${script.src}: ${e.message}`);
           script.onerror && script.onerror(e);
         }
       }, 0);
@@ -194,6 +199,11 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
   }
   console.log("[prefetch] requested: " + requestedSrcs.join(", "));
   check(
+    "no loader faults while fetching region files",
+    loaderErrors.length === 0,
+    loaderErrors.join("; "),
+  );
+  check(
     "prefetch loaded valid + fuzzy regions only",
     // Reuse expectedSrcs so the predicate here cannot drift from the poll above.
     expectedSrcs.every((s) => requestedSrcs.includes(s)),
@@ -219,12 +229,12 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
 d,4,16,us-west-2`;
   vm.runInContext("parseCSV(" + JSON.stringify(csv2) + ")", ctx);
   console.log("[re-upload]");
-  check("panel still visible", !panel.classes.has("hidden"));
-  check("old chips replaced", !panel.innerHTML.includes("narnia-99"));
-  check(
-    "no warning when all valid",
-    !panel.innerHTML.includes("not recognized"),
-  );
+  check("panel still visible", !!panel && !panel.classes.has("hidden"));
+  // Same guarded read as the first render: an unrendered panel is one FAIL, not
+  // a throw that unwinds past the checks below.
+  const panelHtml2 = panel?.innerHTML ?? "";
+  check("old chips replaced", !panelHtml2.includes("narnia-99"));
+  check("no warning when all valid", !panelHtml2.includes("not recognized"));
   check("validation replaced", !ctx._regionValidation?.azure);
 
   process.exit(failures ? 1 : 0);

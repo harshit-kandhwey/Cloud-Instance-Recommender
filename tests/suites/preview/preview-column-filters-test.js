@@ -239,8 +239,8 @@ function colIndex(ctx, name) {
     );
   }
 
-  process.exit(state.failures ? 1 : 0);
+  process.exitCode = state.failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

@@ -96,8 +96,20 @@ function generateSample(sample) {
   ctx.downloadCsv = (content) => {
     csv = content;
   };
-  ctx[sample.fn]();
-  return { ctx, elements, csv };
+  // Guard the call itself: a renamed/removed generator would otherwise throw at
+  // the top level and abort the whole run, leaving the remaining samples
+  // unchecked. Report it as a named failure on this sample instead.
+  let error = null;
+  if (typeof ctx[sample.fn] !== "function") {
+    error = `${sample.fn} is not defined`;
+  } else {
+    try {
+      ctx[sample.fn]();
+    } catch (e) {
+      error = `${sample.fn} threw: ${e.message}`;
+    }
+  }
+  return { ctx, elements, csv, error };
 }
 
 // Every line of the <pre> inside the page's .sample-csv block. Tolerant of
@@ -125,9 +137,13 @@ function previewLines(page) {
 
 for (const sample of SAMPLES) {
   console.log(`[the ${sample.label} sample template]`);
-  const { ctx, elements, csv } = generateSample(sample);
+  const { ctx, elements, csv, error } = generateSample(sample);
 
-  check("a sample is produced", typeof csv === "string" && csv.length > 0);
+  check(
+    "a sample is produced",
+    !error && typeof csv === "string" && csv.length > 0,
+    error || "",
+  );
   // Without this, a sample that never reached downloadCsv would take a null into
   // parse() and abort the whole process — the remaining samples would go
   // unchecked and the failure would surface as a crash rather than as this
@@ -141,8 +157,13 @@ for (const sample of SAMPLES) {
   // The template is the one file every new user runs. If it needs mapping, or
   // trips the input check, it fails in their hands on their first attempt.
   check(
+    "it parses to at least one row",
+    rows.length > 0,
+    `rows: ${rows.length}`,
+  );
+  check(
     "it loads with nothing to map",
-    elements.columnMappingSection.classes.has("hidden") && rows.length > 0,
+    elements.columnMappingSection.classes.has("hidden"),
     elements.columnMappingSection.innerHTML,
   );
   check(
@@ -163,16 +184,26 @@ for (const sample of SAMPLES) {
   // sample that ships an unquoted one would shift every column after it right
   // by one, which is exactly the kind of break that reads as "the tool is
   // broken" rather than "the sample is".
+  // Assert the STRUCTURE the quoting must preserve, not one sample's exact
+  // literals: the cell splits into ≥2 non-empty tokens (the comma stayed inside
+  // one field), and the neighbouring columns are still well-formed (nothing
+  // shifted right). A sample that legitimately carries a different multi-value
+  // Exclude then still passes for the reason this check exists.
   const excluding = rows.find((r) => (r["Exclude"] || "").includes(","));
+  const excludeTokens = (excluding?.["Exclude"] || "")
+    .split(",")
+    .map((t) => t.trim());
   check(
     "the quoted multi-value Exclude survives the round trip",
-    !!excluding && excluding["Exclude"] === "Burstable,GPU",
+    !!excluding &&
+      excludeTokens.length >= 2 &&
+      excludeTokens.every((t) => t !== ""),
     JSON.stringify(excluding && excluding["Exclude"]),
   );
   check(
     "and the row it is on is otherwise intact, so no column has shifted",
     !!excluding &&
-      excluding["Compliance"] === "PCI" &&
+      (excluding["Compliance"] || "").trim() !== "" &&
       /^[A-Za-z]/.test(excluding["Current Instance Type"] || ""),
     JSON.stringify(excluding),
   );
@@ -195,7 +226,9 @@ for (const sample of SAMPLES) {
   check(
     `the <pre> preview on ${sample.page} was found`,
     Array.isArray(preview) && preview.length > 1,
-    String(preview),
+    preview === null
+      ? "no .sample-csv <pre> block matched"
+      : `only ${preview.length} line(s)`,
   );
   if (preview) {
     // The preview is an EXCERPT by design — a header and the first few rows of a
@@ -222,4 +255,4 @@ for (const sample of SAMPLES) {
   }
 }
 
-process.exit(state.failures ? 1 : 0);
+process.exitCode = state.failures ? 1 : 0;
