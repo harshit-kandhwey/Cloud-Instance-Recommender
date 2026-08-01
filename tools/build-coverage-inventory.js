@@ -17,11 +17,18 @@
 // each with a reason recorded in coverage-waivers.json. Nothing is skipped by
 // accident; only by a decision someone wrote down.
 //
+// Coverage is EXECUTION-based, not source-text: the tool runs every suite once
+// under V8's coverage collector and a name counts as covered only when a suite
+// actually ran its function (see the coverage section below). That is why both
+// invocations below run the suites (~10-15s) rather than scanning their text.
+//
 //   node tools/build-coverage-inventory.js          # write the report
 //   node tools/build-coverage-inventory.js --check   # (3.10.4) exit 1 on a gap
 "use strict";
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
+const { spawnSync } = require("child_process");
 
 const REPO = path.resolve(__dirname, "..");
 const CHECK = process.argv.includes("--check");
@@ -46,11 +53,17 @@ const rel = (p) => path.relative(REPO, p).split(path.sep).join("/");
 
 // ── The global surface: top-level functions + window assignments ────────────
 // A top-level `function` is one declared at column 0 (not nested, not a method).
-const surface = new Map(); // name -> { file, kinds:Set }
+// files is the SET of files a name is declared in — 15 names live in two files
+// (the provider filters in *-specific.js and form-controls.js, _xlsxWriter,
+// _ingestLabel). Coverage must credit execution in ANY declaring file, so we
+// keep them all, not just the first.
+const surface = new Map(); // name -> { files:Set<rel>, kinds:Set }
 const add = (name, file, kind) => {
   if (!surface.has(name))
-    surface.set(name, { file: rel(file), kinds: new Set() });
-  surface.get(name).kinds.add(kind);
+    surface.set(name, { files: new Set(), kinds: new Set() });
+  const info = surface.get(name);
+  info.files.add(rel(file));
+  info.kinds.add(kind);
 };
 for (const file of jsFiles) {
   const src = fs.readFileSync(file, "utf8");
@@ -118,10 +131,22 @@ for (const name of surface.keys()) {
   }
 }
 
-// ── Coverage: does any suite name it? ────────────────────────────────────────
+// ── Coverage: does any suite EXECUTE it? ─────────────────────────────────────
+// Source-text ("the name's letters appear in the suite file") counts a comment,
+// a string, or an unrelated substring as coverage — it proves the suite mentions
+// the name, not that the name's code ever ran. Instead we run each suite under
+// V8's coverage collector (NODE_V8_COVERAGE) and read back which functions
+// actually executed. vm-loaded app scripts show up in the coverage output keyed
+// by the `filename` each suite compiled them with, and V8 infers `functionName`
+// for both `function NAME()` declarations and `window.NAME = fn` assignments. So
+// a name is covered iff some suite ran a function whose inferred name matches it
+// in a file that declares it. Suites pass differing filenames (full repo-
+// relative path, bare basename, or none), but basenames are unique across the
+// app surface, so we match on basename — which tolerates every convention that
+// carries a filename at all.
 const suitesDir = path.join(REPO, "tests", "suites");
 // Suites are grouped into feature subfolders (ingest/, engine/, …); recurse so
-// every one is scanned wherever it sits.
+// every one is found wherever it sits.
 function findSuites(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -130,13 +155,72 @@ function findSuites(dir, out = []) {
   }
   return out;
 }
-const suiteSrc = findSuites(suitesDir).map((f) => [
-  path.relative(suitesDir, f).split(path.sep).join("/"),
-  fs.readFileSync(f, "utf8"),
-]);
+const suiteLabels = findSuites(suitesDir)
+  .map((f) => path.relative(suitesDir, f).split(path.sep).join("/"))
+  .sort();
+
+// Run every suite once under coverage, collecting the set of executed
+// `basename::functionName` keys per suite. This is why the tool (and the gate)
+// now runs the suites — the report reflects execution reality, not source text,
+// and so it can never quietly go stale the way a committed coverage artifact
+// could.
+function collectExecuted(labels) {
+  const covRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cir-cov-"));
+  const bySuite = new Map(); // label -> Set("basename::functionName")
+  try {
+    for (const label of labels) {
+      const dir = path.join(covRoot, label.replace(/[\\/]/g, "__"));
+      fs.mkdirSync(dir, { recursive: true });
+      const res = spawnSync(process.execPath, [path.join(suitesDir, label)], {
+        encoding: "utf8",
+        timeout: 120000,
+        env: { ...process.env, NODE_V8_COVERAGE: dir },
+      });
+      const executed = new Set();
+      for (const f of fs.readdirSync(dir)) {
+        if (!f.endsWith(".json")) continue;
+        let cov;
+        try {
+          cov = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+        } catch {
+          continue; // a torn coverage file from a crash — skip it
+        }
+        for (const script of cov.result || []) {
+          if (!script.url) continue;
+          const base = path.basename(script.url.replace(/\\/g, "/"));
+          for (const fn of script.functions || []) {
+            if (!fn.functionName || !fn.ranges.some((r) => r.count > 0))
+              continue;
+            // V8 infers the name of `function NAME()` as `NAME`, but of
+            // `window.NAME = function(){}` (or `= async function`, `= () =>`)
+            // as `window.NAME` — the whole assignment target. Our surface keys
+            // are bare names, so strip the leading `window.` to match both.
+            const nm = fn.functionName.replace(/^window\./, "");
+            executed.add(`${base}::${nm}`);
+          }
+        }
+      }
+      bySuite.set(label, executed);
+      // A crashed suite yields partial or no coverage. run-all.js is the real
+      // gate on suite health (CI runs it first); here we only warn, so a suite
+      // that silently stopped exercising a name can't masquerade as coverage.
+      if (res.status !== 0)
+        console.error(`  ! ${label} exited ${res.status} during coverage run`);
+    }
+  } finally {
+    fs.rmSync(covRoot, { recursive: true, force: true });
+  }
+  return bySuite;
+}
+const executedBySuite = collectExecuted(suiteLabels);
 const coveringSuites = (name) => {
-  const re = new RegExp(`\\b${name}\\b`);
-  return suiteSrc.filter(([, src]) => re.test(src)).map(([f]) => f);
+  const keys = [...surface.get(name).files].map(
+    (f) => `${path.basename(f)}::${name}`,
+  );
+  return suiteLabels.filter((label) => {
+    const ex = executedBySuite.get(label);
+    return keys.some((k) => ex.has(k));
+  });
 };
 
 // ── Waivers: deliberate non-coverage, each with a reason ─────────────────────
@@ -162,7 +246,7 @@ const rows = [...surface.keys()].sort().map((name) => {
   else status = "uncovered";
   return {
     name,
-    file: info.file,
+    file: [...info.files].sort().join(", "),
     kinds: [...info.kinds].join("+"),
     tier: isBehavioral ? "behavioral" : "internal",
     reasons: isBehavioral ? [...behavioral.get(name)].join(", ") : "",
