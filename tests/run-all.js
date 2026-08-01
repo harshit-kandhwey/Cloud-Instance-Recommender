@@ -10,9 +10,19 @@ const repoRoot = path.join(__dirname, "..");
 const failed = [];
 
 console.log("── Test suites ────────────────────────────────────────────");
-const suites = fs
-  .readdirSync(suitesDir)
-  .filter((f) => f.endsWith("-test.js"))
+// Suites live one level deep now, grouped by feature area (ingest/, engine/,
+// …). Recurse so every *-test.js is found wherever it sits; the label keeps the
+// folder so a failure line points at the right area.
+function findSuites(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) findSuites(full, out);
+    else if (entry.name.endsWith("-test.js")) out.push(full);
+  }
+  return out;
+}
+const suites = findSuites(suitesDir)
+  .map((f) => path.relative(suitesDir, f).split(path.sep).join("/"))
   .sort();
 for (const suite of suites) {
   const started = Date.now();

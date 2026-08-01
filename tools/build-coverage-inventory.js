@@ -120,10 +120,20 @@ for (const name of surface.keys()) {
 
 // ── Coverage: does any suite name it? ────────────────────────────────────────
 const suitesDir = path.join(REPO, "tests", "suites");
-const suiteSrc = fs
-  .readdirSync(suitesDir)
-  .filter((f) => f.endsWith("-test.js"))
-  .map((f) => [f, fs.readFileSync(path.join(suitesDir, f), "utf8")]);
+// Suites are grouped into feature subfolders (ingest/, engine/, …); recurse so
+// every one is scanned wherever it sits.
+function findSuites(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) findSuites(full, out);
+    else if (entry.name.endsWith("-test.js")) out.push(full);
+  }
+  return out;
+}
+const suiteSrc = findSuites(suitesDir).map((f) => [
+  path.relative(suitesDir, f).split(path.sep).join("/"),
+  fs.readFileSync(f, "utf8"),
+]);
 const coveringSuites = (name) => {
   const re = new RegExp(`\\b${name}\\b`);
   return suiteSrc.filter(([, src]) => re.test(src)).map(([f]) => f);

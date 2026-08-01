@@ -25,162 +25,162 @@ waiver still records the reason.
 
 | Name | File | Kind | Tier | Status | Covered by / waiver |
 | --- | --- | --- | --- | --- | --- |
-| `AWSInstanceSelector` | js/aws/aws-instance-selector.js | window | internal | covered | nearest-miss-test.js |
-| `AzureInstanceSelector` | js/azure/azure-instance-selector.js | window | internal | covered | nearest-miss-test.js |
-| `BaseInstanceSelector` | js/base/base-instance-selector.js | window | internal | covered | nearest-miss-test.js |
-| `GCPInstanceSelector` | js/gcp/gcp-instance-selector.js | window | internal | covered | nearest-miss-test.js |
-| `InstanceSelectorFactory` | js/base/instance-selector-factory.js | window | internal | covered | alternatives-test.js, lazy-test.js, monolith-test.js, region-validation-test.js |
-| `RuleEngine` | js/base/rule-engine.js | window | internal | covered | alternatives-test.js, burstable-preference-test.js, gpu-workload-test.js, min-generation-test.js, nearest-miss-test.js, sql-min-cores-test.js, workload-fit-test.js |
+| `AWSInstanceSelector` | js/aws/aws-instance-selector.js | window | internal | covered | engine/nearest-miss-test.js |
+| `AzureInstanceSelector` | js/azure/azure-instance-selector.js | window | internal | covered | engine/nearest-miss-test.js |
+| `BaseInstanceSelector` | js/base/base-instance-selector.js | window | internal | covered | engine/nearest-miss-test.js |
+| `GCPInstanceSelector` | js/gcp/gcp-instance-selector.js | window | internal | covered | engine/nearest-miss-test.js |
+| `InstanceSelectorFactory` | js/base/instance-selector-factory.js | window | internal | covered | engine/alternatives-test.js, infra/lazy-test.js, infra/monolith-test.js, ui/region-validation-test.js |
+| `RuleEngine` | js/base/rule-engine.js | window | internal | covered | engine/alternatives-test.js, engine/min-generation-test.js, engine/nearest-miss-test.js, workload/burstable-preference-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js, workload/workload-fit-test.js |
 | `_beforeAfter` | js/base/charts.js | function | internal | uncovered | — |
-| `_buildStatsHtml` | js/base/preview.js | function | internal | covered | app-summary-test.js, stats-consistency-test.js |
+| `_buildStatsHtml` | js/base/preview.js | function | internal | covered | preview/stats-consistency-test.js, workload/app-summary-test.js |
 | `_csvMenuOutsideClick` | js/base/downloads.js | function | behavioral | waived | _waived: Outside-click handler that closes the CSV dropdown and resets aria-expanded. Pure interaction wiring, paired with toggleCsvMenu; E2E-verified (3.10.x)._ |
 | `_duplicatesAcknowledged` | js/base/ingest.js | window | internal | uncovered | — |
 | `_familyDistribution` | js/base/charts.js | function | internal | uncovered | — |
 | `_fileSignature` | js/base/ingest.js | window | internal | uncovered | — |
 | `_fitBadgeHtml` | js/base/preview.js | function | internal | uncovered | — |
 | `_ingestLabel` | js/base/ingest.js | window | internal | uncovered | — |
-| `_ingestToken` | js/base/ingest.js | window | internal | covered | stale-results-test.js |
+| `_ingestToken` | js/base/ingest.js | window | internal | covered | preview/stale-results-test.js |
 | `_inputHygiene` | js/base/ingest.js | window | internal | uncovered | — |
-| `_lastIngest` | js/base/ingest.js | window | internal | covered | input-hygiene-test.js |
+| `_lastIngest` | js/base/ingest.js | window | internal | covered | ingest/input-hygiene-test.js |
 | `_manualConfirmClear` | js/base/manual-entry.js | window | internal | uncovered | — |
-| `_manualEditIndex` | js/base/manual-entry.js | window | internal | covered | manual-entry-bulk-edit-test.js |
-| `_manualRegionDefaults` | js/base/manual-entry.js | window | internal | covered | manual-entry-form-test.js |
+| `_manualEditIndex` | js/base/manual-entry.js | window | internal | covered | manual-entry/manual-entry-bulk-edit-test.js |
+| `_manualRegionDefaults` | js/base/manual-entry.js | window | internal | covered | manual-entry/manual-entry-form-test.js |
 | `_matchRateMeter` | js/base/charts.js | function | internal | uncovered | — |
 | `_memoryUnitAcknowledged` | js/base/ingest.js | window | internal | uncovered | — |
 | `_pendingIngest` | js/base/ingest.js | window | internal | uncovered | — |
 | `_portfolioModel` | js/base/portfolio.js | window | internal | uncovered | — |
 | `_portfolioPayload` | js/base/portfolio.js | window | internal | uncovered | — |
 | `_previewActiveColFilter` | js/base/preview.js | window | internal | uncovered | — |
-| `_previewClearColumnFilters` | js/base/preview.js | window | internal | covered | preview-column-filters-test.js |
-| `_previewColsMenuState` | js/base/preview.js | window | internal | covered | preview-column-visibility-test.js |
-| `_previewColumnFilterChanged` | js/base/preview.js | window | internal | covered | preview-column-filters-test.js, preview-column-visibility-test.js |
+| `_previewClearColumnFilters` | js/base/preview.js | window | internal | covered | preview/preview-column-filters-test.js |
+| `_previewColsMenuState` | js/base/preview.js | window | internal | covered | preview/preview-column-visibility-test.js |
+| `_previewColumnFilterChanged` | js/base/preview.js | window | internal | covered | preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js |
 | `_previewCursorPos` | js/base/preview.js | window | internal | uncovered | — |
-| `_previewFilterChanged` | js/base/preview.js | window | internal | covered | preview-pagination-test.js, preview-search-test.js |
+| `_previewFilterChanged` | js/base/preview.js | window | internal | covered | preview/preview-pagination-test.js, preview/preview-search-test.js |
 | `_previewFilterTimer` | js/base/preview.js | window | internal | uncovered | — |
 | `_previewFocusId` | js/base/preview.js | window | internal | uncovered | — |
-| `_previewGoToPage` | js/base/preview.js | window | internal | covered | preview-focus-test.js, preview-nomatch-filter-test.js, preview-pagination-test.js |
-| `_previewSetPageSize` | js/base/preview.js | window | internal | covered | preview-focus-test.js, preview-pagination-test.js |
-| `_previewState` | js/base/preview.js | window | internal | covered | preview-column-filters-test.js, preview-column-visibility-test.js, preview-focus-test.js, preview-nomatch-filter-test.js, scenario-compare-test.js |
-| `_previewToggleColumn` | js/base/preview.js | window | internal | covered | preview-column-visibility-test.js, preview-focus-test.js |
-| `_previewToggleNoMatch` | js/base/preview.js | window | internal | covered | preview-focus-test.js, preview-nomatch-filter-test.js |
+| `_previewGoToPage` | js/base/preview.js | window | internal | covered | preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js |
+| `_previewSetPageSize` | js/base/preview.js | window | internal | covered | preview/preview-focus-test.js, preview/preview-pagination-test.js |
+| `_previewState` | js/base/preview.js | window | internal | covered | export/scenario-compare-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js |
+| `_previewToggleColumn` | js/base/preview.js | window | internal | covered | preview/preview-column-visibility-test.js, preview/preview-focus-test.js |
+| `_previewToggleNoMatch` | js/base/preview.js | window | internal | covered | preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js |
 | `_prewarmedSelectors` | js/base/app-core.js | window | internal | uncovered | — |
 | `_regionScriptPromises` | js/base/base-instance-selector.js | window | internal | uncovered | — |
-| `_regionValidation` | js/base/app-core.js | window | internal | covered | manual-entry-form-test.js, region-validation-test.js |
+| `_regionValidation` | js/base/app-core.js | window | internal | covered | manual-entry/manual-entry-form-test.js, ui/region-validation-test.js |
 | `_relaxSuggestion` | js/base/preview.js | window | internal | uncovered | — |
 | `_renderPreviewTable` | js/base/preview.js | function | internal | uncovered | — |
 | `_reportHeadline` | js/base/charts.js | function | internal | uncovered | — |
 | `_rerenderPreview` | js/base/preview.js | function | internal | uncovered | — |
-| `_resultsIngestToken` | js/base/generate.js | window | internal | covered | stale-results-test.js |
-| `_resultsProviders` | js/base/generate.js | window | internal | covered | preview-search-test.js, stale-results-test.js |
+| `_resultsIngestToken` | js/base/generate.js | window | internal | covered | preview/stale-results-test.js |
+| `_resultsProviders` | js/base/generate.js | window | internal | covered | preview/preview-search-test.js, preview/stale-results-test.js |
 | `_savedMappingSignatures` | js/base/ingest.js | window | internal | uncovered | — |
-| `_sortPreview` | js/base/preview.js | window | internal | covered | accessibility-affordances-test.js, preview-column-visibility-test.js, preview-focus-test.js, preview-pagination-test.js, preview-search-test.js |
-| `_syncSizeUnit` | js/base/ingest.js | window | internal | covered | mapping-units-test.js |
+| `_sortPreview` | js/base/preview.js | window | internal | covered | preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, ui/accessibility-affordances-test.js |
+| `_syncSizeUnit` | js/base/ingest.js | window | internal | covered | ingest/mapping-units-test.js |
 | `_uploadFileNote` | js/base/ingest.js | window | internal | uncovered | — |
 | `_uploadNote` | js/base/ingest.js | window | internal | uncovered | — |
-| `_uploadedSheets` | js/base/ingest.js | window | internal | covered | manual-entry-bulk-edit-test.js, sheet-picker-test.js |
+| `_uploadedSheets` | js/base/ingest.js | window | internal | covered | ingest/sheet-picker-test.js, manual-entry/manual-entry-bulk-edit-test.js |
 | `_xlsxLoadPromise` | js/base/ingest.js | window | internal | uncovered | — |
-| `_xlsxParser` | js/base/ingest.js | window | internal | covered | xlsx-engine-isolation-test.js |
-| `_xlsxWriter` | js/base/portfolio.js | window | internal | covered | portfolio-test.js, xlsx-engine-isolation-test.js |
-| `a1` | js/base/portfolio.js | function | internal | covered | app-summary-test.js, fit-headroom-test.js |
+| `_xlsxParser` | js/base/ingest.js | window | internal | covered | ingest/xlsx-engine-isolation-test.js |
+| `_xlsxWriter` | js/base/portfolio.js | window | internal | covered | export/portfolio-test.js, ingest/xlsx-engine-isolation-test.js |
+| `a1` | js/base/portfolio.js | function | internal | covered | engine/fit-headroom-test.js, workload/app-summary-test.js |
 | `a1col` | js/base/portfolio.js | function | internal | uncovered | — |
 | `allDataReady` | js/base/app-core.js | function | internal | uncovered | — |
 | `analyzeInputHygiene` | js/base/ingest.js | function | internal | uncovered | — |
 | `appNameOf` | js/base/portfolio.js | function | internal | uncovered | — |
-| `applyAppMapping` | js/base/ingest.js | function | behavioral | covered | app-mapping-test.js |
-| `applyColumnMapping` | js/base/ingest.js | function | behavioral | covered | column-mapping-test.js, mapping-units-test.js |
-| `applyIngest` | js/base/ingest.js | function | internal | covered | input-hygiene-test.js |
-| `applyPresetConfig` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `applyAppMapping` | js/base/ingest.js | function | behavioral | covered | workload/app-mapping-test.js |
+| `applyColumnMapping` | js/base/ingest.js | function | behavioral | covered | ingest/column-mapping-test.js, ingest/mapping-units-test.js |
+| `applyIngest` | js/base/ingest.js | function | internal | covered | ingest/input-hygiene-test.js |
+| `applyPresetConfig` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `applyPresetDerivations` | js/base/ingest.js | function | internal | uncovered | — |
-| `applyPresetImportText` | js/base/presets.js | function | internal | covered | presets-test.js |
-| `applyRelaxSuggestion` | js/base/preview.js | function+window | behavioral | covered | preview-search-test.js |
-| `applySelectedPreset` | js/base/presets.js | function | behavioral | covered | presets-test.js |
+| `applyPresetImportText` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
+| `applyRelaxSuggestion` | js/base/preview.js | function+window | behavioral | covered | preview/preview-search-test.js |
+| `applySelectedPreset` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `ariaSortFor` | js/base/portfolio.js | function | internal | uncovered | — |
 | `armPresetButton` | js/base/presets.js | function | internal | uncovered | — |
-| `autoMatchHeaders` | js/base/ingest.js | function | internal | covered | ads-preset-test.js, app-mapping-test.js, current-instance-test.js, storage-passthrough-test.js |
+| `autoMatchHeaders` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/storage-passthrough-test.js, ui/ads-preset-test.js, workload/app-mapping-test.js |
 | `buildAboutSheet` | js/base/portfolio.js | function | internal | uncovered | — |
-| `buildAppCsv` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `buildAppCsv` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildAppSheet` | js/base/portfolio.js | function | internal | uncovered | — |
-| `buildExecutiveReport` | js/base/charts.js | function+window | internal | covered | report-test.js |
-| `buildPortfolioModel` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `buildExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
+| `buildPortfolioModel` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildPortfolioPayload` | js/base/downloads.js | function | internal | uncovered | — |
-| `buildPortfolioWorkbookModel` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `buildPortfolioWorkbookModel` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildPresetExport` | js/base/presets.js | function | internal | uncovered | — |
-| `buildPreviewTsv` | js/base/preview.js | function | internal | covered | preview-search-test.js |
-| `buildResultsSheetModel` | js/base/xlsx-export.js | function | internal | covered | xlsx-export-test.js |
-| `buildResultsWorkbook` | js/base/xlsx-export.js | function | internal | covered | xlsx-export-test.js |
+| `buildPreviewTsv` | js/base/preview.js | function | internal | covered | preview/preview-search-test.js |
+| `buildResultsSheetModel` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
+| `buildResultsWorkbook` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
 | `buildSampleCsv` | js/base/ingest.js | function | internal | uncovered | — |
-| `buildScenarioComparisonCsv` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
-| `buildScenarioComparisonCsvN` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
-| `buildStrategySheetModel` | js/base/xlsx-export.js | function | internal | covered | xlsx-export-test.js |
+| `buildScenarioComparisonCsv` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
+| `buildScenarioComparisonCsvN` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
+| `buildStrategySheetModel` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
 | `callIfFn` | js/base/presets.js | function | internal | uncovered | — |
-| `cancelColumnMapping` | js/base/ingest.js | function | behavioral | covered | mapping-units-test.js |
-| `cancelSavePreset` | js/base/presets.js | function | behavioral | covered | presets-test.js |
-| `capturePresetConfig` | js/base/presets.js | function | internal | covered | presets-test.js, scenario-compare-test.js |
+| `cancelColumnMapping` | js/base/ingest.js | function | behavioral | covered | ingest/mapping-units-test.js |
+| `cancelSavePreset` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
+| `capturePresetConfig` | js/base/presets.js | function | internal | covered | export/scenario-compare-test.js, ui/presets-test.js |
 | `checkRuleConflicts` | js/base/form-controls.js | function | internal | uncovered | — |
-| `clearScenarios` | js/base/scenario-compare.js | function | behavioral | covered | scenario-compare-test.js |
+| `clearScenarios` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
 | `compareScenarios` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. E2E-verified (3.10.x)._ |
 | `complianceTags` | js/base/portfolio.js | function | internal | uncovered | — |
 | `computeAppStats` | js/base/portfolio.js | function | internal | uncovered | — |
-| `computeFitHeadroom` | js/base/app-core.js | function | internal | covered | fit-headroom-test.js |
-| `computeRelaxSuggestion` | js/base/app-core.js | function | internal | covered | nearest-miss-test.js, preview-search-test.js |
-| `computeSizingSavings` | js/base/app-core.js | function | internal | covered | charts-test.js, family-column-test.js, preview-search-test.js |
-| `confirmSavePreset` | js/base/presets.js | function | behavioral | covered | presets-test.js |
-| `convertMemoryToGb` | js/base/ingest.js | function | behavioral | covered | input-hygiene-test.js, sample-gallery-test.js, sheet-picker-test.js |
-| `copyPreviewToClipboard` | js/base/preview.js | function+window | behavioral | covered | preview-column-filters-test.js, preview-column-visibility-test.js, preview-nomatch-filter-test.js, preview-pagination-test.js, preview-search-test.js |
-| `copyTextToClipboard` | js/base/preview.js | function+window | behavioral | covered | preview-column-filters-test.js, preview-column-visibility-test.js, preview-nomatch-filter-test.js, preview-pagination-test.js |
+| `computeFitHeadroom` | js/base/app-core.js | function | internal | covered | engine/fit-headroom-test.js |
+| `computeRelaxSuggestion` | js/base/app-core.js | function | internal | covered | engine/nearest-miss-test.js, preview/preview-search-test.js |
+| `computeSizingSavings` | js/base/app-core.js | function | internal | covered | engine/family-column-test.js, preview/preview-search-test.js, ui/charts-test.js |
+| `confirmSavePreset` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
+| `convertMemoryToGb` | js/base/ingest.js | function | behavioral | covered | ingest/input-hygiene-test.js, ingest/sheet-picker-test.js, ui/sample-gallery-test.js |
+| `copyPreviewToClipboard` | js/base/preview.js | function+window | behavioral | covered | preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js |
+| `copyTextToClipboard` | js/base/preview.js | function+window | behavioral | covered | preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js |
 | `copyViaTextarea` | js/base/preview.js | function | internal | uncovered | — |
-| `currentSourcePage` | js/base/downloads.js | function | internal | covered | presets-test.js |
+| `currentSourcePage` | js/base/downloads.js | function | internal | covered | ui/presets-test.js |
 | `dedupeHeaders` | js/base/ingest.js | function | internal | uncovered | — |
-| `deleteSelectedPreset` | js/base/presets.js | function | behavioral | covered | presets-test.js |
-| `describeFamilyEquivalence` | js/base/instance-selector-factory.js | function | internal | covered | family-equivalence-test.js |
+| `deleteSelectedPreset` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
+| `describeFamilyEquivalence` | js/base/instance-selector-factory.js | function | internal | covered | engine/family-equivalence-test.js |
 | `describeSizedOn` | js/base/instance-selector-factory.js | function | internal | uncovered | — |
 | `detectImportPreset` | js/base/ingest.js | function | internal | uncovered | — |
 | `detectSizeUnits` | js/base/ingest.js | function | internal | uncovered | — |
-| `diffScenarioConfigs` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
-| `diffScenarios` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
-| `diffScenariosN` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
+| `diffScenarioConfigs` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
+| `diffScenarios` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
+| `diffScenariosN` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `disarmAllPresetButtons` | js/base/presets.js | function | internal | uncovered | — |
 | `disarmPresetButton` | js/base/presets.js | function | behavioral | waived | _waived: Timer/DOM disarm of a two-click preset button — restores the label, drops the armed class, clears the arming hint only if unchanged. Interaction/timer wiring with no computed output; E2E-verified (3.10.x)._ |
-| `dismissToast` | js/base/app-core.js | function+window | behavioral | covered | preview-search-test.js |
-| `downloadAWSBulkTemplate` | js/base/downloads.js | function | behavioral | covered | storage-passthrough-test.js |
-| `downloadAWSSampleCSV` | js/aws/aws-specific.js | function | behavioral | covered | sample-templates-test.js |
+| `dismissToast` | js/base/app-core.js | function+window | behavioral | covered | preview/preview-search-test.js |
+| `downloadAWSBulkTemplate` | js/base/downloads.js | function | behavioral | covered | ingest/storage-passthrough-test.js |
+| `downloadAWSSampleCSV` | js/aws/aws-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadAppCsv` | js/base/portfolio.js | function | behavioral | waived | _waived: Builds a per-app VM CSV from the portfolio model (columns via vmDetailColumns, covered by portfolio-test.js) and triggers an anchor download. Adds only the download plumbing; E2E-verified (3.10.x)._ |
-| `downloadAppSummary` | js/base/downloads.js | function | internal | covered | app-summary-test.js |
-| `downloadAzureSampleCSV` | js/azure/azure-specific.js | function | behavioral | covered | sample-templates-test.js |
-| `downloadCsv` | js/base/app-core.js | function | internal | covered | preview-search-test.js, sample-templates-test.js, storage-passthrough-test.js |
-| `downloadGCPSampleCSV` | js/gcp/gcp-specific.js | function | behavioral | covered | sample-templates-test.js |
-| `downloadNoMatchRows` | js/base/downloads.js | function | internal | covered | nomatch-export-test.js |
+| `downloadAppSummary` | js/base/downloads.js | function | internal | covered | workload/app-summary-test.js |
+| `downloadAzureSampleCSV` | js/azure/azure-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
+| `downloadCsv` | js/base/app-core.js | function | internal | covered | ingest/storage-passthrough-test.js, preview/preview-search-test.js, ui/sample-templates-test.js |
+| `downloadGCPSampleCSV` | js/gcp/gcp-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
+| `downloadNoMatchRows` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResults` | js/base/downloads.js | function | internal | uncovered | — |
 | `downloadResultsXlsx` | js/base/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX export of the results table — ensure engine, build, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the row content is pinned by the golden CSV compare. E2E-verified (3.10.x)._ |
-| `downloadSampleCSV` | js/base/ingest.js | function | behavioral | covered | sample-templates-test.js |
+| `downloadSampleCSV` | js/base/ingest.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadScenarioComparison` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard then buildScenarioComparisonCsv / buildScenarioComparisonCsvN (both covered by scenario-compare-test.js) piped to an anchor download. The CSV body is pinned by that suite; this adds only the anchor-download plumbing. E2E-verified (3.10.x)._ |
-| `downloadSelectedCsvs` | js/base/downloads.js | function | behavioral | covered | nomatch-export-test.js |
-| `editColumnMapping` | js/base/ingest.js | function | behavioral | covered | ads-preset-test.js, mapping-units-test.js |
-| `enhanceAccessibility` | js/base/ui-shell.js | function | internal | covered | accessibility-affordances-test.js |
-| `ensurePortfolioXlsx` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `downloadSelectedCsvs` | js/base/downloads.js | function | behavioral | covered | export/nomatch-export-test.js |
+| `editColumnMapping` | js/base/ingest.js | function | behavioral | covered | ingest/mapping-units-test.js, ui/ads-preset-test.js |
+| `enhanceAccessibility` | js/base/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
+| `ensurePortfolioXlsx` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `ensureResultsXlsx` | js/base/xlsx-export.js | function | internal | uncovered | — |
-| `ensureXlsxLoaded` | js/base/ingest.js | function | internal | covered | xlsx-engine-isolation-test.js |
-| `escapeCsvCell` | js/base/app-core.js | function | internal | covered | csv-escaping-test.js, portfolio-test.js, scenario-compare-test.js |
-| `escapeHtml` | js/base/app-core.js | function | internal | covered | saved-mappings-test.js |
+| `ensureXlsxLoaded` | js/base/ingest.js | function | internal | covered | ingest/xlsx-engine-isolation-test.js |
+| `escapeCsvCell` | js/base/app-core.js | function | internal | covered | export/portfolio-test.js, export/scenario-compare-test.js, ingest/csv-escaping-test.js |
+| `escapeHtml` | js/base/app-core.js | function | internal | covered | ingest/saved-mappings-test.js |
 | `excludedColsNote` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `exportDateStamp` | js/base/app-core.js | function | internal | uncovered | — |
-| `exportFilename` | js/base/app-core.js | function | internal | covered | presets-test.js |
+| `exportFilename` | js/base/app-core.js | function | internal | covered | ui/presets-test.js |
 | `exportPortfolioWorkbook` | js/base/portfolio.js | function | behavioral | waived | _waived: Async XLSX export — ensurePortfolioXlsx, build the workbook, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the portfolio model it serializes is covered by portfolio-test.js. E2E-verified (3.10.x)._ |
-| `exportPresets` | js/base/presets.js | function | behavioral | covered | presets-test.js |
-| `extractFamily` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `exportPresets` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
+| `extractFamily` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `extractUniqueRegions` | js/base/instance-selector-factory.js | function | internal | uncovered | — |
-| `filterAndSortRows` | js/base/preview.js | function | internal | covered | preview-column-filters-test.js, preview-column-visibility-test.js, preview-nomatch-filter-test.js |
-| `filterPortfolioApps` | js/base/portfolio.js | function | behavioral | covered | portfolio-test.js |
+| `filterAndSortRows` | js/base/preview.js | function | internal | covered | preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-nomatch-filter-test.js |
+| `filterPortfolioApps` | js/base/portfolio.js | function | behavioral | covered | export/portfolio-test.js |
 | `fmtNum` | js/base/portfolio.js | function | internal | uncovered | — |
-| `forgetAllColumnMappings` | js/base/ingest.js | function | behavioral | covered | saved-mappings-test.js |
-| `forgetColumnMapping` | js/base/ingest.js | function | behavioral | covered | saved-mappings-test.js |
-| `formatAlternative` | js/base/instance-selector-factory.js | function | internal | covered | alternatives-test.js |
-| `formatNearestMiss` | js/base/instance-selector-factory.js | function | internal | covered | nearest-miss-test.js |
+| `forgetAllColumnMappings` | js/base/ingest.js | function | behavioral | covered | ingest/saved-mappings-test.js |
+| `forgetColumnMapping` | js/base/ingest.js | function | behavioral | covered | ingest/saved-mappings-test.js |
+| `formatAlternative` | js/base/instance-selector-factory.js | function | internal | covered | engine/alternatives-test.js |
+| `formatNearestMiss` | js/base/instance-selector-factory.js | function | internal | covered | engine/nearest-miss-test.js |
 | `formatRegionKey` | js/base/app-core.js | function | internal | uncovered | — |
 | `formatRowNumbers` | js/base/ingest.js | function | internal | uncovered | — |
-| `generateRecommendations` | js/base/generate.js | function | behavioral | covered | column-mapping-test.js |
+| `generateRecommendations` | js/base/generate.js | function | behavioral | covered | ingest/column-mapping-test.js |
 | `getAWSExcludeTypeDescription` | js/aws/aws-specific.js | function | internal | uncovered | — |
-| `getAppSummary` | js/base/downloads.js | function | internal | covered | app-summary-test.js |
+| `getAppSummary` | js/base/downloads.js | function | internal | covered | workload/app-summary-test.js |
 | `getAvailableInstanceFamilies` | js/base/instance-selector-factory.js | window | internal | uncovered | — |
 | `getAzureCostOptimizationTips` | js/azure/azure-specific.js | function | internal | uncovered | — |
 | `getAzureExcludeTypeDescription` | js/azure/azure-specific.js | function | internal | uncovered | — |
@@ -205,10 +205,10 @@ waiver still records the reason.
 | `getGCPRegionLocation` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPSustainabilityTips` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPZones` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getInstanceColumns` | js/base/app-core.js | function | internal | covered | family-column-test.js, portfolio-test.js, stats-consistency-test.js |
-| `getInstanceRecommendationWithSelector` | js/base/instance-selector-factory.js | window | behavioral | covered | alternatives-test.js, current-instance-test.js, family-column-test.js, family-equivalence-test.js, gpu-workload-test.js, manual-entry-form-test.js, percentile-utilization-test.js, sql-min-cores-test.js, storage-passthrough-test.js, worker-protocol-test.js |
+| `getInstanceColumns` | js/base/app-core.js | function | internal | covered | engine/family-column-test.js, export/portfolio-test.js, preview/stats-consistency-test.js |
+| `getInstanceRecommendationWithSelector` | js/base/instance-selector-factory.js | window | behavioral | covered | engine/alternatives-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/percentile-utilization-test.js, engine/worker-protocol-test.js, ingest/storage-passthrough-test.js, manual-entry/manual-entry-form-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js |
 | `getMainFamilyDescription` | js/aws/aws-specific.js | function | internal | uncovered | — |
-| `getNoMatchRows` | js/base/downloads.js | function | internal | covered | nomatch-export-test.js |
+| `getNoMatchRows` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `getPageProviders` | js/base/app-core.js | function | internal | uncovered | — |
 | `getProcessorDescription` | js/aws/aws-specific.js | function | internal | uncovered | — |
 | `getProviderStatistics` | js/base/instance-selector-factory.js | window | internal | uncovered | — |
@@ -230,8 +230,8 @@ waiver still records the reason.
 | `headerSignature` | js/base/ingest.js | function | internal | uncovered | — |
 | `hideDataToast` | js/base/app-core.js | function | internal | uncovered | — |
 | `importPresets` | js/base/presets.js | function | behavioral | waived | _waived: Opens the hidden preset-import file input (input.click()). Trivial file-picker trigger; the import parse/apply is covered by presets-test.js via applyPresetImportText. E2E-verified (3.10.x)._ |
-| `ingestPastedData` | js/base/ingest.js | function | behavioral | covered | paste-test.js, stale-results-test.js |
-| `ingestRows` | js/base/ingest.js | function | internal | covered | manual-entry-form-test.js |
+| `ingestPastedData` | js/base/ingest.js | function | behavioral | covered | ingest/paste-test.js, preview/stale-results-test.js |
+| `ingestRows` | js/base/ingest.js | function | internal | covered | manual-entry/manual-entry-form-test.js |
 | `initFilterPresets` | js/base/presets.js | function | internal | uncovered | — |
 | `initPortfolioHandoff` | js/base/portfolio.js | function | internal | uncovered | — |
 | `initializeAWSFilters` | js/aws/aws-specific.js | function | internal | uncovered | — |
@@ -242,129 +242,129 @@ waiver still records the reason.
 | `initializeGCPFilters` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `initializeRecommendationTypeHandlers` | js/base/ui-shell.js | function | internal | uncovered | — |
 | `isMbHeader` | js/base/ingest.js | function | internal | uncovered | — |
-| `isNoMatchValue` | js/base/app-core.js | function | internal | covered | family-column-test.js, portfolio-test.js, scenario-compare-test.js |
+| `isNoMatchValue` | js/base/app-core.js | function | internal | covered | engine/family-column-test.js, export/portfolio-test.js, export/scenario-compare-test.js |
 | `isPresetGroupId` | js/base/presets.js | function | internal | uncovered | — |
-| `keepDuplicateVmNames` | js/base/ingest.js | function | behavioral | covered | input-hygiene-test.js |
-| `keepMemoryAsGb` | js/base/ingest.js | function | behavioral | covered | sheet-picker-test.js |
+| `keepDuplicateVmNames` | js/base/ingest.js | function | behavioral | covered | ingest/input-hygiene-test.js |
+| `keepMemoryAsGb` | js/base/ingest.js | function | behavioral | covered | ingest/sheet-picker-test.js |
 | `kpiTile` | js/base/portfolio.js | function | internal | uncovered | — |
-| `loadAppWorkloadMap` | js/base/ingest.js | function | internal | covered | app-mapping-test.js |
+| `loadAppWorkloadMap` | js/base/ingest.js | function | internal | covered | workload/app-mapping-test.js |
 | `loadColumnMappings` | js/base/ingest.js | function | internal | uncovered | — |
 | `loadManualVMs` | js/base/manual-entry.js | function | internal | uncovered | — |
 | `loadPortfolioFromStorage` | js/base/portfolio.js | function | internal | uncovered | — |
-| `loadPresetsStore` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `loadPresetsStore` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `loadProviderSpecificData` | js/base/ui-shell.js | function | internal | uncovered | — |
 | `loadResultsXlsxScript` | js/base/xlsx-export.js | function | internal | uncovered | — |
-| `loadSampleDataset` | js/base/ingest.js | function | behavioral | covered | sample-gallery-test.js, stale-results-test.js |
-| `loadScriptOnce` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `loadSampleDataset` | js/base/ingest.js | function | behavioral | covered | preview/stale-results-test.js, ui/sample-gallery-test.js |
+| `loadScriptOnce` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `loadSectionStates` | js/base/ui-shell.js | function | internal | uncovered | — |
 | `loadUsageStatistics` | js/base/downloads.js | function | internal | uncovered | — |
-| `makeScenario` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
-| `manualAddVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `manualApplyVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `manualCancelClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
+| `makeScenario` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
+| `manualAddVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `manualApplyVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `manualCancelClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
 | `manualCancelEdit` | js/base/manual-entry.js | function | behavioral | waived | _waived: Clears window._manualEditIndex and re-renders the manual-entry form. One-line cancel + DOM-render wiring; E2E-verified (3.10.x)._ |
-| `manualClearVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `manualConfirmClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
-| `manualEditVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
+| `manualClearVMs` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `manualConfirmClear` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
+| `manualEditVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
 | `manualEditingRow` | js/base/manual-entry.js | function | internal | uncovered | — |
-| `manualFieldDefs` | js/base/manual-entry.js | function | internal | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `manualRemoveVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `manualSaveEdit` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js |
+| `manualFieldDefs` | js/base/manual-entry.js | function | internal | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `manualRemoveVM` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `manualSaveEdit` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js |
 | `matchBadge` | js/base/portfolio.js | function | internal | uncovered | — |
-| `matchStats` | js/base/app-core.js | function | internal | covered | scenario-compare-test.js |
-| `maybeShowAppMappingPanel` | js/base/ingest.js | function | internal | covered | app-mapping-test.js |
+| `matchStats` | js/base/app-core.js | function | internal | covered | export/scenario-compare-test.js |
+| `maybeShowAppMappingPanel` | js/base/ingest.js | function | internal | covered | workload/app-mapping-test.js |
 | `medianMemory` | js/base/ingest.js | function | internal | uncovered | — |
-| `mergeDuplicateVmNames` | js/base/ingest.js | function | behavioral | covered | input-hygiene-test.js, sample-gallery-test.js |
-| `mergeImportedPresets` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `mergeDuplicateVmNames` | js/base/ingest.js | function | behavioral | covered | ingest/input-hygiene-test.js, ui/sample-gallery-test.js |
+| `mergeImportedPresets` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `migrateLegacyMinGen` | js/base/presets.js | function | internal | uncovered | — |
 | `normEnv` | js/base/portfolio.js | function | internal | uncovered | — |
 | `normOS` | js/base/portfolio.js | function | internal | uncovered | — |
 | `normWorkload` | js/base/portfolio.js | function | internal | uncovered | — |
 | `normalizeCellValue` | js/base/ingest.js | function | internal | uncovered | — |
-| `normalizeFamilyClass` | js/base/instance-selector-factory.js | function | internal | covered | family-equivalence-test.js |
+| `normalizeFamilyClass` | js/base/instance-selector-factory.js | function | internal | covered | engine/family-equivalence-test.js |
 | `normalizeHeader` | js/base/ingest.js | function | internal | uncovered | — |
 | `num` | js/base/portfolio.js | function | internal | uncovered | — |
 | `onPortfolioMessage` | js/base/portfolio.js | function | behavioral | waived | _waived: Cross-window message router — enforces origin === location.origin and source === window.opener, then hands the payload to receivePortfolio (covered by portfolio-test.js). The routing/guard needs a real opener + postMessage; E2E-verified (3.10.x)._ |
 | `onPresetNameKeydown` | js/base/presets.js | function | behavioral | waived | _waived: Enter/Escape keyboard wiring for the preset-name field, delegating to confirmSavePreset (covered by presets-test.js) / cancelSavePreset. Keyboard wiring only; E2E-verified (3.10.x)._ |
-| `onPresetSelectChange` | js/base/presets.js | function | behavioral | covered | presets-test.js |
+| `onPresetSelectChange` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `onRuleChange` | js/base/form-controls.js | function | behavioral | waived | _waived: One-line delegator to checkRuleConflicts, which flags rule conflicts by restyling rule groups and toggling conflict-message elements. DOM-messaging wiring with no computed output a node/vm sandbox can assert; E2E-verified (3.10.x)._ |
-| `onUtilizationStatisticChange` | js/base/form-controls.js | function | behavioral | covered | utilization-hint-test.js |
+| `onUtilizationStatisticChange` | js/base/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |
 | `openAppPortfolio` | js/base/downloads.js | function | behavioral | waived | _waived: Serializes the portfolio payload into a size-guarded localStorage copy and opens the App Portfolio window (postMessage is the primary handoff). Cross-window behavior that needs a real window; E2E-verified (3.10.x)._ |
 | `pEsc` | js/base/presets.js | function | internal | uncovered | — |
-| `pageCanonicals` | js/base/app-core.js | function | internal | covered | app-mapping-test.js, column-mapping-test.js, mapping-units-test.js |
-| `parseCSV` | js/base/ingest.js | function | internal | covered | column-mapping-test.js, current-instance-test.js, mapping-units-test.js, preview-search-test.js, region-validation-test.js, storage-passthrough-test.js, xlsx-ingest-test.js |
+| `pageCanonicals` | js/base/app-core.js | function | internal | covered | ingest/column-mapping-test.js, ingest/mapping-units-test.js, workload/app-mapping-test.js |
+| `parseCSV` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/mapping-units-test.js, ingest/storage-passthrough-test.js, ingest/xlsx-ingest-test.js, preview/preview-search-test.js, ui/region-validation-test.js |
 | `parseCSVLine` | js/base/ingest.js | function | internal | uncovered | — |
 | `parseDelimitedText` | js/base/ingest.js | function | internal | uncovered | — |
 | `parseGCPMachineType` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `parseRelaxLabels` | js/base/app-core.js | function | internal | covered | nearest-miss-test.js, preview-search-test.js |
-| `pct` | js/base/portfolio.js | function | internal | covered | fit-headroom-test.js, percentile-utilization-test.js |
+| `parseRelaxLabels` | js/base/app-core.js | function | internal | covered | engine/nearest-miss-test.js, preview/preview-search-test.js |
+| `pct` | js/base/portfolio.js | function | internal | covered | engine/fit-headroom-test.js, engine/percentile-utilization-test.js |
 | `pfBar` | js/base/portfolio.js | function | internal | uncovered | — |
 | `pfChips` | js/base/portfolio.js | function | internal | uncovered | — |
 | `pfEscapeHtml` | js/base/portfolio.js | function | internal | uncovered | — |
 | `pfKeyColor` | js/base/portfolio.js | function | internal | uncovered | — |
-| `pickBestSheet` | js/base/ingest.js | function | internal | covered | sheet-picker-test.js |
-| `pinScenario` | js/base/scenario-compare.js | function | behavioral | covered | scenario-compare-test.js |
-| `portfolioFilterApps` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `pickBestSheet` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js |
+| `pinScenario` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
+| `portfolioFilterApps` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `preWarmSelectors` | js/base/app-core.js | function | internal | uncovered | — |
 | `prefetchCsvRegions` | js/base/app-core.js | function | internal | uncovered | — |
 | `presetUnits` | js/base/ingest.js | function | internal | uncovered | — |
-| `presetsForPage` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `presetsForPage` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `presetsPageKey` | js/base/presets.js | function | internal | uncovered | — |
-| `printExecutiveReport` | js/base/downloads.js | function | behavioral | covered | page-parity-test.js, report-test.js |
+| `printExecutiveReport` | js/base/downloads.js | function | behavioral | covered | export/report-test.js, infra/page-parity-test.js |
 | `providersWithAlternatives` | js/base/xlsx-export.js | function | internal | uncovered | — |
 | `pruneLegacySavedMappings` | js/base/ingest.js | function | internal | uncovered | — |
 | `readManualForm` | js/base/manual-entry.js | function | internal | uncovered | — |
 | `readSavedMapping` | js/base/ingest.js | function | internal | uncovered | — |
-| `readWorkbookSheet` | js/base/ingest.js | function | internal | covered | sheet-picker-test.js |
-| `receivePortfolio` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
-| `removeScenario` | js/base/scenario-compare.js | function | behavioral | covered | scenario-compare-test.js |
-| `renameScenario` | js/base/scenario-compare.js | function | behavioral | covered | scenario-compare-test.js |
+| `readWorkbookSheet` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js |
+| `receivePortfolio` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `removeScenario` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
+| `renameScenario` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
 | `renderAppExpand` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderAppPanel` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderAppTableBody` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderCallouts` | js/base/portfolio.js | function | internal | uncovered | — |
-| `renderCsvMenu` | js/base/downloads.js | function | internal | covered | app-summary-test.js, nomatch-export-test.js |
-| `renderExecutiveReport` | js/base/charts.js | function+window | internal | covered | report-test.js |
+| `renderCsvMenu` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js, workload/app-summary-test.js |
+| `renderExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
 | `renderFamilies` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderHealth` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderManualEntry` | js/base/manual-entry.js | function | internal | uncovered | — |
 | `renderNWayComparison` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `renderOverview` | js/base/portfolio.js | function | internal | uncovered | — |
 | `renderPairwiseComparison` | js/base/scenario-compare.js | function | internal | uncovered | — |
-| `renderPasteControl` | js/base/ingest.js | function | internal | covered | paste-test.js, stale-results-test.js |
+| `renderPasteControl` | js/base/ingest.js | function | internal | covered | ingest/paste-test.js, preview/stale-results-test.js |
 | `renderPortfolio` | js/base/portfolio.js | function | internal | uncovered | — |
-| `renderPresetsBar` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `renderPresetsBar` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `renderRegionValidation` | js/base/app-core.js | function | internal | uncovered | — |
-| `renderResultsCharts` | js/base/charts.js | function+window | internal | covered | charts-test.js |
+| `renderResultsCharts` | js/base/charts.js | function+window | internal | covered | ui/charts-test.js |
 | `renderRightSizing` | js/base/portfolio.js | function | internal | uncovered | — |
-| `renderSampleGallery` | js/base/ingest.js | function | internal | covered | sample-gallery-test.js |
-| `renderSavedMappings` | js/base/ingest.js | function | internal | covered | saved-mappings-test.js |
+| `renderSampleGallery` | js/base/ingest.js | function | internal | covered | ui/sample-gallery-test.js |
+| `renderSavedMappings` | js/base/ingest.js | function | internal | covered | ingest/saved-mappings-test.js |
 | `renderScenarioBar` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `renderScenarioComparison` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `renderSheetPicker` | js/base/ingest.js | function | internal | uncovered | — |
 | `renderToasts` | js/base/app-core.js | function | internal | uncovered | — |
 | `renderVmTable` | js/base/portfolio.js | function | internal | uncovered | — |
-| `reportInputHygiene` | js/base/ingest.js | function | internal | covered | input-hygiene-test.js |
+| `reportInputHygiene` | js/base/ingest.js | function | internal | covered | ingest/input-hygiene-test.js |
 | `resetIngestState` | js/base/ingest.js | function | internal | uncovered | — |
-| `resolveDimension` | js/base/instance-selector-factory.js | function | internal | covered | percentile-utilization-test.js |
-| `resolveRegion` | js/base/app-core.js | function | internal | covered | monolith-test.js |
-| `resolveRowWorkload` | js/base/instance-selector-factory.js | function | internal | covered | app-mapping-test.js |
-| `resolveUtilization` | js/base/instance-selector-factory.js | function | internal | covered | percentile-utilization-test.js |
-| `restoreSectionStates` | js/base/ui-shell.js | function | internal | covered | accessibility-affordances-test.js |
-| `resultsCellType` | js/base/xlsx-export.js | function | internal | covered | xlsx-export-test.js |
-| `resultsColToA1` | js/base/xlsx-export.js | function | internal | covered | xlsx-export-test.js |
-| `resultsInPreviewOrder` | js/base/app-core.js | function | internal | covered | preview-search-test.js, scenario-compare-test.js, storage-passthrough-test.js |
+| `resolveDimension` | js/base/instance-selector-factory.js | function | internal | covered | engine/percentile-utilization-test.js |
+| `resolveRegion` | js/base/app-core.js | function | internal | covered | infra/monolith-test.js |
+| `resolveRowWorkload` | js/base/instance-selector-factory.js | function | internal | covered | workload/app-mapping-test.js |
+| `resolveUtilization` | js/base/instance-selector-factory.js | function | internal | covered | engine/percentile-utilization-test.js |
+| `restoreSectionStates` | js/base/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
+| `resultsCellType` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
+| `resultsColToA1` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
+| `resultsInPreviewOrder` | js/base/app-core.js | function | internal | covered | export/scenario-compare-test.js, ingest/storage-passthrough-test.js, preview/preview-search-test.js |
 | `rewriteRowKeys` | js/base/ingest.js | function | internal | uncovered | — |
-| `rowIsAllNoMatch` | js/base/app-core.js | function | internal | covered | family-column-test.js, stats-consistency-test.js |
-| `sEsc` | js/base/scenario-compare.js | function | internal | covered | scenario-compare-test.js |
+| `rowIsAllNoMatch` | js/base/app-core.js | function | internal | covered | engine/family-column-test.js, preview/stats-consistency-test.js |
+| `sEsc` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `safeMapGet` | js/base/instance-selector-factory.js | function | internal | uncovered | — |
 | `sampleRegionColumns` | js/base/ingest.js | function | internal | uncovered | — |
-| `sanitizeSheetName` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
-| `saveAppWorkloadMap` | js/base/ingest.js | function | internal | covered | app-mapping-test.js |
-| `saveColumnMapping` | js/base/ingest.js | function | internal | covered | column-mapping-test.js |
+| `sanitizeSheetName` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `saveAppWorkloadMap` | js/base/ingest.js | function | internal | covered | workload/app-mapping-test.js |
+| `saveColumnMapping` | js/base/ingest.js | function | internal | covered | ingest/column-mapping-test.js |
 | `saveManualVMs` | js/base/manual-entry.js | function | internal | uncovered | — |
-| `savePresetAs` | js/base/presets.js | function | behavioral | covered | presets-test.js |
-| `savePresetsStore` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `savePresetAs` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
+| `savePresetsStore` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `saveSectionState` | js/base/ui-shell.js | function | internal | uncovered | — |
 | `saveUsageStatistics` | js/base/downloads.js | function | internal | uncovered | — |
 | `scenarioChip` | js/base/scenario-compare.js | function | internal | uncovered | — |
@@ -372,12 +372,12 @@ waiver still records the reason.
 | `scenarioNewName` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `scenarioRowKeys` | js/base/scenario-compare.js | function | internal | uncovered | — |
 | `scoreSheet` | js/base/ingest.js | function | internal | uncovered | — |
-| `sectionKey` | js/base/ui-shell.js | function | internal | covered | accessibility-affordances-test.js |
-| `selectSheet` | js/base/ingest.js | function | behavioral | covered | sheet-picker-test.js |
+| `sectionKey` | js/base/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
+| `selectSheet` | js/base/ingest.js | function | behavioral | covered | ingest/sheet-picker-test.js |
 | `selectedPresetName` | js/base/presets.js | function | internal | uncovered | — |
 | `setPresetStatus` | js/base/presets.js | function | internal | uncovered | — |
 | `setScenarioLiveStatus` | js/base/scenario-compare.js | function | internal | uncovered | — |
-| `setupBackToTop` | js/base/ui-shell.js | function | internal | covered | accessibility-affordances-test.js |
+| `setupBackToTop` | js/base/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
 | `setupFileDragAndDrop` | js/base/ingest.js | function | internal | uncovered | — |
 | `setupStickyGenerate` | js/base/ui-shell.js | function | internal | uncovered | — |
 | `sheetFromResultsModel` | js/base/xlsx-export.js | function | internal | uncovered | — |
@@ -385,14 +385,14 @@ waiver still records the reason.
 | `showDataPreview` | js/base/form-controls.js | function | internal | uncovered | — |
 | `showDataToast` | js/base/app-core.js | function | internal | uncovered | — |
 | `showFileStatistics` | js/base/form-controls.js | function | internal | uncovered | — |
-| `showResultsPreview` | js/base/preview.js | function | internal | covered | accessibility-affordances-test.js, current-instance-test.js, fit-headroom-test.js, preview-column-filters-test.js, preview-column-visibility-test.js, preview-focus-test.js, preview-nomatch-filter-test.js, preview-pagination-test.js, preview-search-test.js |
-| `showToast` | js/base/app-core.js | function | internal | covered | presets-test.js, preview-search-test.js, scenario-compare-test.js |
+| `showResultsPreview` | js/base/preview.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, ui/accessibility-affordances-test.js |
+| `showToast` | js/base/app-core.js | function | internal | covered | export/scenario-compare-test.js, preview/preview-search-test.js, ui/presets-test.js |
 | `showUploadError` | js/base/ingest.js | function | internal | uncovered | — |
 | `sniffDelimiter` | js/base/ingest.js | function | internal | uncovered | — |
-| `sniffFileKind` | js/base/ingest.js | function | internal | covered | upload-guards-test.js |
+| `sniffFileKind` | js/base/ingest.js | function | internal | covered | ingest/upload-guards-test.js |
 | `sortApps` | js/base/portfolio.js | function | internal | uncovered | — |
 | `sortPortfolioApps` | js/base/portfolio.js | function | behavioral | waived | _waived: Flips overviewState sort key/direction and re-renders the app table. Sort-state wiring with no computed output beyond the render; E2E-verified (3.10.x)._ |
-| `sortResultRows` | js/base/app-core.js | function | internal | covered | scenario-compare-test.js |
+| `sortResultRows` | js/base/app-core.js | function | internal | covered | export/scenario-compare-test.js |
 | `sortableTh` | js/base/portfolio.js | function | internal | uncovered | — |
 | `startPreWarm` | js/base/app-core.js | function | internal | uncovered | — |
 | `strategyIdColumns` | js/base/xlsx-export.js | function | internal | uncovered | — |
@@ -407,39 +407,39 @@ waiver still records the reason.
 | `toggleExcludeTypes` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #excludeControls off a checkbox, delegating the render to updateExcludeControls. Visibility-only wiring; E2E-verified (3.10.x)._ |
 | `toggleInstanceFamilyNameFilter` | js/aws/aws-specific.js | function | internal | uncovered | — |
 | `toggleMainFamiliesFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; E2E-verified (3.10.x)._ |
-| `toggleManualEntry` | js/base/manual-entry.js | function | behavioral | covered | manual-entry-bulk-edit-test.js, manual-entry-form-test.js |
-| `toggleOptimizationMode` | js/base/form-controls.js | function | behavioral | covered | utilization-hint-test.js |
+| `toggleManualEntry` | js/base/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
+| `toggleOptimizationMode` | js/base/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |
 | `togglePastePanel` | js/base/ingest.js | function | behavioral | waived | _waived: Show/hide of the paste panel plus focus of the textarea. Visibility/focus wiring; E2E-verified (3.10.x)._ |
-| `togglePortfolioAppRow` | js/base/portfolio.js | function | behavioral | covered | portfolio-test.js |
+| `togglePortfolioAppRow` | js/base/portfolio.js | function | behavioral | covered | export/portfolio-test.js |
 | `togglePortfolioFilter` | js/base/portfolio.js | function | behavioral | waived | _waived: Sets a boolean overviewState filter (noMatchOnly / complianceOnly) and re-renders the app table. Filter-state wiring; E2E-verified (3.10.x)._ |
 | `toggleProcessorManufacturerFilter` | js/aws/aws-specific.js | function | behavioral | waived | _waived: Show/hide of the processor-manufacturer restriction controls off a checkbox. Visibility-only wiring; E2E-verified (3.10.x)._ |
-| `toggleSection` | js/base/ui-shell.js | function | behavioral | covered | accessibility-affordances-test.js |
-| `uniqueSheetName` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `toggleSection` | js/base/ui-shell.js | function | behavioral | covered | ui/accessibility-affordances-test.js |
+| `uniqueSheetName` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `updateAnalysisGroupVisibility` | js/base/downloads.js | function | internal | uncovered | — |
 | `updateAppPortfolioButton` | js/base/downloads.js | function | internal | uncovered | — |
 | `updateAzureFilterLabels` | js/azure/azure-specific.js | function | internal | uncovered | — |
-| `updateCpuRanges` | js/base/form-controls.js | function | behavioral | covered | range-linking-test.js |
-| `updateDownloadButtons` | js/base/preview.js | function | internal | covered | page-parity-test.js |
+| `updateCpuRanges` | js/base/form-controls.js | function | behavioral | covered | ui/range-linking-test.js |
+| `updateDownloadButtons` | js/base/preview.js | function | internal | covered | infra/page-parity-test.js |
 | `updateExcludeControls` | js/base/form-controls.js | function | internal | uncovered | — |
 | `updateGCPFilterLabels` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `updateMemoryRanges` | js/base/form-controls.js | function | behavioral | covered | range-linking-test.js |
+| `updateMemoryRanges` | js/base/form-controls.js | function | behavioral | covered | ui/range-linking-test.js |
 | `updateProgressBar` | js/base/generate.js | function | internal | uncovered | — |
-| `updateRelaxSuggestion` | js/base/preview.js | function | internal | covered | preview-search-test.js |
+| `updateRelaxSuggestion` | js/base/preview.js | function | internal | covered | preview/preview-search-test.js |
 | `updateScenarioCompare` | js/base/scenario-compare.js | function | internal | uncovered | — |
-| `updateSelectedPreset` | js/base/presets.js | function | behavioral | covered | presets-test.js |
+| `updateSelectedPreset` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `updateSortIndicators` | js/base/portfolio.js | function | internal | uncovered | — |
-| `updateStaleResultsNotice` | js/base/preview.js | function | internal | covered | preview-search-test.js, stale-results-test.js |
+| `updateStaleResultsNotice` | js/base/preview.js | function | internal | covered | preview/preview-search-test.js, preview/stale-results-test.js |
 | `updateUsageCounters` | js/base/downloads.js | function | internal | uncovered | — |
 | `updateUsageStatistics` | js/base/downloads.js | function | internal | uncovered | — |
 | `validateAzureRegion` | js/azure/azure-specific.js | function | internal | uncovered | — |
 | `validateCsvRegions` | js/base/app-core.js | function | internal | uncovered | — |
 | `validateGCPRegion` | js/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `validatePresetImport` | js/base/presets.js | function | internal | covered | presets-test.js |
+| `validatePresetImport` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `validateProviderSupport` | js/base/instance-selector-factory.js | window | internal | uncovered | — |
-| `vmDetailColumns` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `vmDetailColumns` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `vmMatchCell` | js/base/portfolio.js | function | internal | uncovered | — |
 | `watchForDataThenRun` | js/base/app-core.js | function | internal | uncovered | — |
 | `wbDetailColumns` | js/base/portfolio.js | function | internal | uncovered | — |
 | `writeColumnMappings` | js/base/ingest.js | function | internal | uncovered | — |
 | `writePreset` | js/base/presets.js | function | internal | uncovered | — |
-| `writeWorkbook` | js/base/portfolio.js | function | internal | covered | portfolio-test.js |
+| `writeWorkbook` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |

@@ -6,12 +6,31 @@ Plain-Node test harness — no framework, no npm install.
 node tests/run-all.js       # all suites + golden byte-compare
 node tests/syntax-check.js  # node --check over first-party JS
 npm run coverage:check      # behavioral surface must be covered or waived
-node tests/suites/column-mapping-test.js   # a single suite
+node tests/suites/ingest/column-mapping-test.js   # a single suite
 ```
+
+## Layout
+
+Suites are grouped by feature area, one folder deep — `run-all.js` and the
+coverage ledger both recurse, so a suite is found wherever it sits:
+
+| Folder                 | What it covers                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| `suites/ingest/`       | file upload, CSV/xlsx parsing, sheet & column mapping, paste, input hygiene            |
+| `suites/engine/`       | core sizing — fit, families, generations, nearest-miss, the worker protocol & watchdog |
+| `suites/workload/`     | workload-class rules (burstable, GPU, SQL) and app→workload grouping                   |
+| `suites/preview/`      | the results preview table — filters, visibility, pagination, search, staleness         |
+| `suites/export/`       | downloads — CSV, xlsx, report, scenario compare, portfolio, no-match export            |
+| `suites/manual-entry/` | the manual VM entry form and its bulk edit                                             |
+| `suites/ui/`           | theme, accessibility, charts, presets, region validation, samples, ranges              |
+| `suites/infra/`        | lazy region loading, monolith fallback, page parity, PWA, vendor integrity             |
+
+`suites/harness.js` (the shared simulated-DOM sandbox) stays at the `suites/`
+root — it is not a suite, so nothing runs it directly.
 
 ## How it works
 
-- **`suites/*.js`** — each suite builds a small simulated-DOM sandbox
+- **`suites/**/*-test.js`** — each suite builds a small simulated-DOM sandbox
   (`vm.createContext` with stubbed `document`/`localStorage`/`Worker`),
   loads the real app scripts into it, and drives the actual functions:
   CSV/xlsx ingestion, column mapping, region validation, lazy region
