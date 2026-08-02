@@ -13,54 +13,16 @@
 
 const path = require("path");
 const { test, expect } = require("@playwright/test");
+const { exportResultsCsv } = require("./helpers");
 
 const FIXTURE = path.join(__dirname, "fixtures", "aws-sample.csv");
 // A real AWS instance type: family letter+gen, optional suffix, a dotted size.
 // Matches m6g.xlarge, t4g.small, r8i-flex.2xlarge — but never a bare region or
-// VM name. Its presence in a recommendation cell proves the engine sized a box
-// rather than falling back to echoing the input (the sample-data failure mode).
+// VM name. This spec keeps the tighter POSITIVE match (the sibling provider
+// specs use the provider-agnostic expectSized instead, since Azure/GCP names
+// don't share one shape).
 const AWS_INSTANCE =
   /^[a-z]\d[a-z]*(?:-[a-z]+)?\.(?:nano|micro|small|medium|large|\d*xlarge)\b/;
-
-// Minimal RFC-4180-ish CSV parse — enough for this export: quoted fields,
-// doubled quotes, embedded commas/newlines. Strips a leading BOM. Returns an
-// array of row objects keyed by the header row.
-function parseCsv(text) {
-  const src = text.replace(/^﻿/, "");
-  const rows = [];
-  let field = "";
-  let row = [];
-  let inQuotes = false;
-  for (let i = 0; i < src.length; i++) {
-    const c = src[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (src[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else inQuotes = false;
-      } else field += c;
-    } else if (c === '"') inQuotes = true;
-    else if (c === ",") {
-      row.push(field);
-      field = "";
-    } else if (c === "\n" || c === "\r") {
-      if (c === "\r" && src[i + 1] === "\n") i++;
-      row.push(field);
-      field = "";
-      rows.push(row);
-      row = [];
-    } else field += c;
-  }
-  if (field.length || row.length) {
-    row.push(field);
-    rows.push(row);
-  }
-  const header = rows.shift();
-  return rows
-    .filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ""))
-    .map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));
-}
 
 test("aws.html: upload → region chips → generate → export results CSV", async ({
   page,
@@ -100,21 +62,9 @@ test("aws.html: upload → region chips → generate → export results CSV", as
 
   // ── Export the results CSV ───────────────────────────────────────────────────
   // "Results CSV" is checked by default in the CSV menu; open it and download.
-  await page.click("#csvMenuBtn");
-  const downloadPromise = page.waitForEvent("download");
-  await page.click(".csv-menu-go");
-  const download = await downloadPromise;
+  const { filename, rows } = await exportResultsCsv(page);
+  expect(filename).toMatch(/^instance_recommendations_.*\.csv$/);
 
-  expect(download.suggestedFilename()).toMatch(
-    /^instance_recommendations_.*\.csv$/,
-  );
-
-  const stream = await download.createReadStream();
-  const chunks = [];
-  for await (const chunk of stream) chunks.push(chunk);
-  const csv = Buffer.concat(chunks).toString("utf8");
-
-  const rows = parseCsv(csv);
   const names = rows.map((r) => r["VM Name"]);
   // Every input row survived the round trip.
   expect(names).toEqual(["web-server-01", "db-server-02", "app-server-03"]);

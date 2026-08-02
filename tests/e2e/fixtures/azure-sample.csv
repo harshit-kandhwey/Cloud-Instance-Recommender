@@ -1,0 +1,4 @@
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload
+web-server-01,4,16,45,60,East US,Production,Linux,Web Server
+db-server-02,8,32,70,80,West US 2,Production,Windows,Database
+app-server-03,2,8,35,45,North Europe,Dev,Linux,General

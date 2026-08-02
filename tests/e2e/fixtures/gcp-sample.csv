@@ -1,0 +1,4 @@
+VM Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,GCP Region,ENV,OS,Workload
+web-server-01,4,16,45,60,us-central1-a,Production,Linux,Web Server
+db-server-02,8,32,70,80,us-west1-b,Production,Windows,Database
+app-server-03,2,8,35,45,europe-west1-c,Dev,Linux,General
