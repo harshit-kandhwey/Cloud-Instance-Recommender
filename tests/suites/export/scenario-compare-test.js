@@ -753,37 +753,126 @@ console.log("[match rate is per run, not per compared cell]");
   );
 }
 
-// ─── The comparison tables carry header semantics ────────────────────────────
+// ─── The comparison tables carry header semantics — on the EMITTED HTML ───────
 // Both tables are read as a matrix: the pairwise one has a header row, and the
 // N-way one has TWO header levels (recommendation column, then one sub-column
 // per run). Without scope, assistive tech cannot associate a value with the
 // column-and-run it belongs to, and the grid is unreadable.
-console.log("[comparison tables wire up their headers]");
+//
+// This drives the REAL render — `renderScenarioComparison()`, which picks
+// pairwise (2 runs) vs N-way (3+) itself — and reads the innerHTML it produced,
+// rather than grepping the source. A source scan passes even if the render never
+// runs, if the markup is malformed around the scope= it happens to contain, or if
+// the pairwise-vs-N-way branch is broken: the substring is there in the file
+// either way. Reading the emitted HTML asserts what a screen reader would get.
+console.log("[comparison tables wire up their headers — behavioral render]");
 {
-  const src = fs.readFileSync(
-    path.join(REPO, "js/base/scenario-compare.js"),
-    "utf8",
+  // Point getElementById at capturing stubs so the render has somewhere to write
+  // (the rest of this file relies on it returning null; this block is last).
+  const captured = {};
+  sandbox.document.getElementById = (id) => {
+    if (!captured[id]) captured[id] = { id, innerHTML: "", textContent: "" };
+    return captured[id];
+  };
+  const renderWith = (runs) => {
+    captured.scenarioCompareResult = {
+      id: "scenarioCompareResult",
+      innerHTML: "",
+      textContent: "",
+    };
+    sandbox.__runs = runs; // share the objects (computed [AWS] keys) by reference
+    run("scenarios = __runs;");
+    run("renderScenarioComparison()");
+    return captured.scenarioCompareResult.innerHTML;
+  };
+
+  // Two runs → the pairwise view. Both rows change, so the body table renders.
+  const pairHtml = renderWith([
+    {
+      label: "A",
+      config: null,
+      results: [
+        { "VM Name": "web1", [AWS]: "m5.large" },
+        { "VM Name": "db1", [AWS]: "No data available" },
+      ],
+    },
+    {
+      label: "B",
+      config: null,
+      results: [
+        { "VM Name": "web1", [AWS]: "m6i.large" },
+        { "VM Name": "db1", [AWS]: "r5.large" },
+      ],
+    },
+  ]);
+  check(
+    "renderScenarioComparison took the pairwise branch and produced the table",
+    /scenario-legend/.test(pairHtml) && /scenario-table/.test(pairHtml),
+    pairHtml.slice(0, 160),
   );
   check(
-    "the N-way group header declares scope=colgroup",
-    /colspan="\$\{list\.length\}" scope="colgroup"/.test(src),
-    "the grouped header has no colgroup scope",
+    "pairwise column headers are emitted with scope=col",
+    /<th scope="col">VM<\/th>/.test(pairHtml) &&
+      pairHtml.includes(`<th scope="col">${AWS}</th>`),
+    pairHtml,
   );
   check(
-    "the per-run subheader declares scope=col",
-    /<th scope="col">\$\{sEsc\(s\.label\)\}<\/th>/.test(src),
-    "the per-run header has no col scope",
+    "pairwise VM label is emitted as a row header, never a plain data cell",
+    /<th scope="row">web1<\/th>/.test(pairHtml) &&
+      !/<td[^>]*>\s*web1\s*</.test(pairHtml),
+    pairHtml,
+  );
+
+  // Three runs → the N-way matrix with a two-level header. Same data as the
+  // diffScenariosN cases above (web1 + db1 both differ across the set).
+  const nwayHtml = renderWith([
+    {
+      label: "Base",
+      config: null,
+      results: [
+        { "VM Name": "web1", [AWS]: "m5.large" },
+        { "VM Name": "db1", [AWS]: "c5.large" },
+      ],
+    },
+    {
+      label: "Tuned",
+      config: null,
+      results: [
+        { "VM Name": "web1", [AWS]: "m5.large" },
+        { "VM Name": "db1", [AWS]: "c6i.large" },
+      ],
+    },
+    {
+      label: "Aggressive",
+      config: null,
+      results: [
+        { "VM Name": "web1", [AWS]: "m6i.large" },
+        { "VM Name": "db1", [AWS]: "c5.large" },
+      ],
+    },
+  ]);
+  check(
+    "renderScenarioComparison took the N-way branch and produced the matrix",
+    /scenario-nway-table/.test(nwayHtml),
+    nwayHtml.slice(0, 160),
   );
   check(
-    "neither table emits the VM name as a plain data cell",
-    !/<tr><td>\$\{sEsc\(row\.key\)\}<\/td>/.test(src),
-    "a VM row label is still a <td> — it labels its row, so it must be a th",
+    "N-way group header is emitted with scope=colgroup spanning the 3 runs",
+    nwayHtml.includes(`<th colspan="3" scope="colgroup">${AWS}</th>`),
+    nwayHtml,
   );
   check(
-    "both tables mark the VM cell as a row header",
-    (src.match(/<th scope="row">\$\{sEsc\(row\.key\)\}<\/th>/g) || [])
-      .length === 2,
-    "expected the pairwise AND N-way tables to use scope=row",
+    "N-way emits one scope=col subheader per run under the group",
+    /<th scope="col">Base<\/th>/.test(nwayHtml) &&
+      /<th scope="col">Tuned<\/th>/.test(nwayHtml) &&
+      /<th scope="col">Aggressive<\/th>/.test(nwayHtml),
+    nwayHtml,
+  );
+  check(
+    "N-way VM label is emitted as a row header, never a plain data cell",
+    /<th scope="row">web1<\/th>/.test(nwayHtml) &&
+      !/<td[^>]*>\s*web1\s*</.test(nwayHtml),
+    nwayHtml,
   );
 }
 
