@@ -8,6 +8,11 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
+    # @playwright/test is a devDependency now, and its postinstall downloads
+    # browser binaries. This job (and typecheck) only needs the JS packages, so
+    # skip that ~150 MB download here — only the e2e job needs the browser.
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +46,8 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     steps:
       - uses: actions/checkout@v4
 
@@ -53,3 +60,37 @@ jobs:
 
       - name: Type-check JSDoc-annotated modules
         run: npm run typecheck
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The JS packages install without the browser; the browser comes from the
+      # cache below (or a fresh download on a miss), keyed on the exact
+      # Playwright version so a bump invalidates it automatically.
+      - name: Install dev dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Chromium (+ OS deps)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end suite
+        run: npm run test:e2e

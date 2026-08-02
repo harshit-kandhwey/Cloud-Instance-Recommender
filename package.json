@@ -7,12 +7,14 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node tests/run-all.js",
+    "test:e2e": "playwright test",
     "syntax-check": "node tests/syntax-check.js",
     "coverage:check": "node tools/build-coverage-inventory.js --check",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "prettier": "3.9.5",
     "typescript": "5.7.3"
   }
