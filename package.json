@@ -14,7 +14,9 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@playwright/test": "1.56.1",
+    "axe-core": "4.12.1",
     "prettier": "3.9.5",
     "typescript": "5.7.3"
   }

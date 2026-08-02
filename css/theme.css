@@ -36,6 +36,12 @@
   --primary-2: #764ba2;
   --accent: #4ecdc4;
   --accent-2: #44a08d;
+  /* Accessible text colours for the utilization-range headings. The brand
+     --primary/--accent are decorative and fail WCAG AA as TEXT on the light
+     surface (3.48:1 and 1.84:1); these dark variants clear 4.5:1 in light mode
+     and are overridden to legible light tints in the dark theme. */
+  --util-label-cpu: #4c51bf;
+  --util-label-mem: #0f766e;
   --grad-primary: linear-gradient(135deg, #667eea, #764ba2);
   --grad-progress: linear-gradient(90deg, #667eea, #764ba2);
   --grad-header: linear-gradient(135deg, #ff6b6b, #4ecdc4);
@@ -93,6 +99,11 @@
 }
 
 [data-theme="dark"] {
+  /* Legible light tints on the dark surface (the light-mode dark variants
+     would be near-invisible here). */
+  --util-label-cpu: #a5b4fc;
+  --util-label-mem: #5eead4;
+
   --bg-page: linear-gradient(135deg, #1e1b3a 0%, #2c1e45 100%);
   --surface: #1e2433;
   --surface-alt: #262e40;

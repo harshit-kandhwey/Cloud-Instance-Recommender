@@ -632,15 +632,16 @@ body {
   margin-bottom: 20px;
 }
 
-/* CPU utilization label */
+/* CPU utilization label — accessible text token (the brand --primary fails AA
+   as text on the light surface). */
 .cpu-utilization-label {
-  color: var(--primary);
+  color: var(--util-label-cpu);
   font-weight: 700;
 }
 
-/* Memory utilization label */
+/* Memory utilization label — accessible text token (brand --accent fails AA). */
 .memory-utilization-label {
-  color: var(--accent);
+  color: var(--util-label-mem);
   font-weight: 700;
 }
 

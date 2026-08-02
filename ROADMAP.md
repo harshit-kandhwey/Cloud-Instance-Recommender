@@ -117,6 +117,12 @@ it. Their weaknesses are known and specific.
   scenarios for the mapping dialog, filter controls, results tables, and exports,
   so the skip link, live regions, dark mode, and focus management already built
   cannot silently regress. Pairs with the accessibility audit in 3.11. (M)
+  _Landed (v3.10.22): `axe` gates the four pages at zero violations in **light**
+  mode, plus a dark-mode structural pass, a keyboard toggle, and a CSP-intact
+  check. **Known debt, tracked for the 3.11 dark-mode pass:** the dark theme
+  carries pre-existing `color-contrast` failures in several components (secondary
+  buttons, the upload label, preset controls); the gate disables `color-contrast`
+  in dark mode only until that pass clears them, then it flips on._
 - **One suite per unit, named for what it tests.** Suites are currently organised
   by the step of the plan that produced them (`step6`, `step8`, `step9`), so the
   name says when it was written, not what it covers — and the banned-dialog guard,
