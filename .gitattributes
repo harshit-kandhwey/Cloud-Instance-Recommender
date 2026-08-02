@@ -8,3 +8,6 @@ js/vendor/** -text
 # Goldens are compared byte-for-byte against freshly generated output. Line
 # ending translation would make that comparison platform-dependent.
 tests/golden/** -text
+
+# Binary E2E fixtures (.xlsx workbooks are ZIP containers) — never translate.
+tests/e2e/fixtures/*.xlsx -text
