@@ -34,6 +34,13 @@ module.exports = defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    // WebKit as a second engine so cross-engine breakage surfaces here rather
+    // than in production. Its own project keeps the flake it can introduce
+    // isolated and revertible.
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
   ],
   webServer: {
     command: `node tools/static-server.js --port ${PORT}`,

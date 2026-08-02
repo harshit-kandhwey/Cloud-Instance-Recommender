@@ -13,7 +13,8 @@
 // drives sw.js directly with mocked caches. This spec covers the real-browser
 // registration + indicator that the mock cannot.
 //
-// Chromium-only (the E2E matrix is Chromium here).
+// Runs on both engines in the matrix (uses no CDP — only context.setOffline and
+// the standard serviceWorker API).
 
 const { test, expect } = require("@playwright/test");
 

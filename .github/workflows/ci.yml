@@ -89,8 +89,8 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
-      - name: Install Chromium (+ OS deps)
-        run: npx playwright install --with-deps chromium
+      - name: Install browsers (+ OS deps)
+        run: npx playwright install --with-deps chromium webkit
 
-      - name: Run end-to-end suite
+      - name: Run end-to-end suite (Chromium + WebKit)
         run: npm run test:e2e
