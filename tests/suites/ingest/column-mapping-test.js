@@ -217,8 +217,10 @@ function getHeaders(ctx) {
     check("csvData deferred", getCsvData(ctx).length === 0);
   }
 
-  process.exit(failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

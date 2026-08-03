@@ -207,8 +207,10 @@ function fill(ctx, values) {
   check("cleared", vm.runInContext("manualVMs.length", ctx) === 0);
   check("hint back", section.innerHTML.includes("No VMs added yet"));
 
-  process.exit(failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

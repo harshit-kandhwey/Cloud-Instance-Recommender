@@ -132,8 +132,10 @@ d,4,16,us-west-2`;
   check("no warning when all valid", !panelHtml2.includes("not recognized"));
   check("validation replaced", !ctx._regionValidation?.azure);
 
-  process.exit(failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

@@ -190,8 +190,10 @@ same-b,4,16,x1e.32xlarge,us-east-1`,
     instanceCols.map((c) => `${c}: ${a && a[c]} vs ${b && b[c]}`).join(" | "),
   );
 
-  process.exit(state.failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = state.failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

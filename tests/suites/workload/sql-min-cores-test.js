@@ -211,5 +211,7 @@ const row = (workload) => [
     check("the SQL runs complete without throwing", false, e && e.message);
   }
 
-  process.exit(state.failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = state.failures ? 1 : 0;
 })();

@@ -188,13 +188,15 @@ console.log("[the column is added on multi-cloud runs and absent on single]");
       JSON.stringify(Object.keys(single[0])),
     );
 
-    process.exit(state.failures ? 1 : 0);
+    // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+    // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+    process.exitCode = state.failures ? 1 : 0;
   } catch (e) {
     check(
       "the integration run completes without throwing",
       false,
       e && e.message,
     );
-    process.exit(1);
+    process.exitCode = 1;
   }
 })();

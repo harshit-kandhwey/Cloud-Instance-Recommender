@@ -196,8 +196,10 @@ function check(name, cond, detail) {
 
   console.log("[requested srcs] " + requestedSrcs.join(", "));
   console.log("[freshness] AWS_DATA_DATE=" + ctx.AWS_DATA_DATE);
-  process.exit(failures ? 1 : 0);
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout
+  // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);
-  process.exit(1);
+  process.exitCode = 1;
 });

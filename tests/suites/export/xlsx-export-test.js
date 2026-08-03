@@ -226,8 +226,11 @@ check(
   ),
 );
 
+// process.exitCode, not process.exit(): exit() can truncate buffered stdout
+// when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
-  process.exit(1);
+  process.exitCode = 1;
+} else {
+  console.log("xlsx-export-test: all checks passed");
 }
-console.log("xlsx-export-test: all checks passed");

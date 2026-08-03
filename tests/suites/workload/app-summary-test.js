@@ -189,4 +189,6 @@ const noAppStats = run(
 );
 check("no apps chip without App Name column", !noAppStats.includes("apps"));
 
-process.exit(failures ? 1 : 0);
+// process.exitCode, not process.exit(): exit() can truncate buffered stdout
+// when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
+process.exitCode = failures ? 1 : 0;
