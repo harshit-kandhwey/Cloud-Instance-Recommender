@@ -74,7 +74,9 @@ console.log("[with NO recommendation columns, neither counts a no-match]");
   );
   check(
     "and it does not falsely report them all as matched either",
-    !/✓ <strong>3<\/strong> matched/.test(html),
+    // Reject ANY positive matched count, not just the exact "3": a neutral state
+    // that leaked "1"/"2 matched" would slip past a hardcoded-3 check.
+    !/✓ <strong>[1-9]\d*<\/strong> matched/.test(html),
     html,
   );
   check(

@@ -103,6 +103,15 @@ function check(name, cond, detail) {
     ["gcp", gcp],
   ]) {
     const manifest = ctx.window[`${name.toUpperCase()}_REGION_KEYS`];
+    // Guard the global before filtering it: a rename or a load regression makes
+    // it undefined, and `undefined.filter(...)` would crash opaquely instead of
+    // reporting which provider's manifest went missing.
+    check(
+      `${name}: manifest region-keys global is present and non-empty`,
+      Array.isArray(manifest) && manifest.length > 0,
+      `typeof=${typeof manifest}, length=${manifest && manifest.length}`,
+    );
+    if (!Array.isArray(manifest) || manifest.length === 0) continue;
     const offered = new Set(
       selector
         .getAllAvailableRegionKeys()

@@ -454,7 +454,13 @@ console.log("[no library, no literal colours]");
   );
   check(
     "the marks use the chart tokens",
-    /var\(--good-strong\)/.test(src) && /var\(--success-bg\)/.test(src),
+    // Assert the dedicated chart tokens the name actually claims (not only the
+    // shared status tokens), so the check tests what it says it does.
+    /var\(--chart-bar\)/.test(src) &&
+      /var\(--chart-context\)/.test(src) &&
+      /var\(--good-strong\)/.test(src) &&
+      /var\(--success-bg\)/.test(src),
+    "expected --chart-bar, --chart-context, --good-strong and --success-bg",
   );
 }
 

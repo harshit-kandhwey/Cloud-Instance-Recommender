@@ -22,6 +22,11 @@ const check = (name, cond, detail) => {
   }
 };
 
+// The top candidate, safely. A regression that returns no instances must let the
+// checks below report a named failure ("picked undefined") rather than crash on
+// `res.instances[0].instanceType` — including in the eagerly-built detail string.
+const top = (res) => (res && res.instances && res.instances[0]) || {};
+
 // A GCP Cache VM (2 vCPU / 4 GB): a right-sized general instance and the huge
 // memory-optimized one that "fits" only because it exceeds the requirement on
 // every axis. The general one is listed first (cheapest), as the real pipeline
@@ -54,12 +59,12 @@ console.log(
   );
   check(
     "the cheapest-adequate instance is chosen, NOT the huge preferred one",
-    res.instances[0].instanceType === "e2-standard-2",
-    `picked ${res.instances[0].instanceType} (${res.instances[0].vCpus}/${res.instances[0].memory})`,
+    top(res).instanceType === "e2-standard-2",
+    `picked ${top(res).instanceType} (${top(res).vCpus}/${top(res).memory})`,
   );
   check(
     "the huge memory-optimized instance did not jump to the front",
-    res.instances[0].instanceType !== "m3-ultramem-32",
+    top(res).instanceType !== "m3-ultramem-32",
   );
   check(
     "the row explains the preference was not applied",
@@ -95,8 +100,8 @@ console.log("[memory over-provisioning past 4x also drops the preference]");
   );
   check(
     "the exact-fit instance wins over the hyper-memory one",
-    res.instances[0].instanceType === "e2-standard-8",
-    `picked ${res.instances[0].instanceType}`,
+    top(res).instanceType === "e2-standard-8",
+    `picked ${top(res).instanceType}`,
   );
 }
 
@@ -128,8 +133,8 @@ console.log("[a close-fit preferred family is still honoured]");
   );
   check(
     "the preferred memory-optimized instance is chosen when it fits",
-    res.instances[0].instanceType === "r5.2xlarge",
-    `picked ${res.instances[0].instanceType}`,
+    top(res).instanceType === "r5.2xlarge",
+    `picked ${top(res).instanceType}`,
   );
   check(
     "the preference is reported as applied (not skipped)",
@@ -166,8 +171,8 @@ console.log("[the fit bound is inclusive at exactly 4x memory]");
   );
   check(
     "a preferred instance at exactly 4x memory is still chosen",
-    res.instances[0].instanceType === "r6g.large",
-    `picked ${res.instances[0].instanceType} (${res.instances[0].memory} GiB)`,
+    top(res).instanceType === "r6g.large",
+    `picked ${top(res).instanceType} (${top(res).memory} GiB)`,
   );
 }
 
@@ -216,8 +221,8 @@ console.log("[the vCPU bound alone can disqualify a preferred instance]");
   );
   check(
     "the general instance wins; the vCPU-heavy preferred one does not",
-    res.instances[0].instanceType === "m6g.xlarge",
-    `picked ${res.instances[0].instanceType} (${res.instances[0].vCpus}/${res.instances[0].memory})`,
+    top(res).instanceType === "m6g.xlarge",
+    `picked ${top(res).instanceType} (${top(res).vCpus}/${top(res).memory})`,
   );
   check(
     "the row explains the preference was not applied",
@@ -236,8 +241,8 @@ console.log("[no requirement → preference applies as before]");
   );
   check(
     "with no reqCpu/reqMemory the preferred family still sorts first",
-    res.instances[0].instanceType === "m3-ultramem-32",
-    `picked ${res.instances[0].instanceType}`,
+    top(res).instanceType === "m3-ultramem-32",
+    `picked ${top(res).instanceType}`,
   );
 }
 

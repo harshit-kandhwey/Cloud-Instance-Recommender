@@ -120,6 +120,20 @@ function generateSample(sample) {
 // sit for a release showing a different OS, a different compliance value and
 // zone-suffixed regions its own download never produced — the columns matched,
 // so nothing looked.
+// The <pre> holds HTML source, so a sample value with `&`, `<`, `>` or a quote
+// arrives entity-encoded (`&amp;` …) while the generated CSV carries it raw.
+// Decode before comparing so the day a template gains such a character this
+// guard keeps catching real drift instead of raising a false one. `&amp;` last,
+// so an already-decoded `&` isn't re-expanded.
+function decodeEntities(s) {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;|&#x0*27;/gi, "'")
+    .replace(/&amp;/g, "&");
+}
+
 function previewLines(page) {
   const html = fs.readFileSync(path.join(REPO, page), "utf8");
   const block = html.match(
@@ -132,7 +146,7 @@ function previewLines(page) {
   return block[1]
     .trim()
     .split("\n")
-    .map((line) => line.trim());
+    .map((line) => decodeEntities(line.trim()));
 }
 
 for (const sample of SAMPLES) {

@@ -43,12 +43,12 @@ const { check, state } = makeChecker();
 
   check(
     "cpu keep-min tracks downsize-max",
-    ctx.document.getElementById("cpuKeepMin").value === 20,
+    Number(ctx.document.getElementById("cpuKeepMin").value) === 20,
     ctx.document.getElementById("cpuKeepMin").value,
   );
   check(
     "cpu upsize-min tracks keep-max",
-    ctx.document.getElementById("cpuUpsizeMin").value === 80,
+    Number(ctx.document.getElementById("cpuUpsizeMin").value) === 80,
     ctx.document.getElementById("cpuUpsizeMin").value,
   );
   check("cpu upsizing enabled (opacity 1)", label.style.opacity === "1");
@@ -108,12 +108,12 @@ const { check, state } = makeChecker();
 
   check(
     "memory keep-min tracks downsize-max",
-    ctx.document.getElementById("memoryKeepMin").value === 15,
+    Number(ctx.document.getElementById("memoryKeepMin").value) === 15,
     ctx.document.getElementById("memoryKeepMin").value,
   );
   check(
     "memory upsize-min tracks keep-max",
-    ctx.document.getElementById("memoryUpsizeMin").value === 75,
+    Number(ctx.document.getElementById("memoryUpsizeMin").value) === 75,
     ctx.document.getElementById("memoryUpsizeMin").value,
   );
   check("memory upsizing enabled (opacity 1)", label.style.opacity === "1");

@@ -24,9 +24,13 @@ const ROWS = [
 const colIndex = (ctx, name) => ctx._previewState.displayCols.indexOf(name);
 
 // A column header cell carries the sort handler for that column index.
+// Escape the column name before embedding it in a regex — a real column like
+// "Memory (GB)" carries regex metacharacters, and unescaped `(GB)` would be read
+// as a capture group and silently fail to match the literal header.
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const headerShown = (html, ctx, name) =>
   html.includes(`window._sortPreview(${colIndex(ctx, name)})`) &&
-  new RegExp(`>${name}(<|\\u21c5|\\u25b2|\\u25bc)`).test(html);
+  new RegExp(`>${escapeRe(name)}(<|\\u21c5|\\u25b2|\\u25bc)`).test(html);
 
 const settle = () => new Promise((r) => setTimeout(r, 250));
 

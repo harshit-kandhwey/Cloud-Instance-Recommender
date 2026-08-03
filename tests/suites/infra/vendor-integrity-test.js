@@ -90,9 +90,13 @@ if (bundles.length) {
       encoding: "utf8",
     });
   } catch (e) {
-    // ENOENT means no git on PATH (a real skip). Anything else is a genuine git
-    // failure and must not masquerade as "cannot verify here" — report it.
-    if (e.code !== "ENOENT") {
+    // Two real skips: ENOENT (no git on PATH) and exit 128 "not a git
+    // repository" (running outside a working tree — an exported tarball or a
+    // shallow CI checkout without .git). In both, line-ending attributes simply
+    // cannot be verified here. Anything else is a genuine git failure and must
+    // not masquerade as "cannot verify here" — report it.
+    const notARepo = /not a git repository/i.test(String(e.stderr || ""));
+    if (e.code !== "ENOENT" && !notARepo) {
       check("git check-attr ran", false, String(e.message || e));
     }
     attrOut = null;

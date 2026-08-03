@@ -243,10 +243,15 @@ console.log("[the print trigger is scoped, not a bare window.print]");
     classedAtPrint === true,
     `classedAtPrint=${classedAtPrint}`,
   );
+  // Fire the handlers unconditionally — that is the action under test — then
+  // assert. Folding the forEach into the `&&` made the side effect run only when
+  // a handler happened to be registered, so a regression that dropped the
+  // handler would skip the action instead of failing on it.
+  const hadAfterprint = afterprint.length > 0;
+  afterprint.forEach((fn) => fn());
   check(
     "the class is dropped again when afterprint fires",
-    afterprint.length > 0 &&
-      (afterprint.forEach((fn) => fn()), !bodyClasses.has("printing-report")),
+    hadAfterprint && !bodyClasses.has("printing-report"),
     `handlers=${afterprint.length}, still=${bodyClasses.has("printing-report")}`,
   );
 }

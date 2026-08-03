@@ -30,7 +30,9 @@ function check(name, cond, detail) {
 
 (async () => {
   const watchdogMs = 300;
-  const testTimeoutMs = 2500;
+  // Outer safety net for the whole race. Overridable so a slow CI box can raise
+  // it without editing the test; the fallback normally settles ~watchdogMs.
+  const testTimeoutMs = Number(process.env.WATCHDOG_TEST_TIMEOUT_MS) || 2500;
   ctx._workerWatchdogMs = watchdogMs; // short watchdog for the test
 
   const rows = [
@@ -57,15 +59,21 @@ function check(name, cond, detail) {
   };
 
   const start = Date.now();
+  // Keep the safety-net timer's handle so it can be cleared once the race
+  // settles — otherwise it stays pending and keeps the event loop alive to
+  // testTimeoutMs (a leaked timer, and a real hang once this suite moves off
+  // process.exit()).
+  let watchdogTimer;
   const results = await Promise.race([
     ctx.runRecommendationBatch(rows, ["aws"], options),
-    new Promise((_, reject) =>
-      setTimeout(
+    new Promise((_, reject) => {
+      watchdogTimer = setTimeout(
         () => reject(new Error("watchdog fallback did not settle")),
         testTimeoutMs,
-      ),
-    ),
+      );
+    }),
   ]);
+  clearTimeout(watchdogTimer);
   const elapsed = Date.now() - start;
 
   check("worker was attempted", posted === 1, `posted=${posted}`);

@@ -86,15 +86,20 @@ console.log("[the read path is pinned to the patched full build]");
     ),
   );
   // The actual reads must not go through the global.
+  // Lookbehind (not `[^_]\b`) so a bare call at file position 0 is still caught:
+  // `[^_]` must consume a preceding char, which the start of file cannot supply,
+  // letting a leading bare call slip through vacuously. `(?<![\w$])` matches at
+  // file start and still excludes the captured `window._xlsxParser` path.
   check(
     "workbook parsing reads through the captured parser",
-    /window\._xlsxParser\.read\(/.test(src) && !/\bXLSX\.read\(/.test(src),
+    /window\._xlsxParser\.read\(/.test(src) &&
+      !/(?<![\w$])XLSX\.read\(/.test(src),
     "a bare XLSX.read( remains — it would use whichever build loaded last",
   );
   check(
     "sheet extraction reads through the captured parser",
     /window\._xlsxParser\.utils\.sheet_to_json\(/.test(src) &&
-      !/[^_]\bXLSX\.utils\.sheet_to_json\(/.test(src),
+      !/(?<![\w$])XLSX\.utils\.sheet_to_json\(/.test(src),
     "a bare XLSX.utils.sheet_to_json( remains",
   );
 }

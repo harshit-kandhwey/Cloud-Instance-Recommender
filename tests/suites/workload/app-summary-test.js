@@ -146,10 +146,17 @@ check(
     /^app_summary_\d{4}-\d{2}-\d{2}\.csv$/.test(downloads[0].name),
   JSON.stringify(downloads.map((d) => d.name)),
 );
-const rawCsv = downloads[0].blob.content;
+// Guard the download before dereferencing it: if the export produced nothing
+// (a regression), reading `.blob.content` off undefined would crash opaquely
+// instead of letting the checks below report a clean, named failure.
+check("an app-summary file was downloaded to inspect", downloads.length === 1);
+const rawCsv = downloads[0] ? downloads[0].blob.content : "";
 // Excel needs the BOM to read the file as UTF-8; everything else ignores it
 check("CSV starts with a UTF-8 BOM", rawCsv.charCodeAt(0) === 0xfeff);
-const lines = rawCsv.replace(/^﻿/, "").split("\n");
+// `\uFEFF`, not a literal BOM in the source — an invisible BOM here is exactly
+// the kind of byte a formatter or gitattributes can strip, which would turn
+// this into `/^/` (a no-op) and leave the BOM stuck on the header row.
+const lines = rawCsv.replace(/^\uFEFF/, "").split("\n");
 check(
   "header row",
   lines[0] ===

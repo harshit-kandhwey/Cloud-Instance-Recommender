@@ -178,13 +178,16 @@ same-b,4,16,x1e.32xlarge,us-east-1`,
   );
   check(
     "the two rows really did differ in what they run on today",
-    a[CURRENT] === "t3.nano" && b[CURRENT] === "x1e.32xlarge",
-    `${a[CURRENT]} / ${b[CURRENT]}`,
+    a && b && a[CURRENT] === "t3.nano" && b[CURRENT] === "x1e.32xlarge",
+    `${a && a[CURRENT]} / ${b && b[CURRENT]}`,
   );
   check(
     "identical demand gets identical recommendations, whatever it runs on today",
-    instanceCols.length > 0 && instanceCols.every((c) => a[c] === b[c]),
-    instanceCols.map((c) => `${c}: ${a[c]} vs ${b[c]}`).join(" | "),
+    a &&
+      b &&
+      instanceCols.length > 0 &&
+      instanceCols.every((c) => a[c] === b[c]),
+    instanceCols.map((c) => `${c}: ${a && a[c]} vs ${b && b[c]}`).join(" | "),
   );
 
   process.exit(state.failures ? 1 : 0);

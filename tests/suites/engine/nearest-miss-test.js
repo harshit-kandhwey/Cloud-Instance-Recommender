@@ -330,11 +330,15 @@ console.log("[relax controls cover every probe label]");
       probeLabels.every((l) => mapSrc.includes(`"${l}"`)),
     `labels=${JSON.stringify(probeLabels)}`,
   );
+  // Tolerate any indent depth (a reformat/nesting must not silently drop the
+  // regex to zero matches) and assert we actually extracted labels — `every`
+  // on an empty set passes vacuously, which would hollow this guard out.
+  const relaxKeys = [...mapSrc.matchAll(/^\s+"([^"]+)":/gm)].map((m) => m[1]);
   check(
     "the relax map invents no label the engine never emits",
-    [...mapSrc.matchAll(/^\s{2}"([^"]+)":/gm)].every(([, label]) =>
-      probeLabels.includes(label),
-    ),
+    relaxKeys.length > 0 &&
+      relaxKeys.every((label) => probeLabels.includes(label)),
+    `relaxKeys=${JSON.stringify(relaxKeys)}`,
   );
 }
 

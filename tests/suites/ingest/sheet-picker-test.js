@@ -663,10 +663,14 @@ const RVTOOLS = [
         ],
       },
     ];
+    // Call once and guard `.name`: a regression returning null/undefined must
+    // report a named failure, not crash on the deref (which the detail arg,
+    // evaluated eagerly, would do before check() even runs).
+    const picked = ctx.pickBestSheet(asCandidates);
     check(
       "because scoring alone would choose the empty template over the real inventory",
-      ctx.pickBestSheet(asCandidates).name === "Template",
-      `scoring picked ${ctx.pickBestSheet(asCandidates).name} — if this is now "Inventory", the exclusion in readWorkbookSheet is no longer what protects this case`,
+      picked != null && picked.name === "Template",
+      `scoring picked ${picked && picked.name} — if this is now "Inventory", the exclusion in readWorkbookSheet is no longer what protects this case`,
     );
   }
 
