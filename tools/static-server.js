@@ -18,11 +18,21 @@ const path = require("path");
 
 function parseArgs(argv) {
   const out = { port: 8080, root: path.join(__dirname, "..") };
+  // Reject a non-integer port up front: Number(undefined)/Number("abc") is NaN,
+  // and listen(NaN) silently binds an arbitrary free port — so Playwright's
+  // webServer URL would point at a port nothing serves and fail as a timeout.
+  const setPort = (v) => {
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0 || n > 65535) {
+      throw new Error(`static-server: invalid port ${JSON.stringify(v)}`);
+    }
+    out.port = n;
+  };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--port") out.port = Number(argv[++i]);
+    if (argv[i] === "--port") setPort(argv[++i]);
     else if (argv[i] === "--root") out.root = path.resolve(argv[++i]);
   }
-  if (process.env.PORT) out.port = Number(process.env.PORT);
+  if (process.env.PORT) setPort(process.env.PORT);
   return out;
 }
 
@@ -62,9 +72,16 @@ function createServer(root) {
     if (pathname.endsWith("/")) pathname += "index.html";
 
     // Resolve inside root and refuse anything that escapes it (path traversal).
+    // A NUL byte survives decodeURIComponent and the traversal check but makes
+    // fs.stat throw synchronously in current Node — refuse it here so a crafted
+    // request can't take the server down mid-run.
     const filePath = path.join(root, pathname);
     const relative = path.relative(root, filePath);
-    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    if (
+      pathname.includes("\0") ||
+      relative.startsWith("..") ||
+      path.isAbsolute(relative)
+    ) {
       res.writeHead(403).end("Forbidden");
       return;
     }
@@ -78,7 +95,12 @@ function createServer(root) {
         MIME[path.extname(filePath).toLowerCase()] ||
         "application/octet-stream";
       res.writeHead(200, { "Content-Type": type });
-      fs.createReadStream(filePath).pipe(res);
+      // Without an error listener, a read failure after stat (file removed, a
+      // disk error) emits 'error' with no handler and takes the process down —
+      // which would fail every remaining spec with an opaque connection error.
+      const stream = fs.createReadStream(filePath);
+      stream.on("error", () => res.destroy());
+      stream.pipe(res);
     });
   });
 }

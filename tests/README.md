@@ -1,6 +1,6 @@
 # Tests
 
-Plain-Node test harness — no framework, no npm install.
+Plain-Node test harness — no framework, no npm install for the suites below.
 
 ```bash
 node tests/run-all.js       # all suites + golden byte-compare
@@ -9,10 +9,20 @@ npm run coverage:check      # behavioral surface must be covered or waived
 node tests/suites/ingest/column-mapping-test.js   # a single suite
 ```
 
+The browser-level end-to-end suite (`tests/e2e/*.spec.js`) is separate and
+**does** need setup — dev packages plus a one-time browser download — so it is
+kept out of `npm test`:
+
+```bash
+npm ci                                    # installs @playwright/test
+npx playwright install chromium webkit    # one-time browser download
+npm run test:e2e                          # Playwright, Chromium + WebKit
+```
+
 ## Layout
 
-Suites are grouped by feature area, one folder deep — `run-all.js` and the
-coverage ledger both recurse, so a suite is found wherever it sits:
+Suites are grouped by feature area. `run-all.js` and the coverage ledger both
+recurse, so a suite is found at any nested path:
 
 | Folder                 | What it covers                                                                         |
 | ---------------------- | -------------------------------------------------------------------------------------- |
