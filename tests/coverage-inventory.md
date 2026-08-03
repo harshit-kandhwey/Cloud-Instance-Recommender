@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 57 | 226 | 283 |
+| Covered | 57 | 230 | 287 |
 | Waived | 23 | 0 | 23 |
-| Uncovered | 0 | 112 | 112 |
-| **Total** | 80 | 338 | 418 |
+| Uncovered | 0 | 113 | 113 |
+| **Total** | 80 | 343 | 423 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -118,6 +118,7 @@ waiver still records the reason.
 | `capturePresetConfig` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `checkRuleConflicts` | js/base/form-controls.js | function | internal | covered | preview/preview-search-test.js |
 | `clearScenarios` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
+| `collectRegionDataForWorker` | js/base/generate.js | function | internal | covered | engine/watchdog-test.js |
 | `compareScenarios` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
 | `complianceTags` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `computeAppStats` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
@@ -230,6 +231,7 @@ waiver still records the reason.
 | `headerSignature` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `hideDataToast` | js/base/app-core.js | function | internal | uncovered | — |
 | `importPresets` | js/base/presets.js | function | behavioral | waived | _waived: Opens the hidden preset-import file input (input.click()). Trivial file-picker trigger; the import parse/apply is covered by presets-test.js via applyPresetImportText. browser residual deferred to the Playwright E2E suite (3.10, not yet built)._ |
+| `ingestFile` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js |
 | `ingestPastedData` | js/base/ingest.js | function | behavioral | covered | ingest/paste-test.js, preview/stale-results-test.js |
 | `ingestRows` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `initFilterPresets` | js/base/presets.js | function | internal | uncovered | — |
@@ -311,8 +313,10 @@ waiver still records the reason.
 | `presetsForPage` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `presetsPageKey` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `printExecutiveReport` | js/base/downloads.js | function | behavioral | covered | export/report-test.js |
+| `processRecommendations` | js/base/generate.js | function | internal | uncovered | — |
 | `providersWithAlternatives` | js/base/xlsx-export.js | function | internal | covered | export/xlsx-export-test.js |
 | `pruneLegacySavedMappings` | js/base/ingest.js | function | internal | covered | ingest/column-mapping-test.js, ingest/mapping-units-test.js, ingest/saved-mappings-test.js, ui/ads-preset-test.js |
+| `readFileHead` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js |
 | `readManualForm` | js/base/manual-entry.js | function | internal | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `readSavedMapping` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `readWorkbookSheet` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js |
@@ -356,6 +360,7 @@ waiver still records the reason.
 | `resultsInPreviewOrder` | js/base/app-core.js | function | internal | covered | export/nomatch-export-test.js, export/scenario-compare-test.js, preview/preview-search-test.js |
 | `rewriteRowKeys` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `rowIsAllNoMatch` | js/base/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/family-column-test.js, engine/fit-headroom-test.js, export/nomatch-export-test.js, export/report-test.js, export/scenario-compare-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/stats-consistency-test.js, ui/accessibility-affordances-test.js, ui/charts-test.js, workload/app-summary-test.js |
+| `runRecommendationBatch` | js/base/generate.js | function | internal | covered | engine/watchdog-test.js |
 | `sEsc` | js/base/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `safeMapGet` | js/base/instance-selector-factory.js | function | internal | covered | engine/worker-protocol-test.js, ui/accessibility-affordances-test.js, workload/app-mapping-test.js |
 | `sampleRegionColumns` | js/base/ingest.js | function | internal | covered | preview/stale-results-test.js, ui/sample-gallery-test.js |

@@ -1,4 +1,4 @@
-// Coverage inventory (read-only in 3.10.3; the gate arrives in 3.10.4).
+// Coverage inventory + behavioral-coverage gate.
 //
 // Enumerates the app's GLOBAL surface — top-level `function NAME()` declarations
 // and `window.NAME =` assignments, across every non-vendor, non-generated js
@@ -23,7 +23,7 @@
 // invocations below run the suites (~10-15s) rather than scanning their text.
 //
 //   node tools/build-coverage-inventory.js          # write the report
-//   node tools/build-coverage-inventory.js --check   # (3.10.4) exit 1 on a gap
+//   node tools/build-coverage-inventory.js --check   # read-only: exit 1 on a gap
 "use strict";
 const fs = require("fs");
 const os = require("os");
@@ -67,7 +67,12 @@ const add = (name, file, kind) => {
 };
 for (const file of jsFiles) {
   const src = fs.readFileSync(file, "utf8");
-  for (const m of src.matchAll(/^function\s+([A-Za-z_$][\w$]*)\s*\(/gm)) {
+  // Top-level function declarations, including `async function` and generators.
+  // The `\s+ | \s*\*\s*` alternation requires real separation so `functionfoo(`
+  // (a single identifier) is never mistaken for a declaration of `foo`.
+  for (const m of src.matchAll(
+    /^(?:async\s+)?function(?:\s+|\s*\*\s*)([A-Za-z_$][\w$]*)\s*\(/gm,
+  )) {
     add(m[1], file, "function");
   }
   for (const m of src.matchAll(/^\s*window\.([A-Za-z_$][\w$]*)\s*=/gm)) {
@@ -124,9 +129,13 @@ const workerSrc = fs.readFileSync(
   path.join(REPO, "js", "base", "recommendation-worker.js"),
   "utf8",
 );
+// A surface name can contain `$`, where `\b` is unreliable and `$` is a regex
+// anchor — so escape the name and use lookarounds for the identifier boundary.
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 for (const name of surface.keys()) {
   if (name === "recommendationWorker") continue;
-  if (new RegExp(`\\b${name}\\b`).test(workerSrc)) {
+  const re = new RegExp(`(?<![\\w$])${escapeRe(name)}(?![\\w$])`);
+  if (re.test(workerSrc)) {
     markBehavioral(name, "worker");
   }
 }
@@ -202,10 +211,13 @@ function collectExecuted(labels) {
       }
       bySuite.set(label, executed);
       // A crashed suite yields partial or no coverage. run-all.js is the real
-      // gate on suite health (CI runs it first); here we only warn, so a suite
-      // that silently stopped exercising a name can't masquerade as coverage.
-      if (res.status !== 0)
-        console.error(`  ! ${label} exited ${res.status} during coverage run`);
+      // gate on suite health (CI runs it first). In report mode we only warn; in
+      // gate mode (--check) partial data must not silently pass, so we hard-fail.
+      if (res.status !== 0) {
+        const msg = `${label} exited ${res.status} during coverage run`;
+        if (CHECK) throw new Error(msg);
+        console.error(`  ! ${msg}`);
+      }
     }
   } finally {
     fs.rmSync(covRoot, { recursive: true, force: true });
@@ -309,7 +321,7 @@ lines.push(
 lines.push("");
 lines.push(
   gaps.length
-    ? `**${gaps.length} behavioral gap(s)** — a user-reachable name with no suite and no waiver. The gate (3.10.4) fails on these.`
+    ? `**${gaps.length} behavioral gap(s)** — a user-reachable name with no suite and no waiver. The gate fails on these.`
     : "**No behavioral gaps.** Every user-reachable name is covered or waived.",
 );
 lines.push("");
@@ -342,10 +354,19 @@ for (const r of rows) {
 lines.push("");
 
 const outPath = path.join(REPO, "tests", "coverage-inventory.md");
-fs.writeFileSync(outPath, lines.join("\n"));
-console.log(
-  `Wrote ${rel(outPath)} — ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
-);
+// --check is a read-only gate: it must not mutate the working tree (a stray
+// regen diff would surprise a local run and dirty the tree in CI). Report mode
+// writes the committed inventory.
+if (!CHECK) {
+  fs.writeFileSync(outPath, lines.join("\n"));
+  console.log(
+    `Wrote ${rel(outPath)} — ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
+  );
+} else {
+  console.log(
+    `Checked ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
+  );
+}
 
 if (CHECK && gaps.length) {
   console.error(
