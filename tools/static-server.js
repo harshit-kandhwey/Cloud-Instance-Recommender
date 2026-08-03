@@ -33,11 +33,16 @@ function parseArgs(argv) {
     }
     out.port = n;
   };
+  let portFromFlag = false;
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--port") setPort(argv[++i]);
-    else if (argv[i] === "--root") out.root = path.resolve(argv[++i]);
+    if (argv[i] === "--port") {
+      setPort(argv[++i]);
+      portFromFlag = true;
+    } else if (argv[i] === "--root") out.root = path.resolve(argv[++i]);
   }
-  if (process.env.PORT) setPort(process.env.PORT);
+  // PORT is a fallback only: an explicit --port on the command line wins over
+  // the environment, not the other way round.
+  if (!portFromFlag && process.env.PORT) setPort(process.env.PORT);
   return out;
 }
 

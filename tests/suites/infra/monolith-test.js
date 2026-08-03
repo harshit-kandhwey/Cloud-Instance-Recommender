@@ -1,4 +1,4 @@
-// CodeRabbit fix verification: resolveRegion in the monolithic (no-manifest)
+// Regression fix verification: resolveRegion in the monolithic (no-manifest)
 // data-file state must validate against window globals — real regions exact,
 // garbage unknown.
 const fs = require("fs");

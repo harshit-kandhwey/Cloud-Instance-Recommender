@@ -78,7 +78,10 @@ for (const file of jsFiles) {
   )) {
     add(m[1], file, "function");
   }
-  for (const m of src.matchAll(/^\s*window\.([A-Za-z_$][\w$]*)\s*=/gm)) {
+  // `=(?!=)` — a single `=` assignment, not the `==`/`===` of a comparison
+  // statement (`window.foo === bar;` on its own line would otherwise be counted
+  // as a global the site exports).
+  for (const m of src.matchAll(/^\s*window\.([A-Za-z_$][\w$]*)\s*=(?!=)/gm)) {
     add(m[1], file, "window");
   }
 }

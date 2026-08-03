@@ -630,7 +630,7 @@ const RuleEngine = (() => {
       // must be measured AND low. Memory, which burstable does not throttle, may
       // be unknown, but a KNOWN-high memory means the box is working and is not a
       // burstable candidate. (Previously a low memory reading alone could fire
-      // this while CPU was unmeasured — the case CodeRabbit flagged.)
+      // this while CPU was unmeasured — the case a review caught.)
       const isLow =
         cpuUtil > 0 &&
         cpuUtil <= cpuLow &&
