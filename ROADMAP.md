@@ -167,7 +167,7 @@ it. Their weaknesses are known and specific.
   A sizing engine has properties that must hold for _every_ input, and those are
   exactly where the silent wrong-size hides: the chosen instance always meets the
   required vCPU and memory (never sizes _below_ the requirement), a stricter
-  utilization target never returns a _larger_ box than a looser one, and No-Match
+  utilization target never returns a _smaller_ box than a looser one, and No-Match
   is returned only when no candidate in the region can satisfy the row. Generate
   thousands of random rows with `fast-check` and assert the invariants rather than
   specific outputs — a lightweight dependency that adds suites to the existing
@@ -199,7 +199,8 @@ it. Their weaknesses are known and specific.
   so the integration — a command runner or a thin adapter — is the bulk of the work,
   not the mutations. Threshold set when it is wired, ratcheted up over later
   minors. (L) _Depends on the coverage gate and the tiered suites above; validates
-  every guard the rest of this minor built._
+  the engine-core guards it is scoped to (`rule-engine.js` and
+  `instance-selector-factory.js`), not every guard this minor built._
 
 ### 3.11 — Accessibility, hardening & documentation
 
