@@ -23,7 +23,10 @@
 // invocations below run the suites (~10-15s) rather than scanning their text.
 //
 //   node tools/build-coverage-inventory.js          # write the report
-//   node tools/build-coverage-inventory.js --check   # read-only: exit 1 on a gap
+//   node tools/build-coverage-inventory.js --check   # read-only gate; exit 1 on
+//                                                     #   a behavioral gap
+// Either mode also exits 1 (writing nothing) if a suite fails during the
+// coverage pass — a partial run can't produce a trustworthy inventory or gate.
 "use strict";
 const fs = require("fs");
 const os = require("os");
@@ -176,6 +179,7 @@ const suiteLabels = findSuites(suitesDir)
 function collectExecuted(labels) {
   const covRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cir-cov-"));
   const bySuite = new Map(); // label -> Set("basename::functionName")
+  const failed = []; // suites that exited non-zero during the coverage pass
   try {
     for (const label of labels) {
       const dir = path.join(covRoot, label.replace(/[\\/]/g, "__"));
@@ -210,21 +214,33 @@ function collectExecuted(labels) {
         }
       }
       bySuite.set(label, executed);
-      // A crashed suite yields partial or no coverage. run-all.js is the real
-      // gate on suite health (CI runs it first). In report mode we only warn; in
-      // gate mode (--check) partial data must not silently pass, so we hard-fail.
-      if (res.status !== 0) {
-        const msg = `${label} exited ${res.status} during coverage run`;
-        if (CHECK) throw new Error(msg);
-        console.error(`  ! ${msg}`);
-      }
+      // A crashed suite yields partial or no coverage — enough to under-report a
+      // name as uncovered (a written inventory would be wrong) or let the gate
+      // pass on data that never fully ran. Record it; the caller aborts before
+      // producing any output. run-all.js is the real suite-health gate.
+      if (res.status !== 0) failed.push(`${label} (exit ${res.status})`);
     }
   } finally {
     fs.rmSync(covRoot, { recursive: true, force: true });
   }
-  return bySuite;
+  return { bySuite, failed };
 }
-const executedBySuite = collectExecuted(suiteLabels);
+const { bySuite: executedBySuite, failed: failedSuites } =
+  collectExecuted(suiteLabels);
+// Never write an inventory, nor pass the gate, from a partial coverage run.
+// Both modes abort so a red suite can't bake a wrong "uncovered" into the
+// committed ledger or let --check pass on data that never fully executed.
+if (failedSuites.length) {
+  console.error(
+    `\nCoverage run aborted: ${failedSuites.length} suite(s) failed during the coverage pass:`,
+  );
+  for (const f of failedSuites) console.error(`  ${f}`);
+  console.error(
+    "Coverage from a partial run is unreliable — fix the suite(s) and re-run " +
+      "(run-all.js is the suite-health gate).",
+  );
+  process.exit(1);
+}
 const coveringSuites = (name) => {
   const keys = [...surface.get(name).files].map(
     (f) => `${path.basename(f)}::${name}`,

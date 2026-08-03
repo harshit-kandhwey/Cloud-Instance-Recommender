@@ -22,6 +22,11 @@ function parseArgs(argv) {
   // and listen(NaN) silently binds an arbitrary free port — so Playwright's
   // webServer URL would point at a port nothing serves and fail as a timeout.
   const setPort = (v) => {
+    // Reject a missing/blank value first: Number("") and Number("  ") are 0,
+    // which would pass the integer check and bind an arbitrary ephemeral port.
+    if (typeof v !== "string" || v.trim() === "") {
+      throw new Error(`static-server: invalid port ${JSON.stringify(v)}`);
+    }
     const n = Number(v);
     if (!Number.isInteger(n) || n < 0 || n > 65535) {
       throw new Error(`static-server: invalid port ${JSON.stringify(v)}`);
@@ -79,7 +84,8 @@ function createServer(root) {
     const relative = path.relative(root, filePath);
     if (
       pathname.includes("\0") ||
-      relative.startsWith("..") ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
       path.isAbsolute(relative)
     ) {
       res.writeHead(403).end("Forbidden");
