@@ -4,10 +4,17 @@ Plain-Node test harness — no framework, no npm install for the suites below.
 
 ```bash
 node tests/run-all.js       # all suites + golden byte-compare
+node tests/run-all.js --smoke   # (npm run test:smoke) critical-path subset only
 node tests/syntax-check.js  # node --check over first-party JS
 npm run coverage:check      # behavioral surface must be covered or waived
 node tests/suites/ingest/column-mapping-test.js   # a single suite
 ```
+
+`--smoke` runs only the suites named in `tests/smoke.json` (load → ingest →
+generate → export) plus the golden compare — a ~3s local sanity pass versus the
+full run. It is a **developer convenience, not a CI gate**: CI still runs the
+full suite on every PR and on `main`. A `smoke.json` entry that names a suite
+which no longer exists is a hard error, so the list can't silently rot.
 
 The browser-level end-to-end suite (`tests/e2e/*.spec.js`) is separate and
 **does** need setup — dev packages plus a one-time browser download — so it is

@@ -1,0 +1,8 @@
+{
+  "note": "Critical-path smoke tier for `npm run test:smoke` — a fast local sanity pass over load -> ingest -> generate -> export. Not a CI gate: the full suite (npm test) still runs on every PR and main. The golden byte-compare always runs alongside these, so the generate->export serialization is covered even though no suite below is named for it. Keep this list SHORT and FAST; add a suite only if it guards a stage of the main flow that would otherwise go unchecked by a smoke run. Paths are suite-relative (as printed by run-all.js).",
+  "suites": [
+    "ingest/column-mapping-test.js",
+    "engine/nearest-miss-test.js",
+    "export/portfolio-test.js"
+  ]
+}

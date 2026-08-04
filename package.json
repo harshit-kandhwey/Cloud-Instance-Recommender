@@ -7,6 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node tests/run-all.js",
+    "test:smoke": "node tests/run-all.js --smoke",
     "test:e2e": "playwright test",
     "syntax-check": "node tests/syntax-check.js",
     "coverage:check": "node tools/build-coverage-inventory.js --check",

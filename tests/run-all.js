@@ -24,7 +24,38 @@ function findSuites(dir, out = []) {
 const suites = findSuites(suitesDir)
   .map((f) => path.relative(suitesDir, f).split(path.sep).join("/"))
   .sort();
-for (const suite of suites) {
+
+// Smoke tier: `node tests/run-all.js --smoke` (npm run test:smoke) runs only the
+// critical-path subset named in tests/smoke.json — a fast local sanity pass over
+// load → ingest → generate → export. The full suite is unchanged and still runs
+// in CI on every PR and main; this tier is a developer convenience, not a CI
+// gate. The golden compare always runs (it *is* the generate→export path).
+//
+// A manifest entry that names no discovered suite is a hard error, never a
+// silent skip — a smoke run that quietly drops a suite it was meant to cover is
+// the exact broken-guard failure the rest of this test work exists to prevent.
+let activeSuites = suites;
+if (process.argv.includes("--smoke")) {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "smoke.json"), "utf8"),
+  );
+  const wanted = manifest.suites || [];
+  const known = new Set(suites);
+  const missing = wanted.filter((s) => !known.has(s));
+  if (missing.length) {
+    console.error(
+      `smoke.json lists ${missing.length} suite(s) that no longer exist: ${missing.join(", ")}`,
+    );
+    process.exit(2);
+  }
+  const want = new Set(wanted);
+  activeSuites = suites.filter((s) => want.has(s));
+  console.log(
+    `Smoke tier — ${activeSuites.length} of ${suites.length} suites + goldens\n`,
+  );
+}
+
+for (const suite of activeSuites) {
   const started = Date.now();
   const result = spawnSync(process.execPath, [path.join(suitesDir, suite)], {
     encoding: "utf8",
@@ -77,4 +108,4 @@ if (failed.length) {
   console.error(`${failed.length} failure(s): ${failed.join(", ")}`);
   process.exit(1);
 }
-console.log(`All ${suites.length} suites + goldens passed.`);
+console.log(`All ${activeSuites.length} suites + goldens passed.`);
