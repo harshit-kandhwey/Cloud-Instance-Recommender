@@ -143,6 +143,42 @@ const SCENARIOS = [
       memoryBased: true,
     },
   },
+  // Single-provider like-to-like, one per non-AWS provider, so a regression
+  // isolated to the Azure or GCP selector shows up on its own line rather than
+  // only inside the multicloud blend.
+  {
+    file: "azure-l2l.csv",
+    providers: ["azure"],
+    options: {
+      ...BASE_OPTIONS,
+      generateLikeToLike: true,
+      generateOptimized: false,
+    },
+  },
+  {
+    file: "gcp-l2l.csv",
+    providers: ["gcp"],
+    options: {
+      ...BASE_OPTIONS,
+      generateLikeToLike: true,
+      generateOptimized: false,
+    },
+  },
+  // Every row walled off by a soft filter (only the t2 family is allowed, and
+  // nothing in the sample fits it), so this golden locks the No-Match path:
+  // the reason text AND the nearest-miss hint that names the filter to relax.
+  // The happy-path goldens above never exercise those columns.
+  {
+    file: "aws-nearest-miss.csv",
+    providers: ["aws"],
+    options: {
+      ...BASE_OPTIONS,
+      generateLikeToLike: true,
+      generateOptimized: false,
+      restrictInstanceFamilyNames: true,
+      selectedInstanceFamilyNames: ["t2"],
+    },
+  },
 ];
 
 (async () => {

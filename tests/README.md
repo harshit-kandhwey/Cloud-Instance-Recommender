@@ -49,7 +49,11 @@ root — it is not a suite, so nothing runs it directly.
 - **`golden/golden-run.js`** — runs the built-in sample CSV through the
   pure recommendation pipeline (rule engine + selectors + factory) and
   serializes exactly like `downloadResults()`. `run-all.js` byte-compares
-  the output against `golden/goldens/*.csv`.
+  the output against `golden/goldens/*.csv`. Scenarios cover AWS
+  like-to-like, the AWS/Azure/GCP multicloud blend, single-provider Azure
+  and GCP (so a regression isolated to one selector shows on its own line),
+  and a fully filtered-out AWS run that locks the No-Match reason and
+  nearest-miss hint.
 
 ## Golden maintenance
 
