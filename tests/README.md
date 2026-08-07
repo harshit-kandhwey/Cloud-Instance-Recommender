@@ -46,16 +46,16 @@ to reproduce it.
 Suites are grouped by feature area. `run-all.js` and the coverage ledger both
 recurse, so a suite is found at any nested path:
 
-| Folder                 | What it covers                                                                         |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `suites/ingest/`       | file upload, CSV/xlsx parsing, sheet & column mapping, paste, input hygiene            |
-| `suites/engine/`       | core sizing — fit, families, generations, nearest-miss, the worker protocol & watchdog |
-| `suites/workload/`     | workload-class rules (burstable, GPU, SQL) and app→workload grouping                   |
-| `suites/preview/`      | the results preview table — filters, visibility, pagination, search, staleness         |
-| `suites/export/`       | downloads — CSV, xlsx, report, scenario compare, portfolio, no-match export            |
-| `suites/manual-entry/` | the manual VM entry form and its bulk edit                                             |
-| `suites/ui/`           | theme, accessibility, charts, presets, region validation, samples, ranges              |
-| `suites/infra/`        | lazy region loading, monolith fallback, page parity, PWA, vendor integrity             |
+| Folder                 | What it covers                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
+| `suites/ingest/`       | file upload, CSV/xlsx parsing, sheet & column mapping, paste, input hygiene                         |
+| `suites/engine/`       | core sizing — fit, families, generations, nearest-miss, the worker protocol & watchdog              |
+| `suites/workload/`     | workload-class rules (burstable, GPU, SQL) and app→workload grouping                                |
+| `suites/preview/`      | the results preview table — filters, visibility, pagination, search, staleness                      |
+| `suites/export/`       | downloads — CSV, xlsx, report, scenario compare, portfolio, no-match export                         |
+| `suites/manual-entry/` | the manual VM entry form and its bulk edit                                                          |
+| `suites/ui/`           | theme, accessibility, charts, presets, region validation, samples, ranges                           |
+| `suites/infra/`        | lazy region loading, monolith fallback, page parity, PWA, vendor integrity, data/manifest integrity |
 
 `suites/harness.js` (the shared simulated-DOM sandbox) stays at the `suites/`
 root — it is not a suite, so nothing runs it directly.
