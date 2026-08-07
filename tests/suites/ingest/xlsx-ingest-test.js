@@ -71,7 +71,7 @@ db-server-02,8,32,70,80,us-west-2`;
     const data = vm.runInContext("csvData", ctx);
     check("2 rows ingested", data.length === 2, JSON.stringify(data));
     check(
-      "values are trimmed strings",
+      "numeric cells arrive as strings",
       data[0]["CPU Count"] === "4" && data[1]["Memory (GB)"] === "32",
     );
 
@@ -83,6 +83,29 @@ db-server-02,8,32,70,80,us-west-2`;
       "xlsx rows identical to CSV rows",
       xlsxJson === csvJson,
       `${xlsxJson}\nvs\n${csvJson}`,
+    );
+  }
+
+  console.log("[1b. padded xlsx string cells are trimmed on ingest]");
+  {
+    const { ctx } = buildContext();
+    // Leading/trailing whitespace on real string cells — the value coercion the
+    // "numeric cells" check above cannot exercise (numbers carry no padding). A
+    // regression that stopped trimming would leave "  web-01  " intact here.
+    const padded = [
+      ["VM Name", "CPU Count", "Memory (GB)", "AWS Region"],
+      ["  web-01  ", 4, 16, "  us-east-1  "],
+    ];
+    await ctx.ingestFile(
+      fakeFile("padded.xlsx", makeXlsx([{ name: "S", aoa: padded }])),
+    );
+    const data = vm.runInContext("csvData", ctx);
+    check(
+      "string cell whitespace is stripped",
+      data.length === 1 &&
+        data[0]["VM Name"] === "web-01" &&
+        data[0]["AWS Region"] === "us-east-1",
+      JSON.stringify(data),
     );
   }
 
@@ -104,28 +127,29 @@ db-server-02,8,32,70,80,us-west-2`;
     );
   }
 
-  // The best-SCORING sheet is chosen, not the positionally first — here "First"
-  // carries six mappable columns and "Second" only three, so First wins on score
-  // and happens to also be first. The score-vs-order tiebreak itself lives in
-  // sheet-picker-test; this only pins that a multi-sheet workbook ingests the
-  // winning sheet's rows end to end.
+  // The best-SCORING sheet is chosen, not the positionally first. The winner is
+  // placed SECOND on purpose: "First" carries only three mappable columns and
+  // "Second" (the AOA) carries six, so a code path that just grabbed sheet 0
+  // would ingest the wrong rows and fail here. The score-vs-order tiebreak
+  // itself lives in sheet-picker-test; this only pins that a multi-sheet
+  // workbook ingests the winning sheet's rows end to end.
   console.log("[3. multi-sheet → the best-scoring sheet is ingested]");
   {
     const { ctx } = buildContext();
     const wb = makeXlsx([
-      { name: "First", aoa: AOA },
       {
-        name: "Second",
+        name: "First",
         aoa: [
           ["VM Name", "CPU Count", "Memory (GB)"],
           ["WRONG", 1, 1],
         ],
       },
+      { name: "Second", aoa: AOA },
     ]);
     await ctx.ingestFile(fakeFile("multi.xlsx", wb));
     const data = vm.runInContext("csvData", ctx);
     check(
-      "best-scoring sheet used (First: 6 mappable cols vs Second: 3)",
+      "best-scoring sheet used (Second: 6 mappable cols vs First: 3)",
       data.length === 2 && data[0]["VM Name"] === "web-server-01",
     );
   }

@@ -81,7 +81,7 @@ console.log("[the preview puts it next to the recommendation]");
       OS: "Linux",
       Workload: "Web Server",
       Compliance: "PCI",
-      [CURRENT]: "m5.xlarge",
+      [CURRENT]: "c5.2xlarge",
       "AWS Like-to-Like Instance": "m5.xlarge",
       "AWS Optimized Instance": "t3.large",
     },
@@ -108,7 +108,13 @@ console.log("[the preview puts it next to the recommendation]");
     iCurrent !== -1 && iFirstInstance === iCurrent + 1,
     headers.join(" | "),
   );
-  check("with its value in the row", shown.includes("m5.xlarge"));
+  // Strip tags/attributes first: each row embeds its full value set in the copy
+  // button's onclick attribute, so a raw innerHTML `includes` would pass on that
+  // hidden payload even if the visible cell were dropped. Text-only content pins
+  // the rendered cell. The value is also distinct from the like-to-like column
+  // ("m5.xlarge") so it cannot pass on a coincidental neighbour match either.
+  const bodyText = shown.replace(/<[^>]*>/g, " ");
+  check("with its value in the row", bodyText.includes("c5.2xlarge"));
 }
 
 console.log(

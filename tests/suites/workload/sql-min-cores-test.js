@@ -138,7 +138,11 @@ check(
 );
 check(
   "and it is marked as not applied, not silently reported as licensed",
-  r.rules.some((x) => /not applied/i.test(x)),
+  // Match the licence-floor branch specifically: apply() also pushes an
+  // unrelated "sql server preference not applied" rule here (the pool has no
+  // r/x/z), so a bare /not applied/ would pass even if the licence-floor branch
+  // under test were deleted.
+  r.rules.some((x) => /licence floor not applied/i.test(x)),
   r.rules.join(" | "),
 );
 

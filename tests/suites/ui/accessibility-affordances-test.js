@@ -76,7 +76,9 @@ let sectionHeaders = [headerOpen, headerCollapsed];
 // keys the stored collapse state under "aws".
 const { ctx, run, elements } = buildContext();
 ctx.location = { pathname: "/aws.html" };
-const baseQSA = ctx.document.querySelectorAll;
+// Bind to the receiver: a bare method reference would call through with `this`
+// undefined, so any fall-through selector breaks if the harness qSA reads `this`.
+const baseQSA = ctx.document.querySelectorAll.bind(ctx.document);
 ctx.document.querySelectorAll = (sel) =>
   sel === ".section-header[onclick]" ? sectionHeaders : baseQSA(sel);
 

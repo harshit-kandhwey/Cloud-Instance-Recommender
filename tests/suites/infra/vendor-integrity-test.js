@@ -37,13 +37,19 @@ check("SECURITY.md has an Artifact integrity section", integrity.length > 0);
 // `| js/vendor/x.min.js | <64 hex> |` — however the table happens to be padded
 const recorded = new Map();
 for (const m of integrity.matchAll(
-  /`(js\/vendor\/[\w.-]+\.js)`\s*\|\s*`([a-f0-9]{64})`/g,
+  // Allow a path separator: a nested bundle records as js/vendor/<dir>/<file>.js
+  /`(js\/vendor\/[\w./-]+\.js)`\s*\|\s*`([a-f0-9]{64})`/g,
 )) {
   recorded.set(m[1], m[2]);
 }
 
+// Recursive: a bundle in a vendored sub-package (js/vendor/pkg/x.js) is
+// executable code from the trusted origin too. A one-level readdir filtered it
+// out (the dir name has no .js suffix), so a nested bundle would ship with no
+// integrity record — the exact case this suite exists to catch. Node 18.17+.
 const bundles = fs
-  .readdirSync(VENDOR_DIR)
+  .readdirSync(VENDOR_DIR, { recursive: true })
+  .map((f) => String(f).replace(/\\/g, "/"))
   .filter((f) => f.endsWith(".js"))
   .map((f) => `js/vendor/${f}`);
 const present = new Set(bundles);

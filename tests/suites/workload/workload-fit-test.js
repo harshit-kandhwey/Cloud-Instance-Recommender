@@ -138,8 +138,8 @@ console.log("[a close-fit preferred family is still honoured]");
   );
   check(
     "the preference is reported as applied (not skipped)",
-    res.rules.some((r) => /database preference$/.test(r)) &&
-      !res.rules.some((r) => /not applied/i.test(r)),
+    res.rules.some((r) => /database preference\b/i.test(r)) &&
+      !res.rules.some((r) => /database preference not applied/i.test(r)),
     JSON.stringify(res.rules),
   );
 }

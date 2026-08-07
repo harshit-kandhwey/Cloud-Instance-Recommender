@@ -72,6 +72,10 @@ function check(name, cond, detail) {
   }
 }
 
+// Stalled-promise guard: fail by default, cleared to `failures ? 1 : 0` only
+// when the IIFE runs to completion. If an awaited load never settles the event
+// loop drains and Node exits — without this that silent stall would exit 0.
+process.exitCode = 1;
 (async () => {
   console.log("[manifest keys]");
   const aws = ctx.InstanceSelectorFactory.createSelector("aws");

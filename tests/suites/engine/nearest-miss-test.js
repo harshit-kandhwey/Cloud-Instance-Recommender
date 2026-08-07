@@ -198,9 +198,10 @@ check(
 );
 check(
   "attributes the block to instance family/series",
-  JSON.stringify(rSeries.blockedBy) ===
-    JSON.stringify(["instance family/series"]),
-  JSON.stringify(rSeries.blockedBy),
+  !!rSeries &&
+    JSON.stringify(rSeries.blockedBy) ===
+      JSON.stringify(["instance family/series"]),
+  JSON.stringify(rSeries && rSeries.blockedBy),
 );
 
 // ── RuleEngine present but a no-op on the size-only pass ({} → workload general) ─

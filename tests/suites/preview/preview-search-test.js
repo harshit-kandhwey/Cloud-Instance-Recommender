@@ -452,8 +452,15 @@ function check(name, cond, detail) {
   check(
     "dismissing an already-gone toast is a no-op",
     (() => {
-      ctx.dismissToast(tempId);
-      return true;
+      // A no-op must not throw. Catch here so a throw becomes THIS named FAIL,
+      // not an exception that escapes to the outer .catch and aborts every
+      // block after it (the outcome the comment below argues against).
+      try {
+        ctx.dismissToast(tempId);
+        return true;
+      } catch {
+        return false;
+      }
     })(),
   );
 
@@ -700,12 +707,14 @@ function check(name, cond, detail) {
     );
     check(
       "a row blocked by two filters is not counted as rescuable",
-      suggestion.rescues === 3 && suggestion.unmatched === 5,
+      Boolean(suggestion) &&
+        suggestion.rescues === 3 &&
+        suggestion.unmatched === 5,
       JSON.stringify(suggestion),
     );
     check(
       "maps the label to the checkbox that turns it off",
-      suggestion.control.id === "currentGenerationOnly",
+      suggestion?.control?.id === "currentGenerationOnly",
     );
 
     // A matched row means nothing to relax

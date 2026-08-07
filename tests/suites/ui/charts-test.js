@@ -93,7 +93,11 @@ console.log("[a clean sweep says 100%, with no phantom no-match]");
   const { ctx, elements } = buildContext();
   ctx.renderResultsCharts([matched("a"), matched("b")]);
   const html = panel(elements).innerHTML;
-  check("100% when every row matched", html.includes("100%"));
+  // The DISPLAYED figure, not any "100%" in the markup — the meter fill itself
+  // is 100% wide/high on a clean sweep, so a bare includes("100%") would pass
+  // even if the stated rate were wrong.
+  const shownPct = (h) => h.match(/>(\d+)%</)?.[1];
+  check("100% when every row matched", shownPct(html) === "100", html);
   check("and no 'no match' clause at all", !html.includes("no match"), html);
 }
 

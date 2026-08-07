@@ -174,6 +174,10 @@ const req = (url, extra) =>
     extra,
   );
 
+// Stalled-promise guard: fail by default, cleared only when the IIFE runs to
+// completion. If an awaited value never settles the event loop drains and Node
+// exits — without this, that silent stall would exit 0 with no output.
+process.exitCode = 1;
 (async () => {
   // install → precache
   const e1 = makeEvent();
@@ -309,9 +313,14 @@ const req = (url, extra) =>
       navigator: { onLine }, // no serviceWorker key → registration skipped
       setTimeout: (fn) => {
         pendingTimers.push(fn);
-        return pendingTimers.length;
+        return pendingTimers.length; // 1-based id = slot index + 1
       },
-      clearTimeout: () => {},
+      // Model cancellation: null the slot so a cleared timer does NOT fire when
+      // pendingTimers is later drained. A no-op here would let a cancelled
+      // "hide banner" timer still run, masking a banner that vanishes offline.
+      clearTimeout: (id) => {
+        if (id) pendingTimers[id - 1] = null;
+      },
       document: {
         addEventListener: (type, fn) => {
           docListeners[type] = fn;
@@ -371,7 +380,7 @@ const req = (url, extra) =>
     /Back online/.test(ob.textContent) && ob.style.display === "block",
     ob.textContent,
   );
-  onlinePage.pendingTimers.forEach((fn) => fn());
+  onlinePage.pendingTimers.forEach((fn) => fn && fn()); // skip cancelled timers
   check(
     "back-online notice hides itself after the timer",
     ob.style.display === "none",
@@ -409,6 +418,7 @@ const req = (url, extra) =>
     process.exitCode = 1;
   } else {
     console.log("pwa-test: all checks passed");
+    process.exitCode = 0; // clears the up-front stalled-promise guard
   }
 })().catch((e) => {
   console.error(e);

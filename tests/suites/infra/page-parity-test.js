@@ -164,8 +164,16 @@ console.log("[every page offers the same shared features]");
     "Theme toggle": "toggleTheme()",
     "Sample CSV preview": 'class="sample-csv"',
   };
+  // A bare id-shaped marker is routed through hasElementId, not a raw substring:
+  // includes() would accept the id sitting in data-section-id= or aria-controls=
+  // rather than on a real element tag — the false positive hasElementId exists
+  // to prevent. Attribute (id="…", class="…") and call-expression (foo()) markers
+  // are already specific enough for includes().
+  const isBareId = (s) => /^[A-Za-z][\w-]*$/.test(s);
   Object.entries(MARKERS).forEach(([label, needle]) => {
-    const missing = PAGES.filter((p) => !html[p].includes(needle));
+    const present = (p) =>
+      isBareId(needle) ? hasElementId(p, needle) : html[p].includes(needle);
+    const missing = PAGES.filter((p) => !present(p));
     check(
       `${label} is on all four pages`,
       missing.length === 0,

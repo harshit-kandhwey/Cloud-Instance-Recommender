@@ -169,12 +169,12 @@ check(
   ["'=Evil", "'+Evil", "'-Evil", "'@Evil"].every((needle) =>
     lines.some((l) => l.startsWith(needle)),
   ),
-  downloads[0].blob.content,
+  rawCsv,
 );
 check(
   "Storefront row present with totals",
   lines.some((l) => l.startsWith("Storefront,2,6,24,2,0")),
-  downloads[0].blob.content,
+  rawCsv,
 );
 
 console.log("[stats bar chip]");

@@ -146,8 +146,8 @@ function fill(ctx, values) {
   );
   check(
     "region validation ran",
-    !!ctx._regionValidation &&
-      ctx._regionValidation.aws["us-east-1"].status === "exact",
+    ctx._regionValidation?.aws?.["us-east-1"]?.status === "exact",
+    JSON.stringify(ctx._regionValidation),
   );
   check(
     "region chips rendered",

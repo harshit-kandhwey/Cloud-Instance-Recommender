@@ -217,7 +217,11 @@ console.log("[a header cannot smuggle script into the Forget button]");
   );
   check(
     "no fragment of the hostile header reaches the handler",
-    !/forgetColumnMapping\([^)]*alert/.test(html),
+    // Every forgetColumnMapping call must take a bare integer index. The
+    // negative lookahead fires on any call whose argument is not purely digits,
+    // so a leaked header (which cannot form `(<digits>)`) fails this — unlike a
+    // `[^)]*alert` scan that a `)` in the payload would slip past.
+    !/forgetColumnMapping\((?!\d+\))/.test(html),
     handler,
   );
   ctx.forgetColumnMapping(0);

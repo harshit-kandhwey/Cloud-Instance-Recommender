@@ -64,16 +64,24 @@ function check(name, cond, detail) {
   // testTimeoutMs (a leaked timer, and a real hang once this suite moves off
   // process.exit()).
   let watchdogTimer;
-  const results = await Promise.race([
-    ctx.runRecommendationBatch(rows, ["aws"], options),
-    new Promise((_, reject) => {
-      watchdogTimer = setTimeout(
-        () => reject(new Error("watchdog fallback did not settle")),
-        testTimeoutMs,
-      );
-    }),
-  ]);
-  clearTimeout(watchdogTimer);
+  let results;
+  // finally, not a trailing clearTimeout: if the batch REJECTS, the await throws
+  // and a success-path clear never runs, so the safety-net timer stays pending
+  // and holds the event loop open to testTimeoutMs — the exact leak this handle
+  // exists to prevent, only on the failure path.
+  try {
+    results = await Promise.race([
+      ctx.runRecommendationBatch(rows, ["aws"], options),
+      new Promise((_, reject) => {
+        watchdogTimer = setTimeout(
+          () => reject(new Error("watchdog fallback did not settle")),
+          testTimeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(watchdogTimer);
+  }
   const elapsed = Date.now() - start;
 
   check("worker was attempted", posted === 1, `posted=${posted}`);
