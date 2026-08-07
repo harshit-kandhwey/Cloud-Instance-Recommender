@@ -373,11 +373,25 @@ for (const r of rows) {
 lines.push("");
 
 const outPath = path.join(REPO, "tests", "coverage-inventory.md");
+const report = lines.join("\n");
 // --check is a read-only gate: it must not mutate the working tree (a stray
 // regen diff would surprise a local run and dirty the tree in CI). Report mode
 // writes the committed inventory.
+//
+// Staleness: --check only proves there are no *uncovered* names; it did not
+// prove the committed inventory still matches what the tool renders. A covered
+// or waived change can alter the report while the gate stays green, leaving the
+// checked-in file wrong. Compare the rendered report to the committed one here
+// (EOL-normalized, since the file is prettier-ignored and checks out CRLF on
+// Windows but LF in CI) and fail if they diverge.
+const normEol = (s) => s.replace(/\r\n/g, "\n");
+const inventoryStale =
+  CHECK &&
+  (!fs.existsSync(outPath) ||
+    normEol(fs.readFileSync(outPath, "utf8")) !== normEol(report));
+
 if (!CHECK) {
-  fs.writeFileSync(outPath, lines.join("\n"));
+  fs.writeFileSync(outPath, report);
   console.log(
     `Wrote ${rel(outPath)} — ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
   );
@@ -387,6 +401,11 @@ if (!CHECK) {
   );
 }
 
+if (CHECK && inventoryStale) {
+  console.error(
+    `\nCoverage inventory is stale: ${rel(outPath)} does not match the generated report.\nRegenerate and commit it: node tools/build-coverage-inventory.js`,
+  );
+}
 if (CHECK && gaps.length) {
   console.error(
     `\nCoverage gate FAILED: ${gaps.length} behavioral name(s) with no suite and no waiver:`,
@@ -395,5 +414,7 @@ if (CHECK && gaps.length) {
   console.error(
     "\nCover it with a suite, or add it to tests/coverage-waivers.json with a reason.",
   );
+}
+if (CHECK && (inventoryStale || gaps.length)) {
   process.exit(1);
 }
