@@ -26,6 +26,21 @@ npx playwright install chromium webkit    # one-time browser download
 npm run test:e2e                          # Playwright, Chromium + WebKit
 ```
 
+The property-based engine gate (`tests/property/`) is likewise kept out of
+`npm test` — it is the one harness suite that needs a node_module (`fast-check`),
+so the core run above stays dependency-free:
+
+```bash
+npm ci                     # installs fast-check
+npm run test:property      # fuzzes the selector invariants (soundness, no-match honesty, monotonicity)
+```
+
+It runs hundreds of random pools + requests through the real selector pipeline
+and asserts three guarantees: a matched box always meets the requested size, a
+no-match happens exactly when nothing fits, and a stricter target never returns
+a cheaper box. On failure fast-check prints the shrunk counterexample and a seed
+to reproduce it.
+
 ## Layout
 
 Suites are grouped by feature area. `run-all.js` and the coverage ledger both

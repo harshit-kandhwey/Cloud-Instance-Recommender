@@ -61,6 +61,26 @@ jobs:
       - name: Type-check JSDoc-annotated modules
         run: npm run typecheck
 
+  property:
+    runs-on: ubuntu-latest
+    # Property-based engine gate. Unlike the `test` job it needs a node_module
+    # (fast-check), so it installs deps — but not the Playwright browser, which
+    # it never uses.
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dev dependencies (fast-check)
+        run: npm ci
+
+      - name: Property-based engine invariants
+        run: npm run test:property
+
   e2e:
     runs-on: ubuntu-latest
     steps:
