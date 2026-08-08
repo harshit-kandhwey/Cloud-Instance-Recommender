@@ -41,6 +41,22 @@ no-match happens exactly when nothing fits, and a stricter target never returns
 a cheaper box. On failure fast-check prints the shrunk counterexample and a seed
 to reproduce it.
 
+The mutation gate (StrykerJS) is periodic/manual, not a PR blocker — a legitimate
+refactor can move the score. It is scoped to the engine core
+(`js/base/rule-engine.js` + `js/base/instance-selector-factory.js`) and driven by
+`tests/mutation-run.js`, a single-process in-process oracle (StrykerJS uses the
+command runner because no framework plugin understands this repo's `vm` harness):
+
+```bash
+npm ci                     # installs @stryker-mutator/core
+npm run test:mutation      # ~3 min; HTML report at reports/mutation/index.html
+```
+
+Baseline mutation score at introduction is 53% (the `thresholds.break` in
+`stryker.config.json` sits below it as a ratchet — raise it as the oracle grows,
+never lower it). `tests/mutation-run.js` is NOT a substitute for `run-all.js`; it
+is a fast, engine-scoped killer set that also folds in the property gate.
+
 ## Layout
 
 Suites are grouped by feature area. `run-all.js` and the coverage ledger both

@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Depth gate D — mutation testing. Scoped to the engine CORE (rule-engine + the selector factory) where a survived mutant is a real test hole; deliberately NOT the whole surface. Uses the command runner because this repo drives a bespoke vm/classic-script harness no framework plugin understands; coverageAnalysis must be 'off' for the command runner, so each mutant reruns the whole command — hence tests/mutation-run.js is a fast, single-process, in-process oracle (~0.24s, no child spawns) rather than the 24s full run-all. Run with `npm run test:mutation` (~3 min). Kept OUT of per-PR CI: a legitimate refactor can move the score, so this is a periodic/manual gate, not a PR blocker. Baseline score at introduction: 53.40% (rule-engine 58.73%, factory 44.94%); break is set below that as a RATCHET — raise it as the oracle grows, never lower it.",
+  "packageManager": "npm",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node tests/mutation-run.js"
+  },
+  "coverageAnalysis": "off",
+  "mutate": ["js/base/rule-engine.js", "js/base/instance-selector-factory.js"],
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "clearTextReporter": {
+    "maxTestsToLog": 0
+  },
+  "concurrency": 6,
+  "timeoutMS": 20000,
+  "thresholds": {
+    "high": 70,
+    "low": 50,
+    "break": 50
+  }
+}

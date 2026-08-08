@@ -32,3 +32,7 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+
+# StrykerJS mutation gate — sandbox + HTML report are generated, never committed
+.stryker-tmp/
+reports/

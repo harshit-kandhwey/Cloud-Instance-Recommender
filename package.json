@@ -10,6 +10,7 @@
     "test:smoke": "node tests/run-all.js --smoke",
     "test:e2e": "playwright test",
     "test:property": "node tests/property/engine-invariants.property.js",
+    "test:mutation": "stryker run",
     "syntax-check": "node tests/syntax-check.js",
     "coverage:check": "node tools/build-coverage-inventory.js --check",
     "format": "prettier --write .",
@@ -18,9 +19,13 @@
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
     "@playwright/test": "1.56.1",
+    "@stryker-mutator/core": "9.6.1",
     "axe-core": "4.12.1",
     "fast-check": "4.9.0",
     "prettier": "3.9.5",
     "typescript": "5.7.3"
+  },
+  "overrides": {
+    "qs": "6.15.3"
   }
 }

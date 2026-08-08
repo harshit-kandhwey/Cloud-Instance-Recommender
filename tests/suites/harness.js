@@ -336,6 +336,16 @@ function buildContext({
 function buildEngineContext({ scripts = [], label = "engine-eval" } = {}) {
   const sandbox = { console: { log() {}, warn() {}, error() {} } };
   sandbox.window = sandbox;
+  // Under StrykerJS, expose `process` inside the sandbox. Stryker instruments
+  // source with mutation switching that reads the active mutant off
+  // `globalThis` + `process.env.__STRYKER_ACTIVE_MUTANT__`; a vm sandbox has no
+  // `process`, so without this every mutant would silently run the ORIGINAL code
+  // and "survive" (a false 0% score). Gated on the env var Stryker sets per
+  // mutant so normal runs are byte-for-byte unaffected. Engine code never reads
+  // `process`, so it is otherwise inert.
+  if (process.env.__STRYKER_ACTIVE_MUTANT__ !== undefined) {
+    sandbox.process = process;
+  }
   const ctx = vm.createContext(sandbox);
   const load = (rel) =>
     vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
