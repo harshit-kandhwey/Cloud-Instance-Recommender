@@ -143,7 +143,10 @@ check(
     /^no_match_rows_\d{4}-\d{2}-\d{2}\.csv$/.test(downloads[0].name),
   JSON.stringify(downloads.map((d) => d.name)),
 );
-const raw = downloads[0].blob.content;
+// Guard the deref: if downloadNoMatchRows() posted nothing, the check above
+// already recorded a failure — reading .blob.content unguarded would then throw
+// and abort every later assertion (the all-match guard, the alerts check).
+const raw = downloads[0]?.blob?.content ?? "";
 // Excel needs the BOM to read the file as UTF-8; everything else ignores it
 check("CSV starts with a UTF-8 BOM", raw.charCodeAt(0) === 0xfeff);
 // ﻿, not a literal BOM: an invisible U+FEFF in the pattern is unreviewable

@@ -657,6 +657,14 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
   // Simulate the multicloud page: the shared control is gone, the three native
   // ones are present.
   const shared = els.ruleDefaultMinGen;
+  // If PRESET_TEXTS ever drops "ruleDefaultMinGen", `shared` is undefined and the
+  // restore below (els.ruleDefaultMinGen.value = "") would throw and abort the
+  // rest of the suite. Report it as a named failure instead of crashing.
+  check(
+    "fixture has the shared ruleDefaultMinGen element to migrate from",
+    !!shared,
+    "els.ruleDefaultMinGen missing — is it still in PRESET_TEXTS?",
+  );
   delete els.ruleDefaultMinGen;
   const toasts = [];
   sandbox.showToast = (msg, kind) => toasts.push({ msg, kind });
@@ -791,8 +799,9 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
 
   els.ruleDefaultMinGen = shared;
   // On a single-provider page the shared control still exists and its value is
-  // already native — the migration must not touch it.
-  els.ruleDefaultMinGen.value = "";
+  // already native — the migration must not touch it. Guarded so a missing
+  // fixture element (asserted above) fails by name rather than crashing here.
+  if (els.ruleDefaultMinGen) els.ruleDefaultMinGen.value = "";
   sandbox.__cfg = { texts: { ruleDefaultMinGen: "5" } };
   run("applyPresetConfig(__cfg)");
   check(

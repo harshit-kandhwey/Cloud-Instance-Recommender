@@ -27,6 +27,11 @@ const check = (name, cond, detail) => {
 // `res.instances[0].instanceType` — including in the eagerly-built detail string.
 const top = (res) => (res && res.instances && res.instances[0]) || {};
 
+// The rule list, safely — same reason as `top`: a regression that returns a
+// result without `rules` must let the checks below report a named failure rather
+// than crash on `rules(res).some(...)`, including in the eagerly-built detail arg.
+const rules = (res) => (res && res.rules) || [];
+
 // A GCP Cache VM (2 vCPU / 4 GB): a right-sized general instance and the huge
 // memory-optimized one that "fits" only because it exceeds the requirement on
 // every axis. The general one is listed first (cheapest), as the real pipeline
@@ -68,8 +73,8 @@ console.log(
   );
   check(
     "the row explains the preference was not applied",
-    res.rules.some((r) => /cache preference not applied/i.test(r)),
-    JSON.stringify(res.rules),
+    rules(res).some((r) => /cache preference not applied/i.test(r)),
+    JSON.stringify(rules(res)),
   );
 }
 
@@ -138,9 +143,9 @@ console.log("[a close-fit preferred family is still honoured]");
   );
   check(
     "the preference is reported as applied (not skipped)",
-    res.rules.some((r) => /database preference\b/i.test(r)) &&
-      !res.rules.some((r) => /database preference not applied/i.test(r)),
-    JSON.stringify(res.rules),
+    rules(res).some((r) => /database preference\b/i.test(r)) &&
+      !rules(res).some((r) => /database preference not applied/i.test(r)),
+    JSON.stringify(rules(res)),
   );
 }
 
@@ -226,8 +231,8 @@ console.log("[the vCPU bound alone can disqualify a preferred instance]");
   );
   check(
     "the row explains the preference was not applied",
-    res.rules.some((r) => /cache preference not applied/i.test(r)),
-    JSON.stringify(res.rules),
+    rules(res).some((r) => /cache preference not applied/i.test(r)),
+    JSON.stringify(rules(res)),
   );
 }
 

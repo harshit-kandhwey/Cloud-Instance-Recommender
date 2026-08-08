@@ -19,7 +19,7 @@ function expectSized(cell) {
 // Minimal RFC-4180-ish CSV parse — quoted fields, doubled quotes, embedded
 // commas/newlines; strips a leading BOM. Returns row objects keyed by header.
 function parseCsv(text) {
-  const src = text.replace(/^﻿/, "");
+  const src = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text; // strip a leading UTF-8 BOM (no literal BOM/escape a formatter could silently drop)
   const rows = [];
   let field = "";
   let row = [];
@@ -50,6 +50,7 @@ function parseCsv(text) {
     rows.push(row);
   }
   const header = rows.shift();
+  if (!header) return []; // empty export: report cleanly, not crash on header.map
   return rows
     .filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ""))
     .map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));

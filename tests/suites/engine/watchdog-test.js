@@ -91,8 +91,11 @@ function check(name, cond, detail) {
     `terminated=${terminated}`,
   );
   check(
+    // Small lower tolerance: Node timers can fire a hair before the requested
+    // delay when measured with Date.now(), which would flake this bound. The
+    // upper bound still proves the fallback settled before the safety net.
     "watchdog used the short test timeout before fallback",
-    elapsed >= watchdogMs && elapsed < testTimeoutMs,
+    elapsed >= watchdogMs - 5 && elapsed < testTimeoutMs,
     `${elapsed}ms`,
   );
   check(
