@@ -2216,21 +2216,54 @@ function sniffDelimiter(headerLine) {
   return tabs > commas ? "\t" : ",";
 }
 
+// Split delimited text into RECORDS, honouring quotes. A newline only ends a
+// record when it is OUTSIDE a quoted field; a newline INSIDE quotes is a data
+// character of a multi-line cell (RFC-4180) and must be kept. Splitting on "\n"
+// first — as this used to — tore such a cell across records and misaligned every
+// field after it, no matter how carefully parseCSVLine handled quoted commas,
+// because the shred happened before parseCSVLine ever ran. Every character is
+// preserved verbatim (quotes included) so parseCSVLine re-parses each record
+// exactly as if it had been a single physical line. Quote-state tracking mirrors
+// sniffDelimiter / parseCSVLine: a doubled quote inside a field is one escaped
+// literal, not a state toggle.
+function splitRecords(text) {
+  const normalized = text.replace(/\r\n?/g, "\n");
+  const records = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized[i];
+    if (char === '"') {
+      if (inQuotes && normalized[i + 1] === '"') {
+        current += '""'; // escaped quote pair — kept for parseCSVLine to collapse
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+        current += char;
+      }
+    } else if (char === "\n" && !inQuotes) {
+      records.push(current);
+      current = "";
+    } else {
+      current += char; // includes a newline when inQuotes — the multi-line cell
+    }
+  }
+  if (current.length) records.push(current);
+  return records;
+}
+
 // Text (a file's contents, or a paste) → { headers, rows }. The one place that
 // turns delimited text into rows; both the upload and the paste path use it, so
 // they cannot drift apart in how they read a quoted field.
 function parseDelimitedText(text) {
-  const lines = text
-    .replace(/\r\n?/g, "\n")
-    .trim()
-    .split("\n")
-    .filter((line) => line.trim() !== "");
-  if (!lines.length) return { headers: [], rows: [] };
+  const records = splitRecords(text).filter((record) => record.trim() !== "");
+  if (!records.length) return { headers: [], rows: [] };
 
-  const delimiter = sniffDelimiter(lines[0]);
-  const headers = dedupeHeaders(parseCSVLine(lines[0], delimiter));
-  const rows = lines.slice(1).map((line) => {
-    const values = parseCSVLine(line, delimiter);
+  const delimiter = sniffDelimiter(records[0]);
+  const headers = dedupeHeaders(parseCSVLine(records[0], delimiter));
+  const rows = records.slice(1).map((record) => {
+    const values = parseCSVLine(record, delimiter);
     const row = {};
     headers.forEach((header, index) => {
       // Same normalization as the workbook path: a CSV exported from a

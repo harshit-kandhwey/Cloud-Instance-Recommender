@@ -545,7 +545,12 @@ function validateCsvRegions() {
       if (r) regions.add(r);
     });
     if (!regions.size) continue;
-    validation[provider] = {};
+    // Null-prototype accumulator: the keys are CSV region names, so a cell that
+    // normalizes to "__proto__" would otherwise hit the prototype setter (the
+    // value is an object) and drop the region from the panel. No global pollution
+    // either way, but this matches the repo's safeMapGet / RESERVED_PRESET_NAMES
+    // stance — untrusted keys never touch a live prototype.
+    validation[provider] = Object.create(null);
     for (const raw of regions) {
       validation[provider][raw] = resolveRegion(provider, raw);
     }
