@@ -68,6 +68,19 @@ const { check, state } = makeChecker();
 
   ctx.updateCpuRanges();
 
+  // The bands still relink even while upsizing is disabled: assert the values,
+  // not just the dimmed label, so a regression that leaves keepMin/upsizeMin
+  // stale when keepMax is 100 cannot pass on the label state alone.
+  check(
+    "cpu keep-min still tracks downsize-max",
+    Number(ctx.document.getElementById("cpuKeepMin").value) === 30,
+    ctx.document.getElementById("cpuKeepMin").value,
+  );
+  check(
+    "cpu upsize-min becomes 100",
+    Number(ctx.document.getElementById("cpuUpsizeMin").value) === 100,
+    ctx.document.getElementById("cpuUpsizeMin").value,
+  );
   check("cpu upsizing dimmed (opacity 0.5)", label.style.opacity === "0.5");
   check(
     "cpu upsize label reads disabled",
@@ -133,6 +146,16 @@ const { check, state } = makeChecker();
 
   ctx.updateMemoryRanges();
 
+  check(
+    "memory keep-min still tracks downsize-max",
+    Number(ctx.document.getElementById("memoryKeepMin").value) === 40,
+    ctx.document.getElementById("memoryKeepMin").value,
+  );
+  check(
+    "memory upsize-min becomes 100",
+    Number(ctx.document.getElementById("memoryUpsizeMin").value) === 100,
+    ctx.document.getElementById("memoryUpsizeMin").value,
+  );
   check("memory upsizing dimmed (opacity 0.5)", label.style.opacity === "0.5");
   check(
     "memory upsize label reads disabled",

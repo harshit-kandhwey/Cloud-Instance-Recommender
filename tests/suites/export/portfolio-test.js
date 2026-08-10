@@ -436,13 +436,18 @@ check(
 const billingSheet = wbModel.sheets.find((s) => s.name === "Billing");
 check(
   "app sheet: title + back-to-Contents link + autofilter",
-  billingSheet.rows[0][0].v === "Billing" &&
-    billingSheet.rows[1][0].l.Target === "#'Contents'!A1" &&
-    /^A\d+:[A-Z]+\d+$/.test(billingSheet.autofilter),
+  billingSheet?.rows?.[0]?.[0]?.v === "Billing" &&
+    billingSheet?.rows?.[1]?.[0]?.l?.Target === "#'Contents'!A1" &&
+    /^A\d+:[A-Z]+\d+$/.test(billingSheet?.autofilter || ""),
+  JSON.stringify(billingSheet?.rows?.slice(0, 2)),
 );
+// Find the About sheet by name rather than a fixed index, and guard the deref:
+// a dropped row or a changed sheet count should be one named FAIL, not a throw
+// that aborts the xlsx write smoke, the reuse checks and the per-app CSV export.
+const aboutSheet = wbModel.sheets.find((s) => s.name === "About");
 check(
   "About sheet notes pricing is excluded",
-  JSON.stringify(wbModel.sheets[5].rows).includes("Intentionally excluded"),
+  JSON.stringify(aboutSheet?.rows || []).includes("Intentionally excluded"),
 );
 
 console.log("[xlsx write smoke — vendored styling fork]");

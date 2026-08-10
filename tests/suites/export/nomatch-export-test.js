@@ -162,12 +162,17 @@ check(
   lines[0],
 );
 check("2 data rows", lines.length === 3);
+// Guard the row derefs the same way downloads[0] is guarded above: if raw is
+// empty, lines has one element and lines[1]/lines[2] are undefined — an
+// unguarded .startsWith would throw and abort the all-match and alerts checks.
+const row1 = lines[1] ?? "";
+const row2 = lines[2] ?? "";
 check(
   "exact rows exported",
-  lines[1].startsWith("bad-1") && lines[2].startsWith("bad-2"),
+  row1.startsWith("bad-1") && row2.startsWith("bad-2"),
 );
-check("formula-injection hardened", lines[1].includes("'=2+2"), lines[1]);
-check("reasons included", lines[1].includes("Region 'narnia' not found"));
+check("formula-injection hardened", row1.includes("'=2+2"), row1);
+check("reasons included", row1.includes("Region 'narnia' not found"));
 
 console.log("[all-match export guard]");
 // toasts still holds the empty-selection warning from the block above; clear it

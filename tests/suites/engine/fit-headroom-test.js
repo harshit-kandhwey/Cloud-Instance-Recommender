@@ -39,14 +39,23 @@ console.log("[computeFitHeadroom reads the excess over the requested size]");
   // is 100% and the binding-axis tie resolves to vCPU.
   const h = headroom(l2l("a", { cpu: 2, mem: 8, iCpu: 4, iMem: 16 }), "AWS");
   check("headroom is computed", h !== null, JSON.stringify(h));
-  check("vCPU headroom is 100%", Math.round(h.cpu * 100) === 100, `${h.cpu}`);
-  check("memory headroom is 100%", Math.round(h.mem * 100) === 100, `${h.mem}`);
-  check("the worst axis is reported", Math.round(h.worst * 100) === 100);
-  // The tie-break itself, not just the magnitude: with both axes at 100% the
-  // worst is the same number either way, so a regression that resolved the tie
-  // to "memory" would leave every assertion above green while the flag named
-  // the wrong axis.
-  check("a tie resolves to vCPU", h.axis === "vCPU", h.axis);
+  // Guard the derefs: if computeFitHeadroom regresses to null the check above
+  // records the failure by name; reading h.* unguarded would throw and abort
+  // every later block, losing their named FAIL lines.
+  if (h) {
+    check("vCPU headroom is 100%", Math.round(h.cpu * 100) === 100, `${h.cpu}`);
+    check(
+      "memory headroom is 100%",
+      Math.round(h.mem * 100) === 100,
+      `${h.mem}`,
+    );
+    check("the worst axis is reported", Math.round(h.worst * 100) === 100);
+    // The tie-break itself, not just the magnitude: with both axes at 100% the
+    // worst is the same number either way, so a regression that resolved the tie
+    // to "memory" would leave every assertion above green while the flag named
+    // the wrong axis.
+    check("a tie resolves to vCPU", h.axis === "vCPU", h.axis);
+  }
 }
 
 console.log("[the worst axis is the one that is most over-provisioned]");
@@ -54,18 +63,22 @@ console.log("[the worst axis is the one that is most over-provisioned]");
   // 14 vCPU / 8 GB landed on 16/32: vCPU +14%, memory +300%. Memory is the
   // waste, so that is the axis the flag names.
   const h = headroom(l2l("a", { cpu: 14, mem: 8, iCpu: 16, iMem: 32 }), "AWS");
-  check("memory is the worst axis", h.axis === "memory", h.axis);
-  check(
-    "worst headroom is 300%",
-    Math.round(h.worst * 100) === 300,
-    `${h.worst}`,
-  );
+  check("headroom is computed", h !== null, JSON.stringify(h));
+  if (h) {
+    check("memory is the worst axis", h.axis === "memory", h.axis);
+    check(
+      "worst headroom is 300%",
+      Math.round(h.worst * 100) === 300,
+      `${h.worst}`,
+    );
+  }
 }
 
 console.log("[a perfect fit has zero headroom]");
 {
   const h = headroom(l2l("a", { cpu: 4, mem: 16, iCpu: 4, iMem: 16 }), "AWS");
-  check("worst headroom is 0", h.worst === 0, `${h.worst}`);
+  check("headroom is computed", h !== null, JSON.stringify(h));
+  if (h) check("worst headroom is 0", h.worst === 0, `${h.worst}`);
 }
 
 console.log("[headroom is null when there is nothing to compare]");

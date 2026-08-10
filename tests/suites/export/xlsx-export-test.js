@@ -160,12 +160,12 @@ run(
 );
 check(
   "round-trip read preserves the header row",
-  run('__back[0].join(",")') === "VM Name,CPU,AWS Instance",
-  run('__back[0].join(",")'),
+  run('(__back[0] || []).join(",")') === "VM Name,CPU,AWS Instance",
+  run("JSON.stringify(__back[0])"),
 );
 check(
   "round-trip read preserves a numeric value as a number",
-  run("__back[2][1]") === 16,
+  run("(__back[2] || [])[1]") === 16,
   run("JSON.stringify(__back[2])"),
 );
 
@@ -196,8 +196,9 @@ check(
 );
 check(
   "the strategy sheet carries the per-row pick",
-  run('__sm.rows[0].join("|")') === "web-01|4|16|m6g.xlarge (4/16)",
-  run('__sm.rows[0].join("|")'),
+  run('(((__sm || {}).rows || [])[0] || []).join("|")') ===
+    "web-01|4|16|m6g.xlarge (4/16)",
+  run("JSON.stringify((__sm || {}).rows)"),
 );
 check(
   "a run with no alternative columns yields no strategy model",

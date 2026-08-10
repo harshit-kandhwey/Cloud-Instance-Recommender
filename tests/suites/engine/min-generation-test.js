@@ -228,25 +228,35 @@ console.log("[the two version parsers agree]");
   // in 3.8.14 while this one kept the first-match regex. Pin them together so
   // they cannot drift apart again — for every type, the version generationRank
   // reads must be exactly the boundary at which MinGen starts excluding it.
-  const disagreements = Object.keys(FAMILY).filter((t) => {
-    const rank = RE.generationRank(inst(t), "azure");
-    return (
-      meets(t, minGenFor(rank)) !== true ||
-      meets(t, minGenFor(rank + 1)) !== false
+  // Guard the export: generationRank is called for every FAMILY key below. If it
+  // is renamed or dropped the first call throws inside filter() and aborts the
+  // suite before line 254 sets process.exitCode — the named report is lost.
+  check(
+    "generationRank is exported",
+    typeof RE.generationRank === "function",
+    typeof RE.generationRank,
+  );
+  if (typeof RE.generationRank === "function") {
+    const disagreements = Object.keys(FAMILY).filter((t) => {
+      const rank = RE.generationRank(inst(t), "azure");
+      return (
+        meets(t, minGenFor(rank)) !== true ||
+        meets(t, minGenFor(rank + 1)) !== false
+      );
+    });
+    check(
+      "every type's MinGen boundary matches the version generationRank reads",
+      disagreements.length === 0,
+      `disagree: ${disagreements.join(", ")}`,
     );
-  });
-  check(
-    "every type's MinGen boundary matches the version generationRank reads",
-    disagreements.length === 0,
-    `disagree: ${disagreements.join(", ")}`,
-  );
-  check(
-    "and generationRank reads the real versions, not the sizes",
-    RE.generationRank(inst("nv48sv3"), "azure") === 3 &&
-      RE.generationRank(inst("nv72adsv5"), "azure") === 5 &&
-      RE.generationRank(inst("nv24"), "azure") === 2,
-    `nv48sv3=${RE.generationRank(inst("nv48sv3"), "azure")} nv72adsv5=${RE.generationRank(inst("nv72adsv5"), "azure")} nv24=${RE.generationRank(inst("nv24"), "azure")}`,
-  );
+    check(
+      "and generationRank reads the real versions, not the sizes",
+      RE.generationRank(inst("nv48sv3"), "azure") === 3 &&
+        RE.generationRank(inst("nv72adsv5"), "azure") === 5 &&
+        RE.generationRank(inst("nv24"), "azure") === 2,
+      `nv48sv3=${RE.generationRank(inst("nv48sv3"), "azure")} nv72adsv5=${RE.generationRank(inst("nv72adsv5"), "azure")} nv24=${RE.generationRank(inst("nv24"), "azure")}`,
+    );
+  }
 }
 
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout

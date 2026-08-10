@@ -79,7 +79,8 @@ check(
 );
 check(
   "changed cell carries both old and new values",
-  d1.changedRows[0].key === "web1" &&
+  d1.changedRows.length > 0 &&
+    d1.changedRows[0].key === "web1" &&
     d1.changedRows[0].cells[0].a === "m5.large" &&
     d1.changedRows[0].cells[0].b === "m6i.large" &&
     d1.changedRows[0].cells[0].changed === true,
@@ -485,9 +486,10 @@ check(
 );
 check(
   "a differing cell carries one value per run",
-  dn.changedRows[0].cells[0].values.length === 3 &&
+  dn.changedRows.length > 0 &&
+    dn.changedRows[0].cells[0].values.length === 3 &&
     dn.changedRows[0].cells[0].changed === true,
-  JSON.stringify(dn.changedRows[0].cells[0]),
+  JSON.stringify(dn.changedRows[0]),
 );
 check(
   "per-run match rate is reported with the run label",

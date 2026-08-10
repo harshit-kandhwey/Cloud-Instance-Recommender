@@ -147,7 +147,10 @@ const posted = [];
 const workerSandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   setTimeout,
-  postMessage: (m) => posted.push(m),
+  // A real worker structured-clones outbound messages; clone here too so a result
+  // carrying a value browser postMessage could not clone fails in the test rather
+  // than passing against a shared reference the real page would never receive.
+  postMessage: (m) => posted.push(structuredClone(m)),
   importScripts: (...files) => {
     for (const f of files) {
       const full = path.join(REPO, "js/base", f);
