@@ -39,7 +39,14 @@ if (process.argv.includes("--smoke")) {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(__dirname, "smoke.json"), "utf8"),
   );
-  const wanted = manifest.suites || [];
+  const wanted = manifest.suites;
+  // An empty or missing suites list is the same broken-guard failure this file's
+  // header warns about: it would run zero suites and still report success. A
+  // smoke manifest that names nothing is a manifest bug, not a valid "skip all".
+  if (!Array.isArray(wanted) || wanted.length === 0) {
+    console.error("smoke.json must contain a non-empty suites array");
+    process.exit(2);
+  }
   const known = new Set(suites);
   const missing = wanted.filter((s) => !known.has(s));
   if (missing.length) {

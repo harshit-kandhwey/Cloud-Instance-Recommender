@@ -941,7 +941,10 @@ const realInstance = (v) =>
   // Add the property gate's invariant kills. It sets process.exitCode itself;
   // fold its result in so a mutant either side detects counts as killed.
   require("./property/engine-invariants.property.js");
-  const propertyFailed = process.exitCode === 1;
+  // Any nonzero code means the property gate failed — not just the literal 1.
+  // (The module runs its fc.assert synchronously and sets process.exitCode at
+  // top level, so it is already set by the time require() returns.)
+  const propertyFailed = Number(process.exitCode || 0) !== 0;
 
   process.exitCode = oracleFailed || propertyFailed ? 1 : 0;
 })().catch((e) => {

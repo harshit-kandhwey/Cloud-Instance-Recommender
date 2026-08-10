@@ -326,6 +326,17 @@ web-01,4,16,16384,102400,us-east-1`;
     setCol("Memory (GB)", 3); // the MB column
     setCol("Disk (GB)", 4); // Disk MiB
     setCol("AWS Region", 5);
+    // getElementById invents any id fakeElement is asked for, so setting
+    // colmap_unit_disk on a phantom would let the 100 GB check below pass even if
+    // the panel never offered the user a disk-unit selector. Assert it is really
+    // rendered first — the same protection the memory selector has above.
+    check(
+      "disk unit selector is rendered in the panel",
+      fresh.elements.columnMappingSection.innerHTML.includes(
+        'id="colmap_unit_disk"',
+      ),
+      fresh.elements.columnMappingSection.innerHTML,
+    );
     c.document.getElementById("colmap_unit_mem").value = "MB";
     c.document.getElementById("colmap_unit_disk").value = "MB";
     vm.runInContext("applyColumnMapping()", c);

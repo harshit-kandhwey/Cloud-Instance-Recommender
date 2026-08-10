@@ -155,6 +155,11 @@ function fill(ctx, values) {
   );
 
   console.log("[generate works on manual rows]");
+  // Record what the ~20 synchronous checks above found before the first await.
+  // If getInstanceRecommendationWithSelector never settles, the assignment at the
+  // end of this function never runs and the process would exit 0, reporting those
+  // failures as a pass. The tail refreshes this once it completes.
+  process.exitCode = failures ? 1 : 0;
   vm.runInContext("selectedProviders = ['aws']", ctx);
   const results = await ctx.getInstanceRecommendationWithSelector(
     data,

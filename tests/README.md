@@ -32,14 +32,14 @@ so the core run above stays dependency-free:
 
 ```bash
 npm ci                     # installs fast-check
-npm run test:property      # fuzzes the selector invariants (soundness, no-match honesty, monotonicity)
+npm run test:property      # fuzzes the selector invariants (soundness, no-match honesty, monotonicity, determinism)
 ```
 
 It runs hundreds of random pools + requests through the real selector pipeline
-and asserts three guarantees: a matched box always meets the requested size, a
-no-match happens exactly when nothing fits, and a stricter target never returns
-a cheaper box. On failure fast-check prints the shrunk counterexample and a seed
-to reproduce it.
+and asserts four guarantees: a matched box always meets the requested size, a
+no-match happens exactly when nothing fits, a stricter target never returns a
+cheaper box, and identical input yields an identical recommendation. On failure
+fast-check prints the shrunk counterexample and a seed to reproduce it.
 
 The mutation gate (StrykerJS) is periodic/manual, not a PR blocker — a legitimate
 refactor can move the score. It is scoped to the engine core

@@ -271,6 +271,12 @@ console.log("[the rows still feed the normal pipeline]");
 // so applying manual rows after a workbook left that workbook's picker on screen
 // still offering its sheets. Picking one would have silently replaced the manual
 // rows with a sheet the user had already moved on from.
+// Record what the synchronous blocks above found before entering the async tail.
+// If the await below never settles, the assignment at the end never runs and the
+// process would exit 0 — silently reporting every sync FAIL as a pass. The tail
+// refreshes this once it completes.
+process.exitCode = state.failures ? 1 : 0;
+
 (async () => {
   console.log("[manual entry clears what the previous input left behind]");
 

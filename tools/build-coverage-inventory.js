@@ -189,6 +189,11 @@ function collectExecuted(labels) {
       fs.mkdirSync(dir, { recursive: true });
       const res = spawnSync(process.execPath, [path.join(suitesDir, label)], {
         encoding: "utf8",
+        // Coverage lands in NODE_V8_COVERAGE files, not stdout — the child's
+        // console output is pure logging we never read. Discard it so a verbose
+        // suite cannot exceed the default 1 MiB maxBuffer, which would kill the
+        // child with ENOBUFS and surface as an opaque "(exit null)".
+        stdio: "ignore",
         timeout: 120000,
         env: { ...process.env, NODE_V8_COVERAGE: dir },
       });
@@ -221,7 +226,17 @@ function collectExecuted(labels) {
       // name as uncovered (a written inventory would be wrong) or let the gate
       // pass on data that never fully ran. Record it; the caller aborts before
       // producing any output. run-all.js is the real suite-health gate.
-      if (res.status !== 0) failed.push(`${label} (exit ${res.status})`);
+      if (res.status !== 0) {
+        // Distinguish a real nonzero exit from a spawn/timeout kill (status is
+        // null, res.error holds the cause) so a hang or ENOBUFS is not hidden
+        // behind an opaque "(exit null)".
+        const why = res.error
+          ? res.error.message
+          : res.signal
+            ? `signal ${res.signal}`
+            : `exit ${res.status}`;
+        failed.push(`${label} (${why})`);
+      }
     }
   } finally {
     fs.rmSync(covRoot, { recursive: true, force: true });

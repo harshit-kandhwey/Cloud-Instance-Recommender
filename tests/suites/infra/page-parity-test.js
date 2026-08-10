@@ -125,8 +125,14 @@ console.log("[shared modules find their elements on every page]");
 // ─── The shared shell loads the same modules, in the same order ──────────────
 console.log("[every page loads the same js/base modules in the same order]");
 {
+  // Scan a comment-stripped copy: a commented-out <script src="js/base/…"> is not
+  // loaded, but the raw text still contains it, so scanning raw[p] would count it
+  // as present and let the module-order check pass on a page that never loads it.
+  const noComments = Object.fromEntries(
+    PAGES.map((p) => [p, raw[p].replace(/<!--[\s\S]*?-->/g, "")]),
+  );
   const baseScripts = (p) =>
-    [...raw[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
+    [...noComments[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
       .map((m) => m[1])
       .filter((s) => s.includes("/base/"));
   const ref = baseScripts(PAGES[0]);

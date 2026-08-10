@@ -17,9 +17,15 @@ console.log("[the gallery offers the three samples]");
       html.includes("Deliberately messy"),
     html,
   );
+  // Not just three calls — three DISTINCT indexes. Three loadSampleDataset(0)
+  // calls would pass a bare count while every gallery action loaded the same
+  // sample, which is the exact defect this check exists to catch.
+  const indexes = [...html.matchAll(/loadSampleDataset\((\d+)\)/g)]
+    .map((match) => match[1])
+    .sort();
   check(
     "each loads by index, not by interpolated text",
-    (html.match(/loadSampleDataset\(\d+\)/g) || []).length === 3,
+    indexes.join(",") === "0,1,2",
     html,
   );
 }
