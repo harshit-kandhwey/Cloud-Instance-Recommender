@@ -57,6 +57,27 @@ Baseline mutation score at introduction is 53% (the `thresholds.break` in
 never lower it). `tests/mutation-run.js` is NOT a substitute for `run-all.js`; it
 is a fast, engine-scoped killer set that also folds in the property gate.
 
+The visual-regression gate (`tests/visual/`, `playwright-visual.config.js`) pins
+the rendered look of the four provider pages in their empty, pre-upload state, so
+an accidental CSS/layout regression fails even when every functional assertion
+still passes. It is chromium-only and kept out of `npm run test:e2e`:
+
+```bash
+npm run test:visual          # compare against the committed baselines
+npm run test:visual:update   # regenerate baselines (CI only — see below)
+```
+
+The catch with pixel baselines is that they are **OS- and engine-specific**: a
+screenshot taken on Windows or macOS differs from ubuntu on font hinting alone.
+So the committed baselines are the `-linux` set, generated on the ubuntu CI
+runner — never on a contributor's machine. To (re)generate them, run the CI
+workflow manually with `update_baselines=true` (Actions → CI → Run workflow):
+the `visual` job regenerates the PNGs and uploads them as the
+`visual-baselines-linux` artifact; download it, commit the PNGs under
+`tests/visual/__screenshots__/`, and from then on the `visual` job compares
+against them on every push/PR. Until those baselines are committed the gate is
+**neutral** (the job skips the compare rather than failing red).
+
 ## Layout
 
 Suites are grouped by feature area. `run-all.js` and the coverage ledger both

@@ -4,6 +4,16 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Manual trigger used once, at release, to generate the visual-regression
+  # baselines on the ubuntu runner (they are OS-specific — see the `visual` job
+  # and tests/README.md). With update_baselines=true the visual job regenerates
+  # the -linux PNGs and uploads them as an artifact to download and commit.
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: "Regenerate visual-regression baselines and upload them as an artifact"
+        type: boolean
+        default: false
 
 jobs:
   format:
@@ -114,3 +124,75 @@ jobs:
 
       - name: Run end-to-end suite (Chromium + WebKit)
         run: npm run test:e2e
+
+  visual:
+    # Depth gate C — visual regression (chromium-only, ubuntu baselines). The
+    # committed baselines are the -linux PNGs this runner produces; a pixel diff
+    # here is a layout/colour regression. See playwright-visual.config.js.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dev dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # Only chromium here — the visual gate is single-engine on purpose.
+      - name: Install browser (+ OS deps)
+        run: npx playwright install --with-deps chromium
+
+      # One-time baseline generation (manual: workflow_dispatch, update_baselines
+      # = true). Regenerates the -linux PNGs and uploads them as an artifact to
+      # download and commit. After that, compare mode below guards every run.
+      - name: Generate baselines (manual, update mode)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_baselines == 'true' }}
+        run: npm run test:visual:update
+
+      - name: Upload generated baselines
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_baselines == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: tests/visual/__screenshots__/
+
+      # Compare mode runs only when the -linux baselines are committed, so this
+      # gate stays neutral (not falsely red) until they are generated at release,
+      # then guards on every push/PR thereafter. See tests/README.md.
+      - name: Check for committed baselines
+        id: baselines
+        if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.update_baselines == 'true') }}
+        run: |
+          if ls tests/visual/__screenshots__/*-linux.png >/dev/null 2>&1; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No committed -linux baselines yet; visual gate is neutral until they are generated (run this workflow with update_baselines=true). See tests/README.md."
+          fi
+
+      - name: Visual regression (compare)
+        if: ${{ steps.baselines.outputs.present == 'true' }}
+        run: npm run test:visual
+
+      - name: Upload diff on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: test-results/
+          if-no-files-found: ignore

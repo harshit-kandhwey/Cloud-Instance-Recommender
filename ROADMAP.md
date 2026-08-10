@@ -185,12 +185,16 @@ test:property` and a dedicated CI job. It catches the case nobody enumerated,
   until a specific region silently falls back to sample data in the browser —
   precisely the failure the split was built to make impossible. Pure Node, no new
   toolchain. (M) _Landed 3.10._
-- **Visual-regression snapshots.** Once the Playwright infrastructure above is in,
-  snapshot the views that are only ever checked by eye today — dark mode, the
-  region-validation chips, the results table — so a token rename or a CSS drift
-  fails a check instead of a user noticing. Near-zero marginal cost on top of the
-  E2E rig; pairs with the 3.11 accessibility work, which is where visual drift most
-  often bites. (S) _Rides the Playwright rig from the E2E item above._
+- **Visual-regression snapshots.** Snapshots the four provider pages in their
+  empty, pre-upload state so a token rename or a CSS drift fails a check instead
+  of a user noticing. Chromium-only, kept out of `npm run test:e2e`
+  (`tests/visual/`, `playwright-visual.config.js`, `npm run test:visual`). Pixel
+  baselines are OS-specific, so the committed set is the `-linux` PNGs generated
+  on the ubuntu CI runner (via the `visual` job's manual `update_baselines` mode)
+  — never on a contributor's machine; the gate stays neutral until they are
+  committed, then guards. Deeper-view snapshots (dark mode, region chips, the
+  results table) ride this rig in 3.11, alongside the accessibility work where
+  visual drift most often bites. (S) _Landed 3.10._
 - **Mutation testing — the final gate.** Execution coverage proves a line _ran_;
   it does not prove a bug in that line would be _caught_. Mutation testing is the
   measure that closes the loop: introduce a defect (`>` → `>=`, a dropped branch, a
