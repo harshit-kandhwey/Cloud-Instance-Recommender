@@ -93,6 +93,31 @@ console.log("[CRLF line endings around a quoted newline]");
   );
 }
 
+console.log("[an unterminated quote is flagged, not silently merged]");
+{
+  // One stray double-quote before "open": quote state never closes, so the "\n"
+  // boundaries after it are treated as in-cell data and every later row is
+  // absorbed into this one. The parser must REPORT that so the caller can warn,
+  // rather than shipping a single giant merged row with no explanation.
+  const bad = parseDelimited('VM,Notes,CPU\nweb-01,"open,4\nweb-02,plain,2');
+  check(
+    "the unterminated quote is flagged",
+    bad.unterminatedQuote === true,
+    JSON.stringify(bad.unterminatedQuote),
+  );
+  check(
+    "and the damage is visible as a merged record (one row, not two)",
+    bad.rows.length === 1,
+    `rows.length=${bad.rows.length}`,
+  );
+  const good = parseDelimited("VM,CPU\nweb-01,4\nweb-02,8");
+  check(
+    "a well-formed file is NOT flagged",
+    good.unterminatedQuote === false,
+    JSON.stringify(good.unterminatedQuote),
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout when
 // it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = state.failures ? 1 : 0;

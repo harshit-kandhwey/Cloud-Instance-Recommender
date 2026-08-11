@@ -16,8 +16,8 @@ waiver still records the reason.
 | --- | ---: | ---: | ---: |
 | Covered | 57 | 231 | 288 |
 | Waived | 23 | 0 | 23 |
-| Uncovered | 0 | 113 | 113 |
-| **Total** | 80 | 344 | 424 |
+| Uncovered | 0 | 114 | 114 |
+| **Total** | 80 | 345 | 425 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -444,6 +444,7 @@ waiver still records the reason.
 | `validateProviderSupport` | js/base/instance-selector-factory.js | window | internal | uncovered | — |
 | `vmDetailColumns` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `vmMatchCell` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `warnUnterminatedQuote` | js/base/ingest.js | function | internal | uncovered | — |
 | `watchForDataThenRun` | js/base/app-core.js | function | internal | covered | preview/preview-search-test.js |
 | `wbDetailColumns` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `writeColumnMappings` | js/base/ingest.js | function | internal | covered | ingest/column-mapping-test.js, ingest/mapping-units-test.js, ingest/saved-mappings-test.js, ui/ads-preset-test.js |

@@ -444,7 +444,8 @@ function selectSheet(name) {
 // feeds ingestRows directly)
 function parseCSV(csvText) {
   console.log("Parsing CSV data");
-  const { headers, rows } = parseDelimitedText(csvText);
+  const { headers, rows, unterminatedQuote } = parseDelimitedText(csvText);
+  if (unterminatedQuote) warnUnterminatedQuote();
   ingestRows(headers, rows);
 }
 
@@ -819,7 +820,8 @@ function ingestPastedData() {
     return;
   }
 
-  const { headers, rows } = parseDelimitedText(text);
+  const { headers, rows, unterminatedQuote } = parseDelimitedText(text);
+  if (unterminatedQuote) warnUnterminatedQuote();
   if (!rows.length) {
     // A header with nothing under it is the classic paste mistake: the header
     // row was selected and the data was not.
@@ -2250,6 +2252,11 @@ function splitRecords(text) {
     }
   }
   if (current.length) records.push(current);
+  // A quote left open at end-of-input means the file is malformed: every record
+  // after the stray quote was absorbed into this last one (quote state never
+  // reset, so no later "\n" was treated as a record boundary). Expose it so the
+  // caller can warn rather than shipping one giant merged row silently.
+  records.unterminatedQuote = inQuotes;
   return records;
 }
 
@@ -2257,8 +2264,12 @@ function splitRecords(text) {
 // turns delimited text into rows; both the upload and the paste path use it, so
 // they cannot drift apart in how they read a quoted field.
 function parseDelimitedText(text) {
-  const records = splitRecords(text).filter((record) => record.trim() !== "");
-  if (!records.length) return { headers: [], rows: [] };
+  // Capture the malformed-quote flag BEFORE filtering — .filter() returns a new
+  // array without the property splitRecords hung on it.
+  const raw = splitRecords(text);
+  const unterminatedQuote = raw.unterminatedQuote === true;
+  const records = raw.filter((record) => record.trim() !== "");
+  if (!records.length) return { headers: [], rows: [], unterminatedQuote };
 
   const delimiter = sniffDelimiter(records[0]);
   const headers = dedupeHeaders(parseCSVLine(records[0], delimiter));
@@ -2272,5 +2283,16 @@ function parseDelimitedText(text) {
     });
     return row;
   });
-  return { headers, rows };
+  return { headers, rows, unterminatedQuote };
+}
+
+// The warning the two delimited-text entry points share when the parse reports
+// an unclosed quote. Kept out of parseDelimitedText so that stays a pure,
+// node-testable function; the toast is the browser-only surface.
+function warnUnterminatedQuote() {
+  showToast(
+    "A quoted value was never closed — every row after the stray double-quote " +
+      'was merged into one. Check the file for an unbalanced " character.',
+    "warning",
+  );
 }

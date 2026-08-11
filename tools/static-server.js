@@ -40,7 +40,17 @@ function parseArgs(argv) {
     if (argv[i] === "--port") {
       setPort(argv[++i]);
       portFromFlag = true;
-    } else if (argv[i] === "--root") out.root = path.resolve(argv[++i]);
+    } else if (argv[i] === "--root") {
+      // Validate as strictly as --port: a bare `--root` with no value would call
+      // path.resolve(undefined) and throw an opaque TypeError, and later a
+      // nonexistent dir fails deep in fs.realpathSync — both surface to
+      // Playwright as an unexplained webServer startup timeout.
+      const v = argv[++i];
+      if (typeof v !== "string" || v.trim() === "") {
+        throw new Error(`static-server: invalid root ${JSON.stringify(v)}`);
+      }
+      out.root = path.resolve(v);
+    }
   }
   // PORT is a fallback only: an explicit --port on the command line wins over
   // the environment, not the other way round.
