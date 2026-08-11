@@ -27,7 +27,9 @@ test("aws.html: generate → pin twice → compare → export comparison CSV", a
 
   await page.setInputFiles("#csvFile", FIXTURE);
   await page.click("button.generate-btn");
-  await expect(page.locator("#downloadSection")).toBeVisible({ timeout: 15000 });
+  await expect(page.locator("#downloadSection")).toBeVisible({
+    timeout: 15000,
+  });
 
   // The scenario bar unhides only after a successful run (generate.js →
   // updateScenarioCompare).

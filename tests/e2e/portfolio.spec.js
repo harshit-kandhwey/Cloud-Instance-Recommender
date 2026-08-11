@@ -32,7 +32,9 @@ async function openPortfolioPopup(page) {
   await page.waitForFunction(() => window.AWS_DATA_READY === true);
   await page.setInputFiles("#csvFile", FIXTURE);
   await page.click("button.generate-btn");
-  await expect(page.locator("#downloadSection")).toBeVisible({ timeout: 15000 });
+  await expect(page.locator("#downloadSection")).toBeVisible({
+    timeout: 15000,
+  });
 
   // The button appears only when results carry at least one named app.
   const openBtn = page.locator("#openAppPortfolioBtn");

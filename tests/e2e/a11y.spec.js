@@ -98,14 +98,27 @@ test.describe("accessibility", () => {
           .querySelector('meta[http-equiv="Content-Security-Policy"]')
           ?.getAttribute("content") || "",
     );
-    expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("connect-src 'none'");
-    expect(csp).toContain("script-src 'self' 'unsafe-inline'");
-    // The dark-mode scan injects an inline <style> to freeze transitions, which
-    // only runs under the real policy because style-src allows 'unsafe-inline'.
-    // Assert the exact value so a broadened style-src can't weaken the shipped
-    // CSP while this gate stays green (and so the future strict-CSP migration,
-    // which drops 'unsafe-inline', is forced to update this scan deliberately).
-    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+    // Parse the policy into a directive→value map so each assertion is EXACT.
+    // A toContain check would also pass a BROADENED directive (e.g. a style-src
+    // with an extra allowed host, or 'unsafe-eval' added to script-src) — which
+    // is precisely the weakening this gate exists to catch. Exact values also
+    // force the future strict-CSP migration (which drops 'unsafe-inline') to
+    // update this scan deliberately rather than sliding past a substring match.
+    const directives = Object.fromEntries(
+      csp
+        .split(";")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .map((d) => {
+          const sp = d.indexOf(" ");
+          return sp === -1 ? [d, ""] : [d.slice(0, sp), d.slice(sp + 1).trim()];
+        }),
+    );
+    expect(directives["default-src"]).toBe("'self'");
+    expect(directives["connect-src"]).toBe("'none'");
+    expect(directives["script-src"]).toBe("'self' 'unsafe-inline'");
+    // style-src must allow 'unsafe-inline': the dark-mode scan injects an inline
+    // <style> to freeze transitions, and it must run under the real policy.
+    expect(directives["style-src"]).toBe("'self' 'unsafe-inline'");
   });
 });
