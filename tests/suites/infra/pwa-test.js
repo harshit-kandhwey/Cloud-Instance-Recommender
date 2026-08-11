@@ -240,9 +240,14 @@ process.exitCode = 1;
   handlers.fetch(e5);
   const r5 = await e5.getResponse();
   // Drain the waitUntil promises with allSettled (not Promise.all like the
-  // online events above): offline, fetchMock rejects, so a network promise the
-  // SW hands to waitUntil rejects too. Left unhandled, Node aborts the process
-  // on the unhandled rejection and the checks below never report.
+  // online events above): offline, fetchMock rejects, so any network promise the
+  // SW hands to waitUntil rejects too. Left unhandled, Node aborts the process on
+  // the unhandled rejection and the checks below never report. Today the offline
+  // paths call waitUntil zero times (e5.waits is empty), so there is nothing to
+  // assert about a settlement — asserting an "expected rejection" on an empty
+  // array would be vacuous; this drain is defensive future-proofing for a SW
+  // change that starts backgrounding a fetch here. The offline BEHAVIOUR is
+  // pinned by the r5/r6 response checks, not by these side-channel promises.
   await Promise.allSettled(e5.waits);
   check(
     "offline uncached navigation falls back to a cached shell",

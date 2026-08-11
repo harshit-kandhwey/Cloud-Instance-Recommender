@@ -44,9 +44,16 @@ function parseArgs(argv) {
       // Validate as strictly as --port: a bare `--root` with no value would call
       // path.resolve(undefined) and throw an opaque TypeError, and later a
       // nonexistent dir fails deep in fs.realpathSync — both surface to
-      // Playwright as an unexplained webServer startup timeout.
+      // Playwright as an unexplained webServer startup timeout. A recognized flag
+      // in the value slot (`--root --port 9000`) is a missing value too, not a
+      // directory literally named "--port".
       const v = argv[++i];
-      if (typeof v !== "string" || v.trim() === "") {
+      if (
+        typeof v !== "string" ||
+        v.trim() === "" ||
+        v === "--port" ||
+        v === "--root"
+      ) {
         throw new Error(`static-server: invalid root ${JSON.stringify(v)}`);
       }
       out.root = path.resolve(v);

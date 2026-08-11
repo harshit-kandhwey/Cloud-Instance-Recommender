@@ -23,8 +23,11 @@ const FIXTURE = path.join(__dirname, "fixtures", "aws-sample.csv");
 // since Azure/GCP names don't share one shape). The family alternation includes
 // the high-memory `u-*` types and the size alternation includes `metal`, so a
 // data refresh that legitimately returns either shape does not turn this red.
+// Anchored both ends ($ not \b) so a malformed value like "m5.large-extra" cannot
+// pass on a prefix match; the xlarge multiplier is (?:[1-9]\d*)? so "m5.0xlarge"
+// (a leading-zero size that AWS never emits) is rejected too.
 const AWS_INSTANCE =
-  /^(?:u-[\w]+|[a-z]\d[a-z]*(?:-[a-z]+)?)\.(?:nano|micro|small|medium|large|metal|\d*xlarge)\b/;
+  /^(?:u-[\w]+|[a-z]\d[a-z]*(?:-[a-z]+)?)\.(?:nano|micro|small|medium|large|metal|(?:[1-9]\d*)?xlarge)$/;
 
 test("aws.html: upload → region chips → generate → export results CSV", async ({
   page,
