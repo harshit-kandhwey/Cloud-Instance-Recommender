@@ -12,11 +12,16 @@
 // below asserts that policy is present and strict, so a future weakening (or a
 // switch to bypassCSP) can't quietly hollow the gate out.
 //
-// Scope: LIGHT mode is gated at zero violations on all four pages. DARK mode is
-// gated at zero STRUCTURAL violations (color-contrast disabled) — the dark theme
-// carries pre-existing contrast debt in several components (buttons, upload
-// label, preset controls) that is tracked for a dedicated dark-mode contrast
-// pass; the util-range headings this patch fixed are accessible in BOTH themes.
+// Scope: BOTH themes are gated at zero violations on all four pages, color-contrast
+// INCLUDED. 3.10 had disabled color-contrast in dark as "tracked debt"; the 3.11
+// dark-contrast pass found that was a false positive, not real debt — the dark
+// palette is AA-compliant at rest. The apparent failures came from scanning the
+// page MID-TRANSITION: switching data-theme fires the 0.3s theme fade on every
+// element, and axe sampled colors part-way between the light and dark tokens
+// (e.g. a button caught at #959daa on #363d4e — neither the light nor the settled
+// dark value). The dark test now disables transitions before scanning so axe reads
+// the settled colors a user actually reads; with that, all four pages pass
+// color-contrast in dark with no token changes.
 
 const { test, expect } = require("@playwright/test");
 const { AxeBuilder } = require("@axe-core/playwright");
@@ -43,24 +48,33 @@ test.describe("accessibility", () => {
     });
   }
 
-  test("aws.html has no structural axe violations in dark mode", async ({
-    page,
-  }) => {
-    await page.goto("/aws.html");
-    await page.waitForSelector("#cpuUtilizationRanges");
-    await page.evaluate(() => {
-      document.documentElement.dataset.theme = "dark";
+  for (const p of PAGES) {
+    test(`${p}.html has no axe violations (dark, color-contrast included)`, async ({
+      page,
+    }) => {
+      await page.goto(`/${p}.html`);
+      await page.waitForSelector("#cpuUtilizationRanges");
+      // Freeze the 0.3s theme transition so axe reads the SETTLED dark colors,
+      // not a light→dark blend mid-fade (see file header). The injected <style>
+      // is inline; the shipped CSP allows it (style-src 'self' 'unsafe-inline'),
+      // so the scan still runs under the real policy — the CSP-integrity test
+      // below asserts that policy is intact.
+      await page.addStyleTag({
+        content:
+          "*,*::before,*::after{transition:none!important;animation:none!important}",
+      });
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = "dark";
+      });
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(
+        results.violations,
+        results.violations
+          .map((v) => `${v.impact} ${v.id} (${v.nodes.length})`)
+          .join("; "),
+      ).toEqual([]);
     });
-    // color-contrast is tracked dark-mode debt (see file header); everything
-    // else — labels, roles, names, structure — must still hold in dark.
-    const results = await new AxeBuilder({ page })
-      .disableRules(["color-contrast"])
-      .analyze();
-    expect(
-      results.violations,
-      results.violations.map((v) => `${v.impact} ${v.id}`).join("; "),
-    ).toEqual([]);
-  });
+  }
 
   test("a collapsible section is operable by keyboard", async ({ page }) => {
     await page.goto("/aws.html");
