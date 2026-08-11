@@ -1,0 +1,12 @@
+{
+  "page": "aws",
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "presets": {
+    "e2e-imported-preset": {
+      "savedAt": 1735689600000,
+      "config": {
+        "recommendationType": "likeForLike"
+      }
+    }
+  }
+}
