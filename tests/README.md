@@ -58,9 +58,12 @@ never lower it). `tests/mutation-run.js` is NOT a substitute for `run-all.js`; i
 is a fast, engine-scoped killer set that also folds in the property gate.
 
 The visual-regression gate (`tests/visual/`, `playwright-visual.config.js`) pins
-the rendered look of the four provider pages in their empty, pre-upload state, so
-an accidental CSS/layout regression fails even when every functional assertion
-still passes. It is chromium-only and kept out of `npm run test:e2e`:
+the rendered look of the four provider pages in their empty, pre-upload state
+(`pages.visual.spec.js`) plus three richer states (`states.visual.spec.js`): the
+dark theme, the region-validation chips after an upload, and the populated results
+preview table. So an accidental CSS/layout/token regression fails even when every
+functional assertion still passes. It is chromium-only and kept out of
+`npm run test:e2e`:
 
 ```bash
 npm run test:visual          # compare against the committed baselines
