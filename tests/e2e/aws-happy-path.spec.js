@@ -17,12 +17,14 @@ const { exportResultsCsv } = require("./helpers");
 
 const FIXTURE = path.join(__dirname, "fixtures", "aws-sample.csv");
 // A real AWS instance type: family letter+gen, optional suffix, a dotted size.
-// Matches m6g.xlarge, t4g.small, r8i-flex.2xlarge — but never a bare region or
-// VM name. This spec keeps the tighter POSITIVE match (the sibling provider
-// specs use the provider-agnostic expectSized instead, since Azure/GCP names
-// don't share one shape).
+// Matches m6g.xlarge, t4g.small, r8i-flex.2xlarge, m5.metal, u-6tb1.112xlarge —
+// but never a bare region or VM name. This spec keeps the tighter POSITIVE match
+// (the sibling provider specs use the provider-agnostic expectSized instead,
+// since Azure/GCP names don't share one shape). The family alternation includes
+// the high-memory `u-*` types and the size alternation includes `metal`, so a
+// data refresh that legitimately returns either shape does not turn this red.
 const AWS_INSTANCE =
-  /^[a-z]\d[a-z]*(?:-[a-z]+)?\.(?:nano|micro|small|medium|large|\d*xlarge)\b/;
+  /^(?:u-[\w]+|[a-z]\d[a-z]*(?:-[a-z]+)?)\.(?:nano|micro|small|medium|large|metal|\d*xlarge)\b/;
 
 test("aws.html: upload → region chips → generate → export results CSV", async ({
   page,

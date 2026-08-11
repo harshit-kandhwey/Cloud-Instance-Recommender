@@ -883,10 +883,21 @@ const realInstance = (v) =>
     realInstance(r0["AWS Like-to-Like Instance"]),
     r0["AWS Like-to-Like Instance"],
   );
+  // r0 requests 4 vCPU / 16 GiB. Like-to-like must MEET that on every provider
+  // (the soundness invariant), so assert both axes for all three — not just AWS
+  // vCPU. A mutant that under-sizes memory, or Azure/GCP, would otherwise survive
+  // because the bare realInstance check only proves a name is present. (Optimized
+  // is intentionally not asserted against the raw request: it sizes to
+  // utilization — here 20%/30% — so a correct optimized pick can be smaller.)
   check(
     "rec: AWS like-to-like meets requested vCPU (≥4)",
     Number(r0["AWS Like-to-Like vCPUs"]) >= 4,
     String(r0["AWS Like-to-Like vCPUs"]),
+  );
+  check(
+    "rec: AWS like-to-like meets requested memory (≥16 GiB)",
+    Number(r0["AWS Like-to-Like Memory (GiB)"]) >= 16,
+    String(r0["AWS Like-to-Like Memory (GiB)"]),
   );
   check(
     "rec: Azure like-to-like is a real instance",
@@ -894,9 +905,21 @@ const realInstance = (v) =>
     r0["AZURE Like-to-Like Instance"],
   );
   check(
+    "rec: Azure like-to-like meets requested vCPU (≥4) and memory (≥16 GiB)",
+    Number(r0["AZURE Like-to-Like vCPUs"]) >= 4 &&
+      Number(r0["AZURE Like-to-Like Memory (GiB)"]) >= 16,
+    `${r0["AZURE Like-to-Like vCPUs"]} vCPU / ${r0["AZURE Like-to-Like Memory (GiB)"]} GiB`,
+  );
+  check(
     "rec: GCP like-to-like is a real instance",
     realInstance(r0["GCP Like-to-Like Instance"]),
     r0["GCP Like-to-Like Instance"],
+  );
+  check(
+    "rec: GCP like-to-like meets requested vCPU (≥4) and memory (≥16 GiB)",
+    Number(r0["GCP Like-to-Like vCPUs"]) >= 4 &&
+      Number(r0["GCP Like-to-Like Memory (GiB)"]) >= 16,
+    `${r0["GCP Like-to-Like vCPUs"]} vCPU / ${r0["GCP Like-to-Like Memory (GiB)"]} GiB`,
   );
   check(
     "rec: optimized instance produced when utilization present",

@@ -164,10 +164,20 @@ const SCENARIOS = [
       generateOptimized: false,
     },
   },
-  // Every row walled off by a soft filter (only the t2 family is allowed, and
-  // nothing in the sample fits it), so this golden locks the No-Match path:
-  // the reason text AND the nearest-miss hint that names the filter to relax.
-  // The happy-path goldens above never exercise those columns.
+  // Every row walled off by a soft filter, so this golden locks the No-Match
+  // path: the reason text AND the nearest-miss hint that names the filter to
+  // relax. The filter is on the instance-family-NAME scale, whose values are
+  // catalogue CATEGORIES ("General purpose", "Compute optimized", ...); "t2"
+  // is not one, so the filter admits nothing and every row no-matches
+  // deterministically, and the nearest-miss reports the box you'd get by
+  // relaxing it (t4g.* at the requested size).
+  //
+  // Do NOT "correct" this to the main-family PREFIX scale
+  // (restrictMainFamilies / selectedMainFamilies with "t2"): these sample VMs
+  // are small (up to 8 vCPU / 32 GiB) and every one fits a real t2 box
+  // (t2.xlarge = 4/16, t2.2xlarge = 8/32, ...), so the prefix scale would let
+  // them MATCH and defeat the No-Match lock this golden exists to hold.
+  // The happy-path goldens above never exercise these columns.
   {
     file: "aws-nearest-miss.csv",
     providers: ["aws"],

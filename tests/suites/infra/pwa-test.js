@@ -239,6 +239,11 @@ process.exitCode = 1;
   const e5 = makeEvent(req("never-visited.html", { mode: "navigate" }));
   handlers.fetch(e5);
   const r5 = await e5.getResponse();
+  // Drain the waitUntil promises with allSettled (not Promise.all like the
+  // online events above): offline, fetchMock rejects, so a network promise the
+  // SW hands to waitUntil rejects too. Left unhandled, Node aborts the process
+  // on the unhandled rejection and the checks below never report.
+  await Promise.allSettled(e5.waits);
   check(
     "offline uncached navigation falls back to a cached shell",
     r5 && r5.url === "index.html",
@@ -249,6 +254,7 @@ process.exitCode = 1;
   const e6 = makeEvent(req("js/gcp/regions/never.js"));
   handlers.fetch(e6);
   const r6 = await e6.getResponse();
+  await Promise.allSettled(e6.waits);
   check(
     "offline uncached subresource returns an error response",
     r6 && r6._isError === true,

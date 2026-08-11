@@ -806,8 +806,8 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
   run("applyPresetConfig(__cfg)");
   check(
     "a single-provider page applies its native value unchanged",
-    els.ruleDefaultMinGen.value === "5",
-    els.ruleDefaultMinGen.value,
+    els.ruleDefaultMinGen?.value === "5",
+    String(els.ruleDefaultMinGen?.value),
   );
   delete sandbox.showToast;
 }

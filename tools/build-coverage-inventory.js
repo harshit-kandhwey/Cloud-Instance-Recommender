@@ -189,6 +189,11 @@ function collectExecuted(labels) {
       fs.mkdirSync(dir, { recursive: true });
       const res = spawnSync(process.execPath, [path.join(suitesDir, label)], {
         encoding: "utf8",
+        // Pin the child CWD to the repo root: discovery uses an absolute suite
+        // path, but a suite that opens a fixture by relative path would fail if
+        // this tool were run from anywhere else — surfacing as a coverage-pass
+        // abort, not a suite bug.
+        cwd: REPO,
         // Coverage lands in NODE_V8_COVERAGE files, not stdout — the child's
         // console output is pure logging we never read. Discard it so a verbose
         // suite cannot exceed the default 1 MiB maxBuffer, which would kill the

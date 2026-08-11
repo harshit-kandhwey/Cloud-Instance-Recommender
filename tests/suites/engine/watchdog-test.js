@@ -93,9 +93,13 @@ function check(name, cond, detail) {
   check(
     // Small lower tolerance: Node timers can fire a hair before the requested
     // delay when measured with Date.now(), which would flake this bound. The
-    // upper bound still proves the fallback settled before the safety net.
+    // upper bound is watchdogMs * 4, NOT testTimeoutMs: Promise.race already
+    // rejects at testTimeoutMs, so `elapsed < testTimeoutMs` holds for every
+    // resolved result and proves nothing — a fallback that took ~2s instead of
+    // ~300ms would slip through. Binding it to a small multiple of the watchdog
+    // catches a fallback that fired late but still under the safety net.
     "watchdog used the short test timeout before fallback",
-    elapsed >= watchdogMs - 5 && elapsed < testTimeoutMs,
+    elapsed >= watchdogMs - 5 && elapsed < watchdogMs * 4,
     `${elapsed}ms`,
   );
   check(
