@@ -101,5 +101,11 @@ test.describe("accessibility", () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("connect-src 'none'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+    // The dark-mode scan injects an inline <style> to freeze transitions, which
+    // only runs under the real policy because style-src allows 'unsafe-inline'.
+    // Assert the exact value so a broadened style-src can't weaken the shipped
+    // CSP while this gate stays green (and so the future strict-CSP migration,
+    // which drops 'unsafe-inline', is forced to update this scan deliberately).
+    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
   });
 });

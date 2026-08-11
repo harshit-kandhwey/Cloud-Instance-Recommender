@@ -14,8 +14,8 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 57 | 231 | 288 |
-| Waived | 23 | 0 | 23 |
+| Covered | 58 | 231 | 289 |
+| Waived | 22 | 0 | 22 |
 | Uncovered | 0 | 114 | 114 |
 | **Total** | 80 | 345 | 425 |
 
@@ -226,7 +226,7 @@ waiver still records the reason.
 | `getSelectedMainFamilies` | js/aws/aws-specific.js, js/base/form-controls.js | function | internal | uncovered | — |
 | `getSelectedProcessorManufacturers` | js/aws/aws-specific.js, js/base/form-controls.js | function | internal | uncovered | — |
 | `handleFileUpload` | js/base/ingest.js | function | behavioral | waived | _waived: input[type=file] change wrapper that hands the File to ingestFile. ingestFile is covered by upload-guards-test.js, xlsx-ingest-test.js and sheet-picker-test.js; this is the one-line event wiring. browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
-| `handlePresetImportFile` | js/base/presets.js | function | behavioral | waived | _waived: FileReader wrapper that hands the file text to applyPresetImportText (covered by presets-test.js) and resets the input so the same file re-fires. FileReader/DOM wiring only; its browser residual is now VERIFIED end-to-end by tests/e2e/preset-interaction.spec.js (which runs outside this V8-instrumented node run)._ |
+| `handlePresetImportFile` | js/base/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `handleRecommendationTypeChange` | js/base/form-controls.js | function | behavioral | waived | _waived: Show/hide of #optimizationControls off the recommendation-type radio. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `headerSignature` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `hideDataToast` | js/base/app-core.js | function | internal | uncovered | — |

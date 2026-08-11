@@ -87,5 +87,10 @@ test.describe("aws.html: filter-preset interaction", () => {
         hasText: "e2e-imported-preset",
       }),
     ).toHaveCount(1);
+    // NOTE: handlePresetImportFile also resets the input value so re-picking the
+    // SAME file re-fires change. That reset is NOT verifiable here — Playwright's
+    // setFiles force-dispatches change regardless of the value, so a broken reset
+    // would still pass. It is verified in a node suite instead (ui/presets-test.js,
+    // "import resets the file input"), where the event object is controllable.
   });
 });

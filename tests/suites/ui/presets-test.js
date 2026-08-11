@@ -110,6 +110,16 @@ const sandbox = {
 };
 sandbox.window = sandbox;
 sandbox.currentSourcePage = () => sandbox.__page;
+// handlePresetImportFile creates a FileReader; a real one is browser-only. This
+// stub fires onload synchronously with the file's text, so the reset line that
+// runs right after readAsText in that handler is observable immediately.
+sandbox.FileReader = class {
+  readAsText(file) {
+    const t = file && typeof file.text === "function" ? file.text() : "";
+    this.result = t; // the handler reads reader.result, not the event arg
+    if (this.onload) this.onload({ target: { result: t } });
+  }
+};
 // Provided by app-core.js on a real page. Stubbed rather than loaded, because
 // app-core's `let selectedProviders` would shadow the sandbox array these tests
 // assert against. The real helper is covered by the suites that do load
@@ -644,6 +654,26 @@ check(
 check(
   "imported preset keeps its original savedAt",
   run(`presetsForPage()["Alpha"].savedAt`) === 5,
+);
+
+// handlePresetImportFile (the FileReader wrapper the E2E cannot faithfully cover,
+// since Playwright's setFiles force-dispatches change regardless of the input
+// value) must reset event.target.value so re-picking the SAME file re-fires the
+// change event. Drive it with a controllable event and assert both the import
+// landed (the wrapper ran end to end) and the value was cleared.
+sandbox.__page = "aws";
+run(
+  `__resetEv = { target: { files: [{ text: () => '{"page":"aws","presets":{"ResetProbe":{"savedAt":9,"config":{}}}}' }], value: "C:/fake/presets.json" } }; handlePresetImportFile(__resetEv);`,
+);
+check(
+  "handlePresetImportFile imported the file (wrapper ran end to end)",
+  !!run(`presetsForPage()["ResetProbe"]`),
+  els.presetStatus.textContent,
+);
+check(
+  "handlePresetImportFile resets the input value so the same file re-fires change",
+  run("__resetEv.target.value") === "",
+  `value=${JSON.stringify(run("__resetEv.target.value"))}`,
 );
 
 // ── Legacy multi-cloud Min Gen migration ────────────────────────────────────
