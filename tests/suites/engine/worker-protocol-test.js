@@ -182,6 +182,37 @@ vm.runInContext(
     typeof workerCtx.getInstanceRecommendationWithSelector === "function",
   );
 
+  // ── Region-identity invariant: the worker preserves the region SET ──────────
+  // The setup count check above (distinct sample regions === REGION_FILES length)
+  // is necessary but not sufficient: equal counts can hide a mismatched key. The
+  // stronger invariant is set equality between (a) the region keys the worker's
+  // OWN selector derives from the raw sample-CSV region strings and (b) the region
+  // data files the worker was handed. Crucially the normalization is read LIVE off
+  // InstanceSelectorFactory — the exact factory the worker importScripts — not a
+  // copy in the test, so a change to any provider's normalizeRegionForJS (the
+  // hyphen→underscore, the Azure display-name map, the GCP zone-strip) surfaces
+  // here as a real diff instead of drifting silently. This was deferred from 3.10
+  // (round 9) precisely because a naive raw compare fails — "us-east-1" the sample
+  // uses is not "us_east_1" the file is keyed by until normalizeRegionForJS runs.
+  const sampleRows = parseSample();
+  for (const p of PROVIDERS) {
+    const selector = workerCtx.InstanceSelectorFactory.createSelector(p);
+    const derived = new Set(
+      sampleRows
+        .map((r) => r[SAMPLE_REGION_COL[p]])
+        .filter(Boolean)
+        .map((region) => selector.normalizeRegionForJS(region)),
+    );
+    const loaded = new Set(REGION_FILES[p]);
+    const equal =
+      derived.size === loaded.size && [...derived].every((k) => loaded.has(k));
+    check(
+      `${p}: worker region-set identity (live-normalized sample === loaded files)`,
+      equal,
+      `derived={${[...derived].sort().join(",")}} loaded={${[...loaded].sort().join(",")}}`,
+    );
+  }
+
   // The worker gets copies, not references. structuredClone is the algorithm
   // postMessage actually uses — more faithful than a JSON round-trip, which would
   // stringify Dates and drop undefined/functions, exercising a different shape
