@@ -36,6 +36,7 @@ const APP_SCRIPTS = [
   "js/base/manual-entry.js",
   "js/base/form-controls.js",
   "js/base/generate.js",
+  "js/base/user-rules-ui.js",
   "js/base/preview.js",
   "js/base/charts.js",
   "js/base/downloads.js",
