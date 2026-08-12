@@ -947,6 +947,37 @@ function computeFitHeadroom(row, provider) {
   };
 }
 
+// Workload shape — the memory-per-vCPU ratio of the SOURCE VM, sorted into the
+// same three buckets the instance families themselves fall into, so a
+// recommendation can say WHY a family fits rather than only that it did: a box
+// carrying a lot of RAM per core is memory-optimized work and belongs on an
+// r/E/M-family; a lean-RAM box is compute-optimized and belongs on a c/F/C2-
+// family; everything between is general. Provider-agnostic on purpose — it reads
+// only the provisioned CPU Count / Memory (GB), never any provider's instance —
+// so the App Portfolio family-mix rollup (a later minor) can classify the same
+// rows from the same numbers. Returns null when either figure is missing or
+// non-positive (a row with nothing to classify), never a guessed bucket.
+//
+// The boundaries are inclusive and pinned by the suite: <=2.5 GB/vCPU is
+// compute-optimized, >=6 is memory-optimized. They bracket the general band the
+// mainline families sit in (~4 GB/vCPU) with clear room either side before a row
+// is called one shape or the other.
+const WORKLOAD_SHAPE_COMPUTE_MAX = 2.5;
+const WORKLOAD_SHAPE_MEMORY_MIN = 6;
+function classifyWorkloadShape(cpu, mem) {
+  const c = parseFloat(cpu);
+  const m = parseFloat(mem);
+  if (isNaN(c) || isNaN(m) || c <= 0 || m <= 0) return null;
+  const ratio = m / c;
+  const shape =
+    ratio <= WORKLOAD_SHAPE_COMPUTE_MAX
+      ? "compute"
+      : ratio >= WORKLOAD_SHAPE_MEMORY_MIN
+        ? "memory"
+        : "general";
+  return { shape, ratio };
+}
+
 // ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
 // The engine already works out, per unmatched row, which soft-filter group kept
 // the otherwise-fitting instance out ("Nearest Miss" column). This turns that

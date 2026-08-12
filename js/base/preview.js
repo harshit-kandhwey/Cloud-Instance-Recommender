@@ -78,6 +78,34 @@ function _rightsizeVerdictHtml(row, col) {
   return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${arrow} ${word}</span>`;
 }
 
+// The workload-shape flag that trails the provisioned Memory (GB) cell: how much
+// RAM the source VM carries per vCPU, sorted into the same compute / general /
+// memory buckets the instance families fall into (classifyWorkloadShape). It
+// explains WHY a skewed row lands on a c- or r-family rather than a general one —
+// the ratio the engine's family preference is really acting on, made visible.
+// Display-only, like the fit and verdict flags — nothing here reaches a download.
+// Silent on the general band, and for the same reason the verdict is silent on
+// "same size": a badge on the majority of rows is noise, and "general" explains
+// nothing a reader would not already assume, so only the two skewed shapes — the
+// ones that actually steer the family — are marked. The colours are the
+// contrast-checked CPU / memory label tokens (indigo / teal), so the flag reads
+// as a neutral classification, never borrowing the verdict's good/amber meaning.
+function _workloadShapeHtml(row) {
+  if (typeof classifyWorkloadShape !== "function") return "";
+  const s = classifyWorkloadShape(
+    row[COLUMN_MAPPINGS.cpu],
+    row[COLUMN_MAPPINGS.memory],
+  );
+  if (!s || s.shape === "general") return "";
+
+  const memory = s.shape === "memory";
+  const color = memory ? "var(--util-label-mem)" : "var(--util-label-cpu)";
+  const word = memory ? "Memory-optimized" : "Compute-optimized";
+  const perCpu = Math.round(s.ratio * 10) / 10;
+  const label = `${word} shape: ${perCpu} GB RAM per vCPU — steers this row toward a ${memory ? "memory" : "compute"}-optimized family`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${word}</span>`;
+}
+
 // The stats bar describes the whole result set, so it does not change when the
 // preview is filtered or re-sorted — but it was being rebuilt on every debounced
 // keystroke and every sort click, rescanning every row for rules, matches and
@@ -608,6 +636,15 @@ function _renderPreviewTable(
         cellContent =
           val !== "" && val !== undefined
             ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
+            : '<span style="color:var(--text-disabled)">—</span>';
+      } else if (col === COLUMN_MAPPINGS.memory) {
+        // The provisioned-memory input cell trails the workload-shape flag: it is
+        // the numerator of the RAM-per-vCPU ratio the flag reports, so the badge
+        // reads naturally beside the number it is derived from.
+        const shape = _workloadShapeHtml(row);
+        cellContent =
+          val !== "" && val !== undefined
+            ? `${escapeHtml(String(val))}${shape}`
             : '<span style="color:var(--text-disabled)">—</span>';
       } else {
         cellContent =
