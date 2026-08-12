@@ -14,6 +14,7 @@ self.window = self;
 
 importScripts(
   "rule-engine.js",
+  "user-rules.js",
   "base-instance-selector.js",
   "../aws/aws-instance-selector.js",
   "../azure/azure-instance-selector.js",

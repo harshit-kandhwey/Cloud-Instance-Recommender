@@ -24,6 +24,7 @@ const REPO = path.resolve(__dirname, "..", "..");
 
 const APP_SCRIPTS = [
   "js/base/rule-engine.js",
+  "js/base/user-rules.js",
   "js/base/base-instance-selector.js",
   "js/aws/aws-instance-selector.js",
   "js/azure/azure-instance-selector.js",

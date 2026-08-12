@@ -154,6 +154,11 @@ async function processRecommendations() {
   // same controls, per generate, for one snapshot that cannot change mid-read.
   const ruleDefaults = getRuleDefaults();
 
+  // User-defined rules for this page (conditional per-row Exclude / Include Only).
+  // Snapshotted once and passed to the worker in options.userRules; the factory
+  // evaluates them per row. Empty when the user has authored none.
+  const userRules = typeof loadUserRules === "function" ? loadUserRules() : [];
+
   // Prepare options with comprehensive filtering and recommendation type control
   const options = {
     // **NEW: Recommendation type control**
@@ -243,6 +248,10 @@ async function processRecommendations() {
     // the workload assigned to their app in the mapping panel (plain object,
     // safe to postMessage into the worker). Omitted when the map is empty.
     ...(Object.keys(appWorkloadMap).length ? { appWorkloadMap } : {}),
+
+    // User-defined conditional rules (plain objects, safe to postMessage into the
+    // worker). Omitted when none are authored, so an ordinary run is unaffected.
+    ...(userRules.length ? { userRules } : {}),
   };
 
   console.log("Processing options:", {

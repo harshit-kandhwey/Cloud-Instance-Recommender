@@ -241,6 +241,39 @@ window.getInstanceRecommendationWithSelector = async function (
             .map((t) => t.trim())
             .filter(Boolean)
         : [];
+      // User-defined rules: conditionals the user authored ("if ENV=production,
+      // exclude t3"). Each rule whose dimension matches this row contributes its
+      // tokens to the row's Exclude / Include Only — the same machinery the CSV
+      // columns feed — and its label to the Rules Applied column (below). The
+      // Include Only tokens JOIN the column's allow-list (a union: any listed
+      // family is acceptable), while Exclude tokens add to what is dropped.
+      let userRuleLabels = [];
+      let userExcludeExtra = [];
+      let userIncludeOnly = [];
+      if (
+        options.userRules &&
+        options.userRules.length &&
+        typeof evaluateUserRules === "function"
+      ) {
+        const ev = evaluateUserRules(
+          {
+            env: rowEnv,
+            os: rowOS,
+            workload: rowWorkload,
+            compliance: rowCompliance,
+          },
+          options.userRules,
+        );
+        userRuleLabels = ev.fired;
+        userExcludeExtra = ev.excludeTokens.map((t) => ({ provider, type: t }));
+        userIncludeOnly = ev.includeOnlyTokens;
+      }
+      const mergedExclude = [
+        ...(options.excludeTypes || []),
+        ...rowExcludeExtra,
+        ...userExcludeExtra,
+      ];
+      const mergedIncludeOnly = [...rowIncludeOnly, ...userIncludeOnly];
       const rowOptions = {
         ...options,
         rowEnv,
@@ -254,11 +287,11 @@ window.getInstanceRecommendationWithSelector = async function (
         // sizing pass keyed on it must not disagree about what the row read.
         rowCpuUtil: util.cpu,
         rowMemoryUtil: util.memory,
-        excludeTypes: rowExcludeExtra.length
-          ? [...(options.excludeTypes || []), ...rowExcludeExtra]
+        excludeTypes: mergedExclude.length
+          ? mergedExclude
           : options.excludeTypes,
-        includeOnlyTypes: rowIncludeOnly.length
-          ? rowIncludeOnly
+        includeOnlyTypes: mergedIncludeOnly.length
+          ? mergedIncludeOnly
           : options.includeOnlyTypes,
       };
 
@@ -375,6 +408,17 @@ window.getInstanceRecommendationWithSelector = async function (
                 "No CPU/Memory utilization data in CSV";
             }
           }
+        }
+
+        // Any user-defined rules that fired for this row are named in the Rules
+        // Applied column alongside the built-in rules, so a conditional the user
+        // authored is as visible as one the engine ships. Prepended once here so
+        // it covers both the like-to-like and optimized-only assignments above.
+        if (userRuleLabels.length) {
+          const key = `${providerUpper} Rules Applied`;
+          result[key] = [userRuleLabels.join(" | "), result[key] || ""]
+            .filter(Boolean)
+            .join(" | ");
         }
 
         // Alternative-strategy picks (Most Cost Optimized / Workload Based /
