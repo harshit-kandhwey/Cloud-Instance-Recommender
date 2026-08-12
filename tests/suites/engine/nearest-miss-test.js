@@ -325,10 +325,24 @@ console.log("[relax controls cover every probe label]");
   );
   const mapSrc = coreSrc.slice(mapStart, mapEnd);
 
+  // Per-row probes are backed by a CSV column, not a run-level control, so they
+  // are deliberately NOT one-click relaxable — the user edits the column, there
+  // is no checkbox to flip. They still PROBE (the Nearest Miss must name them),
+  // so they appear in _nearestMissProbes but carry no RELAX_CONTROLS entry.
+  const PER_ROW_PROBES = ["include-only list"];
   check(
-    "every probe label has a relax control",
+    "every run-level probe label has a relax control",
     probeLabels.length > 0 &&
-      probeLabels.every((l) => mapSrc.includes(`"${l}"`)),
+      probeLabels
+        .filter((l) => !PER_ROW_PROBES.includes(l))
+        .every((l) => mapSrc.includes(`"${l}"`)),
+    `labels=${JSON.stringify(probeLabels)}`,
+  );
+  // The exemption cannot rot into a typo: each name it excuses must actually be a
+  // probe label the engine emits.
+  check(
+    "each exempted per-row probe is a real probe label",
+    PER_ROW_PROBES.every((l) => probeLabels.includes(l)),
     `labels=${JSON.stringify(probeLabels)}`,
   );
   // Tolerate any indent depth (a reformat/nesting must not silently drop the

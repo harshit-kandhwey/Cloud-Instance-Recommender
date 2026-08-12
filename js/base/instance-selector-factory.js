@@ -229,6 +229,18 @@ window.getInstanceRecommendationWithSelector = async function (
             .map((t) => ({ provider, type: t.trim() }))
             .filter((e) => e.type)
         : [];
+      // Per-row Include Only: the symmetric twin of Exclude — an allow-list of
+      // families/types this VM may land on ("m5, m6", "burstable"), applied as an
+      // intersection with the run-level filters (see applyFilters). Row-level only
+      // for now (the run-level allow-list UI is a later minor), so these are plain
+      // token strings scoped to the provider whose pool is being filtered.
+      const rowIncludeRaw = (row["Include Only"] || "").trim();
+      const rowIncludeOnly = rowIncludeRaw
+        ? rowIncludeRaw
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
       const rowOptions = {
         ...options,
         rowEnv,
@@ -245,6 +257,9 @@ window.getInstanceRecommendationWithSelector = async function (
         excludeTypes: rowExcludeExtra.length
           ? [...(options.excludeTypes || []), ...rowExcludeExtra]
           : options.excludeTypes,
+        includeOnlyTypes: rowIncludeOnly.length
+          ? rowIncludeOnly
+          : options.includeOnlyTypes,
       };
 
       if (!region || cpu === 0 || memory === 0) {

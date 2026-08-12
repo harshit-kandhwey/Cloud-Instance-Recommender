@@ -280,6 +280,37 @@ prop(
   },
 );
 
+// ── P5: Include Only — a matched box is always within the allow-list ────────
+// Plain pool + an allow-list drawn from the pool's own families. Two claims at
+// once: SOUNDNESS (a matched pick's family is one the list allows — the engine
+// never leaks a box outside it) and HONESTY (No-Match exactly when nothing in
+// the list also meets the size). The oracle recomputes both from the pool. The
+// allow-list uses the exact family tokens the plain pool draws from; the matcher
+// keys on instanceType.includes(token), and no plain family name is a substring
+// of another's, so token m5 ⇔ family m5 here — the oracle can compare families.
+const includeOnlyInputs = fc.record({
+  cpu: vcpu,
+  memReq: mem,
+  allow: fc.subarray(["m5", "m6i", "c5", "c6i", "r5", "r6i"], { minLength: 1 }),
+});
+
+prop(
+  "P5 include-only — a match is always within the list, and no-match iff nothing in the list fits",
+  fc.tuple(plainPool, includeOnlyInputs),
+  ([pool, { cpu, memReq, allow }]) => {
+    const r = pick(pool, cpu, memReq, { includeOnlyTypes: allow });
+    const allowSet = new Set(allow);
+    const anyFitsInList = pool.some(
+      (i) => i.vCpus >= cpu && i.memory >= memReq && allowSet.has(i.family),
+    );
+    const matched = r.instanceType !== NO_MATCH;
+    if (matched !== anyFitsInList) return false;
+    if (!matched) return true;
+    // The pick's family (instanceType is `${fam}.n${idx}`) must be allowed.
+    return allowSet.has(String(r.instanceType).split(".")[0]);
+  },
+);
+
 console.log(
   state.failures
     ? `\nengine-invariants: ${state.failures} propert${state.failures === 1 ? "y" : "ies"} FAILED`

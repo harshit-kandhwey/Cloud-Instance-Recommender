@@ -495,6 +495,67 @@ class BaseInstanceSelector {
     };
   }
 
+  // The name a per-row Exclude / Include Only token carries, normalised. A token
+  // arrives either as a plain string ("m5", "burstable") or as a { provider, type }
+  // object (the run-level Exclude shape).
+  _typeTokenName(item) {
+    return (typeof item === "string" ? item : (item && item.type) || "")
+      .toLowerCase()
+      .trim();
+  }
+
+  // A provider-tagged token (the run-level Exclude shape) applies only to its
+  // provider; a plain string token applies everywhere. Row-level tokens are plain
+  // strings, so they always apply to the provider whose pool is being filtered.
+  _typeTokenAppliesTo(item, providerName) {
+    const p =
+      item && typeof item === "object"
+        ? (item.provider || "").toLowerCase()
+        : "";
+    return !p || p === providerName;
+  }
+
+  // True when `instance` matches the token `name` (already normalised) for this
+  // provider. The SINGLE vocabulary behind both the per-row Exclude (drop on
+  // match) and the per-row Include Only allow-list (keep only on match), so the
+  // two controls can never disagree about what "burstable", "gpu" or "m5" means.
+  // "gpu" is deliberately the BROAD accelerator match (isAccelerator), the same
+  // classifier the GPU-workload rule uses, so excluding — or allow-listing — "gpu"
+  // also covers FPGA/ML-ASIC/media accelerators; "fpga" is the narrower escape.
+  _matchesTypeToken(instance, name, providerName) {
+    if (!name) return false;
+    const fam = (instance.family || "").toLowerCase();
+    const instType = (instance.instanceType || "").toLowerCase();
+    const familyName = (instance.familyName || "").toLowerCase();
+    switch (name) {
+      case "burstable":
+        return typeof RuleEngine !== "undefined"
+          ? RuleEngine.isBurstable(instance, providerName)
+          : fam.startsWith("t");
+      case "graviton":
+      case "arm":
+        return typeof RuleEngine !== "undefined"
+          ? RuleEngine.isARM(instance)
+          : instance.isGraviton === 1 || instance.isGraviton === 1.0;
+      case "gpu":
+        return typeof RuleEngine !== "undefined"
+          ? RuleEngine.isAccelerator(instance, providerName)
+          : familyName.includes("gpu") || familyName.includes("accelerat");
+      case "fpga":
+        return providerName === "aws" && familyName
+          ? familyName.includes("fpga")
+          : providerName === "aws" && fam.startsWith("f");
+      case "mac":
+        return fam.startsWith("mac");
+      case "previous generation":
+        return typeof RuleEngine !== "undefined"
+          ? !RuleEngine.isCurrentGen(instance)
+          : instance.generation !== 1 && instance.generation !== "1.0";
+      default:
+        return instType.includes(name);
+    }
+  }
+
   // Apply common filters
   applyFilters(instances, currentCpu, currentMemory, options) {
     let filtered = instances.filter((instance) => {
@@ -536,68 +597,46 @@ class BaseInstanceSelector {
         }
       }
 
-      // Exclude types
+      // Exclude types (per-row Exclude ∪ run-level exclude): drop an instance
+      // that matches ANY token, through the shared token matcher.
       if (options.excludeTypes?.length > 0) {
         const providerName = this.getProviderName().toLowerCase();
         if (
-          options.excludeTypes.some((excludeItem) => {
-            if (excludeItem == null) return false;
-            const typeName = (
-              typeof excludeItem === "string"
-                ? excludeItem
-                : excludeItem.type || ""
-            )
-              .toLowerCase()
-              .trim();
-            if (!typeName) return false;
-            const itemProvider =
-              typeof excludeItem === "object"
-                ? (excludeItem.provider || "").toLowerCase()
-                : "";
-            if (itemProvider && itemProvider !== providerName) return false;
+          options.excludeTypes.some(
+            (item) =>
+              item != null &&
+              this._typeTokenAppliesTo(item, providerName) &&
+              this._matchesTypeToken(
+                instance,
+                this._typeTokenName(item),
+                providerName,
+              ),
+          )
+        ) {
+          return false;
+        }
+      }
 
-            const fam = (instance.family || "").toLowerCase();
-            const instType = (instance.instanceType || "").toLowerCase();
-            const familyName = (instance.familyName || "").toLowerCase();
-
-            switch (typeName) {
-              case "burstable":
-                return typeof RuleEngine !== "undefined"
-                  ? RuleEngine.isBurstable(instance, providerName)
-                  : fam.startsWith("t");
-              case "graviton":
-              case "arm":
-                return typeof RuleEngine !== "undefined"
-                  ? RuleEngine.isARM(instance)
-                  : instance.isGraviton === 1 || instance.isGraviton === 1.0;
-              // "Exclude GPU" is deliberately the BROAD accelerator exclude:
-              // one classifier (isAccelerator) backs both this filter and the
-              // GPU-workload rule, so the two can never disagree about what an
-              // accelerator is — and excluding "GPU" therefore also drops FPGA,
-              // ML-ASIC and media accelerators. That is the safe reading: it
-              // stops the workload rule from silently substituting an FPGA for
-              // a GPU workload. The narrower "fpga" case below is the escape
-              // hatch for dropping FPGA alone; the UI descriptions spell out
-              // this breadth so the two controls are not read as independent.
-              case "gpu":
-                return typeof RuleEngine !== "undefined"
-                  ? RuleEngine.isAccelerator(instance, providerName)
-                  : familyName.includes("gpu") ||
-                      familyName.includes("accelerat");
-              case "fpga":
-                return providerName === "aws" && familyName
-                  ? familyName.includes("fpga")
-                  : providerName === "aws" && fam.startsWith("f");
-              case "mac":
-                return fam.startsWith("mac");
-              case "previous generation":
-                return typeof RuleEngine !== "undefined"
-                  ? !RuleEngine.isCurrentGen(instance)
-                  : instance.generation !== 1 && instance.generation !== "1.0";
-              default:
-                return instType.includes(typeName);
-            }
-          })
+      // Include Only (per-row allow-list): the symmetric twin of Exclude — keep an
+      // instance ONLY if it matches a token in the list, read through the SAME
+      // matcher so "burstable" or "m5" can never mean one thing here and another
+      // in Exclude. Row-level and run-level both apply: this narrows the pool the
+      // family / processor restrictions above already narrowed (intersection), so
+      // a conflict empties the pool and the row is a No-Match naming the list —
+      // never a silent override of a run-level filter.
+      if (options.includeOnlyTypes?.length > 0) {
+        const providerName = this.getProviderName().toLowerCase();
+        if (
+          !options.includeOnlyTypes.some(
+            (item) =>
+              item != null &&
+              this._typeTokenAppliesTo(item, providerName) &&
+              this._matchesTypeToken(
+                instance,
+                this._typeTokenName(item),
+                providerName,
+              ),
+          )
         ) {
           return false;
         }
@@ -716,6 +755,14 @@ class BaseInstanceSelector {
       {
         label: "exclude types",
         opts: pick(["excludeTypes", "excludeGraviton", "excludeARM"]),
+      },
+      {
+        // Per-row allow-list. No run-level control backs it, so it is never
+        // offered as a one-click "relax" (RELAX_CONTROLS has no entry) — but
+        // naming it in the Nearest Miss tells the user the row's own Include Only
+        // column is what kept the fitting instance out.
+        label: "include-only list",
+        opts: pick(["includeOnlyTypes"]),
       },
     ];
   }
