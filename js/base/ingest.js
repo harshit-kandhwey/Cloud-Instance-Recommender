@@ -1653,15 +1653,25 @@ function analyzeInputHygiene(rows) {
       },
     ];
     for (const dim of RULE_DIMENSIONS) {
-      const col = dim.cols.find((c) => present(c));
-      if (!col) continue;
+      // Scan EVERY present synonym column, not just the first: a file that
+      // carries both "ENV" and "Environment" can hide a typo in the second, and
+      // a lost constraint in a column we skipped is exactly what this check
+      // exists to surface.
+      const presentCols = dim.cols.filter((c) => present(c));
+      if (presentCols.length === 0) continue;
       const allowed = new Set(dim.allow.map((v) => v.toLowerCase()));
       const byValue = new Map(); // distinct raw value → the rows carrying it
       rows.forEach((row, i) => {
-        const raw = String(row[col] ?? "").trim();
-        if (!raw || allowed.has(raw.toLowerCase())) return;
-        if (!byValue.has(raw)) byValue.set(raw, []);
-        byValue.get(raw).push(dataRowNumber(i));
+        // The same value in two synonym columns of one row (ENV and Environment
+        // both "Prd") names that row once, not twice.
+        const seen = new Set();
+        for (const col of presentCols) {
+          const raw = String(row[col] ?? "").trim();
+          if (!raw || allowed.has(raw.toLowerCase()) || seen.has(raw)) continue;
+          seen.add(raw);
+          if (!byValue.has(raw)) byValue.set(raw, []);
+          byValue.get(raw).push(dataRowNumber(i));
+        }
       });
       for (const [raw, rowNumbers] of byValue) {
         note(

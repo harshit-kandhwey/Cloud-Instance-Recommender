@@ -409,6 +409,63 @@ d,4,16,us-east-1,Sandbox`,
   );
 }
 
+console.log("[both ENV synonym columns are scanned when a file carries both]");
+{
+  const { ctx, elements } = buildContext();
+  // A file with BOTH ENV and Environment columns: a typo in EITHER is a lost
+  // constraint, so scanning only the first would miss the second. Row 2's typo
+  // is in ENV, row 3's in Environment, and row 4 carries the SAME typo in both
+  // columns — which must be named once, not twice.
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region,ENV,Environment
+a,4,16,us-east-1,Prd,Production
+b,4,16,us-east-1,Production,Staaging
+c,4,16,us-east-1,Zzz,Zzz`,
+  );
+  const html = panel(elements).innerHTML;
+  check(
+    "a typo in the first ENV column is named",
+    /ENV &quot;Prd&quot; not recognized[^<]*1 row \(2\)/.test(html),
+    html,
+  );
+  check(
+    "a typo in the second (Environment) column is named",
+    /ENV &quot;Staaging&quot; not recognized[^<]*1 row \(3\)/.test(html),
+    html,
+  );
+  check(
+    "the same typo in both columns of one row is named once, not twice",
+    /ENV &quot;Zzz&quot; not recognized[^<]*1 row \(4\)/.test(html),
+    html,
+  );
+}
+
+console.log(
+  "[OS is never scanned for unrecognized values — every non-Windows/Mac OS is the Linux default]",
+);
+{
+  const { ctx, elements } = buildContext();
+  // A wholly unknown OS string — neither Windows, Mac, nor a recognisable Linux
+  // distro — must STILL raise no warning. The engine treats everything but
+  // windows/macos as the Linux default, so an "unrecognized" OS is no lost
+  // constraint, and flagging it would fire on nearly every real inventory.
+  // RuleEngine.RECOGNIZED.os exists, but the hygiene scan deliberately omits OS;
+  // this pins that omission so a future edit cannot quietly wire OS in.
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region,OS
+a,4,16,us-east-1,TempleOS
+b,4,16,us-east-1,Solaris`,
+  );
+  const html = panel(elements).innerHTML;
+  check(
+    "even a wholly unknown OS raises no unrecognized-value warning",
+    !/OS &quot;/.test(html) && !/no OS rule/.test(html),
+    html,
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = state.failures ? 1 : 0;
