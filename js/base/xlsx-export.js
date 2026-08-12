@@ -245,3 +245,180 @@ function downloadResultsXlsx() {
       }
     });
 }
+
+// ─── Input template (.xlsx) ─────────────────────────────────────────────────
+// A ready-to-fill workbook for building an inventory: the canonical column
+// headers (so an upload maps with nothing to fix), two example rows, and an
+// "Allowed values" sheet documenting the closed-enum vocabularies the rule
+// engine recognises. The vocabularies are read LIVE from RuleEngine.RECOGNIZED,
+// so the documentation can never drift from what apply() actually matches.
+//
+// Why documentation and not in-cell dropdowns: a write/read round-trip spike
+// confirmed the vendored SheetJS builds (Community 0.20.3 and the xlsx-js-style
+// fork 0.18.5) silently DROP a `!dataValidation` on write — data-validation is a
+// SheetJS Pro feature. So the closed enums are DOCUMENTED on their own sheet
+// rather than enforced in-cell; step 1's upload-time hygiene warning is what
+// actually catches an unrecognised value, template or not.
+
+// The canonical input columns, in authoring order. Mirrors downloadSampleCSV's
+// column set (ingest.js) with the per-row Include Only allow-list added — the
+// input-template suite asserts the two stay in step.
+const INPUT_TEMPLATE_COLUMNS = [
+  "VM Name",
+  "App Name",
+  "CPU Count",
+  "Memory (GB)",
+  "CPU Utilization",
+  "Memory Utilization",
+  "AWS Region",
+  "Azure Region",
+  "GCP Region",
+  "ENV",
+  "OS",
+  "Workload",
+  "Compliance",
+  "AWS Min Gen",
+  "Azure Min Gen",
+  "GCP Min Gen",
+  "Exclude",
+  "Include Only",
+  "Current Instance Type",
+];
+
+// Two example rows. Every closed-enum cell uses a recognised value (the suite
+// checks this against RuleEngine.RECOGNIZED), and the second row demonstrates a
+// Compliance tag, a multi-token Exclude, and the new Include Only allow-list.
+const INPUT_TEMPLATE_EXAMPLES = [
+  {
+    "VM Name": "web-server-01",
+    "App Name": "Storefront",
+    "CPU Count": 4,
+    "Memory (GB)": 16,
+    "CPU Utilization": 45,
+    "Memory Utilization": 60,
+    "AWS Region": "us-east-1",
+    "Azure Region": "East US",
+    "GCP Region": "us-central1-a",
+    ENV: "Production",
+    OS: "Linux",
+    Workload: "Web Server",
+    Compliance: "",
+    "AWS Min Gen": "",
+    "Azure Min Gen": "",
+    "GCP Min Gen": "",
+    Exclude: "",
+    "Include Only": "",
+    "Current Instance Type": "m5.xlarge",
+  },
+  {
+    "VM Name": "db-server-02",
+    "App Name": "Billing",
+    "CPU Count": 8,
+    "Memory (GB)": 32,
+    "CPU Utilization": 70,
+    "Memory Utilization": 80,
+    "AWS Region": "us-west-2",
+    "Azure Region": "West US 2",
+    "GCP Region": "us-west1-b",
+    ENV: "Production",
+    OS: "Windows",
+    Workload: "Database",
+    Compliance: "PCI",
+    "AWS Min Gen": "m6",
+    "Azure Min Gen": "",
+    "GCP Min Gen": "",
+    Exclude: "Burstable,GPU",
+    "Include Only": "m5,m6",
+    "Current Instance Type": "m5.2xlarge",
+  },
+];
+
+// The closed-enum columns and their recognised values, read LIVE from the rule
+// engine so the "Allowed values" sheet cannot drift from what the engine
+// matches. Only the four dimensions the hygiene check validates are enumerated;
+// Exclude / Include Only and Min Gen carry a descriptive note instead (their
+// vocabularies are open token sets, not a closed RECOGNIZED enum).
+function buildInputTemplateAllowedValues() {
+  const R = (typeof RuleEngine !== "undefined" && RuleEngine.RECOGNIZED) || {};
+  return [
+    { column: "ENV", values: (R.env || []).slice() },
+    { column: "OS", values: (R.os || []).slice() },
+    { column: "Workload", values: (R.workload || []).slice() },
+    { column: "Compliance", values: (R.compliance || []).slice() },
+  ];
+}
+
+// Neutral builders → a two-sheet SheetJS workbook. Header styling applied only
+// when the fork is the active engine (the plain build ignores `.s`, still valid).
+function buildInputTemplateWorkbook(XLSX, styled) {
+  const styleHeader = (ws, ref) => {
+    if (styled && ws[ref]) ws[ref].s = RESULTS_XLSX_HEADER_STYLE;
+  };
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1 — the inventory grid: headers, then the example rows.
+  const invAoa = [INPUT_TEMPLATE_COLUMNS];
+  INPUT_TEMPLATE_EXAMPLES.forEach((ex) =>
+    invAoa.push(INPUT_TEMPLATE_COLUMNS.map((c) => ex[c] ?? "")),
+  );
+  const inv = XLSX.utils.aoa_to_sheet(invAoa);
+  INPUT_TEMPLATE_COLUMNS.forEach((_, c) =>
+    styleHeader(inv, XLSX.utils.encode_cell({ r: 0, c })),
+  );
+  inv["!cols"] = INPUT_TEMPLATE_COLUMNS.map((h) => ({
+    wch: Math.max(12, h.length + 2),
+  }));
+  XLSX.utils.book_append_sheet(wb, inv, "Inventory");
+
+  // Sheet 2 — documented allowed values for the closed-enum columns.
+  const docAoa = [["Column", "Recognised values (any case; blank = default)"]];
+  buildInputTemplateAllowedValues().forEach(({ column, values }) =>
+    docAoa.push([column, values.join(", ")]),
+  );
+  docAoa.push([]);
+  docAoa.push([
+    "Exclude / Include Only",
+    "Family names (m5, c5) or classifiers: burstable, graviton, gpu, fpga, mac, previous generation. Comma-separated.",
+  ]);
+  docAoa.push([
+    "Min Gen (per provider)",
+    "Generation floor, e.g. AWS m6, Azure Dsv4, GCP n4.",
+  ]);
+  const doc = XLSX.utils.aoa_to_sheet(docAoa);
+  styleHeader(doc, "A1");
+  styleHeader(doc, "B1");
+  doc["!cols"] = [{ wch: 24 }, { wch: 80 }];
+  XLSX.utils.book_append_sheet(wb, doc, "Allowed values");
+
+  return wb;
+}
+
+function downloadInputTemplate() {
+  const btn = document.getElementById("downloadInputTemplateBtn");
+  const restore = btn ? btn.textContent : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Building…";
+  }
+  ensureResultsXlsx()
+    .then((info) => {
+      const XLSXW = window._xlsxWriter || window.XLSX;
+      if (!XLSXW) throw new Error("spreadsheet engine unavailable");
+      const wb = buildInputTemplateWorkbook(XLSXW, !!info.styled);
+      XLSXW.writeFile(wb, "cloud_instance_recommender_template.xlsx");
+    })
+    .catch((e) => {
+      console.error("Template Excel export failed:", e);
+      showToast(
+        "Sorry — building the Excel template failed: " +
+          (e && e.message ? e.message : e),
+        "error",
+      );
+    })
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = restore;
+      }
+    });
+}

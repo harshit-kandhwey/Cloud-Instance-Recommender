@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 58 | 234 | 292 |
-| Waived | 22 | 0 | 22 |
+| Covered | 58 | 236 | 294 |
+| Waived | 23 | 0 | 23 |
 | Uncovered | 0 | 114 | 114 |
-| **Total** | 80 | 348 | 428 |
+| **Total** | 81 | 350 | 431 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -103,6 +103,8 @@ waiver still records the reason.
 | `buildAppCsv` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildAppSheet` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
+| `buildInputTemplateAllowedValues` | js/base/xlsx-export.js | function | internal | covered | export/input-template-test.js |
+| `buildInputTemplateWorkbook` | js/base/xlsx-export.js | function | internal | covered | export/input-template-test.js |
 | `buildPortfolioModel` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildPortfolioPayload` | js/base/downloads.js | function | internal | uncovered | — |
 | `buildPortfolioWorkbookModel` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
@@ -153,6 +155,7 @@ waiver still records the reason.
 | `downloadAzureSampleCSV` | js/azure/azure-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadCsv` | js/base/app-core.js | function | internal | covered | export/nomatch-export-test.js, preview/preview-search-test.js, workload/app-summary-test.js |
 | `downloadGCPSampleCSV` | js/gcp/gcp-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
+| `downloadInputTemplate` | js/base/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX build of the blank input template — ensure engine, build the two-sheet workbook, writeFile, with button busy-state. Async spreadsheet-engine + download plumbing; the workbook CONTENT (headers, example rows, and the drift-proof Allowed-values sheet) is pinned by export/input-template-test.js, which builds the same workbook via the vendored engine and reads it back. browser residual (the .xlsx download firing) deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `downloadNoMatchRows` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResults` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResultsXlsx` | js/base/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX export of the results table — ensure engine, build, anchor-download, with button busy-state. Async spreadsheet-engine + download plumbing; the row content is pinned by the golden CSV compare. browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |

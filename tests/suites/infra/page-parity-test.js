@@ -157,6 +157,7 @@ console.log("[every page offers the same shared features]");
 {
   const MARKERS = {
     "Excel download (primary)": "downloadResultsXlsxBtn",
+    "Excel input template": "downloadInputTemplate()",
     "CSV multiselect dropdown": 'id="csvMenu"',
     "Print report": "printExecutiveReport()",
     "Executive report target": 'id="executiveReportSection"',
