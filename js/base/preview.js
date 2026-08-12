@@ -41,6 +41,43 @@ function _fitBadgeHtml(row, col) {
   return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};${weight}white-space:nowrap;">▲${pct}%</span>`;
 }
 
+// The right-sizing verdict that trails an OPTIMIZED instance name: did the
+// utilization-based pick shrink, grow, or match the size the VM runs on today
+// (its provisioned CPU Count / Memory (GB))? Display-only — like the fit flag it
+// never reaches a download, so the CSV schema and the goldens are untouched.
+// Shown ONLY on an Optimized Instance cell: the like-for-like pick is sized to
+// MEET the requirement, so its over-provisioning is the fit flag's job (above),
+// not a verdict. Silent on "same size" — a badge on every row is noise, so only
+// an actual resize is marked, the way the fit flag only marks a headroom worth
+// flagging. vCPU is the headline axis and decides whenever it differs; memory
+// breaks the tie with a 10% tolerance, which also absorbs the ~7% GiB-vs-GB
+// rounding so a pure unit artefact never reads as a resize.
+const RIGHTSIZE_MEM_TOLERANCE = 0.1;
+function _rightsizeVerdictHtml(row, col) {
+  const m = /^(.*) Optimized Instance$/.exec(col);
+  if (!m) return "";
+  const provider = m[1];
+  const srcCpu = parseFloat(row[COLUMN_MAPPINGS.cpu]);
+  const srcMem = parseFloat(row[COLUMN_MAPPINGS.memory]);
+  const recCpu = parseFloat(row[`${provider} Optimized vCPUs`]);
+  const recMem = parseFloat(row[`${provider} Optimized Memory (GiB)`]);
+  if ([srcCpu, srcMem, recCpu, recMem].some((n) => isNaN(n))) return "";
+  if (srcCpu <= 0 || srcMem <= 0) return "";
+
+  // vCPU first; memory only breaks a vCPU tie, and only past the tolerance.
+  let down;
+  if (recCpu !== srcCpu) down = recCpu < srcCpu;
+  else if (recMem < srcMem * (1 - RIGHTSIZE_MEM_TOLERANCE)) down = true;
+  else if (recMem > srcMem * (1 + RIGHTSIZE_MEM_TOLERANCE)) down = false;
+  else return ""; // same size — no badge
+
+  const color = down ? "var(--good-strong)" : "var(--amber-strong)";
+  const arrow = down ? "▼" : "▲";
+  const word = down ? "Downsized" : "Upsized";
+  const label = `${word}: optimized to ${recCpu} vCPU / ${recMem} GiB from the provisioned ${srcCpu} vCPU / ${srcMem} GB`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${arrow} ${word}</span>`;
+}
+
 // The stats bar describes the whole result set, so it does not change when the
 // preview is filtered or re-sorted — but it was being rebuilt on every debounced
 // keystroke and every sort click, rescanning every row for rules, matches and
@@ -549,9 +586,13 @@ function _renderPreviewTable(
         const color = bad ? "var(--red-strong)" : "var(--ok-strong)";
         // A matched like-for-like cell trails its fit/headroom flag; a no-match
         // cell never does (there is no instance whose size to compare).
+        // Two mutually-exclusive trailing badges: the fit flag only matches a
+        // Like-to-Like cell, the right-sizing verdict only an Optimized cell, so
+        // at most one is ever non-empty for a given column.
         const fit = bad ? "" : _fitBadgeHtml(row, col);
+        const verdict = bad ? "" : _rightsizeVerdictHtml(row, col);
         cellContent = val
-          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>${fit}`
+          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>${fit}${verdict}`
           : '<span style="color:var(--text-disabled)">—</span>';
       } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
         // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
