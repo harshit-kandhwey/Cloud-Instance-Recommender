@@ -1617,6 +1617,62 @@ function analyzeInputHygiene(rows) {
     );
   }
 
+  // Unrecognised rule-engine values: a Workload / ENV / Compliance cell the rule
+  // engine does not know matches no rule and is silently treated as the default,
+  // so the constraint the user believed they set never applied. Name it, with the
+  // rows. A blank cell is the documented default and is never flagged. The
+  // recognised vocabularies are read LIVE from the rule engine, so this cannot
+  // drift from what apply() actually matches.
+  //
+  // OS is deliberately NOT scanned: the engine acts only on "windows"/"macos" and
+  // treats everything else — every Linux distro string a real inventory carries
+  // ("Ubuntu Linux (64-bit)", "RHEL 8") — as the Linux default, which is correct,
+  // so an "unrecognised" OS is no lost constraint. Flagging it would fire on
+  // nearly every real row. (See RuleEngine.RECOGNIZED.os for the same caveat.)
+  const RECOGNIZED =
+    (typeof RuleEngine !== "undefined" && RuleEngine.RECOGNIZED) || null;
+  if (RECOGNIZED) {
+    const RULE_DIMENSIONS = [
+      {
+        label: "Workload",
+        rule: "workload",
+        cols: ["Workload"],
+        allow: RECOGNIZED.workload,
+      },
+      {
+        label: "ENV",
+        rule: "environment",
+        cols: ["ENV", "Environment"],
+        allow: RECOGNIZED.env,
+      },
+      {
+        label: "Compliance",
+        rule: "compliance",
+        cols: ["Compliance"],
+        allow: RECOGNIZED.compliance,
+      },
+    ];
+    for (const dim of RULE_DIMENSIONS) {
+      const col = dim.cols.find((c) => present(c));
+      if (!col) continue;
+      const allowed = new Set(dim.allow.map((v) => v.toLowerCase()));
+      const byValue = new Map(); // distinct raw value → the rows carrying it
+      rows.forEach((row, i) => {
+        const raw = String(row[col] ?? "").trim();
+        if (!raw || allowed.has(raw.toLowerCase())) return;
+        if (!byValue.has(raw)) byValue.set(raw, []);
+        byValue.get(raw).push(dataRowNumber(i));
+      });
+      for (const [raw, rowNumbers] of byValue) {
+        note(
+          "warning",
+          `${dim.label} "${raw}" not recognized (no ${dim.rule} rule applied)`,
+          rowNumbers,
+        );
+      }
+    }
+  }
+
   // Duplicates are a question, not a defect: the same name twice may be one VM
   // exported twice, or two VMs that genuinely share a name across clusters.
   // Only the user knows, so ask instead of picking.

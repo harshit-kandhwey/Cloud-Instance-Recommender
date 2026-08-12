@@ -323,6 +323,92 @@ console.log("[a long list of bad rows is summarised, not dumped]");
   );
 }
 
+console.log(
+  "[unrecognized rule values are named — a lost constraint, not a gate]",
+);
+{
+  const { ctx, elements } = buildContext();
+  // Row 2 is clean. Row 3 has a Workload typo, row 4 an ENV typo, row 5 an
+  // unknown Compliance. Row 6's OS is a real Linux distro string, which must NOT
+  // be flagged (non-Windows/Mac is the Linux default the engine expects).
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region,ENV,OS,Workload,Compliance
+ok,4,16,us-east-1,Production,Linux,Web Server,PCI
+wl,4,16,us-east-1,Production,Windows,WebServer,
+env,4,16,us-east-1,Prd,Linux,Database,
+comp,4,16,us-east-1,Dev,Linux,Cache,SOX
+distro,4,16,us-east-1,Test,Ubuntu Linux (64-bit),General,`,
+  );
+  const html = panel(elements).innerHTML;
+  check(
+    "an unrecognized Workload is named with its value and row",
+    /Workload &quot;WebServer&quot; not recognized[^<]*1 row \(3\)/.test(html),
+    html,
+  );
+  check(
+    "an unrecognized ENV is named",
+    /ENV &quot;Prd&quot; not recognized[^<]*1 row \(4\)/.test(html),
+    html,
+  );
+  check(
+    "an unrecognized Compliance is named",
+    /Compliance &quot;SOX&quot; not recognized[^<]*1 row \(5\)/.test(html),
+    html,
+  );
+  check(
+    "a recognized value is never flagged",
+    !/Web Server&quot; not recognized/.test(html) &&
+      !/&quot;Production&quot; not recognized/.test(html) &&
+      !/&quot;PCI&quot; not recognized/.test(html),
+    html,
+  );
+  check(
+    "a blank rule cell is the default, not an error",
+    !/&quot;&quot; not recognized/.test(html),
+    html,
+  );
+  check(
+    "an OS distro string is NOT flagged (non-Windows/Mac is the Linux default)",
+    !/OS &quot;/.test(html) && !/no OS rule/.test(html),
+    html,
+  );
+  check("the file still loads — a report, not a gate", rows(ctx).length === 5);
+}
+
+console.log(
+  "[the ENV synonym column is honoured, and distinct typos are listed apart]",
+);
+{
+  const { ctx, elements } = buildContext();
+  // The column is the "Environment" synonym, not "ENV". Two rows share one typo,
+  // a third has a different one, and the first is a recognized value.
+  ingest(
+    ctx,
+    `VM Name,CPU Count,Memory (GB),AWS Region,Environment
+a,4,16,us-east-1,Prod
+b,4,16,us-east-1,UAT
+c,4,16,us-east-1,UAT
+d,4,16,us-east-1,Sandbox`,
+  );
+  const html = panel(elements).innerHTML;
+  check(
+    "the repeated typo names both its rows (via the Environment synonym)",
+    /ENV &quot;UAT&quot; not recognized[^<]*2 rows \(3, 4\)/.test(html),
+    html,
+  );
+  check(
+    "a different typo is a separate line",
+    /ENV &quot;Sandbox&quot; not recognized[^<]*1 row \(5\)/.test(html),
+    html,
+  );
+  check(
+    "a recognized ENV (Prod) is not flagged",
+    !/&quot;Prod&quot; not recognized/.test(html),
+    html,
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = state.failures ? 1 : 0;

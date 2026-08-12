@@ -117,6 +117,36 @@ const RuleEngine = (() => {
     },
   };
 
+  // ─── Recognised rule-value vocabularies ───────────────────────────────────
+  // The SINGLE source of truth for both the matching in apply() below and the
+  // upload-time hygiene check (analyzeInputHygiene in ingest.js), so a value the
+  // engine silently treats as the default is instead NAMED for the user. Every
+  // token is lowercase, matching how apply() normalises each cell. Keep these as
+  // exactly the vocabularies apply() matches — a token listed here that no rule
+  // reads would report "recognised" while doing nothing, which is the very trap
+  // this exists to catch.
+  const ENV_PRODUCTION = ["production", "prod"];
+  const ENV_STAGING = ["staging", "stage"];
+  const ENV_DEV_TEST = ["dev", "development", "test", "testing", "qa"];
+  const COMPLIANCE_VALUES = ["pci", "hipaa", "soc2", "fips"];
+  const COMPLIANCE_AWS_NITRO = ["pci", "hipaa"];
+  const OS_WINDOWS = ["windows", "windows server"];
+  const OS_MAC = ["macos", "mac"];
+  const OS_VALUES = ["linux", ...OS_WINDOWS, ...OS_MAC];
+
+  // The recognised sets, exposed on the public API for the hygiene check. The
+  // workload keys are identical across providers, so aws stands for all three.
+  const RECOGNIZED = {
+    env: [...ENV_PRODUCTION, ...ENV_STAGING, ...ENV_DEV_TEST],
+    // os is the true recognised set, but the hygiene check deliberately does NOT
+    // scan OS: everything but windows/macos is the Linux default, so a real
+    // inventory's distro strings ("Ubuntu Linux (64-bit)") are correct, not lost
+    // constraints — flagging them would fire on nearly every row.
+    os: OS_VALUES,
+    workload: Object.keys(WORKLOAD_FAMILIES.aws),
+    compliance: COMPLIANCE_VALUES,
+  };
+
   // ─── Accelerator classification ───────────────────────────────────────────
   // familyName is the provider's OWN classification and is the only reliable
   // signal, so it is checked first. The exact strings present in the region
@@ -477,13 +507,11 @@ const RuleEngine = (() => {
     let filtered = [...instances];
     const rules = [];
 
-    const isProd = env === "production" || env === "prod";
-    const isStaging = env === "staging" || env === "stage";
-    const isDevTest = ["dev", "development", "test", "testing", "qa"].includes(
-      env,
-    );
-    const isCompliance = ["pci", "hipaa", "soc2", "fips"].includes(compliance);
-    const requiresAwsNitro = ["pci", "hipaa"].includes(compliance);
+    const isProd = ENV_PRODUCTION.includes(env);
+    const isStaging = ENV_STAGING.includes(env);
+    const isDevTest = ENV_DEV_TEST.includes(env);
+    const isCompliance = COMPLIANCE_VALUES.includes(compliance);
+    const requiresAwsNitro = COMPLIANCE_AWS_NITRO.includes(compliance);
 
     // ── 1a: Burstable exclusion ─────────────────────────────────────────────
     if (isProd || isStaging) {
@@ -534,14 +562,14 @@ const RuleEngine = (() => {
     }
 
     // ── OS: Windows → exclude ARM/Graviton ─────────────────────────────────
-    if (os === "windows" || os === "windows server") {
+    if (OS_WINDOWS.includes(os)) {
       const before = filtered.length;
       filtered = filtered.filter((i) => !isARM(i));
       if (filtered.length < before) rules.push("OS: ARM excluded (Windows)");
     }
 
     // ── OS: macOS → AWS mac1/mac2 only ─────────────────────────────────────
-    if ((os === "macos" || os === "mac") && provider === "aws") {
+    if (OS_MAC.includes(os) && provider === "aws") {
       filtered = filtered.filter((i) =>
         (i.family || "").toLowerCase().startsWith("mac"),
       );
@@ -728,6 +756,8 @@ const RuleEngine = (() => {
     // Exposed for the alternative-strategy picks (base-instance-selector):
     isWorkloadFit,
     generationRank,
+    // Recognised rule-value vocabularies, for the upload-time hygiene check:
+    RECOGNIZED,
   };
 })();
 
