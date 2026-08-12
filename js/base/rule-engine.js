@@ -507,6 +507,18 @@ const RuleEngine = (() => {
     let filtered = [...instances];
     const rules = [];
 
+    // A filtering rule records how many candidates it removed, so the Rules
+    // Applied column can EXPLAIN a surprising pick ("1a: Burstable excluded — 12
+    // removed") instead of only naming the rule that fired. It reads the current
+    // `filtered` against the count captured just before the filter, so it must be
+    // called AFTER the reassignment. A rule that removed nothing keeps its plain
+    // label; the sort/preference rules (BP, Workload) and the "not applied" notes
+    // remove nothing and are pushed as plain strings.
+    const withCount = (label, before) => {
+      const n = before - filtered.length;
+      return n > 0 ? `${label} — ${n} removed` : label;
+    };
+
     const isProd = ENV_PRODUCTION.includes(env);
     const isStaging = ENV_STAGING.includes(env);
     const isDevTest = ENV_DEV_TEST.includes(env);
@@ -517,22 +529,25 @@ const RuleEngine = (() => {
     if (isProd || isStaging) {
       const before = filtered.length;
       filtered = filtered.filter((i) => !isBurstable(i, provider));
-      if (filtered.length < before) rules.push("1a: Burstable excluded");
+      if (filtered.length < before)
+        rules.push(withCount("1a: Burstable excluded", before));
     }
 
     // ── 1b: Current generation (Production + Compliance) ────────────────────
     if (isProd || isCompliance) {
       const before = filtered.length;
       filtered = filtered.filter(isCurrentGen);
-      if (filtered.length < before) rules.push("1b: Prev-gen excluded");
+      if (filtered.length < before)
+        rules.push(withCount("1b: Prev-gen excluded", before));
     }
 
     // ── 1b: Nitro Enclaves required for AWS under PCI/HIPAA ────────────────
     if (requiresAwsNitro && provider === "aws") {
+      const before = filtered.length;
       const nitro = filtered.filter(isNitroCapable);
       if (nitro.length > 0) {
         filtered = nitro;
-        rules.push("1b: Nitro required (Compliance)");
+        rules.push(withCount("1b: Nitro required (Compliance)", before));
       }
     }
 
@@ -544,7 +559,8 @@ const RuleEngine = (() => {
       } else {
         filtered = filtered.filter((i) => i.vCpus >= 2); // Azure/GCP: ≥ 2 vCPUs for Prod/Staging
       }
-      if (filtered.length < before) rules.push("1c: Size floor applied");
+      if (filtered.length < before)
+        rules.push(withCount("1c: Size floor applied", before));
     }
 
     // ── 1d: Network preference — Production + DB/Web ────────────────────────
@@ -554,10 +570,11 @@ const RuleEngine = (() => {
         workload === "web server" ||
         workload === "web")
     ) {
+      const before = filtered.length;
       const net = filtered.filter((i) => i.vCpus >= 4);
       if (net.length > 0) {
         filtered = net;
-        rules.push("1d: Network-tier preference (≥4 vCPUs)");
+        rules.push(withCount("1d: Network-tier preference (≥4 vCPUs)", before));
       }
     }
 
@@ -565,25 +582,28 @@ const RuleEngine = (() => {
     if (OS_WINDOWS.includes(os)) {
       const before = filtered.length;
       filtered = filtered.filter((i) => !isARM(i));
-      if (filtered.length < before) rules.push("OS: ARM excluded (Windows)");
+      if (filtered.length < before)
+        rules.push(withCount("OS: ARM excluded (Windows)", before));
     }
 
     // ── OS: macOS → AWS mac1/mac2 only ─────────────────────────────────────
     if (OS_MAC.includes(os) && provider === "aws") {
+      const before = filtered.length;
       filtered = filtered.filter((i) =>
         (i.family || "").toLowerCase().startsWith("mac"),
       );
-      rules.push("OS: mac1/mac2 only (macOS)");
+      rules.push(withCount("OS: mac1/mac2 only (macOS)", before));
     }
 
     // ── Min Generation filter ───────────────────────────────────────────────
     if (minGen) {
+      const before = filtered.length;
       const genFiltered = filtered.filter((i) =>
         meetsMinGeneration(i, minGen, provider),
       );
       if (genFiltered.length > 0) {
         filtered = genFiltered;
-        rules.push(`MinGen: ${minGen}+`);
+        rules.push(withCount(`MinGen: ${minGen}+`, before));
       }
       // If filter empties the pool, keep current set and note it
     }
@@ -595,18 +615,22 @@ const RuleEngine = (() => {
     // would empty the pool, the pool stands and the row says the rule did not
     // apply.
     if (ACCELERATOR_WORKLOADS.includes(workload)) {
+      const before = filtered.length;
       const accel = filtered.filter((i) => isAccelerator(i, provider));
       if (accel.length > 0) {
         filtered = accel;
-        rules.push("GPU: accelerator required");
+        rules.push(withCount("GPU: accelerator required", before));
       } else {
         rules.push("GPU: no accelerator available (not applied)");
       }
     } else {
+      const before = filtered.length;
       const withoutAccel = filtered.filter((i) => !isAccelerator(i, provider));
-      if (withoutAccel.length > 0 && withoutAccel.length < filtered.length) {
+      if (withoutAccel.length > 0 && withoutAccel.length < before) {
         filtered = withoutAccel;
-        rules.push("GPU: accelerators excluded (non-GPU workload)");
+        rules.push(
+          withCount("GPU: accelerators excluded (non-GPU workload)", before),
+        );
       }
     }
 
@@ -617,12 +641,15 @@ const RuleEngine = (() => {
     // the licence floor should have removed. Degrades like every other filter
     // — if nothing clears the floor, the pool stands and the row says so.
     if (SQL_WORKLOADS.includes(workload)) {
+      const before = filtered.length;
       const licensed = filtered.filter((i) => i.vCpus >= SQL_MIN_CORES);
       if (licensed.length > 0) {
-        if (licensed.length < filtered.length) {
-          rules.push(`SQL: ${SQL_MIN_CORES}-vCPU licence floor`);
-        }
         filtered = licensed;
+        if (filtered.length < before) {
+          rules.push(
+            withCount(`SQL: ${SQL_MIN_CORES}-vCPU licence floor`, before),
+          );
+        }
       } else {
         rules.push(
           `SQL: ${SQL_MIN_CORES}-vCPU licence floor not applied (no candidate that large)`,

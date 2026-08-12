@@ -88,7 +88,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "1a burstable excluded (prod): rule reported",
-    r.rules.includes("1a: Burstable excluded"),
+    r.rules.some((s) => s.startsWith("1a: Burstable excluded")),
     r.rules.join(" | "),
   );
 }
@@ -106,7 +106,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "1b prev-gen excluded (prod): rule reported",
-    r.rules.includes("1b: Prev-gen excluded"),
+    r.rules.some((s) => s.startsWith("1b: Prev-gen excluded")),
     r.rules.join(" | "),
   );
 }
@@ -124,7 +124,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "1c size floor (prod): rule reported",
-    r.rules.includes("1c: Size floor applied"),
+    r.rules.some((s) => s.startsWith("1c: Size floor applied")),
     r.rules.join(" | "),
   );
 }
@@ -145,7 +145,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "1d network tier: rule reported",
-    r.rules.includes("1d: Network-tier preference (≥4 vCPUs)"),
+    r.rules.some((s) => s.startsWith("1d: Network-tier preference (≥4 vCPUs)")),
     r.rules.join(" | "),
   );
 }
@@ -166,7 +166,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "OS windows: rule reported",
-    r.rules.includes("OS: ARM excluded (Windows)"),
+    r.rules.some((s) => s.startsWith("OS: ARM excluded (Windows)")),
     r.rules.join(" | "),
   );
 }
@@ -210,7 +210,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "GPU workload: rule reported",
-    req.rules.includes("GPU: accelerator required"),
+    req.rules.some((s) => s.startsWith("GPU: accelerator required")),
     req.rules.join(" | "),
   );
   const non = apply(pool(), { rowWorkload: "general" });
@@ -221,7 +221,9 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "non-GPU workload: rule reported",
-    non.rules.includes("GPU: accelerators excluded (non-GPU workload)"),
+    non.rules.some((s) =>
+      s.startsWith("GPU: accelerators excluded (non-GPU workload)"),
+    ),
     non.rules.join(" | "),
   );
 }
@@ -272,7 +274,9 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "BP burstable preferred: rule reported",
-    r.rules.includes("BP: Burstable preferred (Dev/Test, low utilization)"),
+    r.rules.some((s) =>
+      s.startsWith("BP: Burstable preferred (Dev/Test, low utilization)"),
+    ),
     r.rules.join(" | "),
   );
 }
@@ -293,7 +297,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "Workload preference: rule reported",
-    r.rules.includes("Workload: database preference"),
+    r.rules.some((s) => s.startsWith("Workload: database preference")),
     r.rules.join(" | "),
   );
 }
