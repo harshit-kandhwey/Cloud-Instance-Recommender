@@ -36,7 +36,10 @@ top of it.
 - **Next** — _3.12 Input authoring & rules_ · _3.13 Cross-provider sizing_ ·
   _3.14 Data & pricing freshness_. The user-facing capability jumps that do not
   need the 4.0 engine: better inputs and rule expression, cloud-to-cloud and GCP
-  custom shapes, and always-current data.
+  custom shapes, and always-current data. A per-row **right-sizing verdict**, a
+  **workload-shape explainer**, and a **portfolio-visualization** pass (KPI cards
+  and inline-SVG charts) fold into these minors as presentation over data the
+  engine already produces — no new dependency, no pricing on a report.
 - **Later** — _3.15 Closing out 3.x_ → _4.0 Performance-based right-sizing_. Empty
   the known-issues list, then ship the one platform-defining major: a
   policy-driven, per-row sizing engine.
@@ -355,6 +358,30 @@ Make a correct input file easy to produce, and make the rules say what they mean
   authoring surface over them. (L) _Preponed from 4.0: it is a rules-expression
   feature, not part of the sizing engine, and it belongs beside the rule work
   above. Builds on rule-fired transparency._
+- **Right-sizing verdict per recommendation.** Each recommended instance already
+  carries a computed delta from its source — the sizing-savings chips aggregate it
+  — but no row says what the delta _means_. Label every recommendation with a
+  verdict — Downsized, Upsized, Family Changed, Generation Upgrade, or Same Size —
+  as a compact badge beside the instance, so a reviewer reads the sizing decision
+  at a glance instead of diffing the vCPU / memory columns by eye. Pure
+  presentation over data the engine already produces, provider-agnostic, and no
+  pricing. (S) _Sits beside rule-fired transparency above; the input for the
+  portfolio right-sizing bar chart below. Adapted from a reference migration report
+  (ACCORD MPA) — its `ciRightsize` buckets — not copied: the pricing-driven parts
+  of that report are excluded by the no-dollars rule (D8)._
+- **Workload-shape explainer (RAM-per-vCPU).** Classify each row by its
+  memory-to-vCPU ratio — compute-optimized, general-purpose, memory-optimized —
+  and use it both to explain _why_ a family was chosen and to drive a family-mix
+  rollup on the Portfolio page. A provider-agnostic heuristic (ratio ≥ ~6 →
+  memory, ≤ ~2.5 → compute, else general) over columns already in every upload.
+  (S) _Feeds the family-mix chart in the portfolio-visualization work below._
+- **End-of-life OS advisory (stretch).** When the upload carries an OS column,
+  flag rows whose OS is past vendor end-of-life and suggest a modern landing OS
+  (CentOS → Rocky / RHEL 9, Windows Server 2012 → 2022, and so on). Adjacent to the
+  unknown-rule-values check above — the same "name what the input hides" spirit —
+  but it borders on migration-assessment scope, so it ships only as a plain
+  advisory that never gates a recommendation. (M) _Kept a stretch on purpose: the
+  tool sizes instances, it does not plan an OS migration._
 
 ### 3.13 — Cross-provider sizing
 
@@ -420,6 +447,37 @@ either fixed as a patch when it lands, or it belongs here.
   can never be switched on, and its nearest-miss probe can never fire. Either give
   it the UI the rest of the code already expects, or remove it from all of them.
   (S) _The allow-list work in 3.12 is the natural home for the first option._
+
+### Portfolio visualization (unscheduled — folds into a Next minor)
+
+The Portfolio page reports in tables and text; a reference migration report
+(ACCORD MPA) makes the same class of data far more legible with cards and charts,
+and the gap is real — `app-portfolio.html` renders no charts at all. This is a
+presentation pass, not a data change, and every piece is achievable in **inline
+SVG / CSS with no new runtime dependency** — which keeps it inside the strict-CSP
+direction (`script-src 'self'`, [3.11 CSP migration](#311--accessibility-hardening--documentation))
+rather than pulling a charting library or a CDN.
+
+- **KPI card row.** Replace the top-line counts with accent-barred KPI cards
+  (label / value / sub-line): servers in scope, distinct applications, environment
+  split, match rate. CSS only, high polish for the effort. (S)
+- **Distribution charts.** A doughnut for the family / provider / environment mix
+  and a bar for the right-sizing-verdict distribution (from the 3.12 verdict item),
+  rendered as inline SVG so they snapshot cleanly under the existing
+  visual-regression rig. (M)
+- **Family-mix & shape rollup.** Summarise the RAM-per-vCPU workload-shape
+  classification across the estate, so a portfolio reads as "mostly
+  memory-optimized" at a glance. (S) _Needs the workload-shape explainer in 3.12._
+- **Gradient section headers.** Adopt banded headers for the portfolio's major
+  blocks — a small, self-contained CSS lift that reads better across the page. (S)
+
+_Explicitly out, by our own rules:_ everything the reference report builds on
+**pricing** — on-demand / reserved cost cards, savings bands, annual run-rate, the
+live AWS pricing-calculator estimate — is excluded by the no-dollars-in-outputs
+rule (D8), along with its AWS-only, migration-wave, and connectivity-navigator
+views. Sequencing is flexible; this folds into whichever Next minor has room and
+pairs naturally with the visual-regression snapshots, since new charts want new
+baselines.
 
 ## Blocked — awaiting external input
 
