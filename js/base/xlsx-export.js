@@ -324,7 +324,7 @@ const INPUT_TEMPLATE_EXAMPLES = [
     OS: "Windows",
     Workload: "Database",
     Compliance: "PCI",
-    "AWS Min Gen": "m6",
+    "AWS Min Gen": "6",
     "Azure Min Gen": "",
     "GCP Min Gen": "",
     Exclude: "Burstable,GPU",
@@ -382,7 +382,7 @@ function buildInputTemplateWorkbook(XLSX, styled) {
   ]);
   docAoa.push([
     "Min Gen (per provider)",
-    "Generation floor, e.g. AWS m6, Azure Dsv4, GCP n4.",
+    "Generation floor, native to each cloud: AWS a family generation number (6 keeps m6/c6/r6 and newer), Azure a v-number (4 keeps v4 and newer), GCP a family name (n4). A prefixed AWS or Azure value like m6 or Dsv4 is read as no floor at all, so give the bare number.",
   ]);
   const doc = XLSX.utils.aoa_to_sheet(docAoa);
   styleHeader(doc, "A1");

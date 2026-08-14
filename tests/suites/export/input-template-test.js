@@ -148,6 +148,46 @@ console.log("[the example rows never demonstrate a value the engine ignores]");
   );
 }
 
+// ── 3b. The Min Gen example is a value the engine actually honours ───────────
+// Min Gen is an open token set, not a RECOGNIZED enum, so section 3 does not
+// cover it — yet a prefixed value like "m6" parses to 0 in meetsMinGeneration
+// (parseInt("m6") is NaN) and disables the floor silently, exactly the "teaches a
+// value the engine ignores" trap. Prove the example AWS Min Gen actually filters.
+console.log("[the Min Gen example is a floor the engine actually applies]");
+{
+  const mmg = run(
+    "RuleEngine && typeof RuleEngine.meetsMinGeneration === 'function' ? RuleEngine.meetsMinGeneration : null",
+  );
+  check(
+    "RuleEngine.meetsMinGeneration is reachable",
+    typeof mmg === "function",
+  );
+  const awsExample = examples.find((e) =>
+    String(e["AWS Min Gen"] ?? "").trim(),
+  );
+  const awsMinGen = awsExample && awsExample["AWS Min Gen"];
+  check(
+    "an example row sets an AWS Min Gen floor",
+    !!awsMinGen,
+    String(awsMinGen),
+  );
+  if (typeof mmg === "function" && awsMinGen) {
+    // A gen-5 box must be removed and a gen-6 box kept: a floor the engine reads.
+    check(
+      "the example AWS Min Gen removes a below-floor candidate (m5)",
+      mmg({ instanceType: "m5.large", family: "m5" }, awsMinGen, "aws") ===
+        false,
+      `m5 vs "${awsMinGen}" → ${mmg({ instanceType: "m5.large", family: "m5" }, awsMinGen, "aws")}`,
+    );
+    check(
+      "the example AWS Min Gen keeps an at-or-above candidate (m6i)",
+      mmg({ instanceType: "m6i.large", family: "m6i" }, awsMinGen, "aws") ===
+        true,
+      `m6i vs "${awsMinGen}" → ${mmg({ instanceType: "m6i.large", family: "m6i" }, awsMinGen, "aws")}`,
+    );
+  }
+}
+
 // ── 4. Structural round-trip through the real vendored engine ────────────────
 console.log("[the workbook builds and reads back with both sheets intact]");
 {

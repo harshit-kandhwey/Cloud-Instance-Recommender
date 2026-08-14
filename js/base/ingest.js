@@ -1599,8 +1599,11 @@ const EOL_OS_RULES = [
   { re: /amazon\s*linux\s*2(?!\d)/i, suggest: "Amazon Linux 2023" },
 ];
 
-// Return a suggested modern landing OS if `raw` names an OS past end-of-life, or
-// null for anything current, unknown, or blank. Pure — a small table lookup.
+// Return a suggested modern landing OS if `raw` names an OS past its standard
+// end-of-life, or null for anything current, unknown, or blank. Some flagged
+// releases can still carry paid extended support (ESU / ESM) past this date, so
+// the advisory that consumes this asks the user to verify that coverage rather
+// than asserting the OS is unsupported. Pure — a small table lookup.
 function classifyEolOs(raw) {
   const s = String(raw == null ? "" : raw).trim();
   if (!s) return null;
@@ -1764,7 +1767,7 @@ function analyzeInputHygiene(rows) {
     for (const [raw, info] of byOs) {
       note(
         "advisory",
-        `OS "${raw}" is past end-of-life — consider ${info.suggest}`,
+        `OS "${raw}" is past standard end-of-life — verify any extended support (ESU / ESM) coverage, then consider ${info.suggest}`,
         info.rows,
       );
     }
