@@ -333,6 +333,43 @@ class BaseInstanceSelector {
     console.log(`  - Family Types: ${familyTypes} categories`);
   }
 
+  // Reverse spec lookup for cloud-to-cloud sizing: given the instance type a VM
+  // runs on TODAY, return its { instanceType, vCpus, memory } from whatever region
+  // data is loaded, or null when this provider's data does not carry the type.
+  // Specs are region-independent — an m5.xlarge is 4 vCPU / 16 GB in every region —
+  // so the first loaded region that names the type answers. The match is
+  // case-insensitive; the returned instanceType keeps the data's own casing. Only a
+  // finite, positive vCPU/memory pair is returned, so a malformed data row can
+  // never hand back a zero-spec box that would then size a recommendation to
+  // nothing.
+  getSpecsForInstanceType(type) {
+    const target = String(type == null ? "" : type)
+      .trim()
+      .toLowerCase();
+    if (!target) return null;
+    for (const region of Object.keys(this.instanceData)) {
+      const instances = this.instanceData[region];
+      if (!Array.isArray(instances)) continue;
+      for (const inst of instances) {
+        if (
+          inst &&
+          String(inst.instanceType || "").toLowerCase() === target &&
+          Number.isFinite(inst.vCpus) &&
+          Number.isFinite(inst.memory) &&
+          inst.vCpus > 0 &&
+          inst.memory > 0
+        ) {
+          return {
+            instanceType: inst.instanceType,
+            vCpus: inst.vCpus,
+            memory: inst.memory,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
   // Common like-to-like instance selection
   getLikeToLikeInstance(region, currentCpu, currentMemory, options = {}) {
     console.log(

@@ -77,6 +77,24 @@ function formatAlternative(a) {
   return a ? `${a.instanceType} (${a.vCpus}/${a.memory})` : "";
 }
 
+// Cloud-to-cloud sizing: infer which provider an instance-type name belongs to
+// from its naming shape alone. The three clouds' type names are disjoint in their
+// separator — AWS uses a dot (m5.xlarge), Azure an underscore (Standard_D4s_v5,
+// D4s_v5), GCP a hyphen (n2-standard-4) — so no data lookup is needed to know which
+// provider's data to search for the source VM's specs. Returns "aws" | "azure" |
+// "gcp", or "" when the shape matches none (an unknown type is a No-Match with a
+// clear reason, never a guessed size). Checked dot → underscore → hyphen, which is
+// unambiguous because a real type name carries exactly one of the three.
+function inferInstanceTypeProvider(type) {
+  const t = String(type == null ? "" : type).trim();
+  if (!t) return "";
+  if (t.includes(".")) return "aws";
+  if (/^standard_/i.test(t) || t.includes("_")) return "azure";
+  if (t.includes("-")) return "gcp";
+  return "";
+}
+window.inferInstanceTypeProvider = inferInstanceTypeProvider;
+
 // Enhanced integration function with multi-provider support.
 // Optional hooks = { onProgress(done, total), yieldEvery } — when provided,
 // the row loop reports progress and yields to the event loop every
