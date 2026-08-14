@@ -61,6 +61,11 @@ function renderUserRulesPanel() {
         <input id="urTokens" class="form-control" style="width:auto;flex:1;min-width:140px;" type="text" placeholder="families/types, e.g. r5, r6 or burstable" maxlength="120" />
         <button type="button" class="btn btn-secondary" onclick="addUserRuleFromForm()">Add rule</button>
       </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+        <button type="button" class="btn btn-secondary" onclick="exportUserRules()" title="Download this page's custom rules as a JSON file">📤 Export rules</button>
+        <button type="button" class="btn btn-secondary" onclick="importUserRules()" title="Import custom rules from a JSON export file">📥 Import rules</button>
+        <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;" onchange="handleUserRulesImportFile(event)" />
+      </div>
       <span id="userRulesStatus" role="status" aria-live="polite" style="display:block;margin-top:6px;font-size:0.85em;"></span>
     </div>`;
 }
@@ -113,6 +118,156 @@ function deleteUserRule(id) {
   }
   renderUserRulesPanel();
   setUserRulesStatus("Rule deleted.", true);
+}
+
+// ─── Export / import (JSON) ───────────────────────────────────────────────────
+// Rules are per-browser localStorage, per page; a JSON file moves them between
+// machines/browsers. Mirrors the presets export/import (buildPresetExport /
+// validatePresetImport / mergeImportedPresets) but over the rules array rather
+// than the named-preset map. The export carries only the CURRENT page's rules.
+
+function buildUserRulesExport(page, rules) {
+  return {
+    kind: "userRules",
+    page,
+    exportedAt: new Date().toISOString(),
+    rules,
+  };
+}
+
+// Pure: shape-check a parsed import payload. Every entry is run through
+// normalizeUserRule (the same gate storage/UI/engine use), so a malformed rule
+// in the file is dropped, not trusted. Returns { ok:true, page, rules } with at
+// least one valid rule, or { ok:false, error }.
+function validateUserRulesImport(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { ok: false, error: "not a custom-rules export file." };
+  }
+  if (!Array.isArray(payload.rules)) {
+    return { ok: false, error: "no custom rules found in the file." };
+  }
+  const rules =
+    typeof normalizeUserRule === "function"
+      ? payload.rules.map(normalizeUserRule).filter(Boolean)
+      : [];
+  if (!rules.length) {
+    return { ok: false, error: "the file contains no valid custom rules." };
+  }
+  return {
+    ok: true,
+    page: typeof payload.page === "string" ? payload.page : "",
+    rules,
+  };
+}
+
+// Pure: append imported rules to a page's list, skipping ones whose meaning
+// already exists (same dimension + action + value + token set, case-insensitive)
+// so re-importing the same file is a no-op rather than a pile of duplicates.
+// Every appended rule gets a FRESH id: an imported rule may carry an id that
+// collides with one already stored, and deleteUserRule filters by id — a
+// collision would delete two rules at once. Returns { merged, added, skipped }.
+function mergeImportedUserRules(existing, imported) {
+  const keyOf = (r) =>
+    [
+      r.dimension,
+      r.action,
+      r.equals.toLowerCase(),
+      r.tokens.map((t) => t.toLowerCase()).join(","),
+    ].join("|");
+  const seen = new Set((existing || []).map(keyOf));
+  const merged = (existing || []).slice();
+  let added = 0;
+  let skipped = 0;
+  (imported || []).forEach((r) => {
+    const key = keyOf(r);
+    if (seen.has(key)) {
+      skipped++;
+      return;
+    }
+    seen.add(key);
+    const id = typeof _newRuleId === "function" ? _newRuleId() : r.id;
+    merged.push({ ...r, id });
+    added++;
+  });
+  return { merged, added, skipped };
+}
+
+function exportUserRules() {
+  const page =
+    typeof userRulesPageKey === "function" ? userRulesPageKey() : "index";
+  const rules = loadUserRules();
+  if (!rules.length) {
+    setUserRulesStatus("No custom rules on this page to export.", false);
+    return;
+  }
+  const payload = buildUserRulesExport(page, rules);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download =
+    typeof exportFilename === "function"
+      ? exportFilename(`custom_rules_${page}`, "json")
+      : `custom_rules_${page}.json`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setUserRulesStatus(`Exported ${rules.length} rule(s).`, true);
+}
+
+function importUserRules() {
+  const input = document.getElementById("userRulesImportInput");
+  if (input && typeof input.click === "function") input.click();
+}
+
+function handleUserRulesImportFile(event) {
+  const file = event.target && event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => applyUserRulesImportText(String(reader.result || ""));
+  reader.onerror = () =>
+    setUserRulesStatus("Import failed: could not read the file.", false);
+  reader.readAsText(file);
+  // Reset so picking the same file again re-fires the change event.
+  event.target.value = "";
+}
+
+function applyUserRulesImportText(text) {
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    setUserRulesStatus("Import failed: the file is not valid JSON.", false);
+    return;
+  }
+  const v = validateUserRulesImport(payload);
+  if (!v.ok) {
+    setUserRulesStatus(`Import failed: ${v.error}`, false);
+    return;
+  }
+  const { merged, added, skipped } = mergeImportedUserRules(
+    loadUserRules(),
+    v.rules,
+  );
+  if (!saveUserRules(merged)) {
+    setUserRulesStatus(
+      "Could not save imported rules (storage unavailable).",
+      false,
+    );
+    return;
+  }
+  renderUserRulesPanel();
+  const page =
+    typeof userRulesPageKey === "function" ? userRulesPageKey() : "index";
+  const skipNote = skipped ? `, ${skipped} already present skipped` : "";
+  const pageNote =
+    v.page && v.page !== page
+      ? ` — note: exported from the ${v.page} page`
+      : "";
+  setUserRulesStatus(`Imported ${added} rule(s)${skipNote}${pageNote}.`, true);
 }
 
 function initUserRulesUi() {
