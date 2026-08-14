@@ -361,8 +361,10 @@ Make a correct input file easy to produce, and make the rules say what they mean
 - **Right-sizing verdict per recommendation.** Each recommended instance already
   carries a computed delta from its source — the sizing-savings chips aggregate it
   — but no row says what the delta _means_. Label every recommendation with a
-  verdict — Downsized, Upsized, Family Changed, Generation Upgrade, or Same Size —
-  as a compact badge beside the instance, so a reviewer reads the sizing decision
+  verdict — Downsized, Upsized, or Same Size (delivered in 3.12.3); Family Changed
+  and Generation Upgrade are future scope, since they need a source instance type
+  the current inputs do not carry — as a compact badge beside the instance, so a
+  reviewer reads the sizing decision
   at a glance instead of diffing the vCPU / memory columns by eye. Pure
   presentation over data the engine already produces, provider-agnostic, and no
   pricing. (S) _Sits beside rule-fired transparency above; the input for the
@@ -375,13 +377,13 @@ Make a correct input file easy to produce, and make the rules say what they mean
   rollup on the Portfolio page. A provider-agnostic heuristic (ratio ≥ ~6 →
   memory, ≤ ~2.5 → compute, else general) over columns already in every upload.
   (S) _Feeds the family-mix chart in the portfolio-visualization work below._
-- **End-of-life OS advisory (stretch).** When the upload carries an OS column,
-  flag rows whose OS is past vendor end-of-life and suggest a modern landing OS
-  (CentOS → Rocky / RHEL 9, Windows Server 2012 → 2022, and so on). Adjacent to the
-  unknown-rule-values check above — the same "name what the input hides" spirit —
+- **End-of-life OS advisory (delivered in 3.12.11).** When the upload carries an OS
+  column, flag rows whose OS is past vendor end-of-life and suggest a modern landing
+  OS (CentOS → Rocky / RHEL 9, Windows Server 2012 → 2022, and so on). Adjacent to
+  the unknown-rule-values check above — the same "name what the input hides" spirit —
   but it borders on migration-assessment scope, so it ships only as a plain
-  advisory that never gates a recommendation. (M) _Kept a stretch on purpose: the
-  tool sizes instances, it does not plan an OS migration._
+  advisory that never gates a recommendation. (M) _Kept advisory-only on purpose:
+  the tool sizes instances, it does not plan an OS migration._
 
 ### 3.13 — Cross-provider sizing
 
