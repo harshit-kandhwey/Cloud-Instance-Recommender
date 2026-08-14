@@ -387,7 +387,11 @@ Make a correct input file easy to produce, and make the rules say what they mean
 
 Size across providers, not just within one — preponed from 4.0 so the major
 stays the performance engine alone. Neither item depends on that engine; both
-build on data and columns the tool already has.
+build on data and columns the tool already has. This minor also folds in the
+**portfolio-visualization** pass (KPI cards, inline-SVG distribution charts, the
+RAM-per-vCPU family-mix rollup, gradient headers) described in its own section
+below: 3.13 is where its inputs — the 3.12 right-sizing verdict and workload-shape
+classifier — already exist, and its verdict-distribution chart reads them directly.
 
 - **Cloud-to-cloud mode** — derive a VM's specs from its current instance type
   using our own data, instead of requiring CPU and memory columns, and right-size
