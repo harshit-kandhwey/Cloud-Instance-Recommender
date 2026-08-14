@@ -178,6 +178,43 @@ window.getInstanceRecommendationWithSelector = async function (
       result["Sized On"] = describeSizedOn(util);
     }
 
+    // Per-row rule engine inputs: CSV column → UI page default → built-in default.
+    // These four dimensions do NOT depend on the provider, so they — and the
+    // user-rule match that reads them — are resolved ONCE per row here, not once
+    // per provider (a multi-cloud run would otherwise repeat the match, and its
+    // label formatting, three times). Only rowMinGen (native to each cloud) and the
+    // exclude-token provider mapping stay inside the provider loop below.
+    const rowEnv = (
+      row["ENV"] ||
+      row["Environment"] ||
+      options.ruleDefaultEnv ||
+      ""
+    ).trim();
+    const rowOS = (
+      row["OS"] ||
+      row["Operating System"] ||
+      options.ruleDefaultOS ||
+      ""
+    ).trim();
+    const rowWorkload = resolveRowWorkload(row, options);
+    const rowCompliance = (
+      row["Compliance"] ||
+      options.ruleDefaultCompliance ||
+      ""
+    ).trim();
+    const rowUserRules =
+      userRulesNorm.length && typeof _matchUserRules === "function"
+        ? _matchUserRules(
+            {
+              env: rowEnv,
+              os: rowOS,
+              workload: rowWorkload,
+              compliance: rowCompliance,
+            },
+            userRulesNorm,
+          )
+        : { excludeTokens: [], includeOnlyTokens: [], fired: [] };
+
     selectedProviders.forEach((provider) => {
       const selector = selectors[provider];
       if (!selector) {
@@ -193,25 +230,8 @@ window.getInstanceRecommendationWithSelector = async function (
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const region = row[regionColumn] || "";
 
-      // Per-row rule engine inputs: CSV column → UI page default → built-in default
-      const rowEnv = (
-        row["ENV"] ||
-        row["Environment"] ||
-        options.ruleDefaultEnv ||
-        ""
-      ).trim();
-      const rowOS = (
-        row["OS"] ||
-        row["Operating System"] ||
-        options.ruleDefaultOS ||
-        ""
-      ).trim();
-      const rowWorkload = resolveRowWorkload(row, options);
-      const rowCompliance = (
-        row["Compliance"] ||
-        options.ruleDefaultCompliance ||
-        ""
-      ).trim();
+      // rowEnv / rowOS / rowWorkload / rowCompliance are resolved once per row
+      // above the provider loop (they do not vary by provider).
       // MinGen is resolved per PROVIDER, most specific first: this cloud's own
       // CSV column, then this cloud's page default, then the shared column and
       // shared default that a single-provider page supplies. Each value is
@@ -258,23 +278,15 @@ window.getInstanceRecommendationWithSelector = async function (
       // columns feed — and its label to the Rules Applied column (below). The
       // Include Only tokens JOIN the column's allow-list (a union: any listed
       // family is acceptable), while Exclude tokens add to what is dropped.
-      let userRuleLabels = [];
-      let userExcludeExtra = [];
-      let userIncludeOnly = [];
-      if (userRulesNorm.length && typeof _matchUserRules === "function") {
-        const ev = _matchUserRules(
-          {
-            env: rowEnv,
-            os: rowOS,
-            workload: rowWorkload,
-            compliance: rowCompliance,
-          },
-          userRulesNorm,
-        );
-        userRuleLabels = ev.fired;
-        userExcludeExtra = ev.excludeTokens.map((t) => ({ provider, type: t }));
-        userIncludeOnly = ev.includeOnlyTokens;
-      }
+      // The match is hoisted above the loop (rowUserRules); only the exclude
+      // tokens are re-scoped to the current provider here, since a merged Exclude
+      // entry carries { provider, type }.
+      const userRuleLabels = rowUserRules.fired;
+      const userExcludeExtra = rowUserRules.excludeTokens.map((t) => ({
+        provider,
+        type: t,
+      }));
+      const userIncludeOnly = rowUserRules.includeOnlyTokens;
       const mergedExclude = [
         ...(options.excludeTypes || []),
         ...rowExcludeExtra,

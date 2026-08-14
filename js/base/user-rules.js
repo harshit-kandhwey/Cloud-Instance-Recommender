@@ -104,7 +104,11 @@ function _matchUserRules(dims, rules) {
     if (dimVal(r.dimension) !== r.equals.toLowerCase()) return;
     if (r.action === "exclude") excludeTokens.push(...r.tokens);
     else includeOnlyTokens.push(...r.tokens);
-    fired.push(userRuleLabel(r));
+    // The label is constant per rule, so it is precomputed once in
+    // normalizeUserRules (r.label) rather than re-derived — which re-runs
+    // normalizeUserRule — on every row this rule fires. Fall back to computing it
+    // for a caller that passed rules NOT through normalizeUserRules.
+    fired.push(r.label || userRuleLabel(r));
   });
   return { excludeTokens, includeOnlyTokens, fired };
 }
@@ -113,7 +117,13 @@ function _matchUserRules(dims, rules) {
 // once-per-run counterpart to _matchUserRules' per-row matching.
 function normalizeUserRules(rules) {
   return Array.isArray(rules)
-    ? rules.map(normalizeUserRule).filter(Boolean)
+    ? rules
+        .map(normalizeUserRule)
+        .filter(Boolean)
+        // Precompute the Rules Applied label once per rule here, so the per-row
+        // matcher (_matchUserRules) reads r.label instead of re-deriving it —
+        // which re-runs normalizeUserRule — for every row a rule fires on.
+        .map((r) => ({ ...r, label: userRuleLabel(r) }))
     : [];
 }
 
