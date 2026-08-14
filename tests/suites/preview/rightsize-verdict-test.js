@@ -122,6 +122,29 @@ console.log("[a no-match optimized cell carries no verdict]");
   );
 }
 
+console.log("[an invalid recommended capacity is never a verdict]");
+{
+  // A 0-vCPU optimized cell (a malformed value that still parses to a number, or
+  // a placeholder that reads as 0) must NOT render as "Downsized" against a real
+  // source. Same for a negative or infinite recommended capacity.
+  const html = render([
+    opt("zero", { cpu: 8, mem: 32, oCpu: "0", oMem: "16" }),
+    opt("neg", { cpu: 8, mem: 32, oCpu: "-4", oMem: "16" }),
+    opt("inf", { cpu: 8, mem: 32, oCpu: "Infinity", oMem: "16" }),
+    opt("junk", { cpu: 8, mem: 32, oCpu: "4junk", oMem: "16" }),
+  ]);
+  for (const name of ["zero", "neg", "inf", "junk"]) {
+    const r = rowFor(html, name);
+    check(
+      `a ${name} recommended vCPU yields no verdict`,
+      r.includes(`>${name}<`) &&
+        !r.includes("Downsized") &&
+        !r.includes("Upsized"),
+      r,
+    );
+  }
+}
+
 console.log("[Downsized wears the good colour, Upsized the amber one]");
 {
   const html = render([

@@ -57,12 +57,19 @@ function _rightsizeVerdictHtml(row, col) {
   const m = /^(.*) Optimized Instance$/.exec(col);
   if (!m) return "";
   const provider = m[1];
-  const srcCpu = parseFloat(row[COLUMN_MAPPINGS.cpu]);
-  const srcMem = parseFloat(row[COLUMN_MAPPINGS.memory]);
-  const recCpu = parseFloat(row[`${provider} Optimized vCPUs`]);
-  const recMem = parseFloat(row[`${provider} Optimized Memory (GiB)`]);
-  if ([srcCpu, srcMem, recCpu, recMem].some((n) => isNaN(n))) return "";
-  if (srcCpu <= 0 || srcMem <= 0) return "";
+  // Strict numeric conversion + finite-and-positive on ALL four capacities, not
+  // just the source: parseFloat would read "4junk" as 4, and a bare isNaN would
+  // wave through 0 / negative / Infinity, so a recommended 0 vCPU (a no-match or a
+  // malformed cell that still parses) would render as "Downsized". A verdict only
+  // makes sense between two real sizes.
+  const srcCpu = Number(row[COLUMN_MAPPINGS.cpu]);
+  const srcMem = Number(row[COLUMN_MAPPINGS.memory]);
+  const recCpu = Number(row[`${provider} Optimized vCPUs`]);
+  const recMem = Number(row[`${provider} Optimized Memory (GiB)`]);
+  if (
+    ![srcCpu, srcMem, recCpu, recMem].every((n) => Number.isFinite(n) && n > 0)
+  )
+    return "";
 
   // vCPU first; memory only breaks a vCPU tie, and only past the tolerance.
   let down;

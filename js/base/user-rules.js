@@ -58,7 +58,14 @@ function normalizeUserRule(raw) {
     .map((t) => _cleanRuleText(t).replace(/,/g, " ").trim())
     .filter(Boolean);
   if (!tokens.length) return null;
-  const id = _cleanRuleText(raw.id) || _newRuleId();
+  // Restrict the id to a safe charset. The UI renders it into an inline
+  // onclick="deleteUserRule('<id>')" handler; escapeHtml protects the HTML
+  // attribute context but NOT the nested JS-string context (the browser decodes
+  // &#39; back to ' before the handler runs), so a crafted id from an imported
+  // rules file could otherwise break out of the string literal — a stored XSS.
+  // _newRuleId() output ("ur-<base36>-<base36>") is already within this set.
+  const id =
+    _cleanRuleText(raw.id).replace(/[^A-Za-z0-9_-]/g, "") || _newRuleId();
   return { id, dimension, equals, action, tokens };
 }
 

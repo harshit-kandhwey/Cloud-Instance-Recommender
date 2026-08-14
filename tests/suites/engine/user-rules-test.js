@@ -91,6 +91,34 @@ console.log(
       tokens: ["m5"],
     })?.id,
   );
+  // Security: the id is rendered into an inline onclick="deleteUserRule('<id>')"
+  // handler, where HTML-escaping does not protect the nested JS-string context.
+  // An imported rule with a crafted id (quotes, parens, slashes) must be stripped
+  // to a safe charset at the model gate, or it breaks out of the string literal.
+  {
+    const evil = norm({
+      id: "');alert(document.cookie)//",
+      dimension: "env",
+      equals: "prod",
+      action: "exclude",
+      tokens: ["m5"],
+    });
+    check(
+      "a crafted id is stripped to a safe charset (no quote/paren/slash/space)",
+      !!evil && /^[A-Za-z0-9_-]+$/.test(evil.id),
+      evil && JSON.stringify(evil.id),
+    );
+    check(
+      "a normal hyphenated id is preserved unchanged",
+      norm({
+        id: "ur-abc-123",
+        dimension: "env",
+        equals: "prod",
+        action: "exclude",
+        tokens: ["m5"],
+      })?.id === "ur-abc-123",
+    );
+  }
 }
 
 // ── The evaluator ───────────────────────────────────────────────────────────

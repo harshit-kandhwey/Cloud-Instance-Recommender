@@ -965,9 +965,14 @@ function computeFitHeadroom(row, provider) {
 const WORKLOAD_SHAPE_COMPUTE_MAX = 2.5;
 const WORKLOAD_SHAPE_MEMORY_MIN = 6;
 function classifyWorkloadShape(cpu, mem) {
-  const c = parseFloat(cpu);
-  const m = parseFloat(mem);
-  if (isNaN(c) || isNaN(m) || c <= 0 || m <= 0) return null;
+  // Strict numeric conversion, not parseFloat: parseFloat("4junk") is 4 and
+  // parseFloat("Infinity") is Infinity, both of which would pass a bare isNaN
+  // check and hand back a shape for a value the contract calls invalid. Number()
+  // rejects the trailing-garbage case, and Number.isFinite rejects Infinity.
+  const c = Number(cpu);
+  const m = Number(mem);
+  if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
+    return null;
   const ratio = m / c;
   const shape =
     ratio <= WORKLOAD_SHAPE_COMPUTE_MAX

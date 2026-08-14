@@ -85,6 +85,25 @@ console.log("[a row with nothing to classify returns null, never a guess]");
   check("null when cpu is not a number", classify("n/a", 16) === null);
   check("null when cpu is zero (no ratio)", classify(0, 16) === null);
   check("null when memory is negative", classify(4, -8) === null);
+  // A trailing-garbage value that parseFloat would read as its leading number,
+  // and Infinity that isNaN would wave through — both must be rejected, or a row
+  // gets a shape the contract says it does not have (Infinity → ratio Infinity →
+  // a bogus "memory" badge).
+  check(
+    'null for a "4junk" trailing-garbage cpu',
+    classify("4junk", 16) === null,
+    JSON.stringify(classify("4junk", 16)),
+  );
+  check(
+    'null for an "Infinity" memory value',
+    classify(8, "Infinity") === null,
+    JSON.stringify(classify(8, "Infinity")),
+  );
+  check(
+    "null for an infinite cpu value",
+    classify(Infinity, 16) === null,
+    JSON.stringify(classify(Infinity, 16)),
+  );
 }
 
 console.log(
