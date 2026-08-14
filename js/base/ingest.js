@@ -1547,6 +1547,69 @@ const dataRowNumber = (index) => index + 2;
 const IMPLAUSIBLE_CPU = 512;
 const IMPLAUSIBLE_MEMORY_GB = 24576; // 24 TB
 
+// ─── End-of-life OS advisory (step 10) ───────────────────────────────────────
+// A curated, deliberately CONSERVATIVE table of operating systems comfortably
+// past vendor end-of-life, each with a modern landing OS to consider. This is
+// the ONE place OS is read (the unrecognised-value scan deliberately skips it):
+// the difference is that this fires only on an OS it POSITIVELY recognises as
+// EOL, never on an unknown or current string, so it stays silent on the ordinary
+// Linux-distro strings a real inventory is full of. It is advisory only — sizing
+// is driven by CPU/memory, never the OS string, so it never gates a
+// recommendation. Kept small on purpose: a false "you are on EOL" is worse than
+// a missed one, so anything still in support (or ambiguous) is left out. Each
+// rule's regex is validated against real inventory strings — current OSes must
+// NOT match — in ingest/eol-os-test.js. First match wins.
+const EOL_OS_RULES = [
+  // Windows Server 2012 / 2012 R2 (EOL Oct 2023) and older. 2016+ still in
+  // support as of this table's date and deliberately omitted.
+  {
+    re: /windows\s*server\s*(?:2003|2008|2012)(?:\s*r2)?/i,
+    suggest: "Windows Server 2022",
+  },
+  // Windows client editions, occasionally carried in inventories.
+  { re: /windows\s*(?:xp|vista|7|8(?:\.1)?)(?!\d)/i, suggest: "Windows 11" },
+  // CentOS 6/7/8 (8 EOL Dec 2021, 7 EOL Jun 2024). CentOS Stream is a separate,
+  // current product and must NOT match.
+  {
+    re: /centos(?!\s*stream)\D*(?:6|7|8)(?!\d)/i,
+    suggest: "Rocky Linux 9 or RHEL 9",
+  },
+  // RHEL / Red Hat Enterprise Linux 5/6/7 (7 EOL Jun 2024).
+  {
+    re: /(?:rhel|red\s*hat(?:\s+enterprise)?(?:\s+linux)?)\D*(?:5|6|7)(?!\d)/i,
+    suggest: "RHEL 9",
+  },
+  // Oracle Linux 5/6/7.
+  { re: /oracle\s*linux\D*(?:5|6|7)(?!\d)/i, suggest: "Oracle Linux 9" },
+  // Ubuntu 10.04–18.04 (18.04 standard support ended May 2023). 20.04+ omitted.
+  {
+    re: /ubuntu\D*(?:1[0-8])\.(?:04|10)(?!\d)/i,
+    suggest: "Ubuntu 22.04 LTS or newer",
+  },
+  // Debian 8/9/10 (10 EOL 2024). 11+ omitted.
+  { re: /debian\D*(?:8|9|10)(?!\d)/i, suggest: "Debian 12" },
+  // SUSE Linux Enterprise 9/10/11/12 (12 EOL Oct 2024). 15 omitted.
+  {
+    re: /(?:sles|suse[\w ]*?)\D*(?:9|10|11|12)(?!\d)/i,
+    suggest: "SLES 15",
+  },
+  // Amazon Linux AMI (AL1, EOL Dec 2023) and Amazon Linux 2 (EOL Jun 2025).
+  // "Amazon Linux 2023" is current and must NOT match (the 2 is followed by 0).
+  { re: /amazon\s*linux\s*ami/i, suggest: "Amazon Linux 2023" },
+  { re: /amazon\s*linux\s*2(?!\d)/i, suggest: "Amazon Linux 2023" },
+];
+
+// Return a suggested modern landing OS if `raw` names an OS past end-of-life, or
+// null for anything current, unknown, or blank. Pure — a small table lookup.
+function classifyEolOs(raw) {
+  const s = String(raw == null ? "" : raw).trim();
+  if (!s) return null;
+  for (const rule of EOL_OS_RULES) {
+    if (rule.re.test(s)) return rule.suggest;
+  }
+  return null;
+}
+
 function analyzeInputHygiene(rows) {
   const CPU = COLUMN_MAPPINGS.cpu;
   const MEM = COLUMN_MAPPINGS.memory;
@@ -1683,6 +1746,30 @@ function analyzeInputHygiene(rows) {
     }
   }
 
+  // End-of-life OS advisory: fires only on an OS positively recognised as past
+  // vendor end-of-life (classifyEolOs), never on an unknown or current string,
+  // so — unlike the unrecognised-value scan above — reading the OS column here is
+  // safe from the "fires on nearly every row" noise that keeps OS out of that
+  // scan. Advisory only; it suggests a modern landing OS and never affects sizing.
+  if (present("OS") && typeof classifyEolOs === "function") {
+    const byOs = new Map(); // distinct EOL raw value → { suggest, rows: [] }
+    rows.forEach((row, i) => {
+      const raw = String(row["OS"] ?? "").trim();
+      if (!raw) return;
+      const suggest = classifyEolOs(raw);
+      if (!suggest) return;
+      if (!byOs.has(raw)) byOs.set(raw, { suggest, rows: [] });
+      byOs.get(raw).rows.push(dataRowNumber(i));
+    });
+    for (const [raw, info] of byOs) {
+      note(
+        "advisory",
+        `OS "${raw}" is past end-of-life — consider ${info.suggest}`,
+        info.rows,
+      );
+    }
+  }
+
   // Duplicates are a question, not a defect: the same name twice may be one VM
   // exported twice, or two VMs that genuinely share a name across clusters.
   // Only the user knows, so ask instead of picking.
@@ -1782,10 +1869,12 @@ function reportInputHygiene() {
   }
 
   const errors = report.issues.filter((i) => i.severity === "error");
+  const severityIcon = (s) =>
+    s === "error" ? "❌" : s === "advisory" ? "🗓️" : "⚠️";
   const lines = report.issues
     .map(
       (i) =>
-        `<li>${i.severity === "error" ? "❌" : "⚠️"} ${escapeHtml(i.label)} — ${
+        `<li>${severityIcon(i.severity)} ${escapeHtml(i.label)} — ${
           i.rowNumbers.length
         } row${i.rowNumbers.length === 1 ? "" : "s"} (${escapeHtml(
           formatRowNumbers(i.rowNumbers),
