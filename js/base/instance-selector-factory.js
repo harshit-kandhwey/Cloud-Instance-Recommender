@@ -150,6 +150,17 @@ window.getInstanceRecommendationWithSelector = async function (
     hooks && typeof hooks.onProgress === "function" ? hooks.onProgress : null;
   const yieldEvery = (hooks && hooks.yieldEvery) || 25;
 
+  // User-defined rules are normalised ONCE for the whole run, not re-validated
+  // against every row: the per-row matcher (_matchUserRules) trusts canonical
+  // rules. Falls back to the raw list if the normaliser is unavailable (older
+  // load order); _matchUserRules is null-tolerant either way.
+  const userRulesNorm =
+    options.userRules && options.userRules.length
+      ? typeof normalizeUserRules === "function"
+        ? normalizeUserRules(options.userRules)
+        : options.userRules
+      : [];
+
   // Process each row with all providers
   const results = [];
   for (let index = 0; index < csvData.length; index++) {
@@ -250,19 +261,15 @@ window.getInstanceRecommendationWithSelector = async function (
       let userRuleLabels = [];
       let userExcludeExtra = [];
       let userIncludeOnly = [];
-      if (
-        options.userRules &&
-        options.userRules.length &&
-        typeof evaluateUserRules === "function"
-      ) {
-        const ev = evaluateUserRules(
+      if (userRulesNorm.length && typeof _matchUserRules === "function") {
+        const ev = _matchUserRules(
           {
             env: rowEnv,
             os: rowOS,
             workload: rowWorkload,
             compliance: rowCompliance,
           },
-          options.userRules,
+          userRulesNorm,
         );
         userRuleLabels = ev.fired;
         userExcludeExtra = ev.excludeTokens.map((t) => ({ provider, type: t }));

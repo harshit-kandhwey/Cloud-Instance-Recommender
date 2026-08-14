@@ -281,6 +281,10 @@ vm.runInContext(
   }
   for (const f of [
     "js/base/rule-engine.js",
+    // Mirrors the worker's importScripts order (recommendation-worker.js): the
+    // factory reads user-rules' _matchUserRules / normalizeUserRules, so the
+    // fallback context must load it too or a userRules run would ReferenceError.
+    "js/base/user-rules.js",
     "js/base/base-instance-selector.js",
     "js/aws/aws-instance-selector.js",
     "js/azure/azure-instance-selector.js",
@@ -306,6 +310,67 @@ vm.runInContext(
   check(
     "fallback output matches golden",
     !!results2?.length && toCsv(results2) === golden,
+  );
+
+  // ── options.userRules across the worker boundary ────────────────────────────
+  // userRules is the one field 3.12 adds that crosses postMessage as an options
+  // member (Include Only rides inside csvData; user rules do not). The main-thread
+  // factory path is covered by engine/user-rules-test.js, but nothing proved a
+  // rule set SURVIVES structuredClone and EVALUATES inside the worker — the plain
+  // objects clone fine, and the worker importScripts user-rules.js, but that end
+  // to end path was untested. Drive it through the real onmessage: an includeOnly
+  // rule on Workload=database must restrict the pick to its family AND name itself
+  // in Rules Applied, from inside the worker.
+  console.log("[options.userRules over the worker boundary]");
+  const before = posted.length;
+  const userRulesMsg = structuredClone({
+    type: "run",
+    csvData: [
+      {
+        "VM Name": "db-ur",
+        "CPU Count": "4",
+        "Memory (GB)": "16",
+        "AWS Region": "us-east-1",
+        Workload: "Database",
+      },
+    ],
+    providers: ["aws"],
+    options: {
+      ...OPTIONS,
+      userRules: [
+        {
+          dimension: "workload",
+          equals: "database",
+          action: "includeOnly",
+          tokens: ["r5"],
+        },
+      ],
+    },
+    regionData,
+    flags,
+  });
+  await workerCtx.onmessage({ data: userRulesMsg });
+  for (
+    let i = 0;
+    i < 100 && !posted.slice(before).some((m) => m.type === "result");
+    i++
+  ) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  const urResult = posted.slice(before).find((m) => m.type === "result");
+  const urRow = urResult && urResult.results && urResult.results[0];
+  check(
+    "the user rule steered the worker pick to its allow-list family",
+    !!urRow && /^r5/.test(urRow["AWS Like-to-Like Instance"] || ""),
+    urRow && urRow["AWS Like-to-Like Instance"],
+  );
+  check(
+    "the fired user rule is named in Rules Applied, from inside the worker",
+    !!urRow &&
+      /User: Workload=database → include only r5/.test(
+        urRow["AWS Rules Applied"] || "",
+      ),
+    urRow && urRow["AWS Rules Applied"],
   );
 
   process.exitCode = failures ? 1 : 0;

@@ -76,11 +76,14 @@ function userRuleLabel(rule) {
   return `User: ${dim}=${r.equals} → ${act} ${r.tokens.join(", ")}`;
 }
 
-// Evaluate every rule against one row's resolved dimension values. Returns the
-// tokens to merge into that row's Exclude / Include Only, plus the labels of the
-// rules that fired (for the Rules Applied column). Pure — this is what runs in
-// the worker, per row.
-function evaluateUserRules(dims, rules) {
+// Match PRE-NORMALISED rules against one row's resolved dimension values, per
+// row. Returns the tokens to merge into that row's Exclude / Include Only, plus
+// the labels of the rules that fired (for the Rules Applied column). The caller
+// guarantees each rule is already canonical (normalizeUserRule output), so this
+// is the hot per-row path and does NOT re-normalise: the factory normalises the
+// rule set ONCE before its row loop (see normalizeUserRules) and calls this per
+// row, rather than re-validating every rule against every row.
+function _matchUserRules(dims, rules) {
   const excludeTokens = [];
   const includeOnlyTokens = [];
   const fired = [];
@@ -89,8 +92,7 @@ function evaluateUserRules(dims, rules) {
     String((dims && dims[d]) || "")
       .toLowerCase()
       .trim();
-  rules.forEach((raw) => {
-    const r = normalizeUserRule(raw);
+  rules.forEach((r) => {
     if (!r) return;
     if (dimVal(r.dimension) !== r.equals.toLowerCase()) return;
     if (r.action === "exclude") excludeTokens.push(...r.tokens);
@@ -98,6 +100,21 @@ function evaluateUserRules(dims, rules) {
     fired.push(userRuleLabel(r));
   });
   return { excludeTokens, includeOnlyTokens, fired };
+}
+
+// Normalise a whole rule set once, dropping any that fail validation. The
+// once-per-run counterpart to _matchUserRules' per-row matching.
+function normalizeUserRules(rules) {
+  return Array.isArray(rules)
+    ? rules.map(normalizeUserRule).filter(Boolean)
+    : [];
+}
+
+// Public, defensive entry point: normalise then match. Used directly by tests and
+// anywhere a raw (unnormalised) rule set is on hand; the factory takes the
+// normalise-once / match-per-row path above instead.
+function evaluateUserRules(dims, rules) {
+  return _matchUserRules(dims, normalizeUserRules(rules));
 }
 
 // ─── Storage (page-only; never called in the worker) ────────────────────────

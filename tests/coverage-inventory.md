@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 251 | 313 |
+| Covered | 62 | 253 | 315 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 366 | 452 |
+| **Total** | 86 | 368 | 454 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -33,7 +33,7 @@ waiver still records the reason.
 | `RuleEngine` | js/base/rule-engine.js | window | internal | uncovered | — |
 | `_beforeAfter` | js/base/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
 | `_buildStatsHtml` | js/base/preview.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/rightsize-verdict-test.js, preview/stats-consistency-test.js, preview/workload-shape-test.js, ui/accessibility-affordances-test.js, workload/app-summary-test.js |
-| `_cleanRuleText` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
+| `_cleanRuleText` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
 | `_csvMenuOutsideClick` | js/base/downloads.js | function | behavioral | waived | _waived: Outside-click handler that closes the CSV dropdown and resets aria-expanded. Pure interaction wiring, paired with toggleCsvMenu; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `_duplicatesAcknowledged` | js/base/ingest.js | window | internal | uncovered | — |
 | `_familyDistribution` | js/base/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
@@ -47,8 +47,9 @@ waiver still records the reason.
 | `_manualEditIndex` | js/base/manual-entry.js | window | internal | uncovered | — |
 | `_manualRegionDefaults` | js/base/manual-entry.js | window | internal | uncovered | — |
 | `_matchRateMeter` | js/base/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
+| `_matchUserRules` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js |
 | `_memoryUnitAcknowledged` | js/base/ingest.js | window | internal | uncovered | — |
-| `_newRuleId` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
+| `_newRuleId` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
 | `_pendingIngest` | js/base/ingest.js | window | internal | uncovered | — |
 | `_portfolioModel` | js/base/portfolio.js | window | internal | uncovered | — |
 | `_portfolioPayload` | js/base/portfolio.js | window | internal | uncovered | — |
@@ -305,7 +306,8 @@ waiver still records the reason.
 | `normalizeCellValue` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/quoted-newline-test.js, ingest/repeated-header-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `normalizeFamilyClass` | js/base/instance-selector-factory.js | function | internal | covered | engine/family-column-test.js, engine/family-equivalence-test.js, engine/worker-protocol-test.js |
 | `normalizeHeader` | js/base/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/app-mapping-test.js |
-| `normalizeUserRule` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
+| `normalizeUserRule` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
+| `normalizeUserRules` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js |
 | `num` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `onPortfolioMessage` | js/base/portfolio.js | function | behavioral | waived | _waived: Cross-window message router — enforces origin === location.origin and source === window.opener, then hands the payload to receivePortfolio (covered by portfolio-test.js). The routing/guard needs a real opener + postMessage; its browser residual is now VERIFIED end-to-end by tests/e2e/portfolio.spec.js, whose second test clears the localStorage copy so only this postMessage path can render the dashboard (which runs outside this V8-instrumented node run)._ |
 | `onPresetNameKeydown` | js/base/presets.js | function | behavioral | waived | _waived: Enter/Escape keyboard wiring for the preset-name field, delegating to confirmSavePreset (covered by presets-test.js) / cancelSavePreset. Keyboard wiring only; still uncovered in this V8-instrumented node run, but its browser residual is now VERIFIED end-to-end by tests/e2e/preset-interaction.spec.js (which runs outside this run)._ |
@@ -461,7 +463,7 @@ waiver still records the reason.
 | `updateStaleResultsNotice` | js/base/preview.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `updateUsageCounters` | js/base/downloads.js | function | internal | uncovered | — |
 | `updateUsageStatistics` | js/base/downloads.js | function | internal | uncovered | — |
-| `userRuleLabel` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
+| `userRuleLabel` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
 | `userRulesPageKey` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
 | `validateAzureRegion` | js/azure/azure-specific.js | function | internal | uncovered | — |
 | `validateCsvRegions` | js/base/app-core.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
