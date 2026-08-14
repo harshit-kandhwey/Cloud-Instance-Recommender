@@ -48,9 +48,9 @@ const COLUMN_MAPPINGS = {
   disk: "Disk (GB)",
   // The size a VM runs on TODAY (m5.xlarge, Standard_D4s_v3, n2-standard-4).
   // Optional, and carried through to the outputs untouched, so a recommendation
-  // can be read against what it replaces. Nothing is derived from it yet —
-  // deriving specs FROM this column, instead of from CPU/memory, is what makes
-  // cloud-to-cloud sizing possible, and that is a 4.0 change.
+  // can be read against what it replaces. By default nothing is derived from it;
+  // in cloud-to-cloud mode (3.13) a row with no CPU/Memory has its specs DERIVED
+  // from this column instead, which is what makes cross-provider sizing possible.
   currentInstance: "Current Instance Type",
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",

@@ -165,6 +165,12 @@ async function processRecommendations() {
     generateLikeToLike: generateLikeToLike,
     generateOptimized: generateOptimized,
 
+    // Cloud-to-cloud mode: when on, a row that carries no CPU/Memory is sized
+    // from its Current Instance Type (specs resolved below into derivedSpecs and
+    // passed to the factory). Off by default and absent from a page without the
+    // toggle, so an ordinary run is unaffected.
+    cloudToCloud: document.getElementById("cloudToCloudMode")?.checked || false,
+
     // Optimization strategy parameters (only used if generateOptimized is true)
     // Which utilization statistic sizes each row; "avg" is the historical
     // behaviour and the default when the control is absent.
@@ -278,6 +284,15 @@ async function processRecommendations() {
     },
   });
 
+  // Cloud-to-cloud: resolve the source specs on the MAIN thread, where region
+  // scripts can be injected (the worker cannot fetch), and pass the result across
+  // as options.derivedSpecs. Only spec-less rows naming a Current Instance Type
+  // need it, and the source provider is inferred per type — it need not be one of
+  // the selected TARGET providers, which is the whole point of the mode.
+  if (options.cloudToCloud) {
+    options.derivedSpecs = await buildDerivedSpecs(csvData);
+  }
+
   try {
     // Use the modular instance selector system (worker when possible)
     console.log("Running recommendation batch (worker with fallback)");
@@ -361,6 +376,63 @@ async function processRecommendations() {
 // ─── Worker-based batch runner ────────────────────────────────────────────────
 // Snapshots the region data the CSV needs (injecting any region scripts not
 // yet loaded) so it can be posted to the worker, which cannot fetch under CSP.
+// Cloud-to-cloud spec resolution (main thread). For every row that carries NO CPU
+// Count and NO Memory (GB) but names a Current Instance Type, infer which cloud
+// that type belongs to (inferInstanceTypeProvider), load that provider's default
+// region once, and reverse-look-up the type's vCPU/memory (getSpecsForInstanceType).
+// Returns a plain { typeLower: { cpu, memory } } map — safe to postMessage into the
+// worker as options.derivedSpecs. The source provider need not be a selected target;
+// specs are region-independent, so a single default region answers for common types.
+// A type nobody's data carries is simply absent from the map, and the factory turns
+// that into a No-Match that names the type.
+async function buildDerivedSpecs(csvData) {
+  const specs = {};
+  if (
+    !Array.isArray(csvData) ||
+    typeof inferInstanceTypeProvider !== "function"
+  )
+    return specs;
+
+  // Group the distinct spec-less source types by their inferred provider, so each
+  // provider's data is loaded at most once.
+  const needed = new Map();
+  for (const row of csvData) {
+    const cpu = parseInt(row && row["CPU Count"]) || 0;
+    const memory = parseFloat(row && row["Memory (GB)"]) || 0;
+    if (cpu !== 0 || memory !== 0) continue;
+    const type = String((row && row["Current Instance Type"]) || "").trim();
+    if (!type) continue;
+    const provider = inferInstanceTypeProvider(type);
+    if (!provider) continue;
+    if (!needed.has(provider)) needed.set(provider, new Set());
+    needed.get(provider).add(type);
+  }
+
+  for (const [provider, types] of needed) {
+    let selector;
+    try {
+      selector =
+        (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
+        InstanceSelectorFactory.createSelector(provider);
+      const def = InstanceSelectorFactory.getProviderDefaultRegion(provider);
+      await selector.initialize([], [def]);
+    } catch (e) {
+      console.warn(
+        `[CloudToCloud] could not load ${provider} data for spec lookup:`,
+        e,
+      );
+      continue;
+    }
+    for (const type of types) {
+      const found = selector.getSpecsForInstanceType(type);
+      if (found && found.vCpus > 0 && found.memory > 0) {
+        specs[type.toLowerCase()] = { cpu: found.vCpus, memory: found.memory };
+      }
+    }
+  }
+  return specs;
+}
+
 async function collectRegionDataForWorker(providers) {
   const regionData = {};
   const flags = {};

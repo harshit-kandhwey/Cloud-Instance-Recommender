@@ -2,9 +2,10 @@
 // survives untouched into the results and exports, and it lands beside the
 // recommendation so the two can be read against each other.
 //
-// It must NOT change sizing: CPU Count and Memory (GB) still drive that. The day
-// it does is 4.0 (cloud-to-cloud), and it should be a deliberate change, not a
-// drift.
+// It must NOT change sizing in the DEFAULT mode: CPU Count and Memory (GB) drive
+// that. Cloud-to-cloud mode (3.13) deliberately derives specs FROM this column
+// when a row carries no CPU/Memory — a change gated behind options.cloudToCloud
+// and pinned by cloud-to-cloud-test.js, so this default-mode invariant still holds.
 const vm = require("vm");
 const { buildContext, makeChecker, rowsOf, parse } = require("../harness");
 

@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 254 | 316 |
+| Covered | 62 | 255 | 317 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 369 | 455 |
+| **Total** | 86 | 370 | 456 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -107,6 +107,7 @@ waiver still records the reason.
 | `buildAboutSheet` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildAppCsv` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildAppSheet` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
+| `buildDerivedSpecs` | js/base/generate.js | function | internal | covered | engine/cloud-to-cloud-test.js |
 | `buildExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
 | `buildInputTemplateAllowedValues` | js/base/xlsx-export.js | function | internal | covered | export/input-template-test.js |
 | `buildInputTemplateWorkbook` | js/base/xlsx-export.js | function | internal | covered | export/input-template-test.js |

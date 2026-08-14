@@ -220,6 +220,61 @@ console.log("[an empty or unloaded selector answers null, never throws]");
     );
   }
 
+  // ── The main-thread resolver: buildDerivedSpecs (Phase B3) ─────────────────
+  // What generate.js runs before the batch: it turns the spec-less rows into the
+  // derivedSpecs map the factory consumes. A pre-warmed selector is injected so
+  // the test controls the data and isolates the resolver's LOGIC — which rows
+  // qualify, provider inference, the map shape — from region-loading plumbing.
+  console.log("[buildDerivedSpecs resolves spec-less rows to a specs map]");
+  {
+    const { ctx: c } = buildContext();
+    // A fake AWS selector with one known box and a no-op initialize, injected as
+    // a pre-warmed selector so buildDerivedSpecs reuses it instead of loading data.
+    c.window._prewarmedSelectors = c.window._prewarmedSelectors || {};
+    const B = c.BaseInstanceSelector;
+    const fake = new B();
+    fake.getProviderName = () => "AWS";
+    fake.initialize = async () => {};
+    fake.instanceData = {
+      "us-east-1": [
+        { instanceType: "m5.xlarge", vCpus: 4, memory: 16, family: "m5" },
+        { instanceType: "c5.large", vCpus: 2, memory: 4, family: "c5" },
+      ],
+    };
+    c.window._prewarmedSelectors.aws = fake;
+
+    const map = await c.buildDerivedSpecs([
+      { "VM Name": "a", "Current Instance Type": "m5.xlarge" },
+      // Has explicit specs AND names a DIFFERENT type → must be skipped, so its
+      // c5.large never reaches the map (this is what pins the spec-less filter).
+      {
+        "VM Name": "b",
+        "CPU Count": "8",
+        "Memory (GB)": "32",
+        "Current Instance Type": "c5.large",
+      },
+      // No Current Instance Type → nothing to resolve.
+      { "VM Name": "c" },
+    ]);
+    check(
+      "a spec-less row's type resolves to its vCPU / memory",
+      JSON.stringify(map["m5.xlarge"]) ===
+        JSON.stringify({ cpu: 4, memory: 16 }),
+      JSON.stringify(map),
+    );
+    check(
+      "only the spec-less named type is in the map (rows with specs are skipped)",
+      Object.keys(map).length === 1,
+      JSON.stringify(Object.keys(map)),
+    );
+    const emptyMap = await c.buildDerivedSpecs([]);
+    check(
+      "an empty input yields an empty map, never throws",
+      emptyMap && Object.keys(emptyMap).length === 0,
+      JSON.stringify(emptyMap),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
   // pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = state.failures ? 1 : 0;
