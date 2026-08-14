@@ -233,6 +233,35 @@ window.getInstanceRecommendationWithSelector = async function (
           )
         : { excludeTokens: [], includeOnlyTokens: [], fired: [] };
 
+    // Effective size for this row. Normally the provisioned CPU Count / Memory
+    // (GB). In cloud-to-cloud mode, when BOTH are blank and the row names a Current
+    // Instance Type whose specs were resolved on the main thread (options.derivedSpecs,
+    // keyed by lowercased type), the size is DERIVED from that type — the one
+    // deliberate case where the Current Instance Type drives sizing. Explicit
+    // CPU/Memory ALWAYS win: derivation only fills a row that carries neither
+    // (precedence decided with the user), so a normal upload is untouched. Resolved
+    // once per row, not per provider — the derived size is a property of the VM.
+    let cpu = parseInt(row["CPU Count"]) || 0;
+    let memory = parseFloat(row["Memory (GB)"]) || 0;
+    let sizedFrom = "";
+    let c2cUnresolvedType = "";
+    if (options.cloudToCloud && cpu === 0 && memory === 0) {
+      const currentType = String(row["Current Instance Type"] || "").trim();
+      const derived =
+        currentType && options.derivedSpecs
+          ? safeMapGet(options.derivedSpecs, currentType.toLowerCase())
+          : "";
+      if (derived && derived.cpu > 0 && derived.memory > 0) {
+        cpu = derived.cpu;
+        memory = derived.memory;
+        sizedFrom = currentType;
+      } else if (currentType) {
+        // A named source type we could not resolve to specs — recorded so the
+        // No-Match reason names it, instead of the generic "CPU Count is 0".
+        c2cUnresolvedType = currentType;
+      }
+    }
+
     selectedProviders.forEach((provider) => {
       const selector = selectors[provider];
       if (!selector) {
@@ -240,8 +269,8 @@ window.getInstanceRecommendationWithSelector = async function (
         return;
       }
 
-      const cpu = parseInt(row["CPU Count"]) || 0;
-      const memory = parseFloat(row["Memory (GB)"]) || 0;
+      // cpu / memory are resolved once per row above the provider loop (they do
+      // not vary by provider, and in cloud-to-cloud mode may be derived there).
       const cpuUtil = util.cpu;
       const memoryUtil = util.memory;
       const regionColumn =
@@ -335,9 +364,11 @@ window.getInstanceRecommendationWithSelector = async function (
       if (!region || cpu === 0 || memory === 0) {
         const noMatchReason = !region
           ? `No ${providerUpper} region specified in CSV`
-          : cpu === 0
-            ? "CPU Count is 0 or missing"
-            : "Memory (GB) is 0 or missing";
+          : c2cUnresolvedType
+            ? `Current Instance Type "${c2cUnresolvedType}" not recognised — provide CPU Count / Memory (GB)`
+            : cpu === 0
+              ? "CPU Count is 0 or missing"
+              : "Memory (GB) is 0 or missing";
         console.warn(
           `Missing data for ${provider} in row ${index + 1}: ${noMatchReason}`,
         );
@@ -505,6 +536,14 @@ window.getInstanceRecommendationWithSelector = async function (
         result,
         selectedProviders,
       );
+    }
+
+    // Cloud-to-cloud transparency: name the source instance type a row's size was
+    // derived from (empty for a row sized on its own CPU/Memory). Added for every
+    // row only when the mode is on, so the column is consistent within a run and
+    // absent from a normal upload.
+    if (options.cloudToCloud) {
+      result["Sized From"] = sizedFrom;
     }
 
     results.push(result);

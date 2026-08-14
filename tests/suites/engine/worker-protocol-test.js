@@ -373,6 +373,53 @@ vm.runInContext(
     urRow && urRow["AWS Rules Applied"],
   );
 
+  // options.cloudToCloud + options.derivedSpecs cross the boundary as options
+  // members (plain data). A spec-less row naming a Current Instance Type must be
+  // SIZED inside the worker from the derived specs, not returned as Missing data —
+  // proving the flag and the map both survive the clone and drive the factory.
+  console.log("[options.cloudToCloud + derivedSpecs over the worker boundary]");
+  const beforeC2c = posted.length;
+  const c2cMsg = structuredClone({
+    type: "run",
+    csvData: [
+      {
+        "VM Name": "c2c",
+        "AWS Region": "us-east-1",
+        "Current Instance Type": "m5.xlarge",
+      },
+    ],
+    providers: ["aws"],
+    options: {
+      ...OPTIONS,
+      cloudToCloud: true,
+      derivedSpecs: { "m5.xlarge": { cpu: 4, memory: 16 } },
+    },
+    regionData,
+    flags,
+  });
+  await workerCtx.onmessage({ data: c2cMsg });
+  for (
+    let i = 0;
+    i < 100 && !posted.slice(beforeC2c).some((m) => m.type === "result");
+    i++
+  ) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  const c2cResult = posted.slice(beforeC2c).find((m) => m.type === "result");
+  const c2cRow = c2cResult && c2cResult.results && c2cResult.results[0];
+  check(
+    "the spec-less row was sized inside the worker from its Current Instance Type",
+    !!c2cRow &&
+      c2cRow["AWS Like-to-Like Instance"] !== "Missing data" &&
+      !!c2cRow["AWS Like-to-Like Instance"],
+    c2cRow && c2cRow["AWS Like-to-Like Instance"],
+  );
+  check(
+    "Sized From crossed back naming the source type, from inside the worker",
+    !!c2cRow && c2cRow["Sized From"] === "m5.xlarge",
+    c2cRow && c2cRow["Sized From"],
+  );
+
   process.exitCode = failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);

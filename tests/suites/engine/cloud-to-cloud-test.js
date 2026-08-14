@@ -8,7 +8,7 @@
 // The mode that USES these (deriving specs when CPU/Memory are blank) is Phase B2;
 // this suite pins the primitives on their own so a regression there fails here,
 // not three layers downstream.
-const { buildEngineContext, makeChecker } = require("../harness");
+const { buildEngineContext, buildContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 
@@ -114,6 +114,116 @@ console.log("[an empty or unloaded selector answers null, never throws]");
   );
 }
 
-// process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
-// pipe (the CI case), dropping the FAIL: lines the run just wrote.
-process.exitCode = state.failures ? 1 : 0;
+// ── The mode: deriving a row's size from its Current Instance Type (Phase B2) ─
+// This is the DELIBERATE inversion of the invariant current-instance-test.js
+// defends ("the Current Instance Type never changes sizing"). That guard stays
+// true in the DEFAULT mode; here, ONLY under options.cloudToCloud and ONLY when a
+// row carries no CPU/Memory, the type drives the size — from the derivedSpecs map
+// the main thread resolves and passes across the worker boundary.
+(async () => {
+  const { ctx } = buildContext();
+  const rows = [
+    // No CPU/Memory — pure cloud-to-cloud rows naming what they run on today.
+    {
+      "VM Name": "a",
+      "Current Instance Type": "m5.xlarge",
+      "AWS Region": "us-east-1",
+    },
+    {
+      "VM Name": "b",
+      "Current Instance Type": "m5.xlarge",
+      "AWS Region": "us-east-1",
+    },
+    // Explicit CPU/Memory present — precedence says these win, type ignored.
+    {
+      "VM Name": "c",
+      "CPU Count": "8",
+      "Memory (GB)": "32",
+      "Current Instance Type": "m5.xlarge",
+      "AWS Region": "us-east-1",
+    },
+    // A named source type the main thread could not resolve.
+    {
+      "VM Name": "d",
+      "Current Instance Type": "zz9.mega",
+      "AWS Region": "us-east-1",
+    },
+    // Partial specs: CPU present, Memory blank. Derivation fills a row with
+    // NEITHER, so this is NOT derived — a partial row is a data gap the existing
+    // No-Match handles, not a cloud-to-cloud row.
+    {
+      "VM Name": "e",
+      "CPU Count": "8",
+      "Current Instance Type": "m5.xlarge",
+      "AWS Region": "us-east-1",
+    },
+  ];
+  const derivedSpecs = { "m5.xlarge": { cpu: 4, memory: 16 } };
+  const L2L = "AWS Like-to-Like Instance";
+
+  console.log(
+    "[default mode: a spec-less row does NOT derive — invariant holds]",
+  );
+  {
+    const off = await ctx.getInstanceRecommendationWithSelector(
+      rows,
+      ["aws"],
+      {},
+    );
+    check(
+      "with the mode off, a row with no CPU/Memory is Missing data, not derived",
+      off[0][L2L] === "Missing data",
+      JSON.stringify(off[0][L2L]),
+    );
+    check(
+      "with the mode off, no Sized From column is added",
+      !("Sized From" in off[0]),
+      JSON.stringify(Object.keys(off[0])),
+    );
+  }
+
+  console.log("[cloud-to-cloud mode: the source type drives the size]");
+  {
+    const on = await ctx.getInstanceRecommendationWithSelector(rows, ["aws"], {
+      cloudToCloud: true,
+      derivedSpecs,
+    });
+    check(
+      "a spec-less row is now sized (a real instance, not Missing data)",
+      on[0][L2L] !== "Missing data" && !!on[0][L2L],
+      JSON.stringify(on[0][L2L]),
+    );
+    check(
+      "Sized From names the source instance type it derived from",
+      on[0]["Sized From"] === "m5.xlarge",
+      JSON.stringify(on[0]["Sized From"]),
+    );
+    check(
+      "two rows with the same derived type get the same recommendation",
+      on[0][L2L] === on[1][L2L],
+      `${on[0][L2L]} vs ${on[1][L2L]}`,
+    );
+    check(
+      "a row with explicit CPU/Memory ignores its type (precedence: specs win)",
+      on[2]["Sized From"] === "",
+      JSON.stringify(on[2]["Sized From"]),
+    );
+    check(
+      "an unresolved source type is a No-Match that names the type",
+      /not recognised/.test(on[3]["AWS No Match Reason"] || ""),
+      JSON.stringify(on[3]["AWS No Match Reason"]),
+    );
+    check(
+      "a partially-specified row (CPU only) is not derived — both axes must be blank",
+      on[4]["Sized From"] === "" && on[4][L2L] === "Missing data",
+      `${JSON.stringify(on[4]["Sized From"])} / ${on[4][L2L]}`,
+    );
+  }
+
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
+  // pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});
