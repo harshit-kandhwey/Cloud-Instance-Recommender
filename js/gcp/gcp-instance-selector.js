@@ -393,6 +393,53 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     return "standard";
   }
 
+  // The tightest VALID GCP custom machine type for a required size, or "" when the
+  // family cannot be custom or the inputs are unusable. GCP's rules: vCPUs are 1 or
+  // an even number; memory is a whole number of 256 MB blocks and, without extended
+  // memory, between 0.5 GB and 8 GB per vCPU. The size is rounded UP to satisfy the
+  // requirement (never below it) and clamped into the per-vCPU memory band. Result
+  // is "<family>-custom-<vCPU>-<memoryMB>", e.g. "n2-custom-4-16384". Only the
+  // families that actually offer custom shapes qualify — a custom string for a
+  // family GCP does not allow it on would be a value the user cannot deploy.
+  buildCustomMachineType(family, cpu, memory) {
+    const fam = String(family || "")
+      .toLowerCase()
+      .trim();
+    if (!GCPInstanceSelector.CUSTOM_CAPABLE_FAMILIES.includes(fam)) return "";
+    const c = Number(cpu);
+    const m = Number(memory);
+    if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
+      return "";
+
+    // vCPU: 1, or rounded up to the next even number.
+    let vCpu = Math.max(1, Math.ceil(c));
+    if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+
+    // Memory: round the requirement up to a whole 256 MB block, then clamp into
+    // the 0.5–8 GB-per-vCPU band (both bounds are whole 256 MB blocks already).
+    let memMb = Math.ceil((m * 1024) / 256) * 256;
+    const minMb = 0.5 * vCpu * 1024; // 0.5 GB/vCPU (already a whole 256 MB block)
+    const maxMb = 8 * vCpu * 1024; // 8 GB/vCPU
+    if (memMb < minMb) memMb = minMb;
+    if (memMb > maxMb) memMb = maxMb;
+
+    return `${fam}-custom-${vCpu}-${memMb}`;
+  }
+
+  // Whether a standard pick wastes enough to be worth a custom suggestion: it
+  // provides at least `overhead` MORE vCPU or memory than the row requires, on
+  // either axis. Default 25% (a documented, tunable threshold). Guards keep a
+  // missing figure from ever reading as wasteful.
+  customShapeWorthwhile(stdVCpus, stdMem, reqCpu, reqMem, overhead = 0.25) {
+    const sv = Number(stdVCpus);
+    const sm = Number(stdMem);
+    const rc = Number(reqCpu);
+    const rm = Number(reqMem);
+    if (![sv, sm, rc, rm].every((n) => Number.isFinite(n) && n > 0))
+      return false;
+    return sv >= rc * (1 + overhead) || sm >= rm * (1 + overhead);
+  }
+
   // GCP-specific: Enhanced instance result
   createInstanceResult(instance, currentCpu, currentMemory) {
     const result = super.createInstanceResult(
@@ -646,6 +693,19 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     return Array.from(categories).sort();
   }
 }
+
+// The GCP machine families that offer custom vCPU/RAM shapes. Compute-optimized
+// (C2/C3), memory-optimized (M*), accelerator (A*/G*), HPC (H3), storage (Z3) and
+// the Tau/shared-core families do NOT, so a custom suggestion is never made for
+// them — the general-purpose families are the ones GCP lets you tailor.
+GCPInstanceSelector.CUSTOM_CAPABLE_FAMILIES = [
+  "e2",
+  "n1",
+  "n2",
+  "n2d",
+  "n4",
+  "n4d",
+];
 
 // Export GCP instance selector
 window.GCPInstanceSelector = GCPInstanceSelector;
