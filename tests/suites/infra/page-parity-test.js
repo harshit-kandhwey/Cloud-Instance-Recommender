@@ -159,6 +159,7 @@ console.log("[every page offers the same shared features]");
     "Excel download (primary)": "downloadResultsXlsxBtn",
     "Excel input template": "downloadInputTemplate()",
     "Custom rules panel": 'id="userRulesPanel"',
+    "Cloud-to-cloud toggle": "cloudToCloudMode",
     "CSV multiselect dropdown": 'id="csvMenu"',
     "Print report": "printExecutiveReport()",
     "Executive report target": 'id="executiveReportSection"',

@@ -537,6 +537,21 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre>
               </div>
             </div>
 
+            <!-- Cloud-to-cloud sizing mode -->
+            <div class="form-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="cloudToCloudMode" />
+                <label for="cloudToCloudMode">
+                  <strong>🔀 Cloud-to-cloud sizing</strong>
+                  <small style="display: block; color: var(--text-muted)">
+                    Size a row from its Current Instance Type when it has no CPU
+                    Count / Memory (GB). Explicit CPU and memory always take
+                    precedence.
+                  </small>
+                </label>
+              </div>
+            </div>
+
             <!-- Optimization Controls -->
             <div id="optimizationControls" class="optimization-controls">
               <h3 class="optimization-title">🧠 Optimization Settings</h3>
