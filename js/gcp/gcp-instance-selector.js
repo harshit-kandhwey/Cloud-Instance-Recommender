@@ -440,6 +440,45 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     return sv >= rc * (1 + overhead) || sm >= rm * (1 + overhead);
   }
 
+  // Whether this run excludes GCP custom shapes — the "Custom" classifier in the
+  // GCP exclude list. Read through the same token vocabulary the pool filters use,
+  // so a { provider: "gcp", type: "Custom" } run-level token and a plain per-row
+  // "custom" both count, and a token tagged for another provider does not.
+  isCustomExcluded(options) {
+    const list = (options && options.excludeTypes) || [];
+    const provider = this.getProviderName().toLowerCase();
+    return list.some(
+      (item) =>
+        this._typeTokenName(item) === "custom" &&
+        this._typeTokenAppliesTo(item, provider),
+    );
+  }
+
+  // The "GCP Custom Fit" cell for one row: a tighter custom machine type when the
+  // chosen standard pick over-provisions the requirement past the threshold, or ""
+  // otherwise. Returns "" for a no-match/absent pick, when Custom is excluded, when
+  // the waste is under the threshold, or when the pick's family cannot be custom
+  // (buildCustomMachineType decides that last one). Requirement is the row's own
+  // vCPU/memory. Pure — no pricing (D8), only headroom.
+  customFitSuggestion(chosen, reqCpu, reqMem, options) {
+    if (
+      !chosen ||
+      !chosen.instanceType ||
+      chosen.instanceType === "No data available"
+    )
+      return "";
+    if (this.isCustomExcluded(options)) return "";
+    if (
+      !this.customShapeWorthwhile(chosen.vCpus, chosen.memory, reqCpu, reqMem)
+    )
+      return "";
+    return this.buildCustomMachineType(
+      this.getMachineSeries(chosen.instanceType),
+      reqCpu,
+      reqMem,
+    );
+  }
+
   // GCP-specific: Enhanced instance result
   createInstanceResult(instance, currentCpu, currentMemory) {
     const result = super.createInstanceResult(

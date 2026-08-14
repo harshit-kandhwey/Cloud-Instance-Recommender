@@ -115,6 +115,97 @@ console.log("[customShapeWorthwhile fires only on real waste]");
   );
 }
 
-// process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
-// pipe (the CI case), dropping the FAIL: lines the run just wrote.
-process.exitCode = state.failures ? 1 : 0;
+console.log("[isCustomExcluded reads the Custom classifier, GCP-scoped]");
+{
+  const excl = (opts) => run(`__gcp.isCustomExcluded(${J(opts)})`);
+  check(
+    "a GCP-tagged Custom token excludes",
+    excl({ excludeTypes: [{ provider: "gcp", type: "Custom" }] }) === true,
+  );
+  check(
+    "a plain 'custom' token excludes",
+    excl({ excludeTypes: ["custom"] }) === true,
+  );
+  check(
+    "a Custom token tagged for another provider does not",
+    excl({ excludeTypes: [{ provider: "aws", type: "Custom" }] }) === false,
+  );
+  check("no exclude list → not excluded", excl({}) === false);
+}
+
+console.log("[customFitSuggestion ties the pieces together]");
+{
+  const suggest = (chosen, rc, rm, opts) =>
+    run(
+      `__gcp.customFitSuggestion(${J(chosen)}, ${J(rc)}, ${J(rm)}, ${J(opts || {})})`,
+    );
+  const std = { instanceType: "n2-standard-8", vCpus: 8, memory: 32 };
+  check(
+    "an over-provisioned standard pick yields a tighter custom shape",
+    suggest(std, 4, 16, {}) === "n2-custom-4-16384",
+    suggest(std, 4, 16, {}),
+  );
+  check(
+    "an exact-fit pick yields no suggestion",
+    suggest(
+      { instanceType: "n2-standard-4", vCpus: 4, memory: 16 },
+      4,
+      16,
+      {},
+    ) === "",
+  );
+  check(
+    "Custom excluded → no suggestion even when wasteful",
+    suggest(std, 4, 16, { excludeTypes: ["custom"] }) === "",
+  );
+  check(
+    "a no-data pick → no suggestion",
+    suggest(
+      { instanceType: "No data available", vCpus: 0, memory: 0 },
+      4,
+      16,
+      {},
+    ) === "",
+  );
+  check(
+    "a non-custom family pick (c2) → no suggestion",
+    suggest(
+      { instanceType: "c2-standard-8", vCpus: 8, memory: 32 },
+      4,
+      16,
+      {},
+    ) === "",
+  );
+}
+
+// The factory wiring: a real GCP run carries the GCP Custom Fit column (empty or
+// filled), proving the column is initialised and the suggestion is called.
+(async () => {
+  const { buildContext } = require("../harness");
+  const { ctx: c } = buildContext({ dataScript: "js/gcp/gcp-data.js" });
+  console.log("[a GCP run surfaces the GCP Custom Fit column]");
+  const res = await c.getInstanceRecommendationWithSelector(
+    [
+      {
+        "VM Name": "g",
+        "CPU Count": "1",
+        "Memory (GB)": "1",
+        "GCP Region": "us-central1",
+      },
+    ],
+    ["gcp"],
+    {},
+  );
+  check(
+    "the result carries a GCP Custom Fit column",
+    !!res[0] && "GCP Custom Fit" in res[0],
+    JSON.stringify(Object.keys(res[0] || {})),
+  );
+
+  // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
+  // pipe (the CI case), dropping the FAIL: lines the run just wrote.
+  process.exitCode = state.failures ? 1 : 0;
+})().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

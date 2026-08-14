@@ -298,6 +298,10 @@ window.getInstanceRecommendationWithSelector = async function (
       result[`${providerUpper} Rules Applied`] = "";
       result[`${providerUpper} No Match Reason`] = "";
       result[`${providerUpper} Nearest Miss`] = "";
+      // GCP-only: a tighter custom-machine-type suggestion when the standard pick
+      // over-provisions. Initialised empty on every GCP row so the column is
+      // consistent within a run; filled below when a suggestion is warranted.
+      if (provider === "gcp") result["GCP Custom Fit"] = "";
 
       // Per-row Exclude: merge CSV "Exclude" column with page-level excludeTypes
       const rowExcludeRaw = (row["Exclude"] || "").trim();
@@ -487,6 +491,23 @@ window.getInstanceRecommendationWithSelector = async function (
           result[key] = [userRuleLabels.join(" | "), result[key] || ""]
             .filter(Boolean)
             .join(" | ");
+        }
+
+        // GCP custom-machine-type suggestion: when the chosen standard pick
+        // (altSource — the like-to-like result, else the optimized one) over-
+        // provisions this row past the threshold, and the run does not exclude
+        // Custom, name the tighter custom shape. No pricing (D8) — the judgement
+        // is vCPU/RAM headroom. Requirement is the row's cpu/memory.
+        if (
+          provider === "gcp" &&
+          typeof selector.customFitSuggestion === "function"
+        ) {
+          result["GCP Custom Fit"] = selector.customFitSuggestion(
+            altSource,
+            cpu,
+            memory,
+            rowOptions,
+          );
         }
 
         // Alternative-strategy picks (Most Cost Optimized / Workload Based /

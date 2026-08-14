@@ -855,6 +855,16 @@ const REC_CSV = [
     "Azure Region": "East US",
     "GCP Region": "us-central1",
   },
+  {
+    // Over-provisioned on GCP: 2 vCPU / 5 GB, whose cheapest standard fit
+    // (e2-standard-2, 2/8) carries more memory than needed — exercises the GCP
+    // Custom Fit suggestion branch, which offers the tighter e2-custom-2-5120.
+    "VM Name": "vm3",
+    "CPU Count": "2",
+    "Memory (GB)": "5",
+    "GCP Region": "us-central1",
+    Workload: "General",
+  },
 ];
 
 const realInstance = (v) =>
@@ -877,7 +887,7 @@ const realInstance = (v) =>
 
   check(
     "rec: one result row per input row",
-    results.length === 2,
+    results.length === 3,
     String(results.length),
   );
 
@@ -958,6 +968,22 @@ const realInstance = (v) =>
     'rec: missing-region row marks the instance "Missing data"',
     r1["AWS Like-to-Like Instance"] === "Missing data",
     r1["AWS Like-to-Like Instance"],
+  );
+
+  // GCP Custom Fit: the over-provisioned GCP row (vm3) gets a tighter custom shape;
+  // the exact-fit row (vm1, 4 vCPU / 16 GB) gets none. These pin the factory's GCP
+  // suggestion branch — a mutant that drops it, mis-scopes the provider check, or
+  // swaps the requirement arguments changes one of these.
+  const r2 = results[2];
+  check(
+    "rec: an over-provisioned GCP row gets a custom-fit suggestion",
+    r2["GCP Custom Fit"] === "e2-custom-2-5120",
+    r2["GCP Custom Fit"],
+  );
+  check(
+    "rec: an exact-fit GCP row gets no custom-fit suggestion",
+    r0["GCP Custom Fit"] === "",
+    r0["GCP Custom Fit"],
   );
 
   const oracleFailed = state.failures > 0;

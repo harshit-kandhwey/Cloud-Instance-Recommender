@@ -256,6 +256,13 @@ function showResultsPreview(results) {
     // factory adds it when more than one provider is selected). Like "Sized On"
     // it is in the download already, and must be named here or it will not render.
     "Family Equivalence",
+    // Cloud-to-cloud: the source instance type a row's size was derived from,
+    // present only when that mode is on. In the download already; named here so it
+    // renders on screen too.
+    "Sized From",
+    // GCP-only: the tighter custom machine type suggested when the standard pick
+    // over-provisions. Present on GCP runs; named here or it will not render.
+    "GCP Custom Fit",
   ].filter((c) => allKeys.includes(c));
 
   const displayCols = [...inputCols];
