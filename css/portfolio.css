@@ -86,6 +86,21 @@
   gap: 12px;
   margin-bottom: 18px;
 }
+/* D1: a gradient accent bar down the left edge of each KPI tile (overview and
+   per-app panels alike, since both wrap their tiles in .pf-kpis). */
+.pf-kpis .counter-card {
+  position: relative;
+  overflow: hidden;
+}
+.pf-kpis .counter-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--grad-primary);
+}
 
 /* Estate distribution charts (Overview): doughnuts + right-sizing bar */
 .pf-charts {
@@ -136,6 +151,15 @@
 .pf-card h4 {
   margin: 0;
   color: var(--heading-indigo);
+}
+/* D4: banded gradient headers for the portfolio's major blocks — the same
+   brand gradient the active tab wears, so the section titles read as bands
+   rather than plain text. Later than the rule above, so it wins the colour. */
+.pf-section-head h3 {
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--grad-primary);
 }
 .pf-search {
   max-width: 260px;
