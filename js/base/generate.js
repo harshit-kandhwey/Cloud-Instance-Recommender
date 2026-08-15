@@ -134,14 +134,16 @@ async function processRecommendations() {
     "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
   );
 
-  // Pin what this run describes — BOTH the selection and the data — for its whole
-  // duration. The batch below is awaited, so anything changed in flight would be
-  // recorded as what the results ran against, making the stale-results notice wrong in
-  // the case it exists for. The token is as racy as the selection: an upload/paste/
-  // sample/manual apply mid-run would stamp the finished batch with the NEW token.
-  // Snapshot both here, at the same moment.
+  // Pin what this run describes — the selection, the token, AND the rows — for its
+  // whole duration. The batch below is awaited, so a mid-run upload/paste/sample/
+  // manual-apply that reassigns csvData would otherwise let buildDerivedSpecs and
+  // runRecommendationBatch read different arrays (mixing datasets) and stamp the
+  // finished batch with the NEW token. rowsForRun is a per-row snapshot that
+  // isolates the run from any in-flight change; the token is still recorded so the
+  // stale-results notice can flag a later drift.
   const providersForRun = selectedProviders.slice();
   const ingestTokenForRun = window._ingestToken;
+  const rowsForRun = csvData.map((row) => ({ ...row }));
 
   const recommendationType = document.querySelector(
     'input[name="recommendationType"]:checked',
@@ -303,13 +305,13 @@ async function processRecommendations() {
     // point of the mode. Inside the try so a resolver failure surfaces the error toast
     // and the finally still hides the processing status.
     if (options.cloudToCloud) {
-      options.derivedSpecs = await buildDerivedSpecs(csvData);
+      options.derivedSpecs = await buildDerivedSpecs(rowsForRun);
     }
 
     // Use the modular instance selector system (worker when possible)
     console.log("Running recommendation batch (worker with fallback)");
     processedResults = await runRecommendationBatch(
-      csvData,
+      rowsForRun,
       providersForRun,
       options,
     );
@@ -331,7 +333,7 @@ async function processRecommendations() {
     updateStaleResultsNotice();
 
     // Update usage statistics and show download section
-    updateUsageStatistics(csvData.length);
+    updateUsageStatistics(rowsForRun.length);
     document.getElementById("downloadSection").classList.remove("hidden");
 
     // Show inline results preview
