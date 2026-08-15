@@ -87,6 +87,37 @@
   margin-bottom: 18px;
 }
 
+/* Estate distribution charts (Overview): doughnuts + right-sizing bar */
+.pf-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.pf-chart-card {
+  padding: 12px 14px;
+  background: var(--surface-tint);
+  border: 1px solid var(--border-slate);
+  border-radius: 10px;
+}
+.pf-chart-card h4 {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  color: var(--heading-indigo);
+}
+.pf-doughnut-fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.pf-doughnut {
+  display: block;
+}
+.pf-doughnut-legend {
+  justify-content: center;
+}
+
 /* Section blocks */
 .pf-section {
   margin: 18px 0;

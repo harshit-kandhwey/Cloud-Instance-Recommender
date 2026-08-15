@@ -198,6 +198,44 @@ check(
     run("__m.estate.matchRate") === 75,
 );
 
+console.log("[estate distribution aggregates]");
+// ENV / OS are per-VM tallies summed across named apps + Unassigned, so each
+// reconciles to estate.vms (4). Billing 2×Production, Analytics 1×Dev,
+// Unassigned 1×Staging; OS: Linux b1/an1/u1 (3), Windows b2 (1).
+check(
+  "estate envMix {Production:2, Dev:1, Staging:1}",
+  run("__m.estate.envMix.Production") === 2 &&
+    run("__m.estate.envMix.Dev") === 1 &&
+    run("__m.estate.envMix.Staging") === 1,
+  run("JSON.stringify(__m.estate.envMix)"),
+);
+check(
+  "estate osMix {Linux:3, Windows:1}",
+  run("__m.estate.osMix.Linux") === 3 && run("__m.estate.osMix.Windows") === 1,
+  run("JSON.stringify(__m.estate.osMix)"),
+);
+// AWS: Billing 1 downsize + 1 same, Unassigned u1 same → downsize 1, same 2.
+// AZURE: Billing 2 same → same 2. (Analytics is all no-match, contributes none.)
+check(
+  "estate rightSizing.aws downsize 1 / same 2 / upsize 0",
+  run("__m.estate.rightSizing.aws.downsize") === 1 &&
+    run("__m.estate.rightSizing.aws.same") === 2 &&
+    run("__m.estate.rightSizing.aws.upsize") === 0,
+  run("JSON.stringify(__m.estate.rightSizing.aws)"),
+);
+check(
+  "estate rightSizing.azure same 2",
+  run("__m.estate.rightSizing.azure.same") === 2 &&
+    run("__m.estate.rightSizing.azure.downsize") === 0,
+  run("JSON.stringify(__m.estate.rightSizing.azure)"),
+);
+check(
+  "estate rightSizing is null when no Optimized picks ran",
+  run(
+    '__lo = buildPortfolioModel({ providers: ["aws"], hasOptimized: false, results: [{ "App Name": "A", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" }] }); __lo.estate.rightSizing',
+  ) === null,
+);
+
 console.log("[per-app: Billing]");
 check(
   "Billing 2 VMs / 12 vCPUs / 48 GB",
@@ -353,6 +391,13 @@ check(
   /VM detail/.test(cHtml) && /Recommended families/.test(cHtml),
 );
 check("right-sizing block present (Optimized run)", /Right-sizing/.test(cHtml));
+check(
+  "overview renders the estate distribution charts (doughnuts + verdict bar)",
+  /Estate distribution/.test(cHtml) &&
+    /Environment mix/.test(cHtml) &&
+    /<svg/.test(cHtml) &&
+    /Right-sizing verdict/.test(cHtml),
+);
 
 console.log("[UI interactions]");
 run('filterPortfolioApps("bill")');

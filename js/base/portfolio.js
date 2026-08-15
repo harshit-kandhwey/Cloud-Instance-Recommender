@@ -325,6 +325,39 @@ function buildPortfolioModel(payload) {
     ? Math.round((estate.matched / estate.vms) * 100)
     : 0;
 
+  // Estate-level distribution aggregates (named apps + Unassigned), so the
+  // Overview charts read one already-summed source instead of re-walking rows.
+  // ENV / OS are per-VM tallies, so their totals reconcile to estate.vms.
+  estate.envMix = {};
+  estate.osMix = {};
+  allStats.forEach((a) => {
+    Object.entries(a.envMix).forEach(([k, n]) => {
+      estate.envMix[k] = (estate.envMix[k] || 0) + n;
+    });
+    Object.entries(a.osMix).forEach(([k, n]) => {
+      estate.osMix[k] = (estate.osMix[k] || 0) + n;
+    });
+  });
+  // Right-sizing verdict distribution per provider, summed across every app —
+  // only when the run carried Optimized picks (otherwise there is no verdict).
+  estate.rightSizing = null;
+  if (hasOptimized) {
+    estate.rightSizing = {};
+    providers.forEach((p) => {
+      estate.rightSizing[p] = { downsize: 0, same: 0, upsize: 0 };
+    });
+    allStats.forEach((a) => {
+      if (!a.rightSizing) return;
+      providers.forEach((p) => {
+        const rs = a.rightSizing[p];
+        if (!rs) return;
+        estate.rightSizing[p].downsize += rs.downsize;
+        estate.rightSizing[p].same += rs.same;
+        estate.rightSizing[p].upsize += rs.upsize;
+      });
+    });
+  }
+
   // Rankings / callouts (named apps only).
   const bySize = [...apps].sort(
     (a, b) => b.vcpus - a.vcpus || b.memory - a.memory,
@@ -496,6 +529,140 @@ function vmMatchCell(row) {
     : '<span class="pf-chip pf-chip-danger">✗ no match</span>';
 }
 
+// ─── Estate distribution charts (Overview) ───────────────────────────────────
+// Inline-SVG doughnuts + a diverging right-sizing bar over the estate-level
+// aggregates buildPortfolioModel precomputes. No charting library — the same
+// rationale as charts.js: a tight CSP allows same-origin scripts and none of
+// this needs one. Segment fills are the shared categorical hues (pfEnvColor /
+// pfOsColor — literal and theme-stable, matching the per-app bars); every text
+// mark wears a theme text token, never a segment colour, and identity is carried
+// by an always-present legend so it is never colour-alone.
+
+// A part-to-whole doughnut for a {key: count} map. A 2px surface gap separates
+// adjacent arcs; the total sits in the hole as the hero figure; a legend below
+// keys every colour. Returns a muted dash when there is nothing to plot.
+function pfDoughnut(counts, colorFn, opts) {
+  opts = opts || {};
+  const entries = Object.entries(counts)
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((s, [, n]) => s + n, 0);
+  if (!total) return '<span class="pf-muted">—</span>';
+
+  const size = 132;
+  const sw = 18;
+  const r = (size - sw) / 2;
+  const c = size / 2;
+  const circ = 2 * Math.PI * r;
+  // A 2px arc gap reads as a surface-coloured separator; a lone segment is a
+  // full unbroken ring (there is nothing to separate it from).
+  const gap = entries.length > 1 ? 2 : 0;
+
+  let offset = 0;
+  const arcs = entries
+    .map(([k, n]) => {
+      const frac = n / total;
+      const len = Math.max(frac * circ - gap, 0.01);
+      // Per-circle rotate(-90) starts each arc at 12 o'clock and keeps the
+      // centre text upright (no counter-rotation needed).
+      const arc = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${colorFn(k)}" stroke-width="${sw}" stroke-linecap="butt" stroke-dasharray="${len.toFixed(2)} ${(circ - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${c} ${c})"></circle>`;
+      offset += frac * circ;
+      return arc;
+    })
+    .join("");
+
+  const legend = entries
+    .map(
+      ([k, n]) =>
+        `<span class="pf-legend-item"><span class="pf-swatch" style="background:${colorFn(k)}"></span>${esc(k)} <b>${n}</b> <span class="pf-muted">${Math.round((n / total) * 100)}%</span></span>`,
+    )
+    .join("");
+
+  const aria =
+    opts.ariaLabel ||
+    `${opts.centerLabel || "Total"} ${total}: ` +
+      entries
+        .map(([k, n]) => `${k} ${n} (${Math.round((n / total) * 100)}%)`)
+        .join(", ");
+
+  return `<figure class="pf-doughnut-fig" role="img" aria-label="${esc(aria)}">
+    <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" class="pf-doughnut" aria-hidden="true" focusable="false">
+      ${arcs}
+      <text x="${c}" y="${c - 3}" text-anchor="middle" style="fill:var(--text);font-size:26px;font-weight:800;">${total}</text>
+      <text x="${c}" y="${c + 16}" text-anchor="middle" style="fill:var(--text-soft);font-size:11px;">${esc(opts.centerLabel || "")}</text>
+    </svg>
+    <figcaption class="pf-legend pf-doughnut-legend">${legend}</figcaption>
+  </figure>`;
+}
+
+// The estate right-sizing verdict distribution: a diverging stacked bar per
+// provider — Downsized (good) · Same (neutral) · Upsized (caution) — read from
+// the aggregated Optimized-vs-current counts. Empty when the run had no
+// Optimized picks (there is no verdict to show).
+const PF_RIGHTSIZE_SEGS = [
+  {
+    key: "downsize",
+    label: "Downsized",
+    color: "var(--good-strong)",
+    sym: "▼",
+  },
+  { key: "same", label: "Same", color: "var(--chart-context)", sym: "=" },
+  { key: "upsize", label: "Upsized", color: "var(--amber-strong)", sym: "▲" },
+];
+function pfEstateRightSizing(m) {
+  const rs = m.estate.rightSizing;
+  if (!rs) return "";
+  const provs = m.meta.providers.filter((p) => {
+    const v = rs[p];
+    return v && v.downsize + v.same + v.upsize > 0;
+  });
+  if (!provs.length) return "";
+
+  const rows = provs
+    .map((p) => {
+      const v = rs[p];
+      const total = v.downsize + v.same + v.upsize;
+      const segs = PF_RIGHTSIZE_SEGS.map((s) =>
+        v[s.key] > 0
+          ? `<span class="pf-bar-seg" style="width:${((v[s.key] / total) * 100).toFixed(2)}%;background:${s.color}" title="${s.label}: ${v[s.key]}"></span>`
+          : "",
+      ).join("");
+      const aria = PF_RIGHTSIZE_SEGS.map((s) => `${s.label} ${v[s.key]}`).join(
+        ", ",
+      );
+      return `<div class="pf-fam"><span class="pf-fam-prov">${PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()}</span><div class="pf-bar" role="img" aria-label="${esc((PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()) + " right-sizing — " + aria)}">${segs}</div></div>`;
+    })
+    .join("");
+
+  const legend = PF_RIGHTSIZE_SEGS.map(
+    (s) =>
+      `<span class="pf-legend-item"><span class="pf-swatch" style="background:${s.color}"></span>${s.sym} ${s.label}</span>`,
+  ).join("");
+
+  return `<div class="pf-chart-card"><h4>📐 Right-sizing verdict</h4>${rows}<div class="pf-legend">${legend}</div><small class="pf-note">Optimized vs. current vCPUs, across every application.</small></div>`;
+}
+
+// The Overview distribution block: ENV + OS composition doughnuts and the
+// right-sizing verdict bar. Returns "" when none of them has anything to draw,
+// so the section vanishes rather than showing empty frames.
+function renderEstateCharts(m) {
+  const cards = [];
+  if (Object.values(m.estate.envMix).some((n) => n > 0)) {
+    cards.push(
+      `<div class="pf-chart-card"><h4>🌐 Environment mix</h4>${pfDoughnut(m.estate.envMix, pfEnvColor, { centerLabel: "VMs" })}</div>`,
+    );
+  }
+  if (Object.values(m.estate.osMix).some((n) => n > 0)) {
+    cards.push(
+      `<div class="pf-chart-card"><h4>💽 Operating system mix</h4>${pfDoughnut(m.estate.osMix, pfOsColor, { centerLabel: "VMs" })}</div>`,
+    );
+  }
+  const rs = pfEstateRightSizing(m);
+  if (rs) cards.push(rs);
+  if (!cards.length) return "";
+  return `<div class="pf-section"><div class="pf-section-head"><h3>Estate distribution</h3></div><div class="pf-charts">${cards.join("")}</div></div>`;
+}
+
 function renderPortfolio() {
   const empty = document.getElementById("portfolioEmpty");
   const content = document.getElementById("portfolioContent");
@@ -623,7 +790,7 @@ function renderOverview(m) {
     <div class="pf-count" id="pf-app-count"></div>
   </div>`;
 
-  return kpis + table + renderCallouts(m);
+  return kpis + renderEstateCharts(m) + table + renderCallouts(m);
 }
 
 function sortApps(apps) {

@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 255 | 317 |
+| Covered | 62 | 258 | 320 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 370 | 456 |
+| **Total** | 86 | 373 | 459 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -327,7 +327,9 @@ waiver still records the reason.
 | `pct` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `pfBar` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `pfChips` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `pfDoughnut` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `pfEscapeHtml` | js/base/portfolio.js | function | internal | uncovered | — |
+| `pfEstateRightSizing` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `pfKeyColor` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `pickBestSheet` | js/base/ingest.js | function | internal | covered | ingest/sheet-picker-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js |
 | `pinScenario` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
@@ -353,6 +355,7 @@ waiver still records the reason.
 | `renderAppTableBody` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderCallouts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderCsvMenu` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js, workload/app-summary-test.js |
+| `renderEstateCharts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
 | `renderFamilies` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderHealth` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
