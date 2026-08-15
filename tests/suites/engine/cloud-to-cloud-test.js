@@ -275,6 +275,42 @@ console.log("[an empty or unloaded selector answers null, never throws]");
     );
   }
 
+  // Cross-provider resolution — the whole point of the mode. A source type from
+  // ANOTHER cloud must be routed to that cloud's data by inferInstanceTypeProvider,
+  // even when it is not a selected target. An Azure type (Standard_D4s_v5) is
+  // resolved from an injected Azure selector, proving the underscore-shape
+  // inference drives which provider's data answers.
+  console.log("[buildDerivedSpecs resolves a source type from another cloud]");
+  {
+    const { ctx: c } = buildContext();
+    c.window._prewarmedSelectors = c.window._prewarmedSelectors || {};
+    const B = c.BaseInstanceSelector;
+    const azure = new B();
+    azure.getProviderName = () => "Azure";
+    azure.initialize = async () => {};
+    azure.instanceData = {
+      eastus: [
+        {
+          instanceType: "Standard_D4s_v5",
+          vCpus: 4,
+          memory: 16,
+          family: "Dsv5",
+        },
+      ],
+    };
+    c.window._prewarmedSelectors.azure = azure;
+
+    const map = await c.buildDerivedSpecs([
+      { "VM Name": "x", "Current Instance Type": "Standard_D4s_v5" },
+    ]);
+    check(
+      "an Azure-named source type is routed to Azure data and resolved",
+      JSON.stringify(map["standard_d4s_v5"]) ===
+        JSON.stringify({ cpu: 4, memory: 16 }),
+      JSON.stringify(map),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
   // pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = state.failures ? 1 : 0;

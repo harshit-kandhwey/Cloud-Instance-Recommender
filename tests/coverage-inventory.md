@@ -66,7 +66,7 @@ waiver still records the reason.
 | `_previewState` | js/base/preview.js | window | internal | uncovered | — |
 | `_previewToggleColumn` | js/base/preview.js | window | internal | covered | preview/preview-column-visibility-test.js, preview/preview-focus-test.js |
 | `_previewToggleNoMatch` | js/base/preview.js | window | internal | covered | preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js |
-| `_prewarmedSelectors` | js/base/app-core.js | window | internal | uncovered | — |
+| `_prewarmedSelectors` | js/base/app-core.js, js/base/generate.js | window | internal | uncovered | — |
 | `_regionScriptPromises` | js/base/base-instance-selector.js | window | internal | uncovered | — |
 | `_regionValidation` | js/base/app-core.js | window | internal | uncovered | — |
 | `_relaxSuggestion` | js/base/preview.js | window | internal | uncovered | — |

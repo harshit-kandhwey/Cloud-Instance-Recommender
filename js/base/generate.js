@@ -61,18 +61,37 @@ function generateRecommendations() {
     return;
   }
 
-  // Check if required columns exist
-  const requiredColumns = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
-  const missingColumns = requiredColumns.filter(
-    (col) => !columnHeaders.includes(col),
-  );
-
-  if (missingColumns.length > 0) {
-    showToast(
-      `Missing required columns: ${missingColumns.join(", ")}`,
-      "warning",
+  // Check required input columns. Normally CPU Count and Memory (GB). In
+  // cloud-to-cloud mode a row may instead be sized from its Current Instance Type,
+  // so a file that names only that column is valid input — accept EITHER the size
+  // columns or Current Instance Type (the per-row precedence, where explicit
+  // CPU/Memory still win, is handled downstream in the factory). A typical cloud
+  // inventory export names just the instance type, which the old gate rejected
+  // before the mode could ever run.
+  const cloudToCloudOn =
+    document.getElementById("cloudToCloudMode")?.checked || false;
+  const hasSizeColumns =
+    columnHeaders.includes(COLUMN_MAPPINGS.cpu) &&
+    columnHeaders.includes(COLUMN_MAPPINGS.memory);
+  if (cloudToCloudOn) {
+    if (!hasSizeColumns && !columnHeaders.includes("Current Instance Type")) {
+      showToast(
+        "Cloud-to-cloud sizing needs either CPU Count and Memory (GB) columns, or a Current Instance Type column.",
+        "warning",
+      );
+      return;
+    }
+  } else {
+    const missingColumns = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory].filter(
+      (col) => !columnHeaders.includes(col),
     );
-    return;
+    if (missingColumns.length > 0) {
+      showToast(
+        `Missing required columns: ${missingColumns.join(", ")}`,
+        "warning",
+      );
+      return;
+    }
   }
 
   const recommendationType = document.querySelector(
@@ -284,16 +303,18 @@ async function processRecommendations() {
     },
   });
 
-  // Cloud-to-cloud: resolve the source specs on the MAIN thread, where region
-  // scripts can be injected (the worker cannot fetch), and pass the result across
-  // as options.derivedSpecs. Only spec-less rows naming a Current Instance Type
-  // need it, and the source provider is inferred per type — it need not be one of
-  // the selected TARGET providers, which is the whole point of the mode.
-  if (options.cloudToCloud) {
-    options.derivedSpecs = await buildDerivedSpecs(csvData);
-  }
-
   try {
+    // Cloud-to-cloud: resolve the source specs on the MAIN thread, where region
+    // scripts can be injected (the worker cannot fetch), and pass the result
+    // across as options.derivedSpecs. Only spec-less rows naming a Current
+    // Instance Type need it, and the source provider is inferred per type — it
+    // need not be one of the selected TARGET providers, which is the whole point
+    // of the mode. Inside the try so a resolver failure surfaces the error toast
+    // and the finally still hides the processing status.
+    if (options.cloudToCloud) {
+      options.derivedSpecs = await buildDerivedSpecs(csvData);
+    }
+
     // Use the modular instance selector system (worker when possible)
     console.log("Running recommendation batch (worker with fallback)");
     processedResults = await runRecommendationBatch(
@@ -414,6 +435,13 @@ async function buildDerivedSpecs(csvData) {
       selector =
         (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
         InstanceSelectorFactory.createSelector(provider);
+      // Cache it the same way collectRegionDataForWorker does, so a later phase
+      // (or a provider that is also a selected target) reuses the parsed region
+      // data instead of creating and re-parsing a second selector. initialize is
+      // additive — it never resets instanceData — so a reused selector only gains
+      // the default region here.
+      window._prewarmedSelectors = window._prewarmedSelectors || {};
+      window._prewarmedSelectors[provider] = selector;
       const def = InstanceSelectorFactory.getProviderDefaultRegion(provider);
       await selector.initialize([], [def]);
     } catch (e) {
