@@ -77,14 +77,11 @@ function formatAlternative(a) {
   return a ? `${a.instanceType} (${a.vCpus}/${a.memory})` : "";
 }
 
-// Cloud-to-cloud sizing: infer which provider an instance-type name belongs to
-// from its naming shape alone. The three clouds' type names are disjoint in their
-// separator — AWS uses a dot (m5.xlarge), Azure an underscore (Standard_D4s_v5,
-// D4s_v5), GCP a hyphen (n2-standard-4) — so no data lookup is needed to know which
-// provider's data to search for the source VM's specs. Returns "aws" | "azure" |
-// "gcp", or "" when the shape matches none (an unknown type is a No-Match with a
-// clear reason, never a guessed size). Checked dot → underscore → hyphen, which is
-// unambiguous because a real type name carries exactly one of the three.
+// Cloud-to-cloud sizing: infer a type name's provider from its separator alone —
+// AWS uses a dot (m5.xlarge), Azure an underscore (Standard_D4s_v5), GCP a hyphen
+// (n2-standard-4), disjoint so no data lookup is needed. Returns "aws"|"azure"|"gcp"
+// or "" (an unknown type is a No-Match, never a guessed size). Checked dot →
+// underscore → hyphen; a real type carries exactly one.
 function inferInstanceTypeProvider(type) {
   const t = String(type == null ? "" : type).trim();
   if (!t) return "";
@@ -168,10 +165,9 @@ window.getInstanceRecommendationWithSelector = async function (
     hooks && typeof hooks.onProgress === "function" ? hooks.onProgress : null;
   const yieldEvery = (hooks && hooks.yieldEvery) || 25;
 
-  // User-defined rules are normalised ONCE for the whole run, not re-validated
-  // against every row: the per-row matcher (_matchUserRules) trusts canonical
-  // rules. Falls back to the raw list if the normaliser is unavailable (older
-  // load order); _matchUserRules is null-tolerant either way.
+  // User-defined rules are normalised ONCE for the whole run; the per-row matcher
+  // (_matchUserRules) trusts canonical rules. Falls back to the raw list if the
+  // normaliser is unavailable (older load order); _matchUserRules is null-tolerant.
   const userRulesNorm =
     options.userRules && options.userRules.length
       ? typeof normalizeUserRules === "function"
@@ -189,19 +185,16 @@ window.getInstanceRecommendationWithSelector = async function (
     // resolved once per row and shared by every provider's optimized pass.
     const util = resolveUtilization(row, options.utilizationStatistic);
     if (generateOptimized) {
-      // Which statistic actually sized the row. Recorded on every row so a
-      // recommendation that looks small can be traced to its basis instead of
-      // reading as arbitrary — especially where a row fell back, or where CPU
-      // and memory were sized on different statistics.
+      // Which statistic sized the row. Recorded on every row so a small-looking
+      // recommendation can be traced to its basis — especially a fallback, or CPU
+      // and memory sized on different statistics.
       result["Sized On"] = describeSizedOn(util);
     }
 
-    // Per-row rule engine inputs: CSV column → UI page default → built-in default.
-    // These four dimensions do NOT depend on the provider, so they — and the
-    // user-rule match that reads them — are resolved ONCE per row here, not once
-    // per provider (a multi-cloud run would otherwise repeat the match, and its
-    // label formatting, three times). Only rowMinGen (native to each cloud) and the
-    // exclude-token provider mapping stay inside the provider loop below.
+    // Per-row rule inputs: CSV column → UI page default → built-in default. These
+    // four dimensions don't depend on the provider, so they (and the user-rule match
+    // reading them) are resolved ONCE per row here, not per provider. Only rowMinGen
+    // (native to each cloud) and the exclude-token provider mapping stay in the loop.
     const rowEnv = (
       row["ENV"] ||
       row["Environment"] ||
@@ -233,14 +226,12 @@ window.getInstanceRecommendationWithSelector = async function (
           )
         : { excludeTokens: [], includeOnlyTokens: [], fired: [] };
 
-    // Effective size for this row. Normally the provisioned CPU Count / Memory
-    // (GB). In cloud-to-cloud mode, when BOTH are blank and the row names a Current
-    // Instance Type whose specs were resolved on the main thread (options.derivedSpecs,
-    // keyed by lowercased type), the size is DERIVED from that type — the one
-    // deliberate case where the Current Instance Type drives sizing. Explicit
-    // CPU/Memory ALWAYS win: derivation only fills a row that carries neither
-    // (precedence decided with the user), so a normal upload is untouched. Resolved
-    // once per row, not per provider — the derived size is a property of the VM.
+    // Effective size for this row. Normally the provisioned CPU Count / Memory (GB).
+    // In cloud-to-cloud mode, when BOTH are blank and the row names a Current Instance
+    // Type whose specs were resolved on the main thread (options.derivedSpecs, keyed by
+    // lowercased type), the size is DERIVED from that type. Explicit CPU/Memory ALWAYS
+    // win: derivation only fills a row carrying neither, so a normal upload is
+    // untouched. Resolved once per row — the derived size is a property of the VM.
     let cpu = parseInt(row["CPU Count"]) || 0;
     let memory = parseFloat(row["Memory (GB)"]) || 0;
     let sizedFrom = "";
@@ -256,8 +247,8 @@ window.getInstanceRecommendationWithSelector = async function (
         memory = derived.memory;
         sizedFrom = currentType;
       } else if (currentType) {
-        // A named source type we could not resolve to specs — recorded so the
-        // No-Match reason names it, instead of the generic "CPU Count is 0".
+        // A named source type we couldn't resolve to specs — recorded so the
+        // No-Match reason names it, not the generic "CPU Count is 0".
         c2cUnresolvedType = currentType;
       }
     }
@@ -277,12 +268,11 @@ window.getInstanceRecommendationWithSelector = async function (
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const region = row[regionColumn] || "";
 
-      // rowEnv / rowOS / rowWorkload / rowCompliance are resolved once per row
-      // above the provider loop (they do not vary by provider).
-      // MinGen is resolved per PROVIDER, most specific first: this cloud's own
-      // CSV column, then this cloud's page default, then the shared column and
-      // shared default that a single-provider page supplies. Each value is
-      // native to the cloud it lands on, so nothing is ever translated.
+      // rowEnv/rowOS/rowWorkload/rowCompliance are resolved once per row above (they
+      // don't vary by provider). MinGen is resolved per PROVIDER, most specific first:
+      // this cloud's CSV column, then its page default, then the shared column/default
+      // a single-provider page supplies. Each value is native to its cloud, never
+      // translated.
       const rowMinGen = (
         row[InstanceSelectorFactory.getProviderMinGenColumn(provider)] ||
         options[InstanceSelectorFactory.getProviderMinGenOption(provider)] ||
@@ -299,8 +289,8 @@ window.getInstanceRecommendationWithSelector = async function (
       result[`${providerUpper} No Match Reason`] = "";
       result[`${providerUpper} Nearest Miss`] = "";
       // GCP-only: a tighter custom-machine-type suggestion when the standard pick
-      // over-provisions. Initialised empty on every GCP row so the column is
-      // consistent within a run; filled below when a suggestion is warranted.
+      // over-provisions. Empty on every GCP row for column consistency; filled below
+      // when warranted.
       if (provider === "gcp") result["GCP Custom Fit"] = "";
 
       // Per-row Exclude: merge CSV "Exclude" column with page-level excludeTypes
@@ -312,10 +302,9 @@ window.getInstanceRecommendationWithSelector = async function (
             .filter((e) => e.type)
         : [];
       // Per-row Include Only: the symmetric twin of Exclude — an allow-list of
-      // families/types this VM may land on ("m5, m6", "burstable"), applied as an
-      // intersection with the run-level filters (see applyFilters). Row-level only
-      // for now (the run-level allow-list UI is a later minor), so these are plain
-      // token strings scoped to the provider whose pool is being filtered.
+      // families/types this VM may land on, applied as an intersection with run-level
+      // filters (see applyFilters). Row-level only for now, so plain token strings
+      // scoped to the provider being filtered.
       const rowIncludeRaw = (row["Include Only"] || "").trim();
       const rowIncludeOnly = rowIncludeRaw
         ? rowIncludeRaw
@@ -324,14 +313,12 @@ window.getInstanceRecommendationWithSelector = async function (
             .filter(Boolean)
         : [];
       // User-defined rules: conditionals the user authored ("if ENV=production,
-      // exclude t3"). Each rule whose dimension matches this row contributes its
-      // tokens to the row's Exclude / Include Only — the same machinery the CSV
-      // columns feed — and its label to the Rules Applied column (below). The
-      // Include Only tokens JOIN the column's allow-list (a union: any listed
-      // family is acceptable), while Exclude tokens add to what is dropped.
-      // The match is hoisted above the loop (rowUserRules); only the exclude
-      // tokens are re-scoped to the current provider here, since a merged Exclude
-      // entry carries { provider, type }.
+      // exclude t3"). Each matching rule contributes tokens to the row's Exclude /
+      // Include Only (same machinery the CSV columns feed) and its label to Rules
+      // Applied. Include Only tokens JOIN the column's allow-list (union); Exclude
+      // tokens add to what's dropped. Match is hoisted above the loop; only exclude
+      // tokens are re-scoped to this provider (a merged Exclude entry carries
+      // { provider, type }).
       const userRuleLabels = rowUserRules.fired;
       const userExcludeExtra = rowUserRules.excludeTokens.map((t) => ({
         provider,
@@ -351,10 +338,9 @@ window.getInstanceRecommendationWithSelector = async function (
         rowWorkload,
         rowCompliance,
         rowMinGen,
-        // The row's resolved utilization, so the rule engine can tell a busy
-        // Dev box from an idle one. Resolved once above, and the SAME figures
-        // that drive the N/2 rules — a rule keyed on "low utilization" and a
-        // sizing pass keyed on it must not disagree about what the row read.
+        // The row's resolved utilization, so the rule engine can tell a busy Dev box
+        // from an idle one. Same figures that drive the N/2 rules — a rule keyed on
+        // "low utilization" and the sizing pass must not disagree on what the row read.
         rowCpuUtil: util.cpu,
         rowMemoryUtil: util.memory,
         excludeTypes: mergedExclude.length
@@ -411,16 +397,15 @@ window.getInstanceRecommendationWithSelector = async function (
             rowOptions,
           );
           // Only when it actually matched. A no-match like-to-like carries no
-          // alternatives, and pinning altSource to it would suppress the ones
-          // the optimized fallback below can still supply on a "both" run.
+          // alternatives, and pinning altSource to it would suppress the ones the
+          // optimized fallback can supply on a "both" run.
           altSource =
             likeToLike.instanceType === "No data available" ? null : likeToLike;
           result[`${providerUpper} Like-to-Like Instance`] =
             likeToLike.instanceType;
-          // The provider's own family category ("General purpose", "Compute
-          // optimized"): taken from the region data, never parsed back out of
-          // the instance name — Azure's family is not a function of its name
-          // (b2ms→bs drops the size letters, d16lsv6→dlsv6 keeps them).
+          // The provider's own family category, from the region data — never parsed
+          // back out of the instance name (Azure's family isn't a function of its
+          // name: b2ms→bs, d16lsv6→dlsv6).
           result[`${providerUpper} Like-to-Like Family`] =
             likeToLike.familyName;
           result[`${providerUpper} Like-to-Like vCPUs`] = likeToLike.vCpus;
@@ -482,10 +467,9 @@ window.getInstanceRecommendationWithSelector = async function (
           }
         }
 
-        // Any user-defined rules that fired for this row are named in the Rules
-        // Applied column alongside the built-in rules, so a conditional the user
-        // authored is as visible as one the engine ships. Prepended once here so
-        // it covers both the like-to-like and optimized-only assignments above.
+        // User-defined rules that fired for this row are named in Rules Applied
+        // alongside the built-in rules. Prepended once here so it covers both the
+        // like-to-like and optimized-only assignments above.
         if (userRuleLabels.length) {
           const key = `${providerUpper} Rules Applied`;
           result[key] = [userRuleLabels.join(" | "), result[key] || ""]
@@ -493,11 +477,9 @@ window.getInstanceRecommendationWithSelector = async function (
             .join(" | ");
         }
 
-        // GCP custom-machine-type suggestion: when the chosen standard pick
-        // (altSource — the like-to-like result, else the optimized one) over-
-        // provisions this row past the threshold, and the run does not exclude
-        // Custom, name the tighter custom shape. No pricing (D8) — the judgement
-        // is vCPU/RAM headroom. Requirement is the row's cpu/memory.
+        // GCP custom-machine-type suggestion: when the standard pick (altSource)
+        // over-provisions past the threshold and the run doesn't exclude Custom, name
+        // the tighter custom shape. No pricing (D8) — the judgement is vCPU/RAM headroom.
         if (
           provider === "gcp" &&
           typeof selector.customFitSuggestion === "function"
@@ -549,9 +531,8 @@ window.getInstanceRecommendationWithSelector = async function (
     });
 
     // Family Equivalence: one summary column, multi-cloud runs only — reads each
-    // provider's chosen family class and says whether the clouds agree on the
-    // KIND of machine. Written onto result (so downloads carry it); the preview
-    // allow-list in preview.js names it too, or it would not render.
+    // provider's chosen family class and says whether the clouds agree on the KIND of
+    // machine. Named in preview.js's allow-list too, or it wouldn't render.
     if (selectedProviders.length > 1) {
       result["Family Equivalence"] = describeFamilyEquivalence(
         result,
@@ -560,9 +541,8 @@ window.getInstanceRecommendationWithSelector = async function (
     }
 
     // Cloud-to-cloud transparency: name the source instance type a row's size was
-    // derived from (empty for a row sized on its own CPU/Memory). Added for every
-    // row only when the mode is on, so the column is consistent within a run and
-    // absent from a normal upload.
+    // derived from (empty for a row sized on its own CPU/Memory). Added for every row
+    // only when the mode is on, so the column is absent from a normal upload.
     if (options.cloudToCloud) {
       result["Sized From"] = sizedFrom;
     }
@@ -583,13 +563,10 @@ window.getInstanceRecommendationWithSelector = async function (
   return results;
 };
 
-// The utilization statistic a run sizes against. "avg" is the default and the
-// historical behaviour; p95/peak are opt-in and only do anything when the CSV
-// carries those columns.
-//
-// Defined HERE rather than in app-core.js for the same reason safeMapGet is:
-// this is the one shared-scope module loaded in BOTH the worker and the main
-// thread, and app-core.js is not in the worker's importScripts list.
+// The utilization statistic a run sizes against. "avg" is the default; p95/peak are
+// opt-in and only do anything when the CSV carries those columns. Defined HERE, not
+// app-core.js (like safeMapGet): this is the one shared module loaded in BOTH the
+// worker and main thread, and app-core.js isn't in the worker's importScripts.
 const UTILIZATION_STATISTICS = {
   avg: {
     label: "Average",
@@ -608,23 +585,19 @@ const UTILIZATION_STATISTICS = {
   },
 };
 
-// Fallback order once the requested statistic is missing for a row. Resolution
-// is per ROW, not per run: a fleet export often carries p95 for the monitored
-// VMs and only an average for the rest, and dropping those rows to "No
-// utilization data" would be worse than sizing them on what they do have.
-// Preferring the HIGHER statistic first is deliberate — sizing against a number
-// lower than the one asked for under-provisions, which is the failure that hurts.
+// Fallback order once the requested statistic is missing for a row. Per ROW, not per
+// run: a fleet export often has p95 for monitored VMs and only an average for the
+// rest, and dropping those to "No utilization data" is worse than sizing on what they
+// have. Preferring the HIGHER statistic first is deliberate — sizing lower under-provisions.
 const UTILIZATION_FALLBACK = {
   avg: ["avg", "p95", "peak"],
   p95: ["p95", "peak", "avg"],
   peak: ["peak", "p95", "avg"],
 };
 
-// Reads one dimension (cpu or memory) for a row, walking its OWN fallback chain
-// from the requested statistic. `dim` is "cpu" or "memory". Returns
-// { value, statistic, fellBack } — `statistic` is the one actually used for
-// THIS dimension. Values come from untrusted CSV cells, hence the
-// finite/positive test rather than a bare parseFloat.
+// Reads one dimension (cpu/memory) for a row, walking its OWN fallback chain from the
+// requested statistic. Returns { value, statistic, fellBack } — statistic is the one
+// actually used. Values are untrusted CSV cells, hence the finite/positive test.
 function resolveDimension(row, want, dim) {
   const num = (v) => {
     const n = parseFloat(v);
@@ -632,10 +605,9 @@ function resolveDimension(row, want, dim) {
   };
   for (const key of UTILIZATION_FALLBACK[want]) {
     const column = UTILIZATION_STATISTICS[key][dim];
-    // Own properties only. Every row is asked for the same six column names, so
-    // an INHERITED property of one of those names would be returned for every VM
-    // in the file — a single polluted prototype re-sizing a whole fleet off a
-    // reading that appears in nobody's upload.
+    // Own properties only. Every row is asked for the same six column names, so an
+    // INHERITED property of one would be returned for every VM — a single polluted
+    // prototype re-sizing a whole fleet off a reading in nobody's upload.
     const value = Object.prototype.hasOwnProperty.call(row, column)
       ? num(row[column])
       : 0;
@@ -644,12 +616,11 @@ function resolveDimension(row, want, dim) {
   return { value: 0, statistic: want, fellBack: false };
 }
 
-// Resolves utilization for a row under the requested statistic. CPU and memory
-// are resolved INDEPENDENTLY, each through its own fallback chain: a fleet
-// export often carries an average for one dimension and only a p95 for the
-// other, and pinning both to whichever statistic the CPU column happened to
-// satisfy would silently discard the memory reading the file actually has —
-// under-sizing the memory-based pass. Returns
+// Resolves utilization for a row under the requested statistic. CPU and memory are
+// resolved INDEPENDENTLY, each through its own fallback chain: a fleet export often
+// carries an average for one dimension and a p95 for the other, and pinning both to
+// whichever the CPU column satisfied would discard the memory reading — under-sizing
+// the memory pass. Returns
 // { cpu, memory, cpuStatistic, memoryStatistic, cpuFellBack, memoryFellBack }.
 function resolveUtilization(row, requested) {
   const want = Object.prototype.hasOwnProperty.call(
@@ -670,13 +641,10 @@ function resolveUtilization(row, requested) {
   };
 }
 
-// The "Sized On" label for a row. When both dimensions used the same statistic
-// (the common case — a file with only averages, or a full p95 run) it reads as
-// one clean word: "Average", "p95", "Peak", with " (fallback)" when the
-// requested statistic was absent. When the two dimensions diverge, or only one
-// carries a reading, it names each so a recommendation is never traceable to a
-// basis it did not use: "CPU: Average, Mem: p95". Empty when the row carries no
-// utilization at all.
+// The "Sized On" label for a row. When both dimensions used the same statistic (the
+// common case) it reads as one word: "Average"/"p95"/"Peak", plus " (fallback)" when
+// the requested statistic was absent. When they diverge, or only one has a reading,
+// it names each ("CPU: Average, Mem: p95"). Empty when the row carries no utilization.
 function describeSizedOn(util) {
   const hasCpu = util.cpu > 0;
   const hasMem = util.memory > 0;
@@ -698,15 +666,13 @@ function describeSizedOn(util) {
   return bits.join(", ");
 }
 
-// Fold a provider's own family-class name to a shared class, so a multi-cloud
-// row can be read as "did the clouds land on the same KIND of machine?". The
-// three clouds already write "General purpose", "Compute optimized", "Memory
-// optimized" and "Storage optimized" verbatim, so those pass through unchanged;
-// only the accelerator class has three different names (AWS "GPU instance" /
-// "…ASIC…" / "FPGA…", Azure "GPU", GCP "Accelerator optimized"), which fold to
-// one label. Anything unrecognised passes through unmapped rather than being
-// guessed into a bucket. The accelerator test mirrors RuleEngine.isAccelerator's
-// familyName pattern — `\basic\b`, not "basic", so "Basic tier" is not swept in.
+// Fold a provider's own family-class name to a shared class, so a multi-cloud row
+// reads as "did the clouds land on the same KIND of machine?". The three clouds write
+// "General purpose"/"Compute optimized"/"Memory optimized"/"Storage optimized"
+// verbatim (pass through unchanged); only the accelerator class has three names (AWS
+// "GPU instance"/"…ASIC…"/"FPGA…", Azure "GPU", GCP "Accelerator optimized"), folded
+// to one. Anything unrecognised passes through unmapped. The test mirrors
+// RuleEngine.isAccelerator — `\basic\b`, not "basic", so "Basic tier" isn't swept in.
 function normalizeFamilyClass(familyName) {
   const n = String(familyName || "").trim();
   if (!n) return "";
@@ -715,12 +681,10 @@ function normalizeFamilyClass(familyName) {
   return n;
 }
 
-// The "Family Equivalence" cell for a multi-cloud row: each provider's chosen
-// family class, folded and compared. Reads the like-to-like family when the run
-// made one, else the optimized family — ONE column, not one per pass. Reports
-// "General purpose on AWS, AZURE, GCP" when the clouds agree, and the more
-// informative "Differs — AWS General purpose, GCP Memory optimized" when they do
-// not. Empty when no provider produced a family to compare.
+// The "Family Equivalence" cell for a multi-cloud row: each provider's chosen family
+// class, folded and compared. Reads the like-to-like family when present, else the
+// optimized — ONE column. "General purpose on AWS, AZURE, GCP" when they agree, else
+// "Differs — AWS General purpose, GCP Memory optimized". Empty when none to compare.
 function describeFamilyEquivalence(result, providers) {
   const usable = (v) => v && v !== "N/A" && v !== "Error";
   const entries = [];
@@ -740,20 +704,17 @@ function describeFamilyEquivalence(result, providers) {
     : `Differs — ${entries.map(([P, cls]) => `${P} ${cls}`).join(", ")}`;
 }
 
-// Own-property-only map lookup. Keys here come from untrusted CSV data; a plain
-// object literal / JSON.parse result inherits Object.prototype, so a key like
-// "constructor" or "toString" would otherwise resolve to an inherited function
-// (truthy → wins the || chains → .trim() throws). Defined here because it's the
-// one shared-scope module loaded in BOTH the worker and the main thread, so
-// ingest.js can reuse the same guard.
+// Own-property-only map lookup. Keys come from untrusted CSV data; a plain object /
+// JSON.parse result inherits Object.prototype, so a key like "constructor" would
+// resolve to an inherited function (truthy → wins the || chains → .trim() throws).
+// Defined here (shared by worker and main thread) so ingest.js reuses the same guard.
 function safeMapGet(map, key) {
   return map && Object.prototype.hasOwnProperty.call(map, key) ? map[key] : "";
 }
 
-// Effective workload for a row, in precedence order: the row's own Workload
-// cell → an app→workload map entry (matched on the App Name column) → the page
-// default → the built-in "General". options.appWorkloadMap is a plain object
-// keyed by lowercased app name, so it survives the postMessage into the worker.
+// Effective workload for a row, in precedence order: the row's own Workload cell →
+// an app→workload map entry (matched on App Name) → the page default → "General".
+// options.appWorkloadMap is a plain object keyed by lowercased app name.
 function resolveRowWorkload(row, options) {
   const appName = (row["App Name"] || "").trim().toLowerCase();
   const fromApp = appName ? safeMapGet(options.appWorkloadMap, appName) : "";

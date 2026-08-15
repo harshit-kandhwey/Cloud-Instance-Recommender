@@ -473,19 +473,12 @@ function downloadAWSBulkTemplate(type) {
       ? "Windows Server"
       : "Linux";
 
-    // Provisioned disk, when the upload carried it. Blank stays blank — the
-    // calculator applies its own default, and a fabricated size would be worse
-    // than an absent one. Storage Type is deliberately left empty: this file is
-    // parsed strictly by the bulk importer, and guessing at its vocabulary
-    // would break every row rather than just this field.
-    //
-    // Round UP, never down: the importer wants an integer GB, and rounding a
-    // real 1.4 GB disk down to 1 — or a 0.4 GB disk down to 0/blank — silently
-    // under-provisions the volume. A passthrough must never hand back LESS than
-    // the upload carried, so Math.ceil floors any present, positive disk at
-    // 1 GB. Only a genuinely absent or non-positive disk stays blank, letting
-    // the calculator apply its own default; a literal "0" would read as "no
-    // volume" to the importer, the opposite of that intent.
+    // Provisioned disk when the upload carried it; blank otherwise so the
+    // calculator applies its own default (Storage Type also left blank — the
+    // importer parses it strictly and a guessed value would break the row).
+    // Math.ceil: the importer wants integer GB and a passthrough must never
+    // under-provision, so any present positive disk floors at 1 GB. Absent or
+    // non-positive stays blank ("0" would read as "no volume" to the importer).
     const diskGb = parseFloat(row["Disk (GB)"]);
     const provisionedDiskGb =
       Number.isFinite(diskGb) && diskGb > 0 ? Math.ceil(diskGb) : 0;

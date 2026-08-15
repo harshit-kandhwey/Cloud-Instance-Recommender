@@ -1,21 +1,12 @@
-// Shared test contexts.
-//
-// Two factories live here, both because a forked copy that drifts is the classic
-// silent-guard risk (a suite passing or failing on which copy it held, not on the
-// code under test):
-//   - buildContext:       the full simulated-DOM harness — loads the whole app
-//                         into a vm with a fake page, for the ingest/UI suites.
-//   - buildEngineContext: a minimal, DOM-free vm — for the pure-engine suites
-//                         (rule-engine and the instance selectors compute over
-//                         injected data, no page), which had each forked the same
-//                         createContext + load + run boilerplate.
-//
+// Shared test contexts. Centralised because forked copies drift (buildContext had
+// been five copies, some grown a real classList.toggle / scrollIntoView /
+// localStorage), letting a suite pass or fail on which copy it held rather than on
+// the code under test.
+//   - buildContext:       full simulated-DOM harness — loads the whole app into a
+//                         vm with a fake page, for the ingest/UI suites.
+//   - buildEngineContext: minimal DOM-free vm for the pure-engine suites (they
+//                         compute over injected data, no page).
 // Not named *-test.js, so run-all.js does not pick it up as a suite.
-//
-// buildContext existed as five verbatim copies that had already begun to drift —
-// one grew a working classList.toggle, one a scrollIntoView, one a real
-// localStorage — which meant a suite could pass or fail on which copy it happened
-// to hold, rather than on the code under test.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

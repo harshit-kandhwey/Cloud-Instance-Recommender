@@ -394,13 +394,11 @@ class GCPInstanceSelector extends BaseInstanceSelector {
   }
 
   // The tightest VALID GCP custom machine type for a required size, or "" when the
-  // family cannot be custom or the inputs are unusable. GCP's rules: vCPUs are 1 or
-  // an even number; memory is a whole number of 256 MB blocks and, without extended
-  // memory, between 0.5 GB and 8 GB per vCPU. The size is rounded UP to satisfy the
-  // requirement (never below it) and clamped into the per-vCPU memory band. Result
-  // is "<family>-custom-<vCPU>-<memoryMB>", e.g. "n2-custom-4-16384". Only the
-  // families that actually offer custom shapes qualify — a custom string for a
-  // family GCP does not allow it on would be a value the user cannot deploy.
+  // family can't be custom or inputs are unusable. Size rounds UP (never below the
+  // requirement) and clamps into the per-vCPU memory band; result is
+  // "<family>-custom-<vCPU>-<memoryMB>" (e.g. "n2-custom-4-16384"). Only custom-
+  // capable families qualify, else the string would be undeployable. Per-family
+  // constraints live in CUSTOM_FAMILY_RULES.
   buildCustomMachineType(family, cpu, memory) {
     const fam = String(family || "")
       .toLowerCase()
@@ -412,11 +410,9 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
       return "";
 
-    // vCPU: at least the family minimum (E2/N2/N2D/N4/N4D need 2; only N1 allows
-    // 1). Above 32, GCP requires a multiple of 4; at or below, an even number
-    // (1 stays 1 where the family permits it). Rounding always goes UP, so the
-    // shape never falls below the requirement. Beyond the family ceiling there is
-    // no valid custom shape, so no suggestion is made.
+    // vCPU: at least the family minimum, rounded UP. Above 32 GCP requires a
+    // multiple of 4; at or below, an even number (1 stays 1 where allowed). Past
+    // the family ceiling there is no valid custom shape.
     let vCpu = Math.max(rules.minVCpu, Math.ceil(c));
     if (vCpu > 32) vCpu = Math.ceil(vCpu / 4) * 4;
     else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
@@ -465,11 +461,10 @@ class GCPInstanceSelector extends BaseInstanceSelector {
   }
 
   // The "GCP Custom Fit" cell for one row: a tighter custom machine type when the
-  // chosen standard pick over-provisions the requirement past the threshold, or ""
-  // otherwise. Returns "" for a no-match/absent pick, when Custom is excluded, when
-  // the waste is under the threshold, or when the pick's family cannot be custom
-  // (buildCustomMachineType decides that last one). Requirement is the row's own
-  // vCPU/memory. Pure — no pricing (D8), only headroom.
+  // standard pick over-provisions past the threshold, else "". Also "" for a
+  // no-match/absent pick, when Custom is excluded, or when the family can't be
+  // custom. Requirement is the row's own vCPU/memory. Pure — headroom only, no
+  // pricing (D8).
   customFitSuggestion(chosen, reqCpu, reqMem, options) {
     if (
       !chosen ||
@@ -743,17 +738,13 @@ class GCPInstanceSelector extends BaseInstanceSelector {
   }
 }
 
-// Per-family custom-machine-type rules. The general-purpose families are the only
-// ones GCP lets you tailor (compute-optimized C2/C3, memory-optimized M*,
-// accelerator A*/G*, HPC H3, storage Z3 and the shared-core families do NOT), and
-// each has its OWN contract — a single uniform rule would emit strings the user
-// cannot deploy. Verified against Google's general-purpose-machines docs:
-//   - minVCpu: E2/N2/N2D/N4/N4D require at least 2 vCPUs; only N1 allows 1.
-//   - maxVCpu: the ceiling for a custom shape in that family.
-//   - memMin/MaxPerVCpu (GB): the per-vCPU memory band. N1 is 0.9–6.5; N4/N4D
-//     require at least 2 GB/vCPU; the rest are 0.5–8.
-//   - prefix: N1 custom types use the prefixless "custom-…" form; the newer
-//     families use "<family>-custom-…".
+// Per-family custom-machine-type rules. Only general-purpose families offer custom
+// shapes (compute/memory/accelerator/HPC/storage and shared-core do NOT), and each
+// has its own contract, so a uniform rule would emit undeployable strings. Verified
+// against Google's general-purpose-machines docs:
+//   - minVCpu / maxVCpu: the family's vCPU floor (N1 allows 1; rest need 2) and ceiling.
+//   - memMin/MaxPerVCpu (GB): per-vCPU band — N1 0.9–6.5; N4/N4D ≥2; rest 0.5–8.
+//   - prefix: N1 uses the prefixless "custom-…"; newer families "<family>-custom-…".
 GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
   e2: { minVCpu: 2, maxVCpu: 32, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
   n1: {

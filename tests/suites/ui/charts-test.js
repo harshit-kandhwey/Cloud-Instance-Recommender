@@ -56,9 +56,8 @@ console.log("[the match rate is drawn, and stated]");
 
 console.log("[a rounded rate never contradicts the counts]");
 {
-  // 199 of 200 = 99.5%, which rounds to 100 — but a row did NOT match. Showing
-  // "100%" beside "1 no match" is a small lie that discredits every other number
-  // on the page, so the rate is held at 99.
+  // 199 of 200 = 99.5%, which rounds to 100 — but a row did NOT match. "100%"
+  // beside "1 no match" would contradict the counts, so the rate is held at 99.
   const many = [];
   for (let i = 0; i < 199; i++) many.push(matched(`ok-${i}`));
   many.push(noMatch("bad"));

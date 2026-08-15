@@ -253,12 +253,10 @@ function downloadResultsXlsx() {
 // engine recognises. The vocabularies are read LIVE from RuleEngine.RECOGNIZED,
 // so the documentation can never drift from what apply() actually matches.
 //
-// Why documentation and not in-cell dropdowns: a write/read round-trip spike
-// confirmed the vendored SheetJS builds (Community 0.20.3 and the xlsx-js-style
-// fork 0.18.5) silently DROP a `!dataValidation` on write — data-validation is a
-// SheetJS Pro feature. So the closed enums are DOCUMENTED on their own sheet
-// rather than enforced in-cell; step 1's upload-time hygiene warning is what
-// actually catches an unrecognised value, template or not.
+// Documented, not in-cell dropdowns: the vendored SheetJS builds (Community
+// 0.20.3, fork 0.18.5) silently drop `!dataValidation` on write (a Pro feature),
+// so the enums live on their own sheet; step 1's upload hygiene warning is what
+// actually catches an unrecognised value.
 
 // The canonical input columns, in authoring order. Mirrors downloadSampleCSV's
 // column set (ingest.js) with the per-row Include Only allow-list added — the

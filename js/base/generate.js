@@ -62,12 +62,10 @@ function generateRecommendations() {
   }
 
   // Check required input columns. Normally CPU Count and Memory (GB). In
-  // cloud-to-cloud mode a row may instead be sized from its Current Instance Type,
-  // so a file that names only that column is valid input — accept EITHER the size
-  // columns or Current Instance Type (the per-row precedence, where explicit
-  // CPU/Memory still win, is handled downstream in the factory). A typical cloud
-  // inventory export names just the instance type, which the old gate rejected
-  // before the mode could ever run.
+  // cloud-to-cloud mode a row may instead be sized from its Current Instance Type, so
+  // a file naming only that column is valid — accept EITHER (per-row precedence, where
+  // explicit CPU/Memory win, is handled in the factory). A typical inventory export
+  // names just the instance type, which the old gate rejected before the mode could run.
   const cloudToCloudOn =
     document.getElementById("cloudToCloudMode")?.checked || false;
   const hasSizeColumns =
@@ -136,16 +134,12 @@ async function processRecommendations() {
     "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
   );
 
-  // Pin what this run describes — BOTH the selection and the data — for its
-  // whole duration. The batch below is awaited, so anything changed while it is
-  // in flight would otherwise be recorded as what the results ran against,
-  // making the stale-results notice wrong in exactly the case it exists for.
-  //
-  // The token is every bit as racy as the selection: an upload, paste, sample or
-  // manual apply landing mid-run would stamp the finished batch with the NEW
-  // token, and the results would then present themselves as describing data they
-  // were never computed from. Snapshot it here, next to the selection, for the
-  // same reason and at the same moment.
+  // Pin what this run describes — BOTH the selection and the data — for its whole
+  // duration. The batch below is awaited, so anything changed in flight would be
+  // recorded as what the results ran against, making the stale-results notice wrong in
+  // the case it exists for. The token is as racy as the selection: an upload/paste/
+  // sample/manual apply mid-run would stamp the finished batch with the NEW token.
+  // Snapshot both here, at the same moment.
   const providersForRun = selectedProviders.slice();
   const ingestTokenForRun = window._ingestToken;
 
@@ -168,9 +162,9 @@ async function processRecommendations() {
   // Read the persisted app→workload map once (used in the options spread below)
   const appWorkloadMap = loadAppWorkloadMap();
 
-  // Likewise the rule defaults: each getter does several DOM reads, and the
-  // spread below tests and then reads eight fields — sixteen re-scans of the
-  // same controls, per generate, for one snapshot that cannot change mid-read.
+  // Likewise the rule defaults: each getter does several DOM reads, and the spread
+  // below tests then reads eight fields — sixteen re-scans per generate for one
+  // snapshot that can't change mid-read.
   const ruleDefaults = getRuleDefaults();
 
   // User-defined rules for this page (conditional per-row Exclude / Include Only).
@@ -184,10 +178,9 @@ async function processRecommendations() {
     generateLikeToLike: generateLikeToLike,
     generateOptimized: generateOptimized,
 
-    // Cloud-to-cloud mode: when on, a row that carries no CPU/Memory is sized
-    // from its Current Instance Type (specs resolved below into derivedSpecs and
-    // passed to the factory). Off by default and absent from a page without the
-    // toggle, so an ordinary run is unaffected.
+    // Cloud-to-cloud mode: a row with no CPU/Memory is sized from its Current Instance
+    // Type (specs resolved below into derivedSpecs, passed to the factory). Off by
+    // default and absent without the toggle, so an ordinary run is unaffected.
     cloudToCloud: document.getElementById("cloudToCloudMode")?.checked || false,
 
     // Optimization strategy parameters (only used if generateOptimized is true)
@@ -269,9 +262,8 @@ async function processRecommendations() {
       ? { ruleDefaultMinGenGcp: ruleDefaults.minGenGcp }
       : {}),
 
-    // App→workload inheritance: VMs with an App Name but no Workload cell take
-    // the workload assigned to their app in the mapping panel (plain object,
-    // safe to postMessage into the worker). Omitted when the map is empty.
+    // App→workload inheritance: VMs with an App Name but no Workload cell take the
+    // workload assigned to their app (plain object, safe to postMessage). Omitted when empty.
     ...(Object.keys(appWorkloadMap).length ? { appWorkloadMap } : {}),
 
     // User-defined conditional rules (plain objects, safe to postMessage into the
@@ -305,11 +297,10 @@ async function processRecommendations() {
 
   try {
     // Cloud-to-cloud: resolve the source specs on the MAIN thread, where region
-    // scripts can be injected (the worker cannot fetch), and pass the result
-    // across as options.derivedSpecs. Only spec-less rows naming a Current
-    // Instance Type need it, and the source provider is inferred per type — it
-    // need not be one of the selected TARGET providers, which is the whole point
-    // of the mode. Inside the try so a resolver failure surfaces the error toast
+    // scripts can be injected (the worker can't fetch), and pass them as
+    // options.derivedSpecs. Only spec-less rows naming a Current Instance Type need it;
+    // the source provider is inferred per type and need not be a selected TARGET — the
+    // point of the mode. Inside the try so a resolver failure surfaces the error toast
     // and the finally still hides the processing status.
     if (options.cloudToCloud) {
       options.derivedSpecs = await buildDerivedSpecs(csvData);
@@ -330,11 +321,11 @@ async function processRecommendations() {
       ),
     });
 
-    // What these results describe: the selection they ran with, and the ingest
-    // they ran against. Both are compared with the live state to warn when they
-    // drift apart (see updateStaleResultsNotice) — the data half matters because
-    // loading a new file, paste or sample does not clear the results, and a
-    // replacement of the same shape looks like nothing happened.
+    // What these results describe: the selection they ran with and the ingest they ran
+    // against. Both are compared with live state to warn on drift
+    // (updateStaleResultsNotice) — the data half matters because loading a new
+    // file/paste/sample doesn't clear the results, and a same-shape replacement looks
+    // like nothing happened.
     window._resultsProviders = providersForRun;
     window._resultsIngestToken = ingestTokenForRun;
     updateStaleResultsNotice();
@@ -346,15 +337,13 @@ async function processRecommendations() {
     // Show inline results preview
     showResultsPreview(processedResults);
 
-    // Summary charts above the table. Guarded: charts.js is a page-level script
-    // like the rest, and a page that has not loaded it should lose the charts,
-    // not the results.
+    // Summary charts above the table. Guarded: a page that hasn't loaded charts.js
+    // loses the charts, not the results.
     if (typeof renderResultsCharts === "function")
       renderResultsCharts(processedResults);
 
-    // Pre-build the hidden executive print report from the same run, so both the
-    // "Print report" button and a native Ctrl+P have it ready. Guarded like the
-    // charts: a page without the placeholder loses the report, not the results.
+    // Pre-build the hidden executive print report from the same run, so "Print report"
+    // and Ctrl+P have it ready. Guarded like the charts.
     if (typeof renderExecutiveReport === "function")
       renderExecutiveReport(processedResults);
 
@@ -395,17 +384,14 @@ async function processRecommendations() {
 }
 
 // ─── Worker-based batch runner ────────────────────────────────────────────────
-// Snapshots the region data the CSV needs (injecting any region scripts not
-// yet loaded) so it can be posted to the worker, which cannot fetch under CSP.
-// Cloud-to-cloud spec resolution (main thread). For every row that carries NO CPU
-// Count and NO Memory (GB) but names a Current Instance Type, infer which cloud
-// that type belongs to (inferInstanceTypeProvider), load that provider's default
-// region once, and reverse-look-up the type's vCPU/memory (getSpecsForInstanceType).
-// Returns a plain { typeLower: { cpu, memory } } map — safe to postMessage into the
-// worker as options.derivedSpecs. The source provider need not be a selected target;
-// specs are region-independent, so a single default region answers for common types.
-// A type nobody's data carries is simply absent from the map, and the factory turns
-// that into a No-Match that names the type.
+// Cloud-to-cloud spec resolution (main thread). For every row with NO CPU Count and
+// NO Memory (GB) but a Current Instance Type, infer the type's cloud
+// (inferInstanceTypeProvider), load that provider's default region once, and reverse-
+// look-up its vCPU/memory (getSpecsForInstanceType). Returns a plain
+// { typeLower: { cpu, memory } } map — safe to postMessage as options.derivedSpecs.
+// The source provider need not be a selected target; specs are region-independent, so
+// one default region answers. A type nobody carries is absent → the factory makes it a
+// No-Match naming the type.
 async function buildDerivedSpecs(csvData) {
   const specs = {};
   if (
@@ -435,11 +421,10 @@ async function buildDerivedSpecs(csvData) {
       selector =
         (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
         InstanceSelectorFactory.createSelector(provider);
-      // Cache it the same way collectRegionDataForWorker does, so a later phase
-      // (or a provider that is also a selected target) reuses the parsed region
-      // data instead of creating and re-parsing a second selector. initialize is
-      // additive — it never resets instanceData — so a reused selector only gains
-      // the default region here.
+      // Cache it the same way collectRegionDataForWorker does, so a later phase (or a
+      // provider that's also a selected target) reuses the parsed region data.
+      // initialize is additive — never resets instanceData — so a reused selector only
+      // gains the default region.
       window._prewarmedSelectors = window._prewarmedSelectors || {};
       window._prewarmedSelectors[provider] = selector;
       const def = InstanceSelectorFactory.getProviderDefaultRegion(provider);
@@ -519,9 +504,9 @@ async function collectRegionDataForWorker(providers) {
   return { regionData, flags };
 }
 
-// Runs the batch in a Web Worker (real progress, UI stays responsive); on any
-// worker failure — file:// pages, CSP oddities, runtime errors — falls back
-// ONCE to the chunked main-thread path with the same progress reporting.
+// Runs the batch in a Web Worker (real progress, UI stays responsive); on any worker
+// failure (file:// pages, CSP oddities, runtime errors) falls back ONCE to the chunked
+// main-thread path with the same progress reporting.
 async function runRecommendationBatch(rows, providers, options) {
   let worker = null;
   try {
@@ -535,9 +520,9 @@ async function runRecommendationBatch(rows, providers, options) {
   if (worker) {
     try {
       const payload = await collectRegionDataForWorker(providers);
-      // Watchdog: any worker message counts as liveness (progress arrives at
-      // least every `yieldEvery` rows). Prolonged silence → reject → the
-      // catch below terminates the worker and runs the main-thread fallback.
+      // Watchdog: any worker message counts as liveness (progress arrives at least
+      // every yieldEvery rows). Prolonged silence → reject → the catch terminates the
+      // worker and runs the main-thread fallback.
       const watchdogMs = window._workerWatchdogMs || 20000;
       const results = await new Promise((resolve, reject) => {
         let watchdog = null;

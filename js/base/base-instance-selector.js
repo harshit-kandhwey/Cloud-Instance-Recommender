@@ -135,11 +135,9 @@ class BaseInstanceSelector {
     }
   }
 
-  // Resolves a normalized region against the manifest key list. Exact hit
-  // wins; otherwise a unique prefix match (e.g. AZ-suffixed "us_east_1a" →
-  // "us_east_1"). Ambiguous or absent → null. Input may only ever match a
-  // key it EXTENDS — a shorter input never expands to a longer key, so
-  // "eastus" can never grab "eastus2".
+  // Resolves a normalized region against the manifest key list. Exact hit wins; else
+  // a unique prefix match (AZ-suffixed "us_east_1a" → "us_east_1"). Ambiguous/absent →
+  // null. Input may only match a key it EXTENDS, so "eastus" can't grab "eastus2".
   _resolveManifestKey(normalizedRegion) {
     const keys = window[`${this.getProviderName().toUpperCase()}_REGION_KEYS`];
     if (!Array.isArray(keys)) return null;
@@ -166,10 +164,9 @@ class BaseInstanceSelector {
     return this._injectRegionScript(normalizedRegion);
   }
 
-  // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script>
-  // tag (CSP forbids fetch/XHR). Only active once the provider's data file
-  // is a manifest ({P}_REGION_KEYS present); with a monolithic data file it
-  // throws immediately so behavior is unchanged.
+  // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script> tag (CSP
+  // forbids fetch/XHR). Active only when the data file is a manifest ({P}_REGION_KEYS
+  // present); a monolithic data file throws immediately, so behavior is unchanged.
   async _injectRegionScript(normalizedRegion) {
     if (window[normalizedRegion]) return;
 
@@ -333,15 +330,13 @@ class BaseInstanceSelector {
     console.log(`  - Family Types: ${familyTypes} categories`);
   }
 
-  // Reverse spec lookup for cloud-to-cloud sizing: given the instance type a VM
-  // runs on TODAY, return its { instanceType, vCpus, memory } from whatever region
-  // data is loaded, or null when this provider's data does not carry the type.
-  // Specs are region-independent — an m5.xlarge is 4 vCPU / 16 GB in every region —
-  // so the first loaded region that names the type answers. The match is
-  // case-insensitive; the returned instanceType keeps the data's own casing. Only a
-  // finite, positive vCPU/memory pair is returned, so a malformed data row can
-  // never hand back a zero-spec box that would then size a recommendation to
-  // nothing.
+  // Reverse spec lookup for cloud-to-cloud sizing: given the type a VM runs on TODAY,
+  // return its { instanceType, vCpus, memory } from whatever region data is loaded, or
+  // null when this provider's data doesn't carry the type. Specs are region-
+  // independent (an m5.xlarge is 4 vCPU / 16 GB everywhere), so the first loaded
+  // region answers. Match is case-insensitive; returned instanceType keeps the data's
+  // casing. Only a finite positive pair is returned, so a malformed row can't size a
+  // recommendation to nothing.
   getSpecsForInstanceType(type) {
     const target = String(type == null ? "" : type)
       .trim()
@@ -452,15 +447,14 @@ class BaseInstanceSelector {
     return result;
   }
 
-  // The alternative-strategy picks over the same valid candidate pool as the
-  // primary recommendation — every one meets the requirement and all filters, so
-  // each is a deployable option; they differ only in what they optimize for.
-  // Price ranks internally (never shown); the caller renders instanceType only.
+  // Alternative-strategy picks over the same valid pool as the primary — every one
+  // meets the requirement and all filters, so each is deployable; they differ in what
+  // they optimize for. Price ranks internally (never shown); caller renders instanceType.
   //   Most Cost Optimized — cheapest in the pool, workload ignored.
   //   Workload Based      — cheapest in the workload-preferred family, UNBOUNDED
   //                         ("—" when no workload/General or none in the family).
-  //   Newest Generation   — bounded workload preference first (the 3.8.12 rule),
-  //                         then highest generation, then cheapest.
+  //   Newest Generation   — bounded workload preference first (3.8.12 rule), then
+  //                         highest generation, then cheapest.
   computeAlternatives(pool, reqCpu, reqMemory, options = {}) {
     const compact = (i) =>
       i
@@ -501,11 +495,10 @@ class BaseInstanceSelector {
         RE.isWorkloadFit(i, reqCpu, reqMemory)
       );
     };
-    // Keep Newest Generation a like-to-like-sized alternative: rank only within
-    // the fit window (<=2x vCPU, <=4x memory of the requirement), falling back to
-    // the whole pool if none qualifies. This also makes it robust to imperfect
-    // generation parsing (Azure versions aren't cleanly derivable from the name)
-    // — a mis-ranked oversized instance can never become the "newest" pick.
+    // Keep Newest Generation a like-to-like-sized alternative: rank only within the
+    // fit window (≤2× vCPU, ≤4× memory), falling back to the whole pool if none
+    // qualifies. Also robust to imperfect generation parsing (Azure versions aren't
+    // clean from the name) — a mis-ranked oversized instance can't become "newest".
     const windowed = pool.filter((i) =>
       RE ? RE.isWorkloadFit(i, reqCpu, reqMemory) : true,
     );
@@ -553,12 +546,10 @@ class BaseInstanceSelector {
   }
 
   // True when `instance` matches the token `name` (already normalised) for this
-  // provider. The SINGLE vocabulary behind both the per-row Exclude (drop on
-  // match) and the per-row Include Only allow-list (keep only on match), so the
-  // two controls can never disagree about what "burstable", "gpu" or "m5" means.
-  // "gpu" is deliberately the BROAD accelerator match (isAccelerator), the same
-  // classifier the GPU-workload rule uses, so excluding — or allow-listing — "gpu"
-  // also covers FPGA/ML-ASIC/media accelerators; "fpga" is the narrower escape.
+  // provider. The SINGLE vocabulary behind both the per-row Exclude (drop on match)
+  // and Include Only (keep only on match), so the two can't disagree about what
+  // "burstable"/"gpu"/"m5" means. "gpu" is the BROAD accelerator match (isAccelerator),
+  // so excluding/allow-listing "gpu" also covers FPGA/ML-ASIC/media; "fpga" is narrower.
   _matchesTypeToken(instance, name, providerName) {
     if (!name) return false;
     const fam = (instance.family || "").toLowerCase();
@@ -655,12 +646,10 @@ class BaseInstanceSelector {
       }
 
       // Include Only (per-row allow-list): the symmetric twin of Exclude — keep an
-      // instance ONLY if it matches a token in the list, read through the SAME
-      // matcher so "burstable" or "m5" can never mean one thing here and another
-      // in Exclude. Row-level and run-level both apply: this narrows the pool the
-      // family / processor restrictions above already narrowed (intersection), so
-      // a conflict empties the pool and the row is a No-Match naming the list —
-      // never a silent override of a run-level filter.
+      // instance ONLY if it matches a token, through the SAME matcher so "burstable"/
+      // "m5" can't mean one thing here and another in Exclude. Intersects with the
+      // family/processor restrictions above, so a conflict empties the pool and the row
+      // is a No-Match naming the list — never a silent override of a run-level filter.
       if (options.includeOnlyTypes?.length > 0) {
         const providerName = this.getProviderName().toLowerCase();
         if (
@@ -684,9 +673,8 @@ class BaseInstanceSelector {
 
     // Apply rule engine (ENV / OS / Workload / Compliance rules)
     if (typeof RuleEngine !== "undefined" && filtered.length > 0) {
-      // The requirement (for like-to-like the requested size; for optimized the
-      // utilization-adjusted target) is passed through so the workload
-      // preference can refuse to over-provision to honour itself.
+      // The requirement (requested size for like-to-like, utilization-adjusted target
+      // for optimized) is passed so the workload preference can refuse to over-provision.
       const ruleResult = RuleEngine.apply(
         filtered,
         { ...options, reqCpu: currentCpu, reqMemory: currentMemory },
@@ -708,12 +696,10 @@ class BaseInstanceSelector {
     return filtered;
   }
 
-  // When no instance passes the active filters, find the cheapest instance that
-  // still meets the size requirement and identify which soft-filter group(s)
-  // removed it. Runs through the real (provider) filter pipeline, so it stays
-  // correct for provider-specific filters too. Returns null when nothing even
-  // meets the size — that shortfall isn't a filter problem, so there's no
-  // "nearest miss" to relax toward.
+  // When no instance passes the active filters, find the cheapest that still meets the
+  // size requirement and identify which soft-filter group(s) removed it. Runs through
+  // the real filter pipeline. Returns null when nothing even meets the size — that
+  // shortfall isn't a filter problem, so there's no "nearest miss" to relax toward.
   computeNearestMiss(instances, currentCpu, currentMemory, options) {
     if (!instances || !instances.length) return null;
     // Size-only pass (no soft filters): instances are price-sorted, so [0] is
@@ -728,8 +714,8 @@ class BaseInstanceSelector {
     const nearest = sizingOnly[0];
     const blockedBy = [];
     for (const probe of this._nearestMissProbes(options)) {
-      // If the nearest instance is removed when only this group is active,
-      // that group is (part of) why nothing matched.
+      // If the nearest instance is removed when only this group is active, that group
+      // is (part of) why nothing matched.
       const survives = this.applyFilters(
         [nearest],
         currentCpu,
@@ -746,9 +732,9 @@ class BaseInstanceSelector {
     };
   }
 
-  // One probe per soft-filter group, each carrying only that group's option
-  // keys (union across providers — a provider ignores keys it doesn't use), so
-  // running it alone reveals whether that group blocks a given instance.
+  // One probe per soft-filter group, each carrying only that group's option keys
+  // (union across providers — a provider ignores keys it doesn't use), so running it
+  // alone reveals whether that group blocks a given instance.
   _nearestMissProbes(options) {
     const pick = (keys) => {
       const o = {};
@@ -900,9 +886,9 @@ class BaseInstanceSelector {
       memory: 0,
       price: 0,
       hourlyPrice: "0.00",
-      // Declared here so an unmatched row carries the same shape as a matched
-      // one: the factory writes this field straight through, and a missing key
-      // would otherwise surface as "undefined" in the exported CSV.
+      // Declared here so an unmatched row carries the same shape as a matched one:
+      // the factory writes this straight through, and a missing key would surface as
+      // "undefined" in the exported CSV.
       familyName: "",
       // Same shape as a matched result: no alternatives for an unmatched row.
       alternatives: { cost: null, workload: null, newestGen: null },

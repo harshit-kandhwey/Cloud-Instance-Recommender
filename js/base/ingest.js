@@ -77,20 +77,16 @@ function setupFileDragAndDrop(fileInput) {
   });
 }
 
-// Loads the vendored SheetJS parser on first use only (Excel uploads are
-// rare enough that the ~900KB script shouldn't be part of page load).
+// Loads the vendored SheetJS parser on first use only (~900KB; Excel uploads
+// are rare).
 //
-// SECURITY — the parser must be the FULL build, never the styling fork.
-// Both vendored bundles define `window.XLSX` and both expose read(), but
-// `xlsx-js-style` is a fork of SheetJS 0.18.x and predates the read-path fixes
-// for CVE-2023-30533 (prototype pollution) and CVE-2024-22363 (ReDoS). An Excel
-// export loads that fork into window.XLSX, so a guard of `if (window.XLSX)`
-// would let a LATER upload — the untrusted input — be parsed by the unpatched
-// engine (upload CSV → generate → Download Results → upload an .xlsx).
-//
-// The two bundles are separate objects, so we capture the full build's own
-// reference and read through THAT, whatever window.XLSX points at afterwards.
-// Reading must never go through the bare global again.
+// SECURITY — must be the FULL build, never the styling fork. Both vendored
+// bundles define window.XLSX with read(), but xlsx-js-style forks SheetJS
+// 0.18.x and predates the read-path fixes for CVE-2023-30533 (prototype
+// pollution) and CVE-2024-22363 (ReDoS). A prior Excel export can leave that
+// fork in window.XLSX, so an `if (window.XLSX)` guard would parse a later
+// untrusted upload with the unpatched engine. Capture the full build's own
+// reference and read through THAT, never the bare global.
 function ensureXlsxLoaded() {
   if (window._xlsxParser) return Promise.resolve();
   if (!window._xlsxLoadPromise) {
@@ -150,20 +146,14 @@ function sniffFileKind(head) {
   return "text";
 }
 
-// A spreadsheet writes 16384 as "16,384" when the cell carries a thousands
-// separator — and RVTools does exactly that for Memory, in every export I have
-// seen, across versions.
-//
-// `parseFloat("16,384")` is **16**. Not NaN, not an error: a wrong answer, and a
-// plausible-looking one. A 16 GiB VM then had its MiB divided by 1024 and arrived
-// as 0.02 GB, and every machine in the file sized to the smallest instance on
-// offer. Nothing caught it — 0.02 is not zero, so the input check stayed quiet,
-// and the median was far below the MiB threshold, so that question never fired.
-// The report came out looking entirely normal and was entirely wrong.
-//
-// Only strictly grouped thousands are stripped. `1,234` and `1,234,567.8` are
-// unambiguous; `3,5` is left alone, because in much of the world that is three
-// and a half, and guessing at a locale is how this class of bug starts.
+// A spreadsheet writes 16384 as "16,384" with a thousands separator — RVTools
+// does this for Memory in every export seen. parseFloat("16,384") === 16 (a
+// plausible wrong answer, not NaN): a 16 GiB VM's MiB / 1024 then arrives as
+// 0.02 GB, sizing every machine to the smallest instance, and nothing catches it
+// (0.02 isn't zero, and the median stays below the MiB threshold). Strip only
+// strictly-grouped thousands: "1,234" / "1,234,567.8" are unambiguous; "3,5" is
+// left alone (three and a half in much of the world — guessing a locale starts
+// this class of bug).
 const GROUPED_THOUSANDS = /^-?\d{1,3}(,\d{3})+(\.\d+)?$/;
 
 function normalizeCellValue(value) {
@@ -171,14 +161,10 @@ function normalizeCellValue(value) {
   return GROUPED_THOUSANDS.test(text) ? text.replace(/,/g, "") : text;
 }
 
-// Rows are built by header NAME, so two columns called the same thing collapse
-// into one: the earlier column's value is overwritten by the later one's, for
-// every row, with nothing said. Worse, the mapping panel then offers the user
-// two entries that are secretly the same column, whichever they pick.
-//
-// Give the repeats a distinct name instead. Nothing is lost, and the choice the
-// panel offers becomes a real one. Blank headers are left alone — they name no
-// column and cannot be mapped to anything.
+// Rows are built by header NAME, so two identically-named columns collapse into
+// one (the later silently overwrites the earlier) and the mapping panel offers
+// two entries that are secretly the same column. Rename repeats so nothing is
+// lost and the panel's choice is real. Blank headers name no column — left alone.
 function dedupeHeaders(headers) {
   const used = new Set();
   return headers.map((header) => {
@@ -218,15 +204,13 @@ function resetIngestState() {
   }
 }
 
-// Routes an uploaded file into the pipeline by its CONTENT: a ZIP goes to
-// SheetJS (which then picks the sheet that looks like an inventory), text goes
-// to the delimited-text parser, and anything else is rejected with an
-// explanation. The extension only decides when the bytes are unavailable.
+// Routes an uploaded file by CONTENT: a ZIP → SheetJS (picks the inventory-like
+// sheet), text → the delimited-text parser, anything else rejected. Extension
+// only decides when the bytes are unavailable.
 async function ingestFile(file) {
-  // Nothing is torn down until the new file is known to be usable. Resetting
-  // first left a rejected upload having already removed the previous workbook's
-  // sheet picker while its rows were still loaded and generatable — the controls
-  // that produced the data on screen would be gone, and the data would not be.
+  // Nothing is torn down until the new file is known usable: resetting first left
+  // a rejected upload having removed the previous workbook's sheet picker while
+  // its rows were still loaded and generatable.
   if (file.size === 0) {
     showUploadError("File is empty");
     return;
@@ -298,12 +282,12 @@ async function ingestFile(file) {
 
     const chosen = pickBestSheet(sheets);
     window._uploadedSheets = sheets;
-    // The file-level note ("named .csv but is a workbook") stays true across a
-    // sheet switch, so keep it to re-apply — _uploadNote is consumed per ingest.
+    // The file-level note ("named .csv but is a workbook") survives a sheet
+    // switch, so keep it to re-apply — _uploadNote is consumed per ingest.
     window._uploadFileNote = window._uploadNote;
 
-    // A page with no picker gives the user no way to see or change the choice,
-    // so there it must at least say what it opened.
+    // A page with no picker can't show or change the choice, so it must at least
+    // say what it opened.
     if (!renderSheetPicker(sheets, chosen.name) && sheets.length > 1) {
       const sheetNote = `Workbook has ${sheets.length} sheets — read "${chosen.name}"`;
       window._uploadNote = window._uploadNote
@@ -324,11 +308,10 @@ async function ingestFile(file) {
 }
 
 // ─── Workbook sheets ─────────────────────────────────────────────────────────
-// Workbooks are rarely single-sheet. An RVTools export keeps the VM inventory in
-// a "vInfo" tab behind other tabs; a hand-kept spreadsheet often leads with a
-// cover note or a pivot. Reading SheetNames[0] gets those files quietly wrong,
-// so read every sheet, open the one that most looks like an inventory, and leave
-// the choice visible and changeable.
+// Workbooks are rarely single-sheet: an RVTools export keeps the inventory in a
+// "vInfo" tab; hand-kept sheets often lead with a cover note or pivot. Reading
+// SheetNames[0] gets those wrong, so read every sheet, open the most inventory-
+// like one, and keep the choice visible/changeable.
 
 // Returns null for a sheet with no data or no header row — an empty tab and a
 // notes tab are not candidates, and must not be offered as one.
@@ -358,23 +341,21 @@ function readWorkbookSheet(workbook, name) {
     })
     .filter((row) => Object.values(row).some((v) => v !== ""));
 
-  // A sheet with headers and no rows is a template, not an inventory. It has to
-  // be excluded here rather than merely ranked low: scoring weighs recognised
-  // columns above row count, so a blank template with a full set of canonical
-  // headers would outrank the populated sheet next to it and open empty.
+  // A sheet with headers and no rows is a template, not an inventory — exclude it
+  // rather than rank it low: scoring weighs recognised columns above row count, so
+  // a blank template with a full canonical header set would outrank the populated
+  // sheet and open empty.
   if (!rows.length) return null;
 
   return { name, headers, rows };
 }
 
-// A sheet an import preset RECOGNISES is the inventory — that beats any amount
-// of generic column counting, and it must, because generic counting gets real
-// files wrong. An RVTools workbook has 28 tabs, and `vHost` (the ESXi servers
-// the VMs run ON) can map more canonical-looking columns than `vInfo` (the VMs
-// themselves). The picker duly opened `vHost` on a real export: the wrong
-// machines entirely, and with no `VM`/`Powerstate` column the RVTools preset
-// then did not fire either. The preset knows which sheet is the inventory. Ask
-// it first, and only fall back to counting columns when nothing is recognised.
+// A sheet an import preset RECOGNISES is the inventory — that beats generic
+// column counting, which gets real files wrong: an RVTools workbook's `vHost`
+// (the ESXi servers) can map more canonical-looking columns than `vInfo` (the
+// VMs), so the picker opened vHost — the wrong machines, and without VM/Powerstate
+// the RVTools preset then didn't fire. Ask the preset first; fall back to counting
+// only when nothing is recognised.
 function scoreSheet(sheet) {
   const match = autoMatchHeaders(sheet.headers);
   return {
@@ -385,10 +366,9 @@ function scoreSheet(sheet) {
   };
 }
 
-// In order: a sheet a preset recognises, then one with every required column,
-// then the one with the most recognised columns, then the biggest. Ties fall
-// back to workbook order, so a workbook whose sheets look alike still opens its
-// first — the behaviour from before there was a choice to make.
+// In order: a preset-recognised sheet, then one with every required column, then
+// the most recognised columns, then the biggest. Ties fall back to workbook order
+// (a workbook of look-alike sheets opens its first).
 function pickBestSheet(sheets) {
   const scored = sheets.map((sheet) => ({ sheet, ...scoreSheet(sheet) }));
   return scored.reduce((best, s) => {
@@ -450,11 +430,9 @@ function parseCSV(csvText) {
 }
 
 // ─── Sample datasets ─────────────────────────────────────────────────────────
-// The one sample file is a clean eight rows: it shows the format and nothing
-// else. It cannot show what a large run looks like, and it certainly cannot show
-// what the tool does with a file that is WRONG — which is most real inventories.
-// These load through the normal pipeline, so what they demonstrate is the actual
-// behaviour rather than a description of it.
+// The eight-row sample shows the format but not a large run or a WRONG file (most
+// real inventories). These load through the normal pipeline, so they demonstrate
+// actual behaviour, not a description of it.
 
 // Regions the page's own providers actually have, so a sample never arrives
 // carrying a region column the page cannot resolve.
@@ -758,8 +736,8 @@ function renderSampleGallery() {
     </div>`;
 }
 
-// Loaded through parseCSV, exactly as an upload is — so the messy one really
-// does trip the input check, rather than being described as though it would.
+// Loaded through parseCSV, exactly as an upload — so the messy sample really trips
+// the input check.
 function loadSampleDataset(index) {
   const dataset = SAMPLE_DATASETS[index];
   if (!dataset) return;
@@ -775,11 +753,9 @@ function loadSampleDataset(index) {
 }
 
 // ─── Paste ───────────────────────────────────────────────────────────────────
-// Not everyone has a file. A few dozen rows selected in Excel and copied is the
-// shortest path from an inventory to an answer, and it goes through exactly the
-// same pipeline as an upload — the same mapping, hygiene check, and region
-// validation — because a second route into the data is a second route to get it
-// wrong.
+// A few dozen rows copied from Excel go through the same pipeline as an upload
+// (same mapping, hygiene check, region validation) — a second route into the data
+// must not be a second route to get it wrong.
 
 function renderPasteControl() {
   const el = document.getElementById("pasteDataSection");
@@ -835,8 +811,8 @@ function ingestPastedData() {
   resetIngestState();
   window._ingestLabel = "Pasted data loaded";
 
-  // A file name left in the picker would now be describing data that is not on
-  // screen. Clearing it also lets the same file be re-selected afterwards.
+  // A file name left in the picker would describe data no longer on screen;
+  // clearing it also lets the same file be re-selected.
   const fileInput = document.getElementById("csvFile");
   if (fileInput) fileInput.value = "";
 
@@ -851,10 +827,9 @@ function normalizeHeader(header) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-// The separator is shared, not assumed. The saved-mapping manager counts a
-// signature's columns by splitting it back apart, and a header containing this
-// character would miscount — but so would changing the join here and leaving the
-// split behind, which is the failure that is easy to miss.
+// Shared separator, not assumed: the saved-mapping manager counts columns by
+// splitting a signature back apart, so changing the join here without the split
+// would miscount (a header containing this char miscounts too).
 const SIGNATURE_SEPARATOR = "|";
 
 function headerSignature(headers) {
@@ -877,9 +852,8 @@ function loadAppWorkloadMap() {
   }
 }
 
-// Returns true on success, false if storage is unavailable (quota exceeded,
-// private-browsing, etc.) so callers can tell the user honestly rather than
-// claiming a save that was actually discarded.
+// Returns false if storage is unavailable (quota, private-browsing) so callers
+// can tell the user rather than claim a save that was discarded.
 function saveAppWorkloadMap(map) {
   try {
     localStorage.setItem("cloudInstanceRecommenderAppMap", JSON.stringify(map));
@@ -891,30 +865,25 @@ function saveAppWorkloadMap(map) {
 }
 
 // ─── Import presets ──────────────────────────────────────────────────────────
-// Exports from the tools people actually inventory with. A preset exists only to
-// settle what the generic matcher cannot, and to name units a header hides.
+// Presets for the tools people inventory with. A preset exists only to settle what
+// the generic matcher can't and to name units a header hides.
 //
-// RVTools' vInfo sheet ships both "VM" (the guest) and "Host" (the ESXi box it
-// runs on), and both are VM-name synonyms — so the matcher finds two candidates
-// and stops to ask, on every RVTools file ever exported. The preset says which
-// one is the VM. (Before "vm" was a synonym at all it was worse than a stall:
-// only "Host" matched, so every guest on a hypervisor silently took that
-// hypervisor's name, and nothing anywhere said so.)
+// RVTools' vInfo ships both "VM" (guest) and "Host" (the ESXi box), both VM-name
+// synonyms, so the matcher finds two candidates and stalls on every RVTools file;
+// the preset says which is the VM.
 //
-// `detect` must key on headers only that tool ships, so a preset never claims a
-// file it has not recognised, and it names as few columns as possible: anything
-// it stays silent about goes through the normal matcher and synonym table.
-// Keys are normalized (normalizeHeader), so casing and spacing do not matter.
+// `detect` keys only on headers that tool ships (so a preset never claims an
+// unrecognised file) and names as few columns as possible; the rest go through the
+// normal matcher. Keys are normalized (normalizeHeader).
 const IMPORT_PRESETS = [
   {
     name: "RVTools",
-    // A preset that claims a file it does not recognise is worse than no preset:
-    // this one divides memory by 1024, so a false positive corrupts every row.
-    // "VM", "Powerstate" and "CPUs" alone are not enough — any hand-rolled
-    // vSphere export could have those, with memory already in GB. RVTools' own
-    // MiB-suffixed sizing columns are the distinguishing mark, and they are also
-    // the evidence for the MiB convention this preset relies on: a file that
-    // reports provisioned storage in MiB reports memory in MiB too.
+    // A preset that claims a file it doesn't recognise is worse than none: this
+    // one divides memory by 1024, so a false positive corrupts every row.
+    // VM/Powerstate/CPUs alone aren't enough (any hand-rolled vSphere export has
+    // those, memory in GB). RVTools' MiB-suffixed sizing columns are the
+    // distinguishing mark — and the evidence for the MiB convention: a file
+    // reporting storage in MiB reports memory in MiB too.
     detect: (norm) =>
       norm.has("vm") &&
       norm.has("powerstate") &&
@@ -935,19 +904,18 @@ const IMPORT_PRESETS = [
   },
   {
     name: "AWS Application Discovery Service",
-    // ADS namespaces its columns ("CPU.NumberOfLogicalCores", "RAM.TotalSizeInMB",
-    // "CPU.UsagePct.Avg"). Nothing else writes headers shaped like that, and the
-    // generic matcher recognises NONE of them — an ADS file otherwise stops at
-    // the mapping panel every single time, with both required columns unmatched.
+    // ADS namespaces its columns ("CPU.NumberOfLogicalCores", "RAM.TotalSizeInMB").
+    // Nothing else writes headers like that and the generic matcher recognises
+    // none, so an ADS file otherwise stalls at the mapping panel with both required
+    // columns unmatched.
     detect: (norm) =>
       norm.has("cpunumberoflogicalcores") &&
       norm.has("ramtotalsizeinmb") &&
       norm.has("cpuusagepctavg"),
     columns: {
-      // Logical cores, not sockets ("NumberOfProcessors") and not physical cores
-      // ("NumberOfCores"): a cloud vCPU corresponds to what the guest OS sees,
-      // which is the logical count. The other two are still offered in the panel
-      // if a particular fleet needs them.
+      // Logical cores, not sockets ("NumberOfProcessors") or physical cores
+      // ("NumberOfCores"): a cloud vCPU matches what the guest OS sees. The other
+      // two stay available in the panel.
       cpunumberoflogicalcores: COLUMN_MAPPINGS.cpu,
       ramtotalsizeinmb: COLUMN_MAPPINGS.memory,
       cpuusagepctavg: COLUMN_MAPPINGS.cpuUtilization,
@@ -957,18 +925,15 @@ const IMPORT_PRESETS = [
     },
     memoryUnit: "MB",
     derive: {
-      // ADS reports memory USED, in megabytes. The optimizer needs a percentage,
-      // and (used ÷ total) × 100 is that percentage. Without this an ADS file
-      // could only ever be CPU-optimized: memory would be left at its current
-      // size for every VM in the fleet, silently forgoing most of the saving.
+      // ADS reports memory USED in MB; the optimizer needs a percentage:
+      // (used ÷ total) × 100. Without it an ADS file could only be CPU-optimized —
+      // memory left at current size for every VM, forgoing most of the saving.
       //
-      // The source columns are found by NORMALIZED name, like everything else in
-      // this file. Reading them as literal strings would mean that an export
-      // varying only in case or punctuation — while still being detected as ADS —
-      // yielded NaN, and the derivation would return "" for every row: no error,
-      // no failing test, and memory-based right-sizing quietly switched off for
-      // the whole fleet. That is precisely the failure this preset exists to
-      // prevent, so it must not be reintroduced by the fix for it.
+      // Source columns are found by NORMALIZED name (like everything here). Reading
+      // them as literal strings would let an export varying only in case/punctuation
+      // — still detected as ADS — yield NaN, returning "" for every row: no error,
+      // no failing test, memory right-sizing silently off. That is the failure this
+      // preset exists to prevent.
       [COLUMN_MAPPINGS.memoryUtilization]: (row, headers) => {
         const column = (normalized) =>
           headers.find((h) => normalizeHeader(h) === normalized);
@@ -984,13 +949,10 @@ const IMPORT_PRESETS = [
   },
 ];
 
-// A preset may DERIVE a canonical column the format does not carry directly.
-// Derived columns are added as ordinary columns before the mapping runs, so
-// everything downstream — the panel, the engine, the exports — sees them as if
-// the file had always had them.
-//
-// A column the file already provides is never overwritten: the user's own data
-// outranks anything computed from it.
+// A preset may DERIVE a canonical column the file doesn't carry. Derived columns
+// are added before mapping, so everything downstream sees them as if the file had
+// them. A column the file already provides is never overwritten (user data
+// outranks computed).
 function applyPresetDerivations(headers, rows, preset) {
   if (!preset || !preset.derive) return { headers, rows };
 
@@ -1004,8 +966,8 @@ function applyPresetDerivations(headers, rows, preset) {
     rows: rows.map((row) => {
       const derived = { ...row };
       for (const [canonical, compute] of derivations) {
-        // The file's own headers are passed in so a derivation can find its
-        // source columns by normalized name rather than by literal string.
+        // Pass the file's headers so a derivation finds source columns by
+        // normalized name, not literal string.
         derived[canonical] = compute(row, headers);
       }
       return derived;
@@ -1034,9 +996,8 @@ function autoMatchHeaders(headers, preset = detectImportPreset(headers)) {
   const ambiguous = [];
   const unmatchedRequired = [];
 
-  // A preset's columns are settled before the matcher runs, and the headers it
-  // took are claimed — that is what stops RVTools' "Host" from competing for
-  // VM Name once "VM" has it.
+  // A preset's columns are settled before the matcher runs and their headers
+  // claimed — that stops RVTools' "Host" competing for VM Name once "VM" has it.
   if (preset) {
     for (const [normSource, canonical] of Object.entries(preset.columns)) {
       const header = headers.find((h) => normalizeHeader(h) === normSource);
@@ -1113,12 +1074,11 @@ function isMbHeader(header) {
   return /(mb|mib)$/.test(normalizeHeader(header));
 }
 
-// Above this, a memory figure starts to look more like MiB than GB. It is NOT a
-// licence to convert: a real fleet of 512 GB–1 TB machines exists, and dividing
-// it by 1024 would be the same class of silent corruption as leaving RVTools'
-// MiB alone. So this only ever raises the question — see reportInputHygiene.
-// The median (not the max, not the mean) keeps one genuine outlier from
-// speaking for the file.
+// Above this, a memory figure looks more like MiB than GB. NOT a licence to
+// convert — a real fleet of 512 GB–1 TB machines exists, and dividing it by 1024
+// is the same silent corruption as leaving MiB alone — only to raise the question
+// (see reportInputHygiene). Median (not max/mean) keeps one outlier from speaking
+// for the file.
 const MEMORY_LOOKS_LIKE_MB = 1024;
 
 function medianMemory(rows, column) {
@@ -1130,22 +1090,15 @@ function medianMemory(rows, column) {
   return values[Math.floor(values.length / 2)];
 }
 
-// Size-column (memory AND disk) unit detection for a mapping: an MB source is
-// converted to GB on ingest. Only EXPLICIT evidence counts here — a header that
-// says MB, or an
-// import preset that knows the format's convention. The values alone are never
-// enough to convert on: they are enough to ask, and asking is what the input
-// check does.
-// Every column whose value is a size in GB, and so converts from MB/MiB the
-// same way. Disk joined memory here rather than growing a parallel path: one
-// list means a new size column cannot be added to the mapping and silently
-// skip the conversion.
+// Size columns (values in GB) that convert from MB/MiB on ingest. Only EXPLICIT
+// evidence converts — a header that says MB, or a preset that knows the format's
+// convention; values alone are enough to ask, not to convert. Disk shares
+// memory's list (not a parallel path) so a new size column can't silently skip
+// the conversion.
 const SIZE_COLUMNS = [COLUMN_MAPPINGS.memory, COLUMN_MAPPINGS.disk];
 
-// The mapping panel's per-size-column unit dropdown ids. A map keyed by canonical
-// rather than a mem/disk ternary, so a third SIZE_COLUMN cannot silently collide
-// on the disk id — it simply needs an entry here (and the render/confirm below
-// walk this map, so nothing else has to change).
+// Per-size-column unit dropdown ids, keyed by canonical (not a mem/disk ternary)
+// so a third SIZE_COLUMN can't collide on the disk id — it just needs an entry.
 const SIZE_UNIT_IDS = {
   [COLUMN_MAPPINGS.memory]: "colmap_unit_mem",
   [COLUMN_MAPPINGS.disk]: "colmap_unit_disk",
@@ -1163,15 +1116,13 @@ function detectSizeUnits(mapping) {
 // Saved mappings: { headerSignature: { v: 2, mapping: {source: canonical},
 // units: {canonical: "MB"|"GB"} } }.
 //
-// A saved mapping short-circuits everything downstream — the preset, the synonym
-// table, the unit inference — because the user already answered for these exact
-// headers. That makes an entry saved by an OLDER version actively dangerous: one
-// written before 3.7 could name `Host` (the hypervisor) as the VM, or record no
-// unit for a MiB column, and it would keep reapplying that answer forever, past
-// the very fixes meant to prevent it. So entries are versioned, and anything
-// older is dropped rather than trusted: the file simply asks again, and now gets
-// the right answer. Units are recorded explicitly, GB included, so "no unit
-// recorded" can never again be mistaken for "GB".
+// A saved mapping short-circuits the preset, synonym table, and unit inference
+// (the user already answered for these exact headers), which makes an entry from
+// an OLDER version dangerous: one written before 3.7 could name `Host` as the VM
+// or record no unit for a MiB column, reapplying that answer past the fixes for
+// it. So entries are versioned and anything older is dropped — the file asks
+// again. Units are recorded explicitly (GB included) so "no unit recorded" can't
+// be mistaken for "GB".
 const SAVED_MAPPING_VERSION = 2;
 
 function loadColumnMappings() {
@@ -1193,9 +1144,9 @@ function readSavedMapping(entry) {
 
 function saveColumnMapping(signature, mapping, units) {
   const recorded = { ...(units || {}) };
-  // Record the unit even when it is the default, for every size column. An
-  // absent unit is ambiguous — it could mean "GB" or "nobody ever decided" —
-  // and that ambiguity is what let a MiB column be reapplied as GB.
+  // Record the unit even when it's the default, for every size column: an absent
+  // unit is ambiguous ("GB" vs "nobody decided"), and that ambiguity let a MiB
+  // column be reapplied as GB.
   for (const canonical of SIZE_COLUMNS) {
     if (Object.values(mapping).includes(canonical)) {
       recorded[canonical] = recorded[canonical] === "MB" ? "MB" : "GB";
@@ -1222,11 +1173,10 @@ function writeColumnMappings(all) {
 }
 
 // ─── Saved-mapping manager ───────────────────────────────────────────────────
-// Confirming the mapping panel once saves that answer against the file's header
-// signature, and every later file with the same headers is mapped that way
-// without asking again. That is the point — but it also means a mistake made
-// once is repeated silently forever, and until now there was nowhere to see it,
-// let alone undo it. Show what is remembered, and allow forgetting it.
+// Confirming the panel once saves that answer against the file's header signature,
+// and every later file with the same headers is mapped that way without asking —
+// which also means a mistake is repeated silently. This shows what's remembered
+// and allows forgetting it.
 
 // Entries written by an older version are ignored on ingest (see
 // readSavedMapping), so they must be ignored here too — counting them in the
@@ -1258,12 +1208,10 @@ function renderSavedMappings() {
     return;
   }
 
-  // The signature is built from the file's own headers, so it is attacker-
-  // controlled text. It must never be interpolated into an inline handler:
-  // escapeHtml turns a quote into &quot;, which the HTML parser decodes back to
-  // a quote INSIDE the onclick attribute, closing the string and running
-  // whatever follows. Hand the handler an index instead — an integer we
-  // generated — and look the signature up here.
+  // The signature is built from the file's headers — attacker-controlled text. It
+  // must never be interpolated into an inline handler: escapeHtml turns a quote
+  // into &quot;, which the parser decodes back to a quote INSIDE onclick, closing
+  // the string. Hand the handler an index instead and look the signature up here.
   window._savedMappingSignatures = signatures;
 
   const entries = signatures
@@ -1271,10 +1219,9 @@ function renderSavedMappings() {
       const saved = readSavedMapping(all[signature]);
       if (!saved) return "";
 
-      // The signature is a sorted, lowercased join of the headers — fine as a
-      // key, unreadable as a label. Show the renames, which is what the user
-      // actually agreed to; a mapping that renamed nothing is shown as such
-      // rather than as an empty row.
+      // The signature is a sorted, lowercased header join — fine as a key,
+      // unreadable as a label. Show the renames the user actually agreed to; a
+      // rename-nothing mapping is labelled as such, not shown as an empty row.
       const renames = Object.entries(saved.mapping)
         .filter(([source, canonical]) => source !== canonical)
         .map(
@@ -1353,26 +1300,21 @@ function forgetAllColumnMappings() {
 function ingestRows(headers, rows) {
   console.log(`Parsed ${rows.length} rows with ${headers.length} columns`);
 
-  // The signature identifies the FILE, so it is taken from the headers the file
-  // actually has — before anything is derived. Sign the derived headers instead
-  // and you save a mapping under a key no later upload of that same file can
-  // produce: saved, and never replayed.
-  //
-  // Kept on the window because every path that SAVES a mapping needs it, and the
-  // edit path rebuilds _pendingIngest from _lastIngest, whose headers are already
-  // post-derivation.
+  // The signature identifies the FILE, so it's taken from the headers the file
+  // actually has, before anything is derived — signing derived headers saves a
+  // mapping under a key no later upload can reproduce. Kept on window because every
+  // save path needs it, and the edit path rebuilds _pendingIngest from _lastIngest
+  // (post-derivation headers).
   const signature = headerSignature(headers);
   window._fileSignature = signature;
 
   const preset = detectImportPreset(headers);
 
-  // A recognised format may carry a canonical column only implicitly: ADS reports
-  // memory used in megabytes, and the optimizer needs the percentage that is.
-  // Derive it BEFORE anything else looks at these rows — the matcher, the panel,
-  // the engine and the exports must all see the column as though the file had
-  // always had it. Doing this after the match left the match ignorant of a column
-  // that was about to exist, and doing it after the saved-mapping branch skipped
-  // it altogether for any file the user had already answered for.
+  // A recognised format may carry a canonical column only implicitly (ADS reports
+  // memory used in MB; the optimizer needs the percentage). Derive it BEFORE the
+  // matcher/panel/engine/exports look, so they see it as though the file had it.
+  // After the match left the match ignorant of it; after the saved-mapping branch
+  // skipped it for files already answered for.
   ({ headers, rows } = applyPresetDerivations(headers, rows, preset));
 
   // A mapping the user previously confirmed for this exact file wins
@@ -1394,8 +1336,8 @@ function ingestRows(headers, rows) {
   }
 
   if (match.preset) {
-    // Say so. A file that was silently reinterpreted is the thing the user goes
-    // looking for later when a number seems wrong.
+    // Say so — a silently reinterpreted file is what the user goes looking for
+    // when a number seems wrong.
     const presetNote = `Recognised as a ${match.preset.name} export`;
     window._uploadNote = window._uploadNote
       ? `${window._uploadNote}. ${presetNote}`
@@ -1410,12 +1352,11 @@ function ingestRows(headers, rows) {
   );
 }
 
-// A preset knows its own units; nothing needs to be inferred from a file whose
-// format we have already identified.
+// A preset knows its own units — nothing to infer once the format is identified.
 function presetUnits(preset, mapping) {
   if (!preset || !preset.memoryUnit) return null;
-  // A format that reports memory in MiB reports its disk sizes in MiB too —
-  // that is the very convention the RVTools preset is keyed on.
+  // A MiB-memory format reports disk in MiB too — the convention the RVTools
+  // preset is keyed on.
   const mapped = Object.values(mapping);
   const units = {};
   for (const canonical of SIZE_COLUMNS) {
@@ -1430,11 +1371,10 @@ function applyIngest(headers, rows, mapping, units = {}) {
   columnHeaders = finalHeaders;
   csvData = rewriteRowKeys(rows, mapping);
 
-  // Unit conversion: sizes supplied in MB (RVTools-style) → GB. Every size
-  // column converts the same way; collect the ones that actually did so the
-  // note below can name each. A disk rescaled by 1024× with no mention of it is
-  // exactly the silent surprise this note exists to prevent, so it must not be
-  // keyed on memory alone.
+  // Unit conversion: MB (RVTools-style) → GB, same for every size column; collect
+  // the ones that converted so the note can name each. Keyed on every size column,
+  // not memory alone — a disk rescaled 1024× with no mention is the silent surprise
+  // this note prevents.
   const convertedCols = [];
   for (const col of SIZE_COLUMNS) {
     if (!units || units[col] !== "MB") continue;
@@ -1447,13 +1387,12 @@ function applyIngest(headers, rows, mapping, units = {}) {
   }
 
   window._pendingIngest = null;
-  // Bumped on every ingest, from any route. Results carry the token they ran
-  // against, so replacing the data under an existing set of results is visible
-  // even when the new data has the same shape as the old.
+  // Bumped on every ingest. Results carry the token they ran against, so replacing
+  // the data under existing results is visible even when the new data has the same
+  // shape.
   window._ingestToken = (window._ingestToken || 0) + 1;
-  // A dismissal belongs to the file it was made about: answering "different VMs"
-  // or "these really are GB" for one upload must not silence the question for
-  // the next.
+  // A dismissal belongs to the file it was made about: answering "different VMs" or
+  // "these really are GB" for one upload must not silence the question for the next.
   window._duplicatesAcknowledged = false;
   window._memoryUnitAcknowledged = false;
   // Keep the pre-rewrite originals so the mapping stays editable afterwards
@@ -1524,44 +1463,37 @@ function applyIngest(headers, rows, mapping, units = {}) {
     onUtilizationStatisticChange();
   }
 
-  // Any results still on screen were generated from the data this just replaced.
-  // They are not cleared — the user may want to look at them — but they must not
-  // go on presenting themselves as describing what is now loaded.
+  // Results still on screen were generated from the data just replaced. Not cleared
+  // (the user may want them) but must stop presenting themselves as current.
   updateStaleResultsNotice();
 }
 
 // ─── Input hygiene ───────────────────────────────────────────────────────────
-// A bad row does not announce itself. A VM with no CPU count still gets a
-// recommendation, a VM listed twice is sized twice and counted twice in the
-// totals, and both come back looking as reasonable as everything else. So say
-// what is wrong with the input, with the row numbers, before the run — the
-// alternative is a report that is quietly wrong and gets forwarded.
+// A bad row doesn't announce itself: a VM with no CPU still gets a recommendation,
+// a VM listed twice is sized and counted twice, both looking reasonable. So say
+// what's wrong, with row numbers, before the run.
 
 // Row numbers as a spreadsheet shows them: the header is row 1, so the first
 // data row is row 2. Anything else sends the user hunting in the wrong place.
 const dataRowNumber = (index) => index + 2;
 
-// Not "unusual" — impossible. These sit far above the largest instance any of
-// the three providers offers, so a row beyond them is a data-entry error (or a
-// unit that was never converted), not a very large machine.
+// Not "unusual" — impossible: far above the largest instance any provider offers,
+// so a row beyond these is a data-entry error or an unconverted unit.
 const IMPLAUSIBLE_CPU = 512;
 const IMPLAUSIBLE_MEMORY_GB = 24576; // 24 TB
 
 // ─── End-of-life OS advisory (step 10) ───────────────────────────────────────
-// A curated, deliberately CONSERVATIVE table of operating systems comfortably
-// past vendor end-of-life, each with a modern landing OS to consider. This is
-// the ONE place OS is read (the unrecognised-value scan deliberately skips it):
-// the difference is that this fires only on an OS it POSITIVELY recognises as
-// EOL, never on an unknown or current string, so it stays silent on the ordinary
-// Linux-distro strings a real inventory is full of. It is advisory only — sizing
-// is driven by CPU/memory, never the OS string, so it never gates a
-// recommendation. Kept small on purpose: a false "you are on EOL" is worse than
-// a missed one, so anything still in support (or ambiguous) is left out. Each
-// rule's regex is validated against real inventory strings — current OSes must
-// NOT match — in ingest/eol-os-test.js. First match wins.
+// A curated, deliberately CONSERVATIVE table of OSes well past vendor end-of-life,
+// each with a modern landing OS. The ONE place OS is read (the unrecognised-value
+// scan skips it): fires only on a POSITIVELY-recognised EOL string, never on an
+// unknown or current one, so it stays silent on ordinary Linux-distro strings.
+// Advisory only — sizing is driven by CPU/memory, never the OS string. Kept small:
+// a false "you are on EOL" is worse than a missed one, so anything in support or
+// ambiguous is left out. Each regex is validated against real inventory strings
+// (current OSes must NOT match) in ingest/eol-os-test.js. First match wins.
 const EOL_OS_RULES = [
-  // Windows Server 2012 / 2012 R2 (EOL Oct 2023) and older. 2016+ still in
-  // support as of this table's date and deliberately omitted.
+  // Windows Server 2012/2012 R2 (EOL Oct 2023) and older. 2016+ still in support,
+  // omitted.
   {
     re: /windows\s*server\s*(?:2003|2008|2012)(?:\s*r2)?/i,
     suggest: "Windows Server 2022",
@@ -1600,10 +1532,9 @@ const EOL_OS_RULES = [
 ];
 
 // Return a suggested modern landing OS if `raw` names an OS past its standard
-// end-of-life, or null for anything current, unknown, or blank. Some flagged
-// releases can still carry paid extended support (ESU / ESM) past this date, so
-// the advisory that consumes this asks the user to verify that coverage rather
-// than asserting the OS is unsupported. Pure — a small table lookup.
+// end-of-life, or null for anything current/unknown/blank. Some flagged releases
+// can still carry paid extended support (ESU/ESM), so the advisory asks the user
+// to verify coverage rather than assert unsupported. Pure — a table lookup.
 function classifyEolOs(raw) {
   const s = String(raw == null ? "" : raw).trim();
   if (!s) return null;
@@ -1683,18 +1614,16 @@ function analyzeInputHygiene(rows) {
     );
   }
 
-  // Unrecognised rule-engine values: a Workload / ENV / Compliance cell the rule
-  // engine does not know matches no rule and is silently treated as the default,
-  // so the constraint the user believed they set never applied. Name it, with the
-  // rows. A blank cell is the documented default and is never flagged. The
-  // recognised vocabularies are read LIVE from the rule engine, so this cannot
-  // drift from what apply() actually matches.
+  // Unrecognised rule-engine values: a Workload/ENV/Compliance cell the engine
+  // doesn't know matches no rule and is silently treated as default, so the
+  // constraint the user believed they set never applied. Name it, with rows. Blank
+  // is the documented default, never flagged. Vocabularies are read LIVE from the
+  // engine, so this can't drift from apply().
   //
   // OS is deliberately NOT scanned: the engine acts only on "windows"/"macos" and
-  // treats everything else — every Linux distro string a real inventory carries
-  // ("Ubuntu Linux (64-bit)", "RHEL 8") — as the Linux default, which is correct,
-  // so an "unrecognised" OS is no lost constraint. Flagging it would fire on
-  // nearly every real row. (See RuleEngine.RECOGNIZED.os for the same caveat.)
+  // treats everything else (every Linux distro string) as the Linux default, which
+  // is correct — an "unrecognised" OS is no lost constraint, and flagging it would
+  // fire on nearly every real row. (See RuleEngine.RECOGNIZED.os.)
   const RECOGNIZED =
     (typeof RuleEngine !== "undefined" && RuleEngine.RECOGNIZED) || null;
   if (RECOGNIZED) {
@@ -1719,17 +1648,15 @@ function analyzeInputHygiene(rows) {
       },
     ];
     for (const dim of RULE_DIMENSIONS) {
-      // Scan EVERY present synonym column, not just the first: a file that
-      // carries both "ENV" and "Environment" can hide a typo in the second, and
-      // a lost constraint in a column we skipped is exactly what this check
-      // exists to surface.
+      // Scan EVERY present synonym column, not just the first: a file with both
+      // "ENV" and "Environment" can hide a typo in the second, and a lost
+      // constraint in a skipped column is what this check exists to surface.
       const presentCols = dim.cols.filter((c) => present(c));
       if (presentCols.length === 0) continue;
       const allowed = new Set(dim.allow.map((v) => v.toLowerCase()));
       const byValue = new Map(); // distinct raw value → the rows carrying it
       rows.forEach((row, i) => {
-        // The same value in two synonym columns of one row (ENV and Environment
-        // both "Prd") names that row once, not twice.
+        // The same value in two synonym columns of one row names that row once.
         const seen = new Set();
         for (const col of presentCols) {
           const raw = String(row[col] ?? "").trim();
@@ -1750,10 +1677,9 @@ function analyzeInputHygiene(rows) {
   }
 
   // End-of-life OS advisory: fires only on an OS positively recognised as past
-  // vendor end-of-life (classifyEolOs), never on an unknown or current string,
-  // so — unlike the unrecognised-value scan above — reading the OS column here is
-  // safe from the "fires on nearly every row" noise that keeps OS out of that
-  // scan. Advisory only; it suggests a modern landing OS and never affects sizing.
+  // vendor end-of-life (classifyEolOs), never on unknown/current, so reading the OS
+  // column here avoids the "fires on nearly every row" noise that keeps OS out of
+  // the scan above. Advisory only; suggests a landing OS, never affects sizing.
   if (present("OS") && typeof classifyEolOs === "function") {
     const byOs = new Map(); // distinct EOL raw value → { suggest, rows: [] }
     rows.forEach((row, i) => {
@@ -1774,8 +1700,7 @@ function analyzeInputHygiene(rows) {
   }
 
   // Duplicates are a question, not a defect: the same name twice may be one VM
-  // exported twice, or two VMs that genuinely share a name across clusters.
-  // Only the user knows, so ask instead of picking.
+  // exported twice or two VMs sharing a name across clusters. Ask, don't pick.
   const duplicates = [];
   if (present(NAME)) {
     const byName = new Map();
@@ -1797,9 +1722,9 @@ function analyzeInputHygiene(rows) {
     }
   }
 
-  // Not a defect, and NOT something to act on unasked: a fleet of 512 GB–1 TB
-  // machines is real, and dividing it by 1024 would corrupt it exactly as surely
-  // as leaving a MiB column alone. Only the user knows which they have.
+  // Not a defect, and NOT to act on unasked: a fleet of 512 GB–1 TB machines is
+  // real, and dividing it by 1024 corrupts it as surely as leaving a MiB column
+  // alone. Only the user knows which they have.
   const memoryUnit =
     present(MEM) && (medianMemory(rows, MEM) || 0) >= MEMORY_LOOKS_LIKE_MB
       ? { median: medianMemory(rows, MEM) }
@@ -1808,22 +1733,18 @@ function analyzeInputHygiene(rows) {
   return { issues, duplicates, memoryUnit };
 }
 
-// The user confirmed the values are MiB. Re-derive from the untouched source
-// rows with the unit set, rather than dividing csvData in place — that way the
-// mapping, the region chips and everything else downstream are rebuilt from one
-// path, and the recorded unit survives a later edit of the mapping.
+// The user confirmed the values are MiB. Re-derive from the untouched source rows
+// with the unit set, not by dividing csvData in place, so everything downstream is
+// rebuilt from one path and the recorded unit survives a later mapping edit.
 function convertMemoryToGb() {
   const last = window._lastIngest;
   if (!last) return;
 
-  // applyIngest clears the per-file acknowledgements, because it is normally the
-  // arrival of a NEW file. This is not that: it is a remediation of the file
-  // already loaded. Dividing a memory column by 1024 cannot change which VM
-  // names repeat, so an answer already given to the duplicate question still
-  // holds — and re-asking it would look like the answer had not registered.
-  //
-  // Re-mapping columns is different and correctly does reset it: choosing a
-  // different column as the VM name genuinely changes which rows are duplicates.
+  // applyIngest clears the per-file acknowledgements (normally a NEW file
+  // arriving). This is a remediation of the loaded file instead: dividing memory by
+  // 1024 can't change which VM names repeat, so a duplicate answer already given
+  // still holds — re-asking would look like it hadn't registered. Re-mapping
+  // columns correctly does reset it (a different VM-name column changes duplicates).
   const duplicatesAnswered = window._duplicatesAcknowledged;
 
   applyIngest(last.headers, last.rows, last.mapping, {
@@ -1842,8 +1763,8 @@ function keepMemoryAsGb() {
   showToast("Leaving memory values as GB", "info");
 }
 
-// At most a handful of row numbers inline — a list of four hundred is not a
-// message, it is a wall, and the user cannot act on it either way.
+// At most a handful of row numbers inline — a list of four hundred is a wall, not
+// a message.
 function formatRowNumbers(rowNumbers, limit = 8) {
   const shown = rowNumbers.slice(0, limit).join(", ");
   const rest = rowNumbers.length - limit;
@@ -1941,10 +1862,9 @@ function reportInputHygiene() {
 
 // Same VM listed twice: keep the first occurrence of each name.
 //
-// csvData and _lastIngest.rows are parallel — the former is the latter with the
-// column mapping applied — so both must be pruned, by the same indexes. Pruning
-// only csvData left the source rows intact, and anything that re-derives from
-// them (editing the mapping, converting a unit) resurrected every duplicate.
+// csvData and _lastIngest.rows are parallel (the former is the latter mapped), so
+// both must be pruned by the same indexes — pruning only csvData left the source
+// rows intact, and re-deriving from them resurrected every duplicate.
 function mergeDuplicateVmNames() {
   const NAME = COLUMN_MAPPINGS.vmName;
   const seen = new Set();
@@ -1979,8 +1899,8 @@ function mergeDuplicateVmNames() {
     "success",
   );
 
-  // The rows changed, so everything derived from them has to be redone — the
-  // region chips and the app→workload panel described the old set.
+  // Rows changed, so everything derived from them is redone (region chips,
+  // app→workload panel described the old set).
   showFileStatistics();
   reportInputHygiene();
   validateCsvRegions();
@@ -1995,19 +1915,17 @@ function keepDuplicateVmNames() {
   showToast("Keeping every row — repeated names left as they are", "info");
 }
 
-// Renders the mapping panel: one dropdown per canonical column, prefilled
-// with the auto-match guesses; the pipeline stays deferred until Confirm.
-// opts.isEdit reopens the panel over already-applied data: nothing changes
-// unless the user confirms, and Cancel simply closes the panel.
+// Renders the mapping panel: one dropdown per canonical, prefilled with auto-match
+// guesses; pipeline stays deferred until Confirm. opts.isEdit reopens over
+// already-applied data — nothing changes unless the user confirms; Cancel closes.
 function showColumnMappingPanel(headers, match, opts = {}) {
   const panel = document.getElementById("columnMappingSection");
 
   if (!panel) {
-    // Page has no panel placeholder — apply best-effort mapping instead. The
-    // preset is consulted for the same reason it is below: this file may be a
-    // recognised MiB format that needed review for some OTHER column, and there
-    // is no dropdown here for anyone to correct the unit with. Trusting the
-    // header name alone would divide nothing and call MiB "GB" — a silent 1024x.
+    // Page has no panel placeholder — apply best-effort mapping. Consult the
+    // preset (as below): a recognised MiB format may have needed review for some
+    // OTHER column, and there's no unit dropdown here — trusting the header name
+    // alone would call MiB "GB", a silent 1024x.
     if (!opts.isEdit) {
       applyIngest(
         headers,
@@ -2034,15 +1952,14 @@ function showColumnMappingPanel(headers, match, opts = {}) {
     ambiguousByCanonical[a.canonical] = a.candidates;
   });
 
-  // Memory unit prefill, in order of authority: units already applied (edit
-  // mode), then the recognised format, then the header name.
+  // Memory unit prefill, in order of authority: units already applied (edit mode),
+  // then the recognised format, then the header name.
   //
-  // The preset must be consulted HERE, not only on the silent path. A recognised
-  // RVTools file can still need review — some other column is ambiguous — and it
-  // then arrives at this panel, where the header alone says "Memory" and means
-  // GB. Prefilling GB for a file we have already identified as MiB invites the
-  // user to confirm a 1024x error, with only the median-based hygiene question
-  // left to catch it.
+  // The preset must be consulted HERE, not only on the silent path: a recognised
+  // RVTools file can still reach this panel (another column ambiguous), where the
+  // header alone says "Memory" and means GB. Prefilling GB for a file identified as
+  // MiB invites confirming a 1024x error, with only the median hygiene question to
+  // catch it.
   const prefillUnits =
     match.units ||
     presetUnits(match.preset, match.mapping) ||
@@ -2195,12 +2112,11 @@ function applyColumnMapping() {
     return;
   }
 
-  // Size-column units (memory AND disk). Start from what the recognised format
-  // or the header names imply for every size column — so a disk in MiB is never
-  // silently left unconverted just because the memory dropdown resolved first —
-  // then let each manual dropdown override its own column. Writing "GB"
-  // explicitly is deliberate: it overrides an auto-detected "MB" when the user
-  // insists the values really are GB, and is a no-op in the conversion below.
+  // Size-column units (memory AND disk). Start from what the recognised format or
+  // header names imply for every size column (so a MiB disk isn't left unconverted
+  // because memory resolved first), then let each manual dropdown override its own
+  // column. Writing "GB" explicitly overrides an auto-detected "MB" and is a no-op
+  // in the conversion below.
   const preset = pending.match && pending.match.preset;
   const units = presetUnits(preset, mapping) || detectSizeUnits(mapping) || {};
   for (const [canonical, id] of Object.entries(SIZE_UNIT_IDS)) {
@@ -2212,10 +2128,9 @@ function applyColumnMapping() {
     if (sel && sel.value) units[canonical] = sel.value === "MB" ? "MB" : "GB";
   }
 
-  // The signature of the FILE, captured before any derived column was added.
-  // Signing pending.headers would include the derived column and produce a key
-  // that no later upload of the same file could ever match — the mapping would be
-  // saved and never replayed.
+  // The FILE signature, captured before any derived column was added. Signing
+  // pending.headers would include the derived column and produce a key no later
+  // upload could match — saved and never replayed.
   saveColumnMapping(
     pending.signature ||
       window._fileSignature ||
@@ -2227,19 +2142,19 @@ function applyColumnMapping() {
 }
 
 // ─── App → workload mapping panel ─────────────────────────────────────────────
-// Appears after ingest when the file has an "App Name" column but no per-row
-// "Workload" column: assigning a workload per application lets every VM in that
-// app inherit it at generation time. Purely optional — the panel only persists
-// the map; generation reads it (see resolveRowWorkload in the factory).
+// Appears after ingest when the file has "App Name" but no per-row "Workload":
+// assigning a workload per application lets every VM in that app inherit it at
+// generation. Optional — the panel only persists the map; generation reads it
+// (resolveRowWorkload in the factory).
 function maybeShowAppMappingPanel() {
   const panel = document.getElementById("appMappingSection");
   if (!panel) return;
 
   const hasApp = columnHeaders.includes(APP_NAME_CANONICAL);
   const hasWorkload = columnHeaders.includes("Workload");
-  // Dedupe case-insensitively (the persisted map keys on the lowercased name),
-  // keeping the first-seen casing for the label — otherwise "Billing" and
-  // "billing" would render as two rows that silently save to the same key.
+  // Dedupe case-insensitively (the map keys on the lowercased name), keeping
+  // first-seen casing for the label, else "Billing"/"billing" render as two rows
+  // that save to the same key.
   const apps = hasApp
     ? Array.from(
         csvData
@@ -2312,8 +2227,8 @@ function applyAppMapping() {
     status.textContent = ok
       ? "✓ Saved — applied on the next Generate"
       : "⚠️ Could not save — browser storage is unavailable";
-    // The span's base color is the success green; recolor on failure so the
-    // warning doesn't read as a success.
+    // Base color is success green; recolor on failure so the warning doesn't read
+    // as success.
     status.style.color = ok ? "var(--good-strong)" : "var(--red-strong)";
   }
 }
@@ -2347,16 +2262,14 @@ function parseCSVLine(line, delimiter = ",") {
   return result;
 }
 
-// Copying cells out of Excel or Google Sheets gives tab-separated text; copying
-// out of a CSV gives commas. Let the header line decide — whichever character
-// actually divides it is the delimiter. A single-column file has neither, and
-// falls to the comma, which splits it into the one column it has.
+// Copying from Excel/Sheets gives tab-separated text; from a CSV, commas. Let the
+// header line decide by whichever character divides it; a single-column file has
+// neither and falls to the comma.
 //
-// Only delimiters OUTSIDE quotes are counted. A header like
+// Only delimiters OUTSIDE quotes count: a header like
 //   "VM, display name"<TAB>CPU Count
-// has one comma and one tab, and counting naively would call it comma-separated
-// and shred every row in the file — but the comma is inside a quoted cell and
-// divides nothing.
+// has one comma and one tab, but the comma is inside a quoted cell — counting it
+// naively would call the file comma-separated and shred every row.
 function sniffDelimiter(headerLine) {
   let tabs = 0;
   let commas = 0;
@@ -2376,16 +2289,12 @@ function sniffDelimiter(headerLine) {
   return tabs > commas ? "\t" : ",";
 }
 
-// Split delimited text into RECORDS, honouring quotes. A newline only ends a
-// record when it is OUTSIDE a quoted field; a newline INSIDE quotes is a data
-// character of a multi-line cell (RFC-4180) and must be kept. Splitting on "\n"
-// first — as this used to — tore such a cell across records and misaligned every
-// field after it, no matter how carefully parseCSVLine handled quoted commas,
-// because the shred happened before parseCSVLine ever ran. Every character is
-// preserved verbatim (quotes included) so parseCSVLine re-parses each record
-// exactly as if it had been a single physical line. Quote-state tracking mirrors
-// sniffDelimiter / parseCSVLine: a doubled quote inside a field is one escaped
-// literal, not a state toggle.
+// Split delimited text into RECORDS, honouring quotes. A newline ends a record
+// only OUTSIDE a quoted field; a newline INSIDE quotes is a data character of a
+// multi-line cell (RFC-4180) and is kept. Splitting on "\n" first (as this used
+// to) tore such a cell across records before parseCSVLine ever ran. Every char is
+// preserved verbatim so parseCSVLine re-parses each record as one physical line.
+// A doubled quote inside a field is one escaped literal, not a state toggle.
 function splitRecords(text) {
   const normalized = text.replace(/\r\n?/g, "\n");
   const records = [];
@@ -2410,20 +2319,18 @@ function splitRecords(text) {
     }
   }
   if (current.length) records.push(current);
-  // A quote left open at end-of-input means the file is malformed: every record
-  // after the stray quote was absorbed into this last one (quote state never
-  // reset, so no later "\n" was treated as a record boundary). Expose it so the
-  // caller can warn rather than shipping one giant merged row silently.
+  // A quote left open at end-of-input means malformed: every record after the
+  // stray quote was absorbed into this last one (state never reset, so no later
+  // "\n" was a boundary). Expose it so the caller can warn rather than ship one row.
   records.unterminatedQuote = inQuotes;
   return records;
 }
 
-// Text (a file's contents, or a paste) → { headers, rows }. The one place that
-// turns delimited text into rows; both the upload and the paste path use it, so
-// they cannot drift apart in how they read a quoted field.
+// Text (file contents or a paste) → { headers, rows }. The one place that turns
+// delimited text into rows; upload and paste both use it, so they can't drift.
 function parseDelimitedText(text) {
-  // Capture the malformed-quote flag BEFORE filtering — .filter() returns a new
-  // array without the property splitRecords hung on it.
+  // Capture the malformed-quote flag BEFORE filtering — .filter() drops the
+  // property splitRecords hung on the array.
   const raw = splitRecords(text);
   const unterminatedQuote = raw.unterminatedQuote === true;
   const records = raw.filter((record) => record.trim() !== "");
@@ -2435,8 +2342,8 @@ function parseDelimitedText(text) {
     const values = parseCSVLine(record, delimiter);
     const row = {};
     headers.forEach((header, index) => {
-      // Same normalization as the workbook path: a CSV exported from a
-      // spreadsheet carries the same "16,384" cells, quoted.
+      // Same normalization as the workbook path: a spreadsheet-exported CSV
+      // carries the same "16,384" cells, quoted.
       row[header] = normalizeCellValue(values[index]);
     });
     return row;
@@ -2444,9 +2351,8 @@ function parseDelimitedText(text) {
   return { headers, rows, unterminatedQuote };
 }
 
-// The warning the two delimited-text entry points share when the parse reports
-// an unclosed quote. Kept out of parseDelimitedText so that stays a pure,
-// node-testable function; the toast is the browser-only surface.
+// Shared warning for an unclosed quote. Kept out of parseDelimitedText so that
+// stays pure/node-testable; the toast is browser-only.
 function warnUnterminatedQuote() {
   showToast(
     "A quoted value was never closed — every row after the stray double-quote " +

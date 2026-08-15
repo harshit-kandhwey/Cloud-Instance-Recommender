@@ -23,11 +23,9 @@ const l2l = (
 const { ctx, elements } = buildContext();
 const headroom = ctx.computeFitHeadroom;
 
-// One VM's own <tr>, so a per-row assertion is scoped to that row and nothing
-// else. This used to be `html.split("mild")[0]`, which assumed "mild" appeared
-// exactly once and only after the row under test — it would have silently
-// mis-scoped the moment the row order or the surrounding markup changed, and a
-// check that quietly stops covering its row is worse than no check.
+// One VM's own <tr>, so a per-row assertion is scoped to that row only. The
+// prior `html.split("mild")[0]` assumed "mild" appeared once and only after the
+// row under test, so it mis-scoped as soon as row order or markup changed.
 const rowFor = (html, vmName) =>
   (html.match(/<tr[\s\S]*?<\/tr>/g) || []).find((r) =>
     r.includes(`>${vmName}<`),

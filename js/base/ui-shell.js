@@ -30,12 +30,9 @@ function setupStickyGenerate() {
 }
 
 // ─── Back to top ──────────────────────────────────────────────────────────────
-// The tool pages run long once results are rendered, and the controls all live
-// at the top.
-//
-// Bottom-LEFT on purpose. The three floating things each own a corner: the
-// toast stack is bottom-right, the sticky Generate bar is bottom-centre, and
-// toasts (z-index 9999) would otherwise cover this button (998).
+// Bottom-LEFT to keep clear of the other fixed elements: toast stack
+// (bottom-right, z 9999) and sticky Generate bar (bottom-centre). This button is
+// z 998, below the toasts.
 function setupBackToTop() {
   if (!document.body) return;
 
@@ -224,12 +221,9 @@ function initializeRecommendationTypeHandlers() {
 }
 
 // ─── Section collapse state ───────────────────────────────────────────────────
-// Sections you rarely touch start collapsed, so the page opens on the parts that
-// matter; every section then remembers whatever the user last did with it.
-//
-// Keyed by `data-section-id` on the header, NOT by its heading text: keying off
-// rendered copy means renaming a heading silently discards everyone's saved
-// state and quietly stops the default from applying.
+// Rarely-used sections start collapsed; each then remembers the user's last
+// choice. Keyed by `data-section-id`, NOT heading text — keying off rendered copy
+// would discard saved state (and drop the default) whenever a heading is renamed.
 const SECTIONS_STORAGE_KEY = "cloudInstanceRecommenderSections";
 
 // The ids of the sections that start collapsed. Only headers carrying

@@ -325,11 +325,10 @@ console.log("[section collapse state]");
       `${idless.length} of ${collapsible.length} collapsible headers without an id`,
     );
   }
-  // The four tool pages are four separate files, and every panel added since the
-  // upload section was written had to be pasted into each of them by hand. A
-  // panel missing from one page does not throw: the renderer looks its element
-  // up, does not find it, and returns — so that page quietly loses the feature.
-  // 3.7 alone added five of these.
+  // The four tool pages are separate files, so a panel can be present on some and
+  // missing from others. A missing panel does not throw — the renderer looks up
+  // its element, finds nothing, and returns — so the page silently loses the
+  // feature. This pins the required panels across all four pages.
   const TOOL_PAGES = ["aws.html", "azure.html", "gcp.html", "multicloud.html"];
   const REQUIRED_PANELS = [
     "manualEntrySection",

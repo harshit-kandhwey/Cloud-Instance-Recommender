@@ -1,25 +1,12 @@
-// Results charts. Hand-built, no charting library — a deliberate choice, not a
-// restriction. `script-src 'self'` permits same-origin scripts, so a vendored
-// library would load exactly the way SheetJS already does (js/vendor/, injected
-// by ingest.js and portfolio.js); `connect-src 'none'` blocks network
-// connections, not script execution. Staying dependency-free is the project's
-// policy — no CDN, no supply-chain surface, a CSP that stays tight — and nothing
-// here needs a library anyway.
-//
-// Rendered into #resultsChartsSection by renderResultsCharts(), which every tool
-// page carries. Like every shared renderer, it survives its element being absent:
-// a page without the placeholder simply gets no charts rather than an exception.
-//
-// Colours are theme tokens, never literals, and every mark's step was chosen per
-// theme against that theme's surface (see css/theme.css). Text wears the text
-// tokens — a mark's colour never doubles as a label colour.
+// Results charts. No charting library by policy (dependency-free, no CDN); CSP
+// would permit a vendored one. Rendered into #resultsChartsSection by
+// renderResultsCharts(); tolerates a missing placeholder (no charts, no throw).
+// Colours are theme tokens chosen per theme against its surface (css/theme.css);
+// mark colours never double as label colours.
 
 // ─── Match rate ───────────────────────────────────────────────────────────────
-// A single ratio of a whole. Deliberately a METER and not a two-slice donut: a
-// pie of two slices asks the eye to compare angles for something one length says
-// exactly, and it is the textbook wrong form for this. The meter is a track of
-// the same ramp as its fill, with the number stated in text beside it — the
-// figure carries the verdict, the bar carries the proportion.
+// One ratio of a whole → a meter, not a two-slice donut (a length reads a ratio
+// exactly; two pie angles do not). Number stated in text beside the bar.
 function _matchRateMeter(results) {
   const instanceCols = getInstanceColumns(results);
   if (!instanceCols.length) return "";
@@ -29,9 +16,8 @@ function _matchRateMeter(results) {
     rowIsAllNoMatch(row, instanceCols),
   ).length;
   const matched = total - unmatched;
-  // Round toward the honest side: never show 100% while a row is unmatched, and
-  // never show 0% while a row matched. A rounded 100 next to "3 no match" is the
-  // kind of small lie that costs trust in every other number on the page.
+  // Clamp rounding so the % never contradicts the counts: no 100% with an
+  // unmatched row, no 0% with a matched one.
   const raw = (matched / total) * 100;
   let pct = Math.round(raw);
   if (pct === 100 && unmatched > 0) pct = 99;
@@ -58,19 +44,13 @@ function _matchRateMeter(results) {
 }
 
 // ─── Family distribution ────────────────────────────────────────────────────
-// What KINDS of instance the recommendations landed on — the count per family
-// category ("General purpose", "Compute optimized", …), which is the family
-// field the provider itself assigns, carried on the row since 3.8.5 and read
-// straight from it (Azure's family is not derivable from the instance name).
-//
-// A magnitude-by-category comparison, so a horizontal bar per category, one
-// hue — the category's identity is its axis label, never its colour, so there
-// is no legend to key and no palette to cycle. Per provider, because the
-// category LABELS genuinely differ between clouds (AWS "GPU instance" vs Azure
-// "GPU" vs GCP "Accelerator optimized") and must not be silently merged. The
-// category count is small by construction (~6–9), which is the whole reason
-// 3.8.5 stored the category and not the exact family (188 of those on AWS) —
-// so nothing is folded into an "Other".
+// Count of recommendations per family category ("General purpose", …), read from
+// the provider-assigned family field carried on the row since 3.8.5 (Azure's
+// family is not derivable from the instance name). Horizontal bar per category,
+// one hue — identity is the axis label, no legend. Per provider: category labels
+// differ across clouds (AWS "GPU instance" vs Azure "GPU" vs GCP "Accelerator
+// optimized") and must not be merged. Category count is small (~6–9) by design,
+// so nothing folds into an "Other".
 function _familyDistribution(results) {
   // Providers that carry a family column, in first-seen order.
   const keys = Object.keys(results[0]);
@@ -83,21 +63,16 @@ function _familyDistribution(results) {
 
   const blocks = providers
     .map((provider) => {
-      // Prefer the optimized recommendation when the run produced one — that is
-      // the instance you would actually deploy; otherwise the like-for-like.
+      // Prefer the optimized recommendation (what you'd deploy) over like-for-like.
       const kind = keys.includes(`${provider} Optimized Family`)
         ? "Optimized"
         : "Like-to-Like";
       const instanceCol = `${provider} ${kind} Instance`;
       const familyCol = `${provider} ${kind} Family`;
 
-      // Count families only over rows that matched — a no-match row has no
-      // family to attribute, and counting its "N/A"/"Error" placeholder would
-      // invent a category. One guard, the shared no-match predicate on the
-      // instance column: a matched instance always carries a real family from
-      // the region data, so the family cells that reach the tally are all real.
-      // (The `!family` check is only a belt-and-braces against an empty family
-      // name in the data — not a second no-match test.)
+      // Tally families only over matched rows: a no-match row's "N/A"/"Error"
+      // placeholder would invent a category. The !family check guards an empty
+      // family name in the data, not a second no-match test.
       const counts = new Map();
       let matched = 0;
       for (const row of results) {
@@ -146,17 +121,11 @@ function _familyDistribution(results) {
 }
 
 // ─── vCPU / RAM before → after ──────────────────────────────────────────────
-// What optimizing did to the fleet's size, per provider: the total baseline
-// footprint against the total optimized footprint. TWO charts, never one with
-// two y-axes — vCPU and GiB are different units on different scales, and a
-// shared axis would imply a crossover wherever the two happen to be zeroed.
-//
-// "Before" wears the de-emphasis gray and "after" the emphasis hue, so the eye
-// reads the direction of change without a legend; each bar is direct-labelled
-// with its value. Bars share one scale per chart (the max across providers of
-// either endpoint) so a longer bar always means more. Never summed across
-// providers — the same VM appears once per provider, so a combined total would
-// count it two or three times; each provider is its own small multiple.
+// Baseline vs optimized footprint per provider. Two charts, not one dual-axis:
+// vCPU and GiB are different units/scales. Before = de-emphasis gray, after =
+// emphasis hue (direction read without a legend); bars direct-labelled, one scale
+// per chart (max endpoint across providers). Never summed across providers — the
+// same VM appears once per provider, so a total would double/triple-count it.
 function _beforeAfter(results) {
   const savings =
     typeof computeSizingSavings === "function"
@@ -181,8 +150,7 @@ function _beforeAfter(results) {
 
   const charts = measures
     .map(({ caption, before, after, unit }) => {
-      // A measure with no movement on any provider is an axis of equal bars —
-      // honest but empty; the other chart carries whatever did change.
+      // Skip a measure that didn't move on any provider (all bars equal).
       if (savings.every((s) => s[before] === s[after])) return "";
 
       const scale = Math.max(
@@ -215,8 +183,7 @@ function _beforeAfter(results) {
         })
         .join("");
 
-      // One-line accessible summary, so the direction of change is never
-      // colour-alone.
+      // Accessible summary so direction of change is never colour-alone.
       const summary = savings
         .map(
           (s) =>
@@ -237,8 +204,8 @@ function _beforeAfter(results) {
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
-// Returns false when the page has no placeholder, so a caller can tell the
-// difference between "nothing to draw" and "nowhere to draw it".
+// Returns false when the page has no placeholder — distinguishes "nothing to
+// draw" from "nowhere to draw it".
 function renderResultsCharts(results) {
   const el = document.getElementById("resultsChartsSection");
   if (!el) return false;
@@ -272,21 +239,14 @@ function renderResultsCharts(results) {
 window.renderResultsCharts = renderResultsCharts;
 
 // ─── Executive print report ─────────────────────────────────────────────────
-// A one-page summary meant for paper (or PDF), built from the SAME primitives as
-// the on-screen charts so the printed figures can never disagree with the ones
-// above the table. It composes headline stat tiles — the single-number form for
-// a verdict, per the dataviz method — with the three charts unchanged.
-//
-// It lives hidden in the page (js/base/downloads.js wires the button; css/style.css
-// hides it on screen and reveals only it on print, forcing light tokens so a
-// dark-theme screen never prints an ink-heavy background). Kept beside the chart
-// builders it reuses rather than in its own file, so those figures are one call
-// away and nothing depends on cross-file load order.
+// One-page print/PDF summary built from the SAME primitives as the on-screen
+// charts, so printed figures can't disagree with them. Stat tiles (verdict as a
+// single number) + the three charts. Hidden in-page (downloads.js wires the
+// button; style.css shows it only on print and forces light tokens). Kept beside
+// the chart builders it reuses to avoid cross-file load-order coupling.
 
-// The headline: what the run assessed and what optimizing bought, as stat tiles
-// and a per-provider right-sizing line. Numbers come from the shared primitives
-// (getInstanceColumns / rowIsAllNoMatch / computeSizingSavings), the same ones
-// the meter and the stats bar read — so every figure on the page is one number.
+// Headline: what the run assessed and what optimizing bought, as stat tiles + a
+// per-provider right-sizing line, from the shared primitives.
 function _reportHeadline(results) {
   const instanceCols =
     typeof getInstanceColumns === "function" ? getInstanceColumns(results) : [];
@@ -325,8 +285,8 @@ function _reportHeadline(results) {
     .filter(Boolean)
     .join("");
 
-  // Per-provider right-sizing, worded exactly as the stats bar words it: a
-  // positive delta is a reduction (shown "−"), a negative one an increase ("+").
+  // Per-provider right-sizing, worded as the stats bar does: positive delta =
+  // reduction ("−"), negative = increase ("+").
   const savings =
     typeof computeSizingSavings === "function"
       ? computeSizingSavings(results)
@@ -363,9 +323,7 @@ function _reportHeadline(results) {
     ${savingsBlock}`;
 }
 
-// The full report: a titled header, the headline, then the three charts. Returns
-// "" for an empty result set so a caller can tell "nothing to report" from a
-// populated page.
+// Full report: header, headline, three charts. "" for an empty result set.
 function buildExecutiveReport(results) {
   if (!results || !results.length) return "";
 
@@ -405,9 +363,8 @@ function buildExecutiveReport(results) {
     </section>`;
 }
 
-// Populates the always-present-but-hidden report container. Mirrors
-// renderResultsCharts: returns false when the page has no placeholder, so a
-// caller can tell "nowhere to draw" from "nothing to draw".
+// Populates the hidden report container. Like renderResultsCharts, returns false
+// when the page has no placeholder.
 function renderExecutiveReport(results) {
   const el = document.getElementById("executiveReportSection");
   if (!el) return false;

@@ -2,28 +2,22 @@
 // download button arrangement.
 
 // ─── Generation stats bar ─────────────────────────────────────────────────────
-// isNoMatchValue / getInstanceColumns live in app-core.js (loaded first on
-// every page) so the stats bar, exports, and the App Portfolio page share one
-// definition.
+// isNoMatchValue / getInstanceColumns (app-core.js) and escapeCsvCell (app-core.js,
+// with downloadCsv/exportFilename) are shared so the stats bar, exports, and the
+// Portfolio page use one definition and quote/formula-harden cells identically.
 
-// escapeCsvCell lives in app-core.js alongside downloadCsv / exportFilename —
-// the shared CSV home — so the preview, the downloads, and the scenario export
-// all quote and formula-harden cells the same way.
-
-// The fit/headroom flag that trails a like-for-like instance name: how much
-// spare capacity the match leaves over the requested size (computeFitHeadroom).
-// Display-only — nothing about it reaches a download, so the CSV schema and the
-// goldens are untouched. Shown only for a like-for-like Instance cell, and only
-// once the worst-axis headroom is worth flagging: below 25% is a tight fit and
-// stays unmarked (this also keeps the ~7% GiB-vs-GB rounding from ever showing).
-// 100%+ (the box is ≥2× the requirement on some axis) is drawn stronger.
+// The fit/headroom flag trailing a like-for-like instance name: spare capacity the
+// match leaves over the requested size (computeFitHeadroom). Display-only — never
+// reaches a download, so the CSV schema/goldens are untouched. Shown only for a
+// like-for-like cell, and only once worst-axis headroom is worth flagging: below
+// 25% is a tight fit and stays unmarked (also hides the ~7% GiB-vs-GB rounding).
+// 100%+ (≥2× the requirement on some axis) is drawn stronger.
 const FIT_FLAG_MIN = 0.25;
 const FIT_FLAG_STRONG = 1.0;
 function _fitBadgeHtml(row, col) {
-  // One anchored mechanism: the flag is for a like-for-like Instance column and
-  // its provider is exactly the prefix. An Optimized Instance column does not
-  // match, so it is never flagged (its rightsizing is the vCPU diff instead) —
-  // and the provider can never be mis-derived into a neighbouring column.
+  // One anchored mechanism: the flag is for a like-for-like Instance column whose
+  // provider is exactly the prefix. An Optimized column never matches (its
+  // rightsizing is the vCPU diff), and the provider can't be mis-derived.
   const m = /^(.*) Like-to-Like Instance$/.exec(col);
   if (!m) return "";
   if (typeof computeFitHeadroom !== "function") return "";
@@ -41,27 +35,22 @@ function _fitBadgeHtml(row, col) {
   return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};${weight}white-space:nowrap;">▲${pct}%</span>`;
 }
 
-// The right-sizing verdict that trails an OPTIMIZED instance name: did the
-// utilization-based pick shrink, grow, or match the size the VM runs on today
-// (its provisioned CPU Count / Memory (GB))? Display-only — like the fit flag it
-// never reaches a download, so the CSV schema and the goldens are untouched.
-// Shown ONLY on an Optimized Instance cell: the like-for-like pick is sized to
-// MEET the requirement, so its over-provisioning is the fit flag's job (above),
-// not a verdict. Silent on "same size" — a badge on every row is noise, so only
-// an actual resize is marked, the way the fit flag only marks a headroom worth
-// flagging. vCPU is the headline axis and decides whenever it differs; memory
-// breaks the tie with a 10% tolerance, which also absorbs the ~7% GiB-vs-GB
-// rounding so a pure unit artefact never reads as a resize.
+// The right-sizing verdict trailing an OPTIMIZED instance name: did the
+// utilization-based pick shrink, grow, or match the size the VM runs on today?
+// Display-only, never reaches a download. Shown ONLY on an Optimized cell (the
+// like-for-like pick is sized to MEET the requirement, so its over-provisioning is
+// the fit flag's job). Silent on "same size" — only an actual resize is marked.
+// vCPU is the headline axis and decides whenever it differs; memory breaks the tie
+// with a 10% tolerance, which also absorbs the ~7% GiB-vs-GB rounding.
 const RIGHTSIZE_MEM_TOLERANCE = 0.1;
 function _rightsizeVerdictHtml(row, col) {
   const m = /^(.*) Optimized Instance$/.exec(col);
   if (!m) return "";
   const provider = m[1];
-  // Strict numeric conversion + finite-and-positive on ALL four capacities, not
-  // just the source: parseFloat would read "4junk" as 4, and a bare isNaN would
-  // wave through 0 / negative / Infinity, so a recommended 0 vCPU (a no-match or a
-  // malformed cell that still parses) would render as "Downsized". A verdict only
-  // makes sense between two real sizes.
+  // Strict conversion + finite-and-positive on ALL four capacities, not just the
+  // source: a bare isNaN would wave through 0/negative/Infinity, so a recommended
+  // 0 vCPU would render as "Downsized". A verdict only makes sense between two real
+  // sizes.
   const srcCpu = Number(row[COLUMN_MAPPINGS.cpu]);
   const srcMem = Number(row[COLUMN_MAPPINGS.memory]);
   const recCpu = Number(row[`${provider} Optimized vCPUs`]);
@@ -85,18 +74,13 @@ function _rightsizeVerdictHtml(row, col) {
   return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${arrow} ${word}</span>`;
 }
 
-// The workload-shape flag that trails the provisioned Memory (GB) cell: how much
-// RAM the source VM carries per vCPU, sorted into the same compute / general /
-// memory buckets the instance families fall into (classifyWorkloadShape). It
-// explains WHY a skewed row lands on a c- or r-family rather than a general one —
-// the ratio the engine's family preference is really acting on, made visible.
-// Display-only, like the fit and verdict flags — nothing here reaches a download.
-// Silent on the general band, and for the same reason the verdict is silent on
-// "same size": a badge on the majority of rows is noise, and "general" explains
-// nothing a reader would not already assume, so only the two skewed shapes — the
-// ones that actually steer the family — are marked. The colours are the
-// contrast-checked CPU / memory label tokens (indigo / teal), so the flag reads
-// as a neutral classification, never borrowing the verdict's good/amber meaning.
+// The workload-shape flag trailing the provisioned Memory (GB) cell: RAM per vCPU,
+// bucketed into compute/general/memory (classifyWorkloadShape). Explains WHY a
+// skewed row lands on a c- or r-family — the ratio the engine's family preference
+// acts on, made visible. Display-only. Silent on the general band (a badge on most
+// rows is noise, and "general" explains nothing), so only the two skewed shapes are
+// marked. Colours are the contrast-checked CPU/memory label tokens (indigo/teal), a
+// neutral classification, never the verdict's good/amber meaning.
 function _workloadShapeHtml(row) {
   if (typeof classifyWorkloadShape !== "function") return "";
   const s = classifyWorkloadShape(
@@ -113,11 +97,10 @@ function _workloadShapeHtml(row) {
   return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${word}</span>`;
 }
 
-// The stats bar describes the whole result set, so it does not change when the
-// preview is filtered or re-sorted — but it was being rebuilt on every debounced
-// keystroke and every sort click, rescanning every row for rules, matches and
-// sizing savings each time. Cached against the results array itself, which is
-// replaced (never mutated) on each run, so a new run always recomputes.
+// The stats bar describes the whole result set, so it doesn't change on filter or
+// re-sort — but it was rebuilt on every keystroke/sort click, rescanning every row.
+// Cached against the results array itself (replaced, never mutated, per run), so a
+// new run always recomputes.
 let _statsCache = { results: null, html: "" };
 
 function _buildStatsHtml(results) {
@@ -125,12 +108,10 @@ function _buildStatsHtml(results) {
 
   const allKeys = Object.keys(results[0] || {});
 
-  // The SAME predicate the red row highlight, the no-match-only view and the
-  // no-match export use. The stats bar used to re-derive it inline, which made
-  // the two disagree on the one case they treat differently: with no
-  // recommendation columns at all, `some(...)` over an empty list is false, so
-  // every row was counted "no match" while the no-match view kept none of them —
-  // the stats bar and the view contradicting each other on the same screen.
+  // The SAME predicate as the red highlight / no-match view / export. The stats
+  // bar used to re-derive it inline and disagreed in one case: with no
+  // recommendation columns, `some(...)` over an empty list is false, so every row
+  // counted "no match" while the no-match view kept none — a contradiction.
   const stats = matchStats(results);
   const hasRecommendations = stats.hasRecommendations;
   const matchedRows = stats.matched;
@@ -163,8 +144,8 @@ function _buildStatsHtml(results) {
       ).size
     : 0;
 
-  // What optimizing actually bought, per provider. Upsizing is reported just as
-  // plainly as downsizing — a stat that only ever shows a win is not a stat.
+  // What optimizing bought, per provider. Upsizing is reported as plainly as
+  // downsizing — a stat that only shows a win isn't a stat.
   const savingsChips = computeSizingSavings(results)
     .map((s) => {
       const parts = [];
@@ -243,25 +224,21 @@ function showResultsPreview(results) {
     "OS",
     "Workload",
     "Compliance",
-    // Last of the input columns, so it lands immediately left of the recommended
-    // instances: the point of the column is to read one against the other.
+    // Last input column, so it lands immediately left of the recommended instances
+    // — the point is to read one against the other.
     "Current Instance Type",
-    // Which utilization statistic sized each row (optimized runs only). Present
-    // in the download all along; it must render too, or a row sized on a
-    // fallback statistic looks arbitrary on screen. Any future row-level column
-    // has to be named here — displayCols is an explicit allow-list, not a
-    // passthrough of every key.
+    // Which utilization statistic sized each row (optimized runs only). In the
+    // download already; must render too, or a fallback-sized row looks arbitrary.
+    // displayCols is an explicit allow-list — any new row-level column names here.
     "Sized On",
-    // Cross-provider family-class summary, present only on multi-cloud runs (the
-    // factory adds it when more than one provider is selected). Like "Sized On"
-    // it is in the download already, and must be named here or it will not render.
+    // Cross-provider family-class summary, multi-cloud runs only. In the download
+    // already; must be named here or it won't render.
     "Family Equivalence",
-    // Cloud-to-cloud: the source instance type a row's size was derived from,
-    // present only when that mode is on. In the download already; named here so it
-    // renders on screen too.
+    // Cloud-to-cloud: the source instance type a row's size was derived from, that
+    // mode only. In the download already; named here so it renders.
     "Sized From",
     // GCP-only: the tighter custom machine type suggested when the standard pick
-    // over-provisions. Present on GCP runs; named here or it will not render.
+    // over-provisions. Named here or it won't render.
     "GCP Custom Fit",
   ].filter((c) => allKeys.includes(c));
 
@@ -319,18 +296,16 @@ function showResultsPreview(results) {
   };
   _renderPreviewTable(container, results, displayCols, null, 1);
 
-  // Scroll so the download button stays visible at the top of the viewport;
-  // the preview flows below and the user scrolls down for rows that don't fit.
-  // (Anchoring on the preview itself pushed the download button off-screen.)
+  // Scroll so the download button stays at the top of the viewport; the preview
+  // flows below. (Anchoring on the preview pushed the button off-screen.)
   const scrollAnchor = document.getElementById("downloadSection") || container;
   scrollAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// The one definition of "what the preview is showing": the no-match-only toggle
-// and the text filter (case-insensitive substring across the visible columns),
-// then sort. The table and the clipboard both go through this — two copies would
-// be two chances to drift, and "the clipboard agrees with the screen" is the
-// whole guarantee. Always returns a NEW array; `results` is never reordered.
+// The one definition of "what the preview is showing": the no-match-only toggle +
+// text filter (case-insensitive substring across visible columns), then sort. Table
+// and clipboard both go through this, so they can't drift. Always returns a NEW
+// array; `results` is never reordered.
 function filterAndSortRows(
   results,
   displayCols,
@@ -345,7 +320,7 @@ function filterAndSortRows(
     .toLowerCase();
   const instanceCols = noMatchOnly ? getInstanceColumns(results) : [];
   // Per-column needles: a row must match EVERY active one (AND), each against its
-  // own column only — narrower than the global filter, which matches ANY column.
+  // own column — narrower than the global filter (matches ANY column).
   const colNeedles = Object.entries(columnFilters)
     .map(([col, v]) => [col, String(v).trim().toLowerCase()])
     .filter(([, v]) => v !== "");
@@ -394,19 +369,16 @@ function _renderPreviewTable(
   } = {},
 ) {
   const hidden = hiddenCols instanceof Set ? hiddenCols : new Set(hiddenCols);
-  // The columns actually rendered and copied. Hidden columns still filter, sort
-  // and download — they are only absent from the on-screen table and the
-  // clipboard, the same way a filtered-out row is.
+  // The columns actually rendered and copied. Hidden columns still filter, sort and
+  // download — only absent from the on-screen table and clipboard, like a filtered row.
   const visibleCols = displayCols.filter((c) => !hidden.has(c));
   const isNoMatch = isNoMatchValue;
   const isRulesCol = (c) => c.includes("Rules Applied");
   const isReasonCol = (c) => c.includes("No Match Reason");
-  // A RECOMMENDED instance, and only that. Matching any column containing
-  // "Instance" also swallowed the input column "Current Instance Type", whose
-  // value is a real instance name and so is never a no-match placeholder — which
-  // made "every instance column is a no match" almost never true, silently
-  // disabling the red highlight on genuinely unmatched rows, and formatted the
-  // input as if it were an outcome.
+  // A RECOMMENDED instance, and only that. Matching any "Instance" column also
+  // swallowed the input "Current Instance Type" (a real instance name, never a
+  // no-match placeholder), making "every instance column is a no match" almost never
+  // true — silently disabling the red highlight and formatting input as an outcome.
   const isInstanceCol = (c) =>
     c.includes("Like-to-Like Instance") || c.includes("Optimized Instance");
   const isVcpuCol = (c) => c.includes("vCPUs");
@@ -421,19 +393,18 @@ function _renderPreviewTable(
     noMatchOnly,
     columnFilters,
   );
-  // Only for the wording below ("No rows match …", the count line); the
-  // filtering itself is the helper's job
+  // Only for the wording below; the filtering itself is the helper's job.
   const needle = String(filter || "")
     .trim()
     .toLowerCase();
   const colFilterActive = Object.values(columnFilters).some(
     (v) => String(v).trim() !== "",
   );
-  // Any narrowing is "filtered" for the count wording and the reminder that
-  // downloads still carry the whole set.
+  // Any narrowing is "filtered" for the count wording and the whole-set download
+  // reminder.
   const filtered = !!needle || noMatchOnly || colFilterActive;
-  // The instance columns once, so the row highlight below uses the SAME predicate
-  // the no-match-only filter does — a red row is exactly a row the filter keeps.
+  // Instance columns once, so the row highlight uses the SAME predicate as the
+  // no-match-only filter — a red row is exactly a row the filter keeps.
   const instanceCols = getInstanceColumns(results);
 
   // Build L2L vCPU map per provider for diff view
@@ -458,10 +429,9 @@ function _renderPreviewTable(
       .join(" ");
   }
 
-  // Pagination is applied AFTER filter + sort, so a page is always a window onto
-  // the rows the user is actually looking at. The clipboard and downloads ignore
-  // it entirely — they carry the whole filtered/sorted set — so the page is a
-  // viewing convenience and never silently narrows what leaves the tool.
+  // Pagination is applied AFTER filter + sort, so a page is a window onto the rows
+  // the user is looking at. Clipboard and downloads ignore it (whole filtered/sorted
+  // set), so a page never silently narrows what leaves the tool.
   const totalRows = rows.length;
   const pageCount =
     pageSize === Infinity ? 1 : Math.max(1, Math.ceil(totalRows / pageSize));
@@ -501,9 +471,9 @@ function _renderPreviewTable(
       </select>
     </label>`;
 
-  // A native <details> disclosure — no click-outside JS, CSP-safe. Its open state
-  // is tracked so re-rendering after a toggle does not snap the menu shut. Each
-  // checkbox carries the column's INDEX, never its name, into the handler.
+  // A native <details> disclosure — no click-outside JS, CSP-safe. Open state is
+  // tracked so a re-render after a toggle doesn't snap it shut. Each checkbox
+  // carries the column's INDEX, never its name.
   const hiddenCount = displayCols.length - visibleCols.length;
   const columnsMenu = `
     <details id="previewColsMenu"${colsMenuOpen ? " open" : ""} ontoggle="window._previewColsMenuState(this.open)" style="position:relative;">
@@ -521,11 +491,9 @@ function _renderPreviewTable(
       </div>
     </details>`;
 
-  // Only shown when there is more than one page — a single page has nothing to
-  // navigate, and a disabled Prev/Next pair would just be noise.
-  // The ids are what let a page turn hand focus back to the button that was
-  // pressed. Deliberately NOT prefixed "previewPage" — that would collide with
-  // the rows-per-page select when the focus restore tests an id for nav-ness.
+  // Only shown when there's more than one page. The ids let a page turn hand focus
+  // back to the pressed button — deliberately NOT prefixed "previewPage" (would
+  // collide with the rows-per-page select when the focus restore tests for nav-ness).
   const navBtn = (label, target, disabled, aria, id) =>
     `<button type="button" id="${id}" onclick="window._previewGoToPage(${target})"${disabled ? " disabled" : ""} aria-label="${aria}"
       style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
@@ -589,9 +557,8 @@ function _renderPreviewTable(
         <tbody>`;
 
   previewRows.forEach((row, ri) => {
-    // The row's absolute position in the filtered/sorted set, not its position on
-    // the page — so "Copied row 47" stays true on page 2, and the zebra striping
-    // does not flip when a page boundary falls mid-run.
+    // Absolute position in the filtered/sorted set, not on the page — so "Copied
+    // row 47" stays true on page 2 and zebra striping doesn't flip at a page boundary.
     const absoluteRow = pageStart + ri + 1;
     const allNoMatch = rowIsAllNoMatch(row, instanceCols);
     const bg = allNoMatch
@@ -599,9 +566,8 @@ function _renderPreviewTable(
       : absoluteRow % 2 === 1
         ? "var(--surface)"
         : "var(--surface-alt-2)";
-    // Tab-separated like the table-level copy, so a single row also pastes
-    // across cells rather than landing in one. Visible columns only, so a copied
-    // row matches the columns on screen — the table copy narrows the same way.
+    // Tab-separated like the table-level copy, so a single row also pastes across
+    // cells. Visible columns only, matching what's on screen.
     const rowTsv = buildPreviewTsv([row], visibleCols).split("\n")[1];
 
     html += `<tr style="background:${bg};">`;
@@ -626,11 +592,9 @@ function _renderPreviewTable(
       } else if (isInstanceCol(col)) {
         const bad = isNoMatch(val);
         const color = bad ? "var(--red-strong)" : "var(--ok-strong)";
-        // A matched like-for-like cell trails its fit/headroom flag; a no-match
-        // cell never does (there is no instance whose size to compare).
-        // Two mutually-exclusive trailing badges: the fit flag only matches a
-        // Like-to-Like cell, the right-sizing verdict only an Optimized cell, so
-        // at most one is ever non-empty for a given column.
+        // A matched like-for-like cell trails its fit/headroom flag; a no-match cell
+        // never does. The two trailing badges are mutually exclusive (fit only on
+        // Like-to-Like, verdict only on Optimized), so at most one is non-empty.
         const fit = bad ? "" : _fitBadgeHtml(row, col);
         const verdict = bad ? "" : _rightsizeVerdictHtml(row, col);
         cellContent = val
@@ -652,9 +616,8 @@ function _renderPreviewTable(
             ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
             : '<span style="color:var(--text-disabled)">—</span>';
       } else if (col === COLUMN_MAPPINGS.memory) {
-        // The provisioned-memory input cell trails the workload-shape flag: it is
-        // the numerator of the RAM-per-vCPU ratio the flag reports, so the badge
-        // reads naturally beside the number it is derived from.
+        // The provisioned-memory input cell trails the workload-shape flag — it's
+        // the numerator of the RAM-per-vCPU ratio the flag reports.
         const shape = _workloadShapeHtml(row);
         cellContent =
           val !== "" && val !== undefined
@@ -683,8 +646,8 @@ function _renderPreviewTable(
 
   html += `</tbody></table></div>`;
   // A filter narrows only the preview; downloads always carry every row. Say so
-  // whenever a filter is active — including when it narrows below 20 rows, where
-  // the "showing first 20" line alone would leave the difference invisible.
+  // whenever a filter is active, including below 20 rows where the count line alone
+  // would hide the difference.
   if (filtered) {
     html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing ${rows.length} of ${results.length} rows${noMatchOnly ? " (no-match only)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
   } else if (pageCount > 1) {
@@ -695,9 +658,9 @@ function _renderPreviewTable(
   container.innerHTML = html;
   container.classList.remove("hidden");
 
-  // Repopulate every filter input via the DOM (never as an HTML attribute — a
-  // value with a quote would break the attribute) and restore focus + cursor so a
-  // re-render mid-typing does not eat keystrokes.
+  // Repopulate every filter input via the DOM (never as an HTML attribute — a value
+  // with a quote would break it) and restore focus + cursor so a mid-typing
+  // re-render doesn't eat keystrokes.
   const searchInput = document.getElementById("previewSearch");
   if (searchInput) searchInput.value = filter || "";
   displayCols.forEach((col, i) => {
@@ -706,9 +669,8 @@ function _renderPreviewTable(
   });
 
   if (restoreFocus) {
-    // A column-filter keystroke restores that column's input; anything else
-    // restores the global search. The active column is keyed by NAME, so it is
-    // found again even if its position has shifted.
+    // A column-filter keystroke restores that column's input; anything else the
+    // global search. The active column is keyed by NAME, found even if it shifted.
     const activeCol = window._previewActiveColFilter;
     if (activeCol) {
       const idx = displayCols.indexOf(activeCol.col);
@@ -730,12 +692,10 @@ function _renderPreviewTable(
     }
   }
 
-  // Every other view-changing interaction — page turn, rows-per-page, no-match
-  // toggle, column show/hide, sort — replaces the node the user was standing on,
-  // which drops a keyboard user back to the body and loses their place. Each of
-  // those handlers records the control to focus again; the ids above are stable
-  // across the re-render, so the same control is found even when the table's
-  // contents changed underneath it.
+  // Every other view-changing interaction (page turn, rows-per-page, no-match
+  // toggle, column show/hide, sort) replaces the node the user was on, dropping a
+  // keyboard user to the body. Each handler records the control to refocus; the ids
+  // above are stable across the re-render.
   const focusId = window._previewFocusId;
   if (focusId) {
     window._previewFocusId = null;
@@ -744,9 +704,8 @@ function _renderPreviewTable(
       (!target || target.disabled) &&
       (focusId === "previewNavNext" || focusId === "previewNavPrev")
     ) {
-      // The button just became disabled — the turn reached the first or last
-      // page. Fall back to its partner, then to rows-per-page: somewhere beside
-      // where the user was, rather than nowhere.
+      // The button just became disabled (reached the first/last page). Fall back to
+      // its partner, then rows-per-page — somewhere beside where the user was.
       const partner =
         focusId === "previewNavNext" ? "previewNavPrev" : "previewNavNext";
       target = document.getElementById(partner);
@@ -759,14 +718,10 @@ function _renderPreviewTable(
 
 const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
 
-// The results on screen describe the providers AND the rows that were loaded
-// when Generate ran. Change either afterwards and nothing re-runs, so the table
-// and every download quietly go on describing something the user no longer has.
-//
-// The provider half was the original case. The data half matters more now that
-// there are four ways to load rows — upload, paste, sample, manual entry — and
-// three of them are a single click, so replacing the data under a set of results
-// is easy and looks like nothing happened.
+// The results on screen describe the providers AND rows loaded when Generate ran.
+// Change either afterwards and nothing re-runs, so the table and downloads go on
+// describing something the user no longer has. The data half matters more now that
+// four one-click ways to load rows exist (upload, paste, sample, manual entry).
 function updateStaleResultsNotice() {
   const notice = document.getElementById("resultsStaleNotice");
   if (!notice) return;
@@ -788,8 +743,7 @@ function updateStaleResultsNotice() {
       ranWith.some((p) => !selectedProviders.includes(p)));
 
   // A counter bumped by every ingest. Comparing row counts would miss a file
-  // replaced by one of the same length, which is exactly the case a user is
-  // least likely to notice by eye.
+  // replaced by one of the same length — the case a user is least likely to notice.
   const dataChanged =
     typeof window._resultsIngestToken === "number" &&
     window._resultsIngestToken !== window._ingestToken;
@@ -818,10 +772,9 @@ function buildPreviewTsv(rows, displayCols) {
     const s = String(v ?? "")
       .replace(/[\t\r\n]+/g, " ")
       .trim();
-    // The same formula-injection guard escapeCsvCell applies to downloads. The
-    // clipboard lands in a spreadsheet exactly like a CSV does, and these values
-    // come from an uploaded file — a VM named `=cmd|'…'!A1` must not execute
-    // just because it was copied instead of downloaded.
+    // The same formula-injection guard escapeCsvCell applies to downloads: the
+    // clipboard lands in a spreadsheet like a CSV, and a VM named `=cmd|'…'!A1` from
+    // an uploaded file must not execute just because it was copied.
     return /^[=+\-@|]/.test(s) ? `'${s}` : s;
   };
   return [
@@ -830,9 +783,9 @@ function buildPreviewTsv(rows, displayCols) {
   ].join("\n");
 }
 
-// One clipboard path for both copy buttons, so neither can fail silently.
-// navigator.clipboard needs a secure context; a page opened from file:// has
-// none, so fall back to the old selection-based copy rather than doing nothing.
+// One clipboard path for both copy buttons, so neither fails silently.
+// navigator.clipboard needs a secure context (a file:// page has none), so fall
+// back to the selection-based copy.
 function copyTextToClipboard(text, successMessage) {
   const done = () => showToast(successMessage, "success", 3000);
   const failed = () =>
@@ -850,16 +803,14 @@ function copyTextToClipboard(text, successMessage) {
 }
 window.copyTextToClipboard = copyTextToClipboard;
 
-// Copies every row the filter currently matches — not just the 20 rendered —
-// in the preview's sort order, so the clipboard agrees with the screen for the
-// same reason the exports do.
+// Copies every row the filter matches (not just the rendered page) in the preview's
+// sort order, so the clipboard agrees with the screen like the exports do.
 function copyPreviewToClipboard() {
   const state = window._previewState;
   if (!state || !state.results || !state.results.length) return;
 
-  // Same helper the table renders from, so the two cannot disagree — including
-  // the no-match-only view and the per-column filters, so a copy carries exactly
-  // the rows on screen.
+  // Same helper the table renders from, so the two can't disagree — including the
+  // no-match-only view and per-column filters.
   const rows = filterAndSortRows(
     state.results,
     state.displayCols,
@@ -870,8 +821,8 @@ function copyPreviewToClipboard() {
     state.columnFilters,
   );
 
-  // And only the visible columns, so the copy matches the on-screen table by
-  // column too. Downloads still carry every column — hidden is a viewing choice.
+  // Visible columns only, matching the on-screen table. Downloads carry every column
+  // — hidden is a viewing choice.
   const hidden =
     state.hiddenCols instanceof Set
       ? state.hiddenCols
@@ -902,8 +853,8 @@ function copyViaTextarea(text) {
   }
 }
 
-// Offers the single filter change that rescues the most unmatched rows, so the
-// user doesn't have to read the Nearest Miss column and work it out by hand.
+// Offers the single filter change that rescues the most unmatched rows, so the user
+// needn't read the Nearest Miss column by hand.
 function updateRelaxSuggestion(results) {
   const panel = document.getElementById("relaxSuggestion");
   if (!panel) return;
@@ -925,9 +876,8 @@ function updateRelaxSuggestion(results) {
   panel.classList.remove("hidden");
 }
 
-// Turns the filter off and re-runs. Regenerating (rather than patching the
-// results in place) keeps one source of truth: the results always come from the
-// filters as they currently stand.
+// Turns the filter off and re-runs. Regenerating (not patching results in place)
+// keeps one source of truth: results always come from the current filters.
 function applyRelaxSuggestion() {
   const suggestion = window._relaxSuggestion;
   if (!suggestion) return;
@@ -955,9 +905,9 @@ function applyRelaxSuggestion() {
 window.applyRelaxSuggestion = applyRelaxSuggestion;
 
 // One re-render, reading every view option from _previewState. A new option is
-// added to the state and to the render — never to five separate call sites — so
-// no interaction can quietly forget to pass one. `restoreFocus` is the only
-// per-call concern: a filter keystroke restores the caret, a page turn does not.
+// added to the state and the render, never to five call sites, so no interaction
+// forgets to pass one. `restoreFocus` is the only per-call concern (a filter
+// keystroke restores the caret, a page turn doesn't).
 function _rerenderPreview(restoreFocus = false) {
   const s = window._previewState;
   if (!s) return;
@@ -987,8 +937,8 @@ window._sortPreview = function (colIdx) {
   if (!s) return;
   s.sortDir = s.sortCol === colIdx ? -s.sortDir : 1;
   s.sortCol = colIdx;
-  // Re-sorting reorders the whole set, so page 3 would show different rows; go
-  // back to the top where the newly-sorted rows are.
+  // Re-sorting reorders the whole set, so page 3 would show different rows; go to
+  // the top.
   s.page = 0;
   window._previewFocusId = `previewSortTh_${colIdx}`;
   _rerenderPreview();
@@ -1011,15 +961,15 @@ window._previewSetPageSize = function (value) {
 window._previewGoToPage = function (index) {
   const s = window._previewState;
   if (!s) return;
-  // Which button the user pressed, read from the direction of travel — so focus
-  // returns to it and a keyboard user can page through with repeated Enter.
+  // Which button the user pressed, from the direction of travel, so focus returns
+  // to it and a keyboard user can page through with repeated Enter.
   window._previewFocusId = index > s.page ? "previewNavNext" : "previewNavPrev";
   s.page = Math.max(0, index);
   _rerenderPreview();
 };
 
-// Restrict the table to rows with no matching instance — exactly the rows the
-// red highlight marks. Changes which rows exist, so start at the first page.
+// Restrict to rows with no matching instance — exactly the red-highlighted rows.
+// Changes which rows exist, so start at the first page.
 window._previewToggleNoMatch = function (checked) {
   const s = window._previewState;
   if (!s) return;
@@ -1029,10 +979,9 @@ window._previewToggleNoMatch = function (checked) {
   _rerenderPreview();
 };
 
-// Per-column filter, keyed by column NAME so it survives a column moving. An
-// empty value removes the entry rather than storing "", so `colFilterActive`
-// stays a simple truthiness check. Debounced and focus-restored like the global
-// search — the active column is remembered by name across the re-render.
+// Per-column filter, keyed by column NAME so it survives a column moving. An empty
+// value removes the entry (keeps colFilterActive a simple truthiness check).
+// Debounced and focus-restored like the global search.
 window._previewColumnFilterChanged = function (colIdx, value) {
   const s = window._previewState;
   if (!s) return;
@@ -1058,16 +1007,15 @@ window._previewClearColumnFilters = function () {
   if (!s) return;
   s.columnFilters = {};
   s.page = 0;
-  // The ✕ button itself disappears once there are no filters left to clear, so
-  // it cannot take focus back; the row filter is the nearest thing that stays.
+  // The ✕ button disappears once there's nothing to clear, so it can't take focus
+  // back; the row filter is the nearest thing that stays.
   window._previewFocusId = "previewSearch";
   _rerenderPreview();
 };
 
-// Show or hide a column, by its index in displayCols. Hiding also drops that
-// column's filter, so there is never a filter narrowing the table from a column
-// nobody can see. The last visible column cannot be hidden — an empty table has
-// nothing to show and no header to bring the column back from.
+// Show or hide a column by its index in displayCols. Hiding also drops that column's
+// filter, so no filter narrows the table from a hidden column. The last visible
+// column can't be hidden (an empty table has no header to bring it back).
 window._previewToggleColumn = function (colIdx, visible) {
   const s = window._previewState;
   if (!s) return;
@@ -1086,11 +1034,10 @@ window._previewToggleColumn = function (colIdx, visible) {
       return;
     }
     s.hiddenCols.add(col);
-    // Dropping this column's filter WIDENS the row set, so the current page
-    // would be an index into the old, narrower one — every other view-changing
-    // handler resets the page for exactly this reason. Only when a filter was
-    // actually there: hiding an unfiltered column changes no rows, and throwing
-    // the user back to page 1 for a cosmetic change would be its own bug.
+    // Dropping this column's filter WIDENS the row set, so the current page would
+    // index the old narrower one — reset it, as every view-changing handler does.
+    // Only when a filter was actually there: hiding an unfiltered column changes no
+    // rows, and paging the user back for a cosmetic change would be its own bug.
     if (Object.prototype.hasOwnProperty.call(s.columnFilters, col)) {
       delete s.columnFilters[col];
       s.page = 0;
@@ -1099,8 +1046,8 @@ window._previewToggleColumn = function (colIdx, visible) {
   _rerenderPreview();
 };
 
-// Remember whether the column menu is open, so re-rendering after a toggle does
-// not snap it shut. Pure state — no re-render, or the ontoggle event would loop.
+// Remember whether the column menu is open, so a re-render after a toggle doesn't
+// snap it shut. Pure state — no re-render, or the ontoggle event would loop.
 window._previewColsMenuState = function (open) {
   const s = window._previewState;
   if (s) s.colsMenuOpen = !!open;
@@ -1111,8 +1058,8 @@ window._previewFilterChanged = function (value) {
   const s = window._previewState;
   if (!s) return;
   s.filter = value;
-  // A new filter changes which rows exist, so the current page number no longer
-  // means anything; start again at the first page of the new result set.
+  // A new filter changes which rows exist, so the current page no longer means
+  // anything; start at the first page of the new set.
   s.page = 0;
   clearTimeout(window._previewFilterTimer);
   window._previewFilterTimer = setTimeout(() => {
@@ -1126,10 +1073,9 @@ window._previewFilterChanged = function (value) {
 };
 
 // ─── AWS Pricing Calculator bulk-template button(s) ───────────────────────────
-// #downloadBtnsRow holds only the bulk-template button(s) inside the "AWS
-// Pricing Calculator" download group (aws.html only). After a run with both
-// L2L + Optimized types, split into one template per type to avoid
-// double-counting in the calculator.
+// #downloadBtnsRow holds the bulk-template button(s) in the "AWS Pricing Calculator"
+// group (aws.html only). After a run with both L2L + Optimized types, split into one
+// template per type to avoid double-counting in the calculator.
 
 function updateDownloadButtons(results) {
   const row = document.getElementById("downloadBtnsRow");

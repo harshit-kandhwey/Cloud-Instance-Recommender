@@ -1,14 +1,12 @@
 // Scenario comparison: pin generation runs (same input, different config) and
-// show which configuration settings differed plus a per-VM diff of what the
-// recommendations changed. Two runs get a detailed pairwise view (config diff +
-// old → new cells); three or more get an N-way matrix (one column per run).
+// show which settings differed plus a per-VM diff of what changed. Two runs get
+// a pairwise view (config diff + old → new cells); 3+ get an N-way matrix.
 //
-// Runs are named (default "Run N", editable in place) and held in memory for
-// the session only: a results grid can exceed localStorage's ~5MB, so
-// cross-session save is deliberately out of scope (the roadmap notes it). A cap
-// keeps the N-way matrix legible. Pinning captures a REFERENCE to that run's
-// processedResults, which is never mutated (a new run reassigns the global to a
-// fresh array). The diff builders are pure and unit-tested; the rest is UI.
+// Runs are in-memory for the session only — a results grid can exceed
+// localStorage's ~5MB, so cross-session save is out of scope. SCENARIO_MAX caps
+// the matrix for legibility. Pinning captures a REFERENCE to processedResults,
+// which is never mutated (each run reassigns the global to a fresh array). The
+// diff builders are pure and unit-tested; the rest is UI.
 
 let scenarios = [];
 let scenarioSeq = 0;
@@ -41,10 +39,8 @@ function scenarioRowKeys(results) {
   return names;
 }
 
-// The recommendation columns a run has that the comparison could not use, as a
-// note fragment. A comparison silently narrowed to the columns two runs happen
-// to share is the kind of thing a reader should be told: the diff below covers
-// AWS only, even though one of these runs also produced Azure recommendations.
+// Recommendation columns present in some run but dropped from the comparison
+// (not common to every run), as a note fragment so a narrowed diff is disclosed.
 function excludedColsNote(allCols, comparedCols) {
   const dropped = allCols.filter((c) => !comparedCols.includes(c));
   if (!dropped.length) return "";
@@ -123,13 +119,10 @@ function diffScenarios(a, b) {
       changedCells,
       newlyMatched,
       newlyUnmatched,
-      // Each run's rate over its WHOLE result set, not over the compared cells.
-      // Scoped to the intersection it could flatter a run badly: comparing a
-      // multi-cloud run against an AWS-only one drops the Azure columns, so a
-      // run whose Azure results all failed would report 100% here while its own
-      // stats bar said otherwise. Same helper the stats bar uses, so the two
-      // always agree. The delta counts above stay scoped to the compared
-      // cells — that is what a diff is.
+      // Each run's rate over its WHOLE result set, not the compared cells:
+      // scoping to the column intersection would flatter a run whose dropped
+      // columns all failed. Same helper as the stats bar, so the two agree.
+      // The delta counts above stay scoped to the compared cells.
       matchRateA: matchStats(a.results).rate ?? 0,
       matchRateB: matchStats(b.results).rate ?? 0,
     },
@@ -138,13 +131,11 @@ function diffScenarios(a, b) {
 }
 
 // ─── Pure N-way diff ─────────────────────────────────────────────────────────
-// Generalises diffScenarios to any number of runs (>= 2). A row's cell is
-// "changed" when the runs do not all agree on it; a row is changed when any of
-// its comparable cells is. Comparable columns are the instance columns common to
-// EVERY run; rows pair by VM Name when every run has unique non-empty names,
-// else by index — the same rule the pairwise diff uses, applied across the set.
-// Kept separate from diffScenarios so the well-tested two-way path is untouched;
-// the two agree on the two-run case (a cell differs iff a !== b).
+// Generalises diffScenarios to N >= 2 runs. A cell is "changed" when the runs
+// disagree on it; a row is changed when any comparable cell is. Comparable
+// columns = instance columns common to EVERY run; rows pair by VM Name (unique
+// non-empty names) else by index. Kept separate from diffScenarios to leave the
+// well-tested two-way path untouched; both agree on the two-run case.
 function diffScenariosN(scenarios) {
   if (!scenarios || scenarios.length < 2) return null;
 
@@ -342,15 +333,11 @@ function diffScenarioConfigs(cfgA, cfgB) {
 
 // ─── CSV export ─────────────────────────────────────────────────────────────────
 
-// Pure: the whole comparison as one sectioned CSV — the run labels, the
-// configuration changes, the summary, and the changed recommendation rows.
-// Reuses the same pure diffs the on-screen comparison draws, so the file can
-// never disagree with the table. escapeCsvCell (app-core.js) hardens every cell
-// against CSV injection, exactly as the other exports do.
-//
-// Sectioned rather than one flat grid because the four parts have different
-// shapes; blank lines separate them. Only CHANGED rows are written, matching
-// what the comparison shows and what the roadmap asks for.
+// Pure: the whole comparison as one sectioned CSV (labels, config changes,
+// summary, changed rows). Reuses the on-screen diffs so file and table agree;
+// escapeCsvCell (app-core.js) hardens every cell against CSV injection.
+// Sectioned (blank-line separated) because the four parts differ in shape; only
+// CHANGED rows are written.
 function buildScenarioComparisonCsv(a, b) {
   const esc = escapeCsvCell;
   const line = (cells) => cells.map(esc).join(",");

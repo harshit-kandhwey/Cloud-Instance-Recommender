@@ -5,23 +5,15 @@ const path = require("path");
 const { buildContext, REPO } = require("../harness");
 
 // Remove comments the way JavaScript actually reads them, tracking strings,
-// template literals AND regex literals as it goes.
-//
-// A regex-based stripper cannot do this, and failing at it is not academic. Two
-// ways it reports safety it never checked:
+// template literals AND regex literals. A regex-based stripper reports safety it
+// never checked — the guard passes because of the thing it failed to parse:
 //
 //   const help = "https://example.test"; alert("boom");
-//     — `.replace(/\/\/.*$/gm, "")` fires on the "//" inside the URL, truncates
-//       the line there, and the banned call disappears from the scan.
-//
+//     — `/\/\/.*$/gm` fires on the "//" in the URL, truncating the line and the
+//       banned call with it.
 //   const s = url.replace(/\/\//g, "/"); alert(1);
-//     — the regex literal's own slashes sit next to each other outside any
-//       string, so even a string-aware scanner reads them as a line comment and
-//       eats the rest of the line.
-//
-// In both cases the guard PASSES, and passes *because* of the very thing it
-// failed to parse. A scanner that only half-understands the language is worse
-// than no scanner at all.
+//     — the regex literal's adjacent slashes read as a line comment even to a
+//       string-aware scanner, eating the rest of the line.
 
 // Whether a "/" here opens a regex literal or is a division sign. Decided by the
 // last significant character, which is what the language itself does.
@@ -750,22 +742,13 @@ function check(name, cond, detail) {
     );
   }
 
-  // Guard the migration away from native dialogs: they block the page, ignore
-  // the theme, and cannot be styled or dismissed by code.
-  //
-  // Every first-party module, discovered rather than listed — a hand-written list
-  // silently stops covering whatever is added next (it had already missed the
-  // three provider-specific files, which is exactly where alert() lived).
-  //
-  // The pages carry inline <script> too (the theme boot script, at minimum), and
-  // a confirm() added to page markup would pass a js-only scan for exactly the
-  // reason the comment above warns about. So scan the inline script bodies of the
-  // HTML pages as well — stripping to the <script> contents first, and skipping
-  // <script src=…> tags, which point back at files already in the list.
-  //
-  // ALL THREE are banned, not just alert(). Banning only alert() is how a
-  // confirm() in the manual-entry list survived the 3.5 migration and lived
-  // until 3.7: the guard was never looking for it.
+  // Guard against native dialogs (they block the page, ignore the theme, can't be
+  // styled/dismissed by code). Modules are DISCOVERED, not listed — a hand list
+  // once missed the provider-specific files, where alert() lived. Inline <script>
+  // bodies in the HTML pages are scanned too (a confirm() in markup would pass a
+  // js-only scan), skipping <script src=…> which points back at scanned files.
+  // ALL THREE (alert/confirm/prompt) are banned: banning only alert() let a
+  // confirm() survive the 3.5 migration until 3.7.
   const scanTargets = [];
   for (const dir of ["js/base", "js/aws", "js/azure", "js/gcp"]) {
     for (const file of fs.readdirSync(path.join(REPO, dir))) {

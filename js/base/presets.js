@@ -155,19 +155,12 @@ function callIfFn(name) {
 }
 
 // ─── Legacy multi-cloud Min Gen presets ───────────────────────────────────────
-// Before MinGen went native per provider, the multi-cloud page carried ONE
-// #ruleDefaultMinGen on an AWS-centric scale (5/6/7) and the engine translated
-// it per provider. That id no longer exists on the page, so a preset saved then
-// would apply to nothing and leave all three new selects at "— any —" — which
-// silently DROPS a constraint the user saved. Translate it instead, to exactly
-// what the old engine filtered at:
-//   AWS   n           → 5/6/7  (used as-is)
-//   Azure n>4 ? n-2   → 3/4/5
-//   GCP   max(0,n-3)  → generation rank 2/3/4
-// GCP is the one inexact case: the page offers n2 (rank 2) and n4 (rank 4), so a
-// legacy 6 (rank 3, i.e. C3-era) has no equivalent option. Rather than loosen it
-// to n2 or tighten it to n4 behind the user's back, that one is left unset and
-// reported, so the choice stays theirs.
+// Older multi-cloud presets carry ONE #ruleDefaultMinGen (AWS scale 5/6/7); that
+// id is gone from the page, so applying such a preset would leave all three
+// native selects at "— any —", silently dropping the saved constraint. Translate
+// it to what the old engine filtered at: AWS n as-is; Azure n>4?n-2 → 3/4/5; GCP
+// rank 2/3/4. Legacy 6 (GCP rank 3) has no option on the page (only n2/n4), so it
+// is left unset and reported rather than silently loosened or tightened.
 const LEGACY_MIN_GEN = {
   5: { aws: "5", azure: "3", gcp: "n2" },
   6: { aws: "6", azure: "4", gcp: null },
@@ -175,32 +168,26 @@ const LEGACY_MIN_GEN = {
 };
 
 function migrateLegacyMinGen(texts) {
-  // A legacy multi-cloud preset is one that carries the old shared key AT ALL.
-  // Presence, not truthiness: "" is the old "— any —" state — a real saved
-  // no-constraint value that must still be applied (by clearing the native
-  // fields), not skipped. A modern preset never carries this key (its state
-  // lives in the three native ones), so its ABSENCE is the pass-through signal.
+  // Presence of the old shared key (not truthiness) marks a legacy preset: ""
+  // is the saved "— any —" state and must still be applied. A modern preset
+  // omits this key, so its absence is the pass-through signal.
   if (!Object.prototype.hasOwnProperty.call(texts, "ruleDefaultMinGen"))
     return texts;
   const legacy = texts.ruleDefaultMinGen;
-  // Only the multi-cloud page lost the shared control; where it still exists
-  // (aws/azure/gcp pages) the value is native already and must pass through.
+  // Only the multi-cloud page lost the shared control; on aws/azure/gcp pages
+  // the value is native already and passes through.
   if (document.getElementById("ruleDefaultMinGen")) return texts;
   if (!document.getElementById("ruleDefaultMinGenAws")) return texts;
 
   const out = { ...texts };
   delete out.ruleDefaultMinGen;
-  // An explicit per-provider value in the preset always wins: it was saved
-  // against the current design and needs no translation. Presence, not
-  // truthiness — a modern preset that deliberately saved "— any —" ("") for a
-  // provider must keep it, not be re-translated from the legacy value.
+  // A native value in the preset always wins (saved against the current design).
+  // Presence, not truthiness — a saved "" must survive, not be re-translated.
   const savedNative = (id) => Object.prototype.hasOwnProperty.call(out, id);
 
-  // Legacy "— any —" ("") is itself a saved state: CLEAR the three native
-  // selects rather than dropping the key. Dropping it leaves whatever stale
-  // generation the controls happen to show (a prior preset or a manual edit) —
-  // the same "constraint silently changed on apply" bug this function exists to
-  // prevent, in its inverse (no-constraint) form.
+  // Legacy "" is a saved no-constraint state: CLEAR the native selects rather
+  // than dropping the key, else the controls keep whatever stale generation they
+  // show — the same silent-change bug this function prevents, inverted.
   if (!legacy) {
     if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = "";
     if (!savedNative("ruleDefaultMinGenAzure")) out.ruleDefaultMinGenAzure = "";
@@ -215,10 +202,8 @@ function migrateLegacyMinGen(texts) {
   if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = map.aws;
   if (!savedNative("ruleDefaultMinGenAzure"))
     out.ruleDefaultMinGenAzure = map.azure;
-  // GCP is written unconditionally when the preset carries no native value —
-  // including the legacy-6 case where map.gcp is null. Writing "" actively
-  // clears any prior GCP selection, so the "left unset" promise holds instead
-  // of silently retaining whatever the control happened to show.
+  // Legacy-6 has map.gcp === null; write "" to actively clear any prior GCP
+  // selection so the "left unset" promise holds rather than retaining stale UI.
   if (!savedNative("ruleDefaultMinGenGcp"))
     out.ruleDefaultMinGenGcp = map.gcp || "";
 

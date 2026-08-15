@@ -287,10 +287,9 @@ function onRuleChange() {
   checkRuleConflicts();
 }
 
-// Picking p95 or Peak when the upload carries no such columns is the quiet
-// failure worth catching: every row would fall back to the average and the run
-// would look like a p95 sizing while being nothing of the sort. Say so at the
-// moment of choosing, against the headers actually uploaded.
+// Warn when the chosen statistic (p95/Peak) has no matching column in the upload:
+// every row would silently fall back to average, so the run isn't the sizing it
+// claims. Checked against the headers actually uploaded, at selection time.
 function onUtilizationStatisticChange() {
   const sel = document.getElementById("utilizationStatistic");
   const hint = document.getElementById("utilizationStatisticHint");
@@ -304,11 +303,9 @@ function onUtilizationStatisticChange() {
     hint.innerHTML = hint.dataset.defaultHtml || hint.innerHTML;
     return;
   }
-  // Snapshot as HTML, not text: the default hint carries a <strong>Sized On</strong>
-  // emphasis, and capturing it with textContent would strip the markup for good —
-  // the first excursion away from Average and back would leave a plain-text hint.
-  // Safe to restore via innerHTML because it is the hint's OWN static markup; the
-  // dynamic warnings below stay on textContent since they interpolate a header name.
+  // Snapshot as HTML (the default hint carries <strong> markup textContent would
+  // strip). Safe to restore via innerHTML — it is the hint's own static markup;
+  // the dynamic warnings below use textContent since they interpolate a header.
   if (!hint.dataset.defaultHtml) {
     hint.dataset.defaultHtml = hint.innerHTML;
   }
@@ -318,11 +315,9 @@ function onUtilizationStatisticChange() {
     hint.innerHTML = hint.dataset.defaultHtml;
     return;
   }
-  // Only the enabled optimization axes matter. With Memory-Based off, a file
-  // carrying CPU alone fully supports the run — warning that "the other
-  // dimension falls back" would be a false alarm about a dimension the run
-  // never consults. So judge the selected statistic against the ACTIVE axes'
-  // columns, not both unconditionally.
+  // Judge the statistic against the ACTIVE axes' columns only: with Memory-Based
+  // off, a CPU-only file fully supports the run, so warning about the memory
+  // column would be a false alarm about a dimension the run never consults.
   const axisColumn = (id, col) =>
     document.getElementById(id)?.checked ? col : null;
   const active = [

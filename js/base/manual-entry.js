@@ -27,10 +27,8 @@ function saveManualVMs() {
   }
 }
 
-// The row currently being edited, if any. Editing happens in the form above the
-// table — the same fields, prefilled — rather than in the table itself: a second
-// set of inputs would be a second place for the validation, the defaults and the
-// region autocomplete to drift out of step with this one.
+// The row currently being edited, if any. Editing reuses the form above (see the
+// "Editing a row" section for why it isn't inline in the table).
 function manualEditingRow() {
   const index = window._manualEditIndex;
   return Number.isInteger(index) && manualVMs[index] ? manualVMs[index] : null;
@@ -178,8 +176,7 @@ function renderManualEntry() {
 
   const editing = manualEditingRow();
 
-  // Adding several near-identical VMs one at a time is the tedious case this is
-  // worst at: a fleet is rarely one web server. Copies numbers them for you.
+  // Copies: add N near-identical VMs at once, numbered from the base name.
   const copiesField = editing
     ? ""
     : `
@@ -198,10 +195,8 @@ function renderManualEntry() {
        <button class="btn btn-secondary" onclick="manualCancelClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">Keep them</button>`
     : `<button class="btn btn-secondary" onclick="manualConfirmClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`;
 
-  // Apply is withheld mid-edit. It reads the saved list, so pressing it with an
-  // unsaved edit in the form would quietly ingest the row's OLD values — the
-  // change would simply vanish, with the form still showing it. Save or Cancel
-  // first; both are one click away.
+  // Apply is withheld mid-edit: it reads the saved list, so an unsaved edit would
+  // ingest the row's OLD values. Save or Cancel first.
   const applyButtons =
     manualVMs.length && !editing
       ? `<button class="btn btn-primary" onclick="manualApplyVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
@@ -292,9 +287,8 @@ function manualAddVM() {
 }
 
 // ─── Editing a row ───────────────────────────────────────────────────────────
-// The row is edited in the form above, prefilled — not in the table. One editor
-// means one place for the CPU/memory validation and the region autocomplete to
-// live, rather than two that drift.
+// Edited in the form above (prefilled), not inline in the table, so the
+// CPU/memory validation and region autocomplete live in one place, not two.
 
 function manualEditVM(index) {
   if (!manualVMs[index]) return;
@@ -374,10 +368,8 @@ function manualApplyVMs() {
     return;
   }
 
-  // Every route into the data clears what the previous one left behind. Without
-  // this, applying manual rows after a workbook left that workbook's sheet
-  // picker on screen, still offering its sheets — and picking one would silently
-  // replace the manual rows with a sheet the user had already moved on from.
+  // Clear prior ingest state so a leftover workbook sheet-picker can't later
+  // replace these manual rows with one of its sheets.
   resetIngestState();
   window._ingestLabel = "Manual entry applied";
 

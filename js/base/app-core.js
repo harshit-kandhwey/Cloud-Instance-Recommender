@@ -1,11 +1,7 @@
-// App core: shared state, column mapping tables, data readiness,
-// region validation, and the data watcher. Loads first — later modules
-// reference these globals at runtime.
+// App core: shared state, column-mapping tables, data readiness, region
+// validation, and the data watcher. Loads first — later modules reference these
+// globals at runtime.
 
-// Main script for Cloud Instance Recommender
-// Core functionality that works across all cloud providers
-
-// Global variables
 let csvData = [];
 let columnHeaders = [];
 let selectedProviders = [];
@@ -31,26 +27,21 @@ const COLUMN_MAPPINGS = {
   memory: "Memory (GB)",
   cpuUtilization: "CPU Utilization",
   memoryUtilization: "Memory Utilization",
-  // Percentile/peak utilization, optional and additive. Sizing against an
-  // average silently undersizes a bursty VM: a box averaging 20% with a p95 of
-  // 85% is not a downsize candidate, but the average alone says it is. Which
-  // statistic drives sizing is a per-run choice (see UTILIZATION_STATISTICS).
+  // Percentile/peak utilization, optional and additive. An average undersizes a
+  // bursty VM (20% avg / 85% p95 is not a downsize). Which statistic drives
+  // sizing is a per-run choice (see UTILIZATION_STATISTICS).
   cpuUtilizationP95: "CPU Utilization p95",
   memoryUtilizationP95: "Memory Utilization p95",
   cpuUtilizationPeak: "CPU Utilization Peak",
   memoryUtilizationPeak: "Memory Utilization Peak",
   vmName: "VM Name",
   appName: "App Name",
-  // Provisioned disk, carried through to the outputs and into the AWS bulk
-  // template's storage field, which was shipping blank. Optional, and nothing
-  // is derived from it: storage does not influence instance selection, so a
-  // file without it behaves exactly as before.
+  // Provisioned disk, carried into outputs and the AWS bulk template's storage
+  // field. Optional; nothing is derived from it (no effect on selection).
   disk: "Disk (GB)",
-  // The size a VM runs on TODAY (m5.xlarge, Standard_D4s_v3, n2-standard-4).
-  // Optional, and carried through to the outputs untouched, so a recommendation
-  // can be read against what it replaces. By default nothing is derived from it;
-  // in cloud-to-cloud mode (3.13) a row with no CPU/Memory has its specs DERIVED
-  // from this column instead, which is what makes cross-provider sizing possible.
+  // Current running size (m5.xlarge, Standard_D4s_v3, n2-standard-4). Carried
+  // through untouched; nothing derived from it by default. In cloud-to-cloud
+  // mode (3.13) a row with no CPU/Memory derives its specs from this column.
   currentInstance: "Current Instance Type",
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",
@@ -160,17 +151,13 @@ const COLUMN_SYNONYMS = {
     "mempeak",
     "maxmemoryutil",
   ],
-  // MB/MiB variants convert to GB on ingest exactly as memory does — RVTools
-  // reports "Provisioned MiB", and treating that as GB would overstate every
-  // disk by 1024x.
+  // MB/MiB variants convert to GB on ingest as memory does (RVTools reports
+  // "Provisioned MiB"; treating it as GB overstates disk 1024x).
   //
-  // Bare generic words — "storage", "provisioned", "capacity" — are deliberately
-  // NOT here. No other canonical shares them, so a header that normalizes to one
-  // of those matches silently (it never trips the ambiguous-column review), and a
-  // column literally named "Capacity" that has nothing to do with disk would flow
-  // straight into the AWS bulk export's storage field undetected. Only the
-  // disk-qualified forms (storagegb, provisionedstorage, capacitygb, …) and the
-  // unambiguous "disk" are kept; a truly generic header goes to the mapping panel.
+  // Bare generic words ("storage", "provisioned", "capacity") are excluded: no
+  // other canonical shares them, so they'd match silently without tripping the
+  // ambiguous-column review, sending an unrelated "Capacity" column into the AWS
+  // export's storage field. Only disk-qualified forms and bare "disk" are kept.
   "Disk (GB)": [
     "disk",
     "diskgb",
@@ -198,10 +185,9 @@ const COLUMN_SYNONYMS = {
   ],
   "VM Name": [
     "vmname",
-    // "vm" is what RVTools calls the guest. Without it, a vInfo sheet matched
-    // only "Host" — the ESXi box — and every guest on a hypervisor silently
-    // took that hypervisor's name. With both present the match is ambiguous
-    // and the file stops to ask, unless an import preset settles it.
+    // "vm" is RVTools' name for the guest. Without it a vInfo sheet matched only
+    // "Host" (the ESXi box), so every guest took its hypervisor's name. With both
+    // present the match is ambiguous and the file stops to ask, unless a preset settles it.
     "vm",
     "servername",
     "hostname",
@@ -224,9 +210,8 @@ const COLUMN_SYNONYMS = {
     "service",
     "servicename",
   ],
-  // Deliberately narrow. A bare "Size", "Type" or "SKU" means too many things in
-  // an inventory export (disk size, VM type, licence SKU) to claim as the
-  // current instance; those can still be mapped by hand in the panel.
+  // Deliberately narrow: a bare "Size"/"Type"/"SKU" means too many things in an
+  // inventory export to claim as the current instance; map those by hand.
   "Current Instance Type": [
     "currentinstancetype",
     "currentinstance",
@@ -241,9 +226,8 @@ const COLUMN_SYNONYMS = {
   ],
   "AWS Region": ["awsregion", "amazonregion"],
   "Azure Region": ["azureregion"],
-  // "gcpzone" is intentional: zones ("us-central1-a") are the expected input
-  // format for the GCP Region column — the factory default region is a zone,
-  // and normalizeRegionForJS strips the zone suffix before region lookup
+  // "gcpzone": zones ("us-central1-a") are the expected GCP Region input;
+  // normalizeRegionForJS strips the zone suffix before lookup.
   "GCP Region": ["gcpregion", "googleregion", "googlecloudregion", "gcpzone"],
 };
 
@@ -253,13 +237,10 @@ const COLUMN_SYNONYMS = {
 const MAPPABLE_CANONICALS = Object.values(COLUMN_MAPPINGS);
 const REQUIRED_CANONICALS = [COLUMN_MAPPINGS.cpu, COLUMN_MAPPINGS.memory];
 
-// "App Name" is an optional mappable canonical (see COLUMN_MAPPINGS): it groups
-// VMs by application. It is never required, and its synonyms auto-match like any
-// other column; an unusually named column can be mapped to it by hand in the
-// mapping panel. When present, VMs inherit a workload from the app→workload map
-// (see the app mapping panel and resolveRowWorkload in the factory). Precedence
-// for a row's workload: its own Workload cell > app→workload map > page default
-// > built-in "General".
+// Optional mappable canonical grouping VMs by application; never required,
+// synonyms auto-match. When present, VMs inherit a workload from the app→workload
+// map (resolveRowWorkload in the factory). Workload precedence: row's Workload
+// cell > app→workload map > page default > built-in "General".
 const APP_NAME_CANONICAL = COLUMN_MAPPINGS.appName;
 
 // Workload vocabulary offered in the app→workload panel (matches the sample
@@ -295,13 +276,11 @@ function pageCanonicals() {
   );
 }
 
-// Initialize page
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────
 // Each provider manifest (js/{p}/{p}-data.js) sets window.{PROVIDER}_DATA_READY
-// = true as its last line. READY means the region key list is known — instance
-// data itself is lazy-loaded per region on demand (base-instance-selector
-// _injectRegionScript). If the user clicks Generate before the manifest loads,
-// we queue the request and auto-execute it the moment the data is confirmed ready.
+// = true last. READY = region key list known; instance data is lazy-loaded per
+// region on demand (base-instance-selector _injectRegionScript). A Generate click
+// before the manifest loads is queued and auto-run once data is ready.
 
 const DATA_READY_FLAGS = {
   aws: "AWS_DATA_READY",
@@ -326,11 +305,9 @@ function allDataReady(providers = getPageProviders()) {
   return providers.every((p) => window[DATA_READY_FLAGS[p]] === true);
 }
 
-// Deliberately NOT the toast stack below. This is a single, persistent status
-// pill for one thing — "the region data is still loading" — that stays up until
-// the data arrives and is then dismissed by code (hideDataToast). Toasts are
-// transient, stack, and are dismissed by the user or a timer. Folding this into
-// them would mean a message with no expiry sitting in a queue of ones that have.
+// A single persistent status pill for "region data still loading", dismissed by
+// code (hideDataToast) — deliberately NOT the transient toast stack below, which
+// stacks and expires by timer/user.
 function showDataToast(msg) {
   let toast = document.getElementById("dataToast");
   if (!toast) {
@@ -368,13 +345,9 @@ function hideDataToast() {
 }
 
 // ─── Toasts ───────────────────────────────────────────────────────────────────
-// Replaces window.alert for everything the app tells the user: alert() is
-// unstyled, ignores the theme, blocks the page, and reads out the origin. These
-// render into the #toastStack placeholder, which is an aria-live region so a
-// screen reader announces each new message.
-//
-// Rendered as innerHTML into an existing container (rather than built with
-// createElement) to match how every other panel here works.
+// Replaces window.alert: alert() is unstyled, ignores the theme, blocks the page.
+// Rendered as innerHTML into #toastStack, an aria-live region so a screen reader
+// announces each message.
 
 const TOAST_TONES = {
   info: { icon: "ℹ️", color: "var(--primary)" },
@@ -449,10 +422,9 @@ function preWarmSelectors() {
   }
 }
 
-// Fire-and-forget prefetch of the region files referenced by the uploaded CSV,
-// so data is usually parsed before the user clicks Generate. Correctness never
-// depends on this — loadRegionData lazy-loads any region still missing.
-// Skips regions that validateCsvRegions() already marked unknown.
+// Fire-and-forget prefetch of the CSV's region files so data is usually parsed
+// before Generate. Correctness never depends on it — loadRegionData lazy-loads
+// any missing region. Skips regions validateCsvRegions() marked unknown.
 function prefetchCsvRegions() {
   if (!csvData || !csvData.length) return;
   for (const provider of getPageProviders()) {
@@ -498,9 +470,9 @@ function resolveRegion(provider, raw) {
 
     const keys = window[`${provider.toUpperCase()}_REGION_KEYS`];
     if (!Array.isArray(keys)) {
-      // Monolithic (pre-split) data file: no manifest, but every region
-      // global is already parsed onto window — validate against those so
-      // real regions aren't falsely flagged during a data-update window.
+      // Monolithic (pre-split) data file: no manifest, so validate against the
+      // region globals already parsed onto window (avoids false-flagging during
+      // a data-update window).
       return window[normalized]
         ? { status: "exact", key: normalized }
         : { status: "unknown", key: null };
@@ -545,11 +517,10 @@ function validateCsvRegions() {
       if (r) regions.add(r);
     });
     if (!regions.size) continue;
-    // Null-prototype accumulator: the keys are CSV region names, so a cell that
-    // normalizes to "__proto__" would otherwise hit the prototype setter (the
-    // value is an object) and drop the region from the panel. No global pollution
-    // either way, but this matches the repo's safeMapGet / RESERVED_PRESET_NAMES
-    // stance — untrusted keys never touch a live prototype.
+    // Null-prototype accumulator: CSV region names are keys, so a cell
+    // normalizing to "__proto__" would otherwise hit the prototype setter and
+    // drop the region. Matches the repo's untrusted-key stance (safeMapGet /
+    // RESERVED_PRESET_NAMES).
     validation[provider] = Object.create(null);
     for (const raw of regions) {
       validation[provider][raw] = resolveRegion(provider, raw);
@@ -667,10 +638,9 @@ function escapeHtml(value) {
 }
 
 // ─── Export filenames ─────────────────────────────────────────────────────────
-// Every generated download is named `<base>_<YYYY-MM-DD>.<ext>` so a folder of
-// them sorts and dedupes sensibly. The stamp is the user's LOCAL date: an
-// evening export in a UTC+ timezone would otherwise be labelled tomorrow.
-// (Sample templates are inputs, not outputs, and keep their fixed names.)
+// Downloads named `<base>_<YYYY-MM-DD>.<ext>` (LOCAL date, so an evening export in
+// a UTC+ zone isn't labelled tomorrow) so a folder sorts/dedupes. Sample
+// templates are inputs and keep fixed names.
 function exportDateStamp(date = new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -680,16 +650,13 @@ function exportFilename(base, extension) {
   return `${base}_${exportDateStamp()}.${extension}`;
 }
 
-// Shared CSV cell escaping (quotes + formula-injection hardening). Defined here,
-// with downloadCsv / exportFilename, so the preview, the result/no-match
-// downloads, and the scenario-comparison export all quote cells identically —
-// one guard, not several that could drift.
-// A plain negative number opens with the same "-" the guard watches for, but it
-// cannot be a formula — and prefixing it makes Excel import it as TEXT, silently
-// breaking any sum or formula the user builds on the export. Every input column
-// is spread into each result row (`const result = { ...row }`), so a user's own
-// negative column really does reach the file. Exempt only a complete numeric
-// literal: "-1+1", "-cmd", "-1e5" and a bare "-" are all still hardened.
+// Shared CSV cell escaping (quotes + formula-injection hardening). One guard for
+// the preview, result/no-match downloads, and scenario export so they can't drift.
+// A plain negative number opens with the "-" the guard watches for but can't be a
+// formula, and prefixing it makes Excel import it as TEXT (breaking sums). Every
+// input column is spread into each result row, so a user's negative column reaches
+// the file. Exempt only a complete numeric literal: "-1+1", "-cmd", "-1e5", bare
+// "-" stay hardened.
 const CSV_FORMULA_START = /^[=+\-@|\t\r]/;
 const CSV_PLAIN_NUMBER = /^-\d+(\.\d+)?$/;
 function escapeCsvCell(val) {
@@ -699,19 +666,13 @@ function escapeCsvCell(val) {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-// Byte-order mark. Excel assumes a CSV is in the local ANSI codepage unless the
-// file starts with one, so without it a VM or application named "München" or
-// "日本" opens as mojibake — the single most common complaint about CSV exports.
-// Other tools ignore it.
+// Byte-order mark. Excel assumes the local ANSI codepage without one, so "München"
+// or "日本" opens as mojibake — the top CSV-export complaint. Other tools ignore it.
 const UTF8_BOM = "﻿";
 
-// The one place a CSV becomes a download. Every CSV export goes through here so
-// they cannot drift apart on encoding or on the object-URL cleanup.
-//
-// `bom: false` for files another PROGRAM reads rather than a person: the AWS
-// Pricing Calculator's bulk import parses the header row, and a BOM turns the
-// first header into "﻿Service Name". The BOM exists for Excel's benefit,
-// and Excel is not the consumer there.
+// The one place a CSV becomes a download, so exports can't drift on encoding or
+// object-URL cleanup. bom:false for files a PROGRAM reads (the AWS Pricing
+// Calculator's bulk import): a BOM turns the first header into "﻿Service Name".
 function downloadCsv(csvContent, filename, { bom = true } = {}) {
   const blob = new Blob([(bom ? UTF8_BOM : "") + csvContent], {
     type: "text/csv;charset=utf-8;",
@@ -725,16 +686,14 @@ function downloadCsv(csvContent, filename, { bom = true } = {}) {
   a.click();
   document.body.removeChild(a);
   // Revoking synchronously after click() intermittently kills the download in
-  // Firefox and WebKit — the browser hasn't finished reading the blob yet. Yield
-  // first. This is the single choke point for every CSV export, so one deferred
-  // revoke fixes them all.
+  // Firefox/WebKit (blob not fully read yet); defer it. One choke point fixes all.
   setTimeout(() => window.URL.revokeObjectURL(url), 0);
 }
 
 // ─── Shared result-set primitives ─────────────────────────────────────────────
-// Defined here (every page loads app-core.js first) so the stats bar, the
-// preview table, the CSV/no-match/app exports, and the App Portfolio page all
-// agree on what "no match" means and which columns are recommendations.
+// Defined here (loaded first) so the stats bar, preview table, CSV/no-match/app
+// exports, and the Portfolio page agree on "no match" and which columns are
+// recommendations.
 
 // Sentinel values a recommendation cell holds when nothing matched.
 const NO_MATCH_VALUES = new Set([
@@ -758,26 +717,20 @@ function getInstanceColumns(results) {
   );
 }
 
-// A row is a "no match" when it has recommendation columns and EVERY one of them
-// is a no-match placeholder. One definition, so the red row highlight, the
-// no-match-only view filter, the no-match export, and the relax suggestion all
-// agree on which rows are unmatched — a row that is red must be the same row the
-// filter keeps and the export writes.
+// A row is "no match" when it has recommendation columns and EVERY one is a
+// no-match placeholder. One definition so the red highlight, no-match filter,
+// no-match export, and relax suggestion agree on which rows are unmatched.
 function rowIsAllNoMatch(row, instanceCols) {
   return (
     instanceCols.length > 0 && instanceCols.every((c) => isNoMatchValue(row[c]))
   );
 }
 
-// How a result set scored, by the SAME predicate the red row highlight, the
-// no-match view and the no-match export use: a row counts as matched when it is
-// not all-no-match. One definition, because "match rate" appears in two places —
-// the generation stats bar and the scenario comparison — and a run whose rate
-// reads 94% on one screen and 100% on another is telling the user two different
-// things about the same data.
-//
-// `rate` is null when the results carry no recommendation columns: there is no
-// rate to report, and 0% would read as "nothing matched".
+// How a result set scored, by the SAME predicate as the red highlight / no-match
+// view / export: matched = not all-no-match. One definition — "match rate" appears
+// in the stats bar and the scenario comparison and must not disagree.
+// rate is null when there are no recommendation columns (0% would read as
+// "nothing matched").
 function matchStats(results) {
   const total = results && results.length ? results.length : 0;
   const cols = getInstanceColumns(results || []);
@@ -806,11 +759,9 @@ function sortResultRows(rows, column, direction) {
   });
 }
 
-// The result set as an export should see it: in the preview's current SORT
-// order, so a downloaded file is ordered the way the user last arranged it on
-// screen — but never narrowed by the preview's search FILTER, because a
-// download is always the complete result set. (The preview's count line says so
-// whenever a filter is active, so the two cannot silently disagree.)
+// Result set in the preview's current SORT order (so a download matches the
+// on-screen arrangement) but never narrowed by the search FILTER — a download is
+// always the complete set. (The preview count line flags an active filter.)
 function resultsInPreviewOrder(results) {
   const state = typeof window !== "undefined" && window._previewState;
   if (!state || state.sortCol === null || !results || !results.length) {
@@ -822,14 +773,11 @@ function resultsInPreviewOrder(results) {
 }
 
 // ─── Sizing savings ───────────────────────────────────────────────────────────
-// What the optimized sizing actually bought, per provider. Never aggregated
-// across providers: the same VM appears once per provider, so a combined total
-// would count the same saving two or three times over.
-//
-// The baseline is the like-for-like recommendation when the run produced one —
-// that is the honest comparison, since it is what you would have deployed
-// without optimizing. On an optimized-only run there is nothing to compare
-// against but the VM's current size, so that is used and labelled as such.
+// What optimized sizing bought, per provider. Never aggregated across providers:
+// the same VM appears once per provider, so a total would count each saving 2-3x.
+// Baseline is the like-for-like recommendation when the run produced one (what
+// you'd have deployed); on an optimized-only run it's the VM's current size,
+// labelled as such.
 function computeSizingSavings(results) {
   if (!results || !results.length) return [];
   const keys = Object.keys(results[0]);
@@ -849,9 +797,9 @@ function computeSizingSavings(results) {
 
     let vcpus = 0;
     let memory = 0;
-    // The absolute before/after totals, alongside the net delta — a before→after
-    // chart needs the two endpoints, not just their difference. Summed over the
-    // same rows and the same baseline, so beforeVcpus − afterVcpus === vcpus.
+    // Absolute before/after totals alongside the net delta (a before→after chart
+    // needs both endpoints). Summed over the same rows/baseline, so
+    // beforeVcpus − afterVcpus === vcpus.
     let beforeVcpus = 0;
     let afterVcpus = 0;
     let beforeMemory = 0;
@@ -866,7 +814,7 @@ function computeSizingSavings(results) {
       let fromCpu;
       let fromMem;
       if (againstLikeForLike) {
-        // Only rows the like-for-like pass also matched can be compared
+        // Only compare rows the like-for-like pass also matched
         if (isNoMatchValue(row[baseInstance])) return;
         fromCpu = parseFloat(row[baseCpu]);
         fromMem = parseFloat(row[baseMem]);
@@ -905,23 +853,18 @@ function computeSizingSavings(results) {
 }
 
 // ─── Fit / headroom ───────────────────────────────────────────────────────────
-// How much spare capacity a like-for-like recommendation leaves over the size
-// that was requested. Instances come in fixed vCPU:RAM ratios, so matching a
-// workload whose own ratio differs forces extra capacity on one axis — that
-// excess is the headroom, and a large one flags an over-provisioned match (a
-// requirement of 14 vCPU / 8 GB lands on a box with 32 GB: 300% memory
-// headroom, not because the box is wrong but because nothing smaller had the
-// cores).
+// Spare capacity a like-for-like recommendation leaves over the requested size.
+// Fixed vCPU:RAM ratios force extra capacity on one axis when the workload's ratio
+// differs; that excess is the headroom, and a large one flags over-provisioning
+// (14 vCPU / 8 GB lands on a 32 GB box: 300% memory headroom because nothing
+// smaller had the cores).
 //
-// Only meaningful for the like-for-like recommendation, whose requirement is
-// exactly the requested CPU Count / Memory (GB). The optimized recommendation is
-// sized against utilization instead — deliberately smaller — and its rightsizing
-// is shown by the vCPU diff, not here. Returns null when the numbers to compare
-// are not both present (a no-match row has no vCPUs/Memory to read).
+// Only meaningful for like-for-like (requirement = requested CPU/Memory). The
+// optimized recommendation is sized against utilization and shown by the vCPU
+// diff, not here. Returns null when the numbers aren't both present.
 //
-// Compared the way the ENGINE compares — instance GiB against requested GB
-// directly, the ~7% unit difference well below the flag threshold — so the flag
-// never contradicts the match the engine actually made.
+// Compared as the ENGINE compares (instance GiB vs requested GB directly, the ~7%
+// unit gap below the flag threshold) so the flag never contradicts the match.
 function computeFitHeadroom(row, provider) {
   const reqCpu = parseFloat(row[COLUMN_MAPPINGS.cpu]);
   const reqMem = parseFloat(row[COLUMN_MAPPINGS.memory]);
@@ -932,8 +875,8 @@ function computeFitHeadroom(row, provider) {
 
   const cpu = (instCpu - reqCpu) / reqCpu;
   const mem = (instMem - reqMem) / reqMem;
-  // The binding axis is the tighter fit; the other carries the waste. Report the
-  // worse (larger) of the two as the headroom that flags over-provisioning.
+  // Report the worse (larger) of the two axes as the headroom that flags
+  // over-provisioning; the tighter axis is the binding fit.
   const worst = Math.max(cpu, mem);
   return {
     cpu,
@@ -947,28 +890,21 @@ function computeFitHeadroom(row, provider) {
   };
 }
 
-// Workload shape — the memory-per-vCPU ratio of the SOURCE VM, sorted into the
-// same three buckets the instance families themselves fall into, so a
-// recommendation can say WHY a family fits rather than only that it did: a box
-// carrying a lot of RAM per core is memory-optimized work and belongs on an
-// r/E/M-family; a lean-RAM box is compute-optimized and belongs on a c/F/C2-
-// family; everything between is general. Provider-agnostic on purpose — it reads
-// only the provisioned CPU Count / Memory (GB), never any provider's instance —
-// so the App Portfolio family-mix rollup (a later minor) can classify the same
-// rows from the same numbers. Returns null when either figure is missing or
-// non-positive (a row with nothing to classify), never a guessed bucket.
+// Workload shape — memory-per-vCPU ratio of the SOURCE VM, bucketed the way the
+// instance families are, so a recommendation can say WHY a family fits: high RAM
+// per core → memory-optimized (r/E/M), lean RAM → compute-optimized (c/F/C2), rest
+// general. Provider-agnostic (reads only CPU Count / Memory (GB)) so the Portfolio
+// shape rollup classifies the same rows from the same numbers. Returns null when
+// either figure is missing/non-positive.
 //
-// The boundaries are inclusive and pinned by the suite: <=2.5 GB/vCPU is
-// compute-optimized, >=6 is memory-optimized. They bracket the general band the
-// mainline families sit in (~4 GB/vCPU) with clear room either side before a row
-// is called one shape or the other.
+// Inclusive boundaries pinned by the suite: <=2.5 GB/vCPU compute, >=6 memory,
+// bracketing the ~4 GB/vCPU general band.
 const WORKLOAD_SHAPE_COMPUTE_MAX = 2.5;
 const WORKLOAD_SHAPE_MEMORY_MIN = 6;
 function classifyWorkloadShape(cpu, mem) {
-  // Strict numeric conversion, not parseFloat: parseFloat("4junk") is 4 and
-  // parseFloat("Infinity") is Infinity, both of which would pass a bare isNaN
-  // check and hand back a shape for a value the contract calls invalid. Number()
-  // rejects the trailing-garbage case, and Number.isFinite rejects Infinity.
+  // Strict conversion, not parseFloat: parseFloat("4junk")===4 and
+  // parseFloat("Infinity")===Infinity both pass a bare isNaN. Number() rejects
+  // trailing garbage, Number.isFinite rejects Infinity.
   const c = Number(cpu);
   const m = Number(mem);
   if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
@@ -984,12 +920,10 @@ function classifyWorkloadShape(cpu, mem) {
 }
 
 // ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
-// The engine already works out, per unmatched row, which soft-filter group kept
-// the otherwise-fitting instance out ("Nearest Miss" column). This turns that
-// into an action: the ONE filter that, switched off, rescues the most rows.
-//
-// Each probe label maps to the checkbox that turns that group off, and to the
-// handler that hides its sub-panel (both in form-controls.js).
+// The engine records per unmatched row which soft-filter group blocked the
+// otherwise-fitting instance ("Nearest Miss"). This picks the ONE filter that,
+// switched off, rescues the most rows. Each label maps to its checkbox + panel
+// toggle (both in form-controls.js).
 const RELAX_CONTROLS = {
   "current-generation only": {
     id: "currentGenerationOnly",
@@ -1022,11 +956,9 @@ function parseRelaxLabels(cell) {
     .filter(Boolean);
 }
 
-// The single filter change that rescues the most fully-unmatched rows, or null.
-//
-// A row counts toward a label only when SOME provider's nearest miss is blocked
-// by that label ALONE. A miss blocked by two groups is not rescued by relaxing
-// one of them, so counting it would promise a rescue that never arrives.
+// The single filter change rescuing the most fully-unmatched rows, or null.
+// A row counts toward a label only when SOME provider's miss is blocked by that
+// label ALONE — relaxing one of two blockers wouldn't rescue it.
 function computeRelaxSuggestion(results) {
   if (!results || !results.length) return null;
   const instanceCols = getInstanceColumns(results);

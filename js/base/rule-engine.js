@@ -118,13 +118,11 @@ const RuleEngine = (() => {
   };
 
   // ─── Recognised rule-value vocabularies ───────────────────────────────────
-  // The SINGLE source of truth for both the matching in apply() below and the
+  // The SINGLE source of truth for both apply()'s matching below and the
   // upload-time hygiene check (analyzeInputHygiene in ingest.js), so a value the
-  // engine silently treats as the default is instead NAMED for the user. Every
-  // token is lowercase, matching how apply() normalises each cell. Keep these as
-  // exactly the vocabularies apply() matches — a token listed here that no rule
-  // reads would report "recognised" while doing nothing, which is the very trap
-  // this exists to catch.
+  // engine treats as default is NAMED for the user. Every token lowercase, matching
+  // apply()'s normalisation. Keep these exactly the vocabularies apply() matches — a
+  // listed token no rule reads would report "recognised" while doing nothing.
   const ENV_PRODUCTION = ["production", "prod"];
   const ENV_STAGING = ["staging", "stage"];
   const ENV_DEV_TEST = ["dev", "development", "test", "testing", "qa"];
@@ -155,17 +153,15 @@ const RuleEngine = (() => {
   //          "FPGA Instances", "Media Accelerator Instances"
   //   Azure  "GPU"
   //   GCP    "Accelerator optimized"
-  // Matching on substrings of these rather than the whole string, so a renamed
-  // or newly-added accelerator class ("GPU instances", "Accelerator-optimized")
-  // still classifies.
+  // Match on substrings so a renamed/new accelerator class ("GPU instances",
+  // "Accelerator-optimized") still classifies.
   const ACCELERATOR_FAMILY_NAME =
     /\bgpu\b|accelerat|\basic\b|\bfpga\b|\btpu\b/i;
 
-  // Fallback ONLY for an instance whose familyName is blank (sample/fallback
-  // data). Deliberately anchored per provider: the previous provider-agnostic
-  // prefix list classified Azure's Dl-series (General purpose) and G/GS
-  // (Memory optimized) as GPUs — 60 instances in eastus — because "dl" and "g"
-  // are accelerator prefixes on AWS but not on Azure.
+  // Fallback ONLY for an instance with a blank familyName (sample/fallback data).
+  // Anchored per provider: a provider-agnostic prefix list classified Azure's
+  // Dl-series and G/GS (60 instances in eastus) as GPUs because "dl"/"g" are
+  // accelerator prefixes on AWS but not Azure.
   const ACCELERATOR_FAMILY_PREFIXES = {
     aws: [
       "p2",
@@ -206,17 +202,11 @@ const RuleEngine = (() => {
     );
   }
 
-  // SQL Server is licensed per core with a documented minimum of 4 core
-  // licences per VM, so a 1 or 2 vCPU recommendation is billed as 4 regardless
-  // — the smaller box saves no licence money and only costs performance. The
-  // rule raises the floor rather than the pick: an 8 vCPU SQL box stays 8.
-  //
-  // Source: Microsoft "Licensing SQL Server 2022" datasheet — "a minimum of
-  // four core licenses is required for each physical processor on the server"
-  // and, for a virtual machine, "a minimum of four core licenses per virtual
-  // machine". If Microsoft revises that floor, or a customer's agreement (e.g.
-  // a subscription/SA term) sets a different one, this single constant is the
-  // one place to change — it is not derived from anything in the repo.
+  // SQL Server is licensed per core with a 4-core minimum per VM, so a 1-2 vCPU pick
+  // is billed as 4 anyway — the smaller box saves no licence money and only costs
+  // performance. Raises the floor, not the pick (an 8 vCPU SQL box stays 8). Source:
+  // Microsoft "Licensing SQL Server 2022" (four core licences minimum per VM). If
+  // that floor or a customer agreement changes, this constant is the one place to edit.
   const SQL_MIN_CORES = 4;
   const SQL_WORKLOADS = ["sql server", "sql", "sqlserver", "mssql"];
 
@@ -309,32 +299,26 @@ const RuleEngine = (() => {
    * @param {Instance} inst
    * @returns {number|null}
    */
-  // The Azure version of one instance, or null when it carries none (an
-  // original-generation box). ONE parser, because two of them is exactly how the
-  // MinGen filter and generationRank came to disagree.
-  //
-  // Read from the FAMILY, not the instance type. The family carries the version
-  // and nothing else — "nv" → none, "nvv3" → 3, "dsv5" → 5 — so there is no size
-  // digit to mistake for a version. The type cannot be parsed reliably at all:
-  // "nv48sv3" needs the TRAILING v3, but "nv24" is a bare NV-series box whose
-  // trailing "v24" is its vCPU count, and no suffix rule separates the two.
-  // Verified against js/azure/regions/: nv24 → family "nv", nv48sv3 → "nvv3".
+  // The Azure version of one instance, or null when it carries none (original-gen).
+  // ONE parser — two of them is how the MinGen filter and generationRank came to
+  // disagree. Read from the FAMILY, not the type: the family carries the version and
+  // nothing else ("nv"→none, "nvv3"→3, "dsv5"→5), no size digit to mistake. The type
+  // can't be parsed reliably — "nv48sv3" needs the trailing v3, but "nv24"'s trailing
+  // "24" is its vCPU count. Verified: nv24→family "nv", nv48sv3→"nvv3".
   function azureVersion(inst) {
     const family = (inst.family || "").toLowerCase();
     const fm = family.match(/v(\d+)$/);
     if (fm) return parseInt(fm[1]);
     if (family) return null; // family known, carries no version → old-style
     // No family at all (hand-built fixtures): fall back to the type's trailing
-    // version, which is correct whenever a real version suffix is present.
+    // version.
     const tm = (inst.instanceType || "").toLowerCase().match(/v(\d+)$/);
     return tm ? parseInt(tm[1]) : null;
   }
 
-  // An Azure instance with no version is an original-generation box, which ranks
-  // as 2. Both the MinGen filter and generationRank need that fact; stating it
-  // twice — once as `v === null ? num <= 2`, once as `v === null ? 2 : v` — is
-  // the same "two encodings of one fact" that let the filter and the rank
-  // disagree in the first place, so it lives here once.
+  // An Azure instance with no version is original-gen, ranked 2. Both the MinGen
+  // filter and generationRank need this; encoding it twice is the same "two
+  // encodings of one fact" that let them disagree, so it lives here once.
   const AZURE_NO_VERSION_RANK = 2;
   /**
    * @param {Instance} inst
@@ -344,19 +328,12 @@ const RuleEngine = (() => {
     return v === null ? AZURE_NO_VERSION_RANK : v;
   }
 
-  // EVERY MinGen value is NATIVE to the provider it is applied to: an AWS value
-  // is an AWS family number (7 → m7/c7/r7), an Azure value is a v-number
-  // (5 → v5), a GCP value is a family name ("n4"). Each page supplies one value
-  // for its own cloud, and the multi-cloud page supplies three — one per
-  // provider — so a value never has to be translated between clouds.
-  //
-  // There used to be a single cross-provider scale that meant different things
-  // per cloud (7 = AWS 7 / Azure v5 / GCP N4), sharing one number space with the
-  // native values, and the engine guessed between them with
-  // `minNum > 4 ? minNum - 2 : minNum`. That guess is why the Azure page's own
-  // "v5+ (Dsv5, Esv5…)" option quietly filtered to v3+: its 5 was read as a
-  // cross-provider position. The scale is gone; nothing is translated, so
-  // nothing can be misread.
+  // EVERY MinGen value is NATIVE to its provider: an AWS value is a family number
+  // (7→m7/c7/r7), Azure a v-number (5→v5), GCP a family name ("n4"). Each page
+  // supplies one value for its own cloud (multi-cloud supplies three), so nothing is
+  // translated between clouds. A prior single cross-provider scale (7 = AWS 7 / Azure
+  // v5 / GCP N4), guessed via `minNum > 4 ? minNum-2 : minNum`, is why the Azure
+  // page's "v5+" quietly filtered to v3+. That scale is gone; nothing is translated.
   /**
    * @param {Instance} inst
    * @param {string} minGen
@@ -377,25 +354,19 @@ const RuleEngine = (() => {
     }
 
     if (provider === "azure") {
-      // Standard_Dsv3→v3, Standard_D4s_v3→v3, Standard_Esv5→v5. The value IS the
-      // v-number: "5" means v5, not "the fifth position on some other scale".
-      // Was /v(\d+)/ on the TYPE, which took the FIRST match — so the "v" in an
-      // NV/NC series name was read as the version: nv48sv3 (a v3 box) became
-      // generation 48, and nv24 became 24. Both looked absurdly new, so no
-      // MinGen filter could exclude them. See azureVersion.
+      // Standard_Dsv3→v3, Standard_Esv5→v5. The value IS the v-number. Was /v(\d+)/
+      // on the TYPE, taking the FIRST match — the "v" in an NV/NC name was read as
+      // version (nv48sv3→gen 48, nv24→24), too new for any MinGen filter to exclude.
+      // See azureVersion.
       return azureRank(inst) >= num;
     }
 
     if (provider === "gcp") {
-      // GCP's native value is a FAMILY NAME ("n2", "n4"), which is what every
-      // GCP control now sends — GCP has no v-number a user would type.
-      //
-      // A bare NUMBER only reaches here from a legacy shared "Min Gen" CSV
-      // column written against the old cross-provider scale, so it keeps that
-      // scale's mapping (5→gen 2, 6→gen 3, 7→gen 4) rather than being read as a
-      // GCP ordinal — which would make "7" mean a generation that does not
-      // exist and silently match nothing. Per-provider columns avoid this
-      // entirely; see the "GCP Min Gen" column.
+      // GCP's native value is a FAMILY NAME ("n2", "n4") — what every GCP control
+      // sends (GCP has no v-number a user would type). A bare NUMBER only reaches
+      // here from a legacy shared "Min Gen" column on the old cross-provider scale,
+      // so it keeps that mapping (5→gen 2, 6→gen 3, 7→gen 4) rather than being read
+      // as a GCP ordinal (which would match nothing). See "GCP Min Gen".
       let gcpMin;
       if (GCP_GEN_ORDER.hasOwnProperty(raw)) {
         gcpMin = GCP_GEN_ORDER[raw];
@@ -424,24 +395,21 @@ const RuleEngine = (() => {
     );
   }
 
-  // A workload preference is a nudge toward an APPROPRIATE FAMILY, never a licence
-  // to over-provision. A like-to-like match may use at most double the requested
-  // vCPUs and quadruple the requested memory to honour the preference; beyond
-  // that the "preferred" instance is not a like-to-like match at all and the
-  // preference is dropped, leaving the normal cheapest-adequate pick.
+  // A workload preference is a nudge toward an APPROPRIATE FAMILY, never a licence to
+  // over-provision. A like-to-like match may use at most 2× the requested vCPUs and
+  // 4× the memory to honour it; beyond that the "preferred" instance isn't like-to-
+  // like and the preference is dropped for the normal cheapest-adequate pick.
   //
-  // Without this bound the preference silently defeated size fit: GCP's
-  // memory-optimized m-series starts at 32 vCPU / 976 GiB, so a 2 vCPU / 4 GB
-  // Cache VM landed on m3-ultramem-32 (32 vCPU / 976 GiB) — 16× the cores it
-  // asked for. AWS/Azure have small memory-optimized instances (r6g.large,
-  // e2psv6), so their preference still applies; GCP simply has no close-fit
-  // member for a small workload, so it correctly falls back.
+  // Without the bound the preference defeated size fit: GCP's memory-optimized
+  // m-series starts at 32 vCPU / 976 GiB, so a 2 vCPU / 4 GB Cache VM landed on
+  // m3-ultramem-32 (16× the cores). AWS/Azure have small memory-optimized instances
+  // so their preference still applies; GCP has no close-fit small member and correctly
+  // falls back.
   const WORKLOAD_MAX_CPU_FACTOR = 2;
   const WORKLOAD_MAX_MEM_FACTOR = 4;
 
-  // Is this instance a close-enough like-to-like fit to be worth preferring?
-  // With no requirement to bound against, everything is eligible (preserves the
-  // prior behaviour for any caller that doesn't pass the requirement).
+  // Is this instance a close-enough like-to-like fit to be worth preferring? With no
+  // requirement to bound against, everything is eligible (preserves prior behaviour).
   function isWorkloadFit(instance, reqCpu, reqMemory) {
     if (!reqCpu && !reqMemory) return true;
     const cpuOk = !reqCpu || instance.vCpus <= reqCpu * WORKLOAD_MAX_CPU_FACTOR;
@@ -463,9 +431,9 @@ const RuleEngine = (() => {
     );
   }
 
-  // Sort the close-fitting preferred families first, cheapest within each tier.
-  // A preferred-family instance that over-provisions past the fit bound is NOT
-  // treated as preferred, so it can't jump ahead of the cheapest-adequate pick.
+  // Sort close-fitting preferred families first, cheapest within each tier. A
+  // preferred-family instance that over-provisions past the fit bound is not treated
+  // as preferred, so it can't jump ahead of the cheapest-adequate pick.
   /**
    * @param {Instance[]} instances
    * @param {string} workload
@@ -509,11 +477,9 @@ const RuleEngine = (() => {
 
     // A filtering rule records how many candidates it removed, so the Rules
     // Applied column can EXPLAIN a surprising pick ("1a: Burstable excluded — 12
-    // removed") instead of only naming the rule that fired. It reads the current
-    // `filtered` against the count captured just before the filter, so it must be
-    // called AFTER the reassignment. A rule that removed nothing keeps its plain
-    // label; the sort/preference rules (BP, Workload) and the "not applied" notes
-    // remove nothing and are pushed as plain strings.
+    // removed"), not only name the rule. Reads `filtered` against the count captured
+    // before the filter, so call it AFTER the reassignment. Rules that remove nothing
+    // (sort/preference, "not applied" notes) keep a plain label.
     const withCount = (label, before) => {
       const n = before - filtered.length;
       return n > 0 ? `${label} — ${n} removed` : label;
@@ -609,11 +575,10 @@ const RuleEngine = (() => {
     }
 
     // ── GPU: require an accelerator, or keep one out of the result ──────────
-    // An accelerator is not a substitute for a general-purpose box of the same
-    // shape: it costs far more and carries hardware the workload will not use.
-    // Both directions degrade rather than force a no-match — if the filter
-    // would empty the pool, the pool stands and the row says the rule did not
-    // apply.
+    // An accelerator is not a substitute for a general-purpose box of the same shape:
+    // it costs far more and carries hardware the workload won't use. Both directions
+    // degrade rather than force a no-match — if the filter would empty the pool, the
+    // pool stands and the row says the rule didn't apply.
     if (ACCELERATOR_WORKLOADS.includes(workload)) {
       const before = filtered.length;
       const accel = filtered.filter((i) => isAccelerator(i, provider));
@@ -635,11 +600,10 @@ const RuleEngine = (() => {
     }
 
     // ── SQL: minimum core count for SQL Server licensing ────────────────────
-    // A floor, not a target: this only removes candidates below the licence
-    // minimum, so a SQL box that genuinely needs 16 vCPUs still gets 16. It
-    // runs before the two preference sorts so neither can reorder a candidate
-    // the licence floor should have removed. Degrades like every other filter
-    // — if nothing clears the floor, the pool stands and the row says so.
+    // A floor, not a target: removes only candidates below the licence minimum, so a
+    // SQL box that needs 16 vCPUs still gets 16. Runs before the two preference sorts
+    // so neither can reorder a candidate the floor should have removed. Degrades like
+    // every filter — if nothing clears the floor, the pool stands and the row says so.
     if (SQL_WORKLOADS.includes(workload)) {
       const before = filtered.length;
       const licensed = filtered.filter((i) => i.vCpus >= SQL_MIN_CORES);
@@ -658,18 +622,12 @@ const RuleEngine = (() => {
     }
 
     // ── BP: Dev/Test at low utilization prefers burstable ───────────────────
-    // The inverse of 1a. A Dev box that idles is exactly what a burstable
-    // family is for, and 1a already keeps them out of Production/Staging, so
-    // the two rules can never both fire on one row.
-    //
-    // Deliberately placed BEFORE the workload preference: that sort runs last
-    // and therefore wins, so an explicit workload (a Dev database asking for
-    // memory-optimized) is never silently overridden by this nudge. A general
-    // or blank workload does not sort at all, which is the common Dev/Test
-    // case and where this rule does its work.
-    //
-    // "Low" is the run's OWN downsize threshold, not a new number invented
-    // here, so the rule and the N/2 sizing agree on what low means.
+    // The inverse of 1a. A Dev box that idles is what a burstable family is for, and
+    // 1a keeps them out of Production/Staging, so the two never both fire on one row.
+    // Placed BEFORE the workload preference (which runs last and wins), so an explicit
+    // workload (a Dev database wanting memory-optimized) isn't overridden by this
+    // nudge; a general/blank workload doesn't sort, the common Dev/Test case. "Low" is
+    // the run's OWN downsize threshold, so this rule and the N/2 sizing agree on it.
     if (isDevTest) {
       const cpuUtil = Number(options.rowCpuUtil) || 0;
       const memUtil = Number(options.rowMemoryUtil) || 0;
@@ -677,15 +635,13 @@ const RuleEngine = (() => {
       const memLow =
         Number(options.memoryDownsizeMax) || DEFAULT_LOW_UTILIZATION;
 
-      // Unknown utilization is not low utilization. Burstable families are
-      // CPU-credit-limited, so the CPU axis is the one that must be confirmed
-      // idle: an UNMEASURED CPU is "no evidence it idles", not "low", and
-      // preferring burstable on it would hand a possibly-hot box a credit-limited
-      // instance — the exact failure the guarantee above warns against. So CPU
-      // must be measured AND low. Memory, which burstable does not throttle, may
-      // be unknown, but a KNOWN-high memory means the box is working and is not a
-      // burstable candidate. (Previously a low memory reading alone could fire
-      // this while CPU was unmeasured — the case a review caught.)
+      // Unknown utilization is not low utilization. Burstable is CPU-credit-limited,
+      // so the CPU axis must be confirmed idle: an UNMEASURED CPU is "no evidence it
+      // idles", not "low", and preferring burstable on it would hand a possibly-hot
+      // box a credit-limited instance. So CPU must be measured AND low. Memory (not
+      // throttled by burstable) may be unknown, but a KNOWN-high memory means the box
+      // is working. (A low memory reading alone once fired this while CPU was
+      // unmeasured — a review caught it.)
       const isLow =
         cpuUtil > 0 &&
         cpuUtil <= cpuLow &&
@@ -718,9 +674,8 @@ const RuleEngine = (() => {
 
     // ── Workload preference: sort close-fitting preferred families first ────
     // Only when a preferred-family instance is a close-enough fit — otherwise
-    // honouring the preference would force a hugely over-provisioned instance
-    // (see WORKLOAD_MAX_*_FACTOR), so the size-based order stands and the row
-    // says why the nudge didn't apply.
+    // honouring the preference would force a hugely over-provisioned instance (see
+    // WORKLOAD_MAX_*_FACTOR), so the size-based order stands and the row says why.
     if (workload && workload !== "general") {
       const preferred = getPreferredFamilies(workload, provider);
       if (preferred.length) {

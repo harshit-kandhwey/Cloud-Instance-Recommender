@@ -194,10 +194,8 @@ for (const sample of SAMPLES) {
     `missing: ${missing.join(", ")}`,
   );
 
-  // Exclude holds a comma-separated list, so its cell must be quoted — and a
-  // sample that ships an unquoted one would shift every column after it right
-  // by one, which is exactly the kind of break that reads as "the tool is
-  // broken" rather than "the sample is".
+  // Exclude holds a comma-separated list, so its cell must be quoted — an
+  // unquoted one shifts every later column right by one.
   // Assert the STRUCTURE the quoting must preserve, not one sample's exact
   // literals: the cell splits into ≥2 non-empty tokens (the comma stayed inside
   // one field), and the neighbouring columns are still well-formed (nothing
