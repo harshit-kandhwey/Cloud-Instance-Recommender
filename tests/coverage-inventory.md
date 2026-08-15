@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 258 | 320 |
+| Covered | 62 | 259 | 321 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 373 | 459 |
+| **Total** | 86 | 374 | 460 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -129,7 +129,7 @@ waiver still records the reason.
 | `capturePresetConfig` | js/base/presets.js | function | internal | covered | ui/presets-test.js |
 | `checkRuleConflicts` | js/base/form-controls.js | function | internal | covered | preview/preview-search-test.js |
 | `classifyEolOs` | js/base/ingest.js | function | internal | covered | ingest/eol-os-test.js, ingest/input-hygiene-test.js, preview/stale-results-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `classifyWorkloadShape` | js/base/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/rightsize-verdict-test.js, preview/workload-shape-test.js |
+| `classifyWorkloadShape` | js/base/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, export/portfolio-test.js, export/xlsx-structural-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/rightsize-verdict-test.js, preview/workload-shape-test.js |
 | `clearScenarios` | js/base/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
 | `collectRegionDataForWorker` | js/base/generate.js | function | internal | covered | engine/watchdog-test.js |
 | `compareScenarios` | js/base/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. Its browser residual is now VERIFIED end-to-end by tests/e2e/scenario-comparison.spec.js (the Compare button re-rendering the comparison after two real pins, which runs outside this V8-instrumented node run)._ |
@@ -356,6 +356,7 @@ waiver still records the reason.
 | `renderCallouts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderCsvMenu` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js, workload/app-summary-test.js |
 | `renderEstateCharts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `renderEstateShape` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
 | `renderFamilies` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderHealth` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |

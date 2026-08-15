@@ -163,6 +163,7 @@ function computeAppStats(app, rows, meta) {
     envMix: {},
     osMix: {},
     workloadMix: {},
+    shapeMix: {},
     compliance: {},
     hasCompliance: false,
     regions: [],
@@ -191,6 +192,14 @@ function computeAppStats(app, rows, meta) {
     tally(stats.envMix, normEnv(row["ENV"]));
     tally(stats.osMix, normOS(row["OS"]));
     tally(stats.workloadMix, normWorkload(row["Workload"]));
+    // Workload SHAPE from the CPU/RAM ratio (classifyWorkloadShape, shared from
+    // app-core.js). Rows without a valid CPU and memory pair classify to null and
+    // are simply left out — they carry no shape to attribute.
+    const shape =
+      typeof classifyWorkloadShape === "function"
+        ? classifyWorkloadShape(row["CPU Count"], row["Memory (GB)"])
+        : null;
+    if (shape) tally(stats.shapeMix, shape.shape);
     complianceTags(row["Compliance"]).forEach((t) => {
       tally(stats.compliance, t);
       stats.hasCompliance = true;
@@ -330,12 +339,16 @@ function buildPortfolioModel(payload) {
   // ENV / OS are per-VM tallies, so their totals reconcile to estate.vms.
   estate.envMix = {};
   estate.osMix = {};
+  estate.shapeMix = {};
   allStats.forEach((a) => {
     Object.entries(a.envMix).forEach(([k, n]) => {
       estate.envMix[k] = (estate.envMix[k] || 0) + n;
     });
     Object.entries(a.osMix).forEach(([k, n]) => {
       estate.osMix[k] = (estate.osMix[k] || 0) + n;
+    });
+    Object.entries(a.shapeMix).forEach(([k, n]) => {
+      estate.shapeMix[k] = (estate.shapeMix[k] || 0) + n;
     });
   });
   // Right-sizing verdict distribution per provider, summed across every app —
@@ -642,9 +655,38 @@ function pfEstateRightSizing(m) {
   return `<div class="pf-chart-card"><h4>📐 Right-sizing verdict</h4>${rows}<div class="pf-legend">${legend}</div><small class="pf-note">Optimized vs. current vCPUs, across every application.</small></div>`;
 }
 
-// The Overview distribution block: ENV + OS composition doughnuts and the
-// right-sizing verdict bar. Returns "" when none of them has anything to draw,
-// so the section vanishes rather than showing empty frames.
+// Workload-shape rollup (Phase D3): the estate's VMs classified by CPU/RAM ratio
+// (classifyWorkloadShape) into compute-optimized / general / memory-optimized,
+// with the estate's overall RAM-per-vCPU as the supporting figure. The three
+// shapes are an ordered spectrum, so the hues run cool→neutral→warm rather than
+// arbitrary categoricals; general keeps the neutral gray as the midpoint.
+const PF_SHAPE_META = {
+  compute: { label: "Compute-optimized", color: "#0284c7" },
+  general: { label: "General", color: "#64748b" },
+  memory: { label: "Memory-optimized", color: "#7c3aed" },
+};
+function renderEstateShape(m) {
+  const sm = m.estate.shapeMix || {};
+  const order = ["compute", "general", "memory"].filter((k) => sm[k] > 0);
+  if (!order.length) return "";
+  const labeled = {};
+  const colorByLabel = {};
+  order.forEach((k) => {
+    labeled[PF_SHAPE_META[k].label] = sm[k];
+    colorByLabel[PF_SHAPE_META[k].label] = PF_SHAPE_META[k].color;
+  });
+  const ratio = m.estate.vcpus ? m.estate.memory / m.estate.vcpus : 0;
+  return `<div class="pf-chart-card"><h4>🧮 Workload shape</h4>${pfDoughnut(
+    labeled,
+    (l) => colorByLabel[l] || "#94a3b8",
+    { centerLabel: "VMs" },
+  )}<small class="pf-note">≈ ${fmtNum(Math.round(ratio * 100) / 100)} GB per vCPU across the estate — compute ≤ 2.5, memory ≥ 6.</small></div>`;
+}
+
+// The Overview distribution block: ENV + OS composition doughnuts, the
+// workload-shape rollup, and the right-sizing verdict bar. Returns "" when none
+// of them has anything to draw, so the section vanishes rather than showing
+// empty frames.
 function renderEstateCharts(m) {
   const cards = [];
   if (Object.values(m.estate.envMix).some((n) => n > 0)) {
@@ -657,6 +699,8 @@ function renderEstateCharts(m) {
       `<div class="pf-chart-card"><h4>💽 Operating system mix</h4>${pfDoughnut(m.estate.osMix, pfOsColor, { centerLabel: "VMs" })}</div>`,
     );
   }
+  const shape = renderEstateShape(m);
+  if (shape) cards.push(shape);
   const rs = pfEstateRightSizing(m);
   if (rs) cards.push(rs);
   if (!cards.length) return "";

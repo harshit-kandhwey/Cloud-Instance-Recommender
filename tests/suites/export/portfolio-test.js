@@ -235,6 +235,36 @@ check(
     '__lo = buildPortfolioModel({ providers: ["aws"], hasOptimized: false, results: [{ "App Name": "A", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" }] }); __lo.estate.rightSizing',
   ) === null,
 );
+// Every payload VM is 4 GB/vCPU (ratio 4 → general), so the estate is all-general.
+check(
+  "estate shapeMix all-general for the 4 payload VMs",
+  run("__m.estate.shapeMix.general") === 4 &&
+    run("JSON.stringify(Object.keys(__m.estate.shapeMix))") ===
+      JSON.stringify(["general"]),
+  run("JSON.stringify(__m.estate.shapeMix)"),
+);
+// A crafted estate spanning all three shapes, plus a spec-less row that must be
+// classified to null and left out of the shape tally (but still counted as a VM).
+run(
+  '__sm = buildPortfolioModel({ providers: ["aws"], hasOptimized: false, results: [' +
+    '{ "App Name": "C", "CPU Count": "8", "Memory (GB)": "8", "AWS Like-to-Like Instance": "c5.2xlarge" },' + // ratio 1 → compute
+    '{ "App Name": "G", "CPU Count": "4", "Memory (GB)": "16", "AWS Like-to-Like Instance": "m5.xlarge" },' + // ratio 4 → general
+    '{ "App Name": "M", "CPU Count": "2", "Memory (GB)": "32", "AWS Like-to-Like Instance": "r5.xlarge" },' + // ratio 16 → memory
+    '{ "App Name": "X", "CPU Count": "", "Memory (GB)": "", "AWS Like-to-Like Instance": "No data available" }' + // invalid → skipped
+    "] });",
+);
+check(
+  "shapeMix spans compute/general/memory (1 each)",
+  run("__sm.estate.shapeMix.compute") === 1 &&
+    run("__sm.estate.shapeMix.general") === 1 &&
+    run("__sm.estate.shapeMix.memory") === 1,
+  run("JSON.stringify(__sm.estate.shapeMix)"),
+);
+check(
+  "the spec-less row is a VM but carries no shape (4 VMs, 3 classified)",
+  run("__sm.estate.vms") === 4 &&
+    run("Object.values(__sm.estate.shapeMix).reduce((s,n)=>s+n,0)") === 3,
+);
 
 console.log("[per-app: Billing]");
 check(
@@ -396,6 +426,7 @@ check(
   /Estate distribution/.test(cHtml) &&
     /Environment mix/.test(cHtml) &&
     /<svg/.test(cHtml) &&
+    /Workload shape/.test(cHtml) &&
     /Right-sizing verdict/.test(cHtml),
 );
 
