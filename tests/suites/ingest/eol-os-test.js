@@ -91,21 +91,21 @@ modern-c,4,16,us-east-1,Windows Server 2022`,
   );
   check(
     "it names the OS and the suggested landing OS",
-    /Windows Server 2012 R2/.test(adv[0].label) &&
-      /consider Windows Server 2022/.test(adv[0].label),
+    /Windows Server 2012 R2/.test(adv[0]?.label) &&
+      /consider Windows Server 2022/.test(adv[0]?.label),
     adv[0] && adv[0].label,
   );
   check(
     "it says standard EOL and asks the reader to verify extended support",
-    /past standard end-of-life/.test(adv[0].label) &&
-      /ESU/.test(adv[0].label) &&
-      /ESM/.test(adv[0].label),
+    /past standard end-of-life/.test(adv[0]?.label) &&
+      /ESU/.test(adv[0]?.label) &&
+      /ESM/.test(adv[0]?.label),
     adv[0] && adv[0].label,
   );
   check(
     "it carries the two EOL rows (2 and 3), not the current-OS row",
-    adv[0].rowNumbers.join(",") === "2,3",
-    JSON.stringify(adv[0].rowNumbers),
+    adv[0]?.rowNumbers?.join(",") === "2,3",
+    JSON.stringify(adv[0]?.rowNumbers),
   );
   check(
     "the panel renders it with the advisory icon, not the error icon",

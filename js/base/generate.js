@@ -423,14 +423,15 @@ async function buildDerivedSpecs(csvData) {
       selector =
         (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
         InstanceSelectorFactory.createSelector(provider);
-      // Cache it the same way collectRegionDataForWorker does, so a later phase (or a
-      // provider that's also a selected target) reuses the parsed region data.
-      // initialize is additive — never resets instanceData — so a reused selector only
-      // gains the default region.
-      window._prewarmedSelectors = window._prewarmedSelectors || {};
-      window._prewarmedSelectors[provider] = selector;
       const def = InstanceSelectorFactory.getProviderDefaultRegion(provider);
       await selector.initialize([], [def]);
+      // Cache only AFTER init succeeds, the same way collectRegionDataForWorker
+      // does, so a later phase (or a provider that's also a selected target)
+      // reuses the parsed region data — and a rejected initialize leaves nothing
+      // cached. initialize is additive (never resets instanceData), so a reused
+      // selector only gains the default region.
+      window._prewarmedSelectors = window._prewarmedSelectors || {};
+      window._prewarmedSelectors[provider] = selector;
     } catch (e) {
       console.warn(
         `[CloudToCloud] could not load ${provider} data for spec lookup:`,
