@@ -405,25 +405,35 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     const fam = String(family || "")
       .toLowerCase()
       .trim();
-    if (!GCPInstanceSelector.CUSTOM_CAPABLE_FAMILIES.includes(fam)) return "";
+    const rules = GCPInstanceSelector.CUSTOM_FAMILY_RULES[fam];
+    if (!rules) return "";
     const c = Number(cpu);
     const m = Number(memory);
     if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
       return "";
 
-    // vCPU: 1, or rounded up to the next even number.
-    let vCpu = Math.max(1, Math.ceil(c));
-    if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+    // vCPU: at least the family minimum (E2/N2/N2D/N4/N4D need 2; only N1 allows
+    // 1). Above 32, GCP requires a multiple of 4; at or below, an even number
+    // (1 stays 1 where the family permits it). Rounding always goes UP, so the
+    // shape never falls below the requirement. Beyond the family ceiling there is
+    // no valid custom shape, so no suggestion is made.
+    let vCpu = Math.max(rules.minVCpu, Math.ceil(c));
+    if (vCpu > 32) vCpu = Math.ceil(vCpu / 4) * 4;
+    else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+    if (vCpu > rules.maxVCpu) return "";
 
     // Memory: round the requirement up to a whole 256 MB block, then clamp into
-    // the 0.5–8 GB-per-vCPU band (both bounds are whole 256 MB blocks already).
+    // the family's per-vCPU band. The band bounds are themselves rounded to whole
+    // 256 MB blocks (up for the floor, down for the ceiling) so the result is
+    // always a valid, in-band multiple of 256 MB.
     let memMb = Math.ceil((m * 1024) / 256) * 256;
-    const minMb = 0.5 * vCpu * 1024; // 0.5 GB/vCPU (already a whole 256 MB block)
-    const maxMb = 8 * vCpu * 1024; // 8 GB/vCPU
+    const minMb = Math.ceil((rules.memMinPerVCpu * vCpu * 1024) / 256) * 256;
+    const maxMb = Math.floor((rules.memMaxPerVCpu * vCpu * 1024) / 256) * 256;
     if (memMb < minMb) memMb = minMb;
     if (memMb > maxMb) memMb = maxMb;
 
-    return `${fam}-custom-${vCpu}-${memMb}`;
+    const prefix = rules.prefix || `${fam}-custom`;
+    return `${prefix}-${vCpu}-${memMb}`;
   }
 
   // Whether a standard pick wastes enough to be worth a custom suggestion: it
@@ -733,18 +743,36 @@ class GCPInstanceSelector extends BaseInstanceSelector {
   }
 }
 
-// The GCP machine families that offer custom vCPU/RAM shapes. Compute-optimized
-// (C2/C3), memory-optimized (M*), accelerator (A*/G*), HPC (H3), storage (Z3) and
-// the Tau/shared-core families do NOT, so a custom suggestion is never made for
-// them — the general-purpose families are the ones GCP lets you tailor.
-GCPInstanceSelector.CUSTOM_CAPABLE_FAMILIES = [
-  "e2",
-  "n1",
-  "n2",
-  "n2d",
-  "n4",
-  "n4d",
-];
+// Per-family custom-machine-type rules. The general-purpose families are the only
+// ones GCP lets you tailor (compute-optimized C2/C3, memory-optimized M*,
+// accelerator A*/G*, HPC H3, storage Z3 and the shared-core families do NOT), and
+// each has its OWN contract — a single uniform rule would emit strings the user
+// cannot deploy. Verified against Google's general-purpose-machines docs:
+//   - minVCpu: E2/N2/N2D/N4/N4D require at least 2 vCPUs; only N1 allows 1.
+//   - maxVCpu: the ceiling for a custom shape in that family.
+//   - memMin/MaxPerVCpu (GB): the per-vCPU memory band. N1 is 0.9–6.5; N4/N4D
+//     require at least 2 GB/vCPU; the rest are 0.5–8.
+//   - prefix: N1 custom types use the prefixless "custom-…" form; the newer
+//     families use "<family>-custom-…".
+GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
+  e2: { minVCpu: 2, maxVCpu: 32, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n1: {
+    minVCpu: 1,
+    maxVCpu: 96,
+    memMinPerVCpu: 0.9,
+    memMaxPerVCpu: 6.5,
+    prefix: "custom",
+  },
+  n2: { minVCpu: 2, maxVCpu: 128, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n2d: { minVCpu: 2, maxVCpu: 224, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n4: { minVCpu: 2, maxVCpu: 80, memMinPerVCpu: 2, memMaxPerVCpu: 8 },
+  n4d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 2, memMaxPerVCpu: 8 },
+};
+// The family names that offer custom shapes, derived from the rules table so the
+// two can never drift apart.
+GCPInstanceSelector.CUSTOM_CAPABLE_FAMILIES = Object.keys(
+  GCPInstanceSelector.CUSTOM_FAMILY_RULES,
+);
 
 // Export GCP instance selector
 window.GCPInstanceSelector = GCPInstanceSelector;

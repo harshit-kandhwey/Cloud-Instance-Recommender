@@ -2,8 +2,11 @@
 // When a standard GCP shape over-provisions a row, a custom vCPU/RAM shape can fit
 // it tighter. Two pure pieces build that suggestion:
 //   - buildCustomMachineType: the tightest VALID custom type for a required size,
-//     applying GCP's rules (vCPU 1 or even; memory a whole 256 MB block, 0.5–8 GB
-//     per vCPU) — or "" for a family GCP does not let you customise;
+//     applying each family's OWN GCP rules (min vCPU — E2/N2/N2D/N4/N4D need 2,
+//     only N1 allows 1; even vCPUs, multiples of 4 above 32; a per-vCPU memory
+//     band that differs by family — N1 0.9–6.5, N4/N4D ≥2, the rest 0.5–8; N1's
+//     prefixless "custom-…" naming) — or "" for a family GCP does not let you
+//     customise, or a size beyond the family's ceiling;
 //   - customShapeWorthwhile: whether a standard pick wastes enough (default 25%
 //     over on either axis) to be worth suggesting a custom shape at all.
 // No pricing anywhere (D8): "wasteful" is vCPU/RAM headroom, never dollars. The
@@ -40,24 +43,53 @@ console.log("[buildCustomMachineType shapes a valid custom type to the need]");
     custom("n2", 5, 8),
   );
   check(
-    "1 vCPU is allowed (not rounded up to 2)",
-    custom("e2", 1, 2) === "e2-custom-1-2048",
-    custom("e2", 1, 2),
-  );
-  check(
     "memory rounds UP to a whole 256 MB block, never below the need",
     custom("n2", 2, 5.1) === "n2-custom-2-5376",
     custom("n2", 2, 5.1),
   );
   check(
-    "memory below 0.5 GB/vCPU is clamped up into the band",
+    "memory below the N2 floor (0.5 GB/vCPU) is clamped up into the band",
     custom("n2", 8, 1) === "n2-custom-8-4096",
     custom("n2", 8, 1),
   );
   check(
-    "memory above 8 GB/vCPU is clamped down into the band",
+    "memory above the N2 ceiling (8 GB/vCPU) is clamped down into the band",
     custom("n2", 2, 100) === "n2-custom-2-16384",
     custom("n2", 2, 100),
+  );
+}
+
+console.log("[each family applies its OWN vCPU/memory/naming rules]");
+{
+  check(
+    "E2 needs at least 2 vCPUs — 1 rounds up, never a bad e2-custom-1",
+    custom("e2", 1, 2) === "e2-custom-2-2048",
+    custom("e2", 1, 2),
+  );
+  check(
+    "N1 alone allows 1 vCPU, and uses the prefixless custom- form",
+    custom("n1", 1, 2) === "custom-1-2048",
+    custom("n1", 1, 2),
+  );
+  check(
+    "N1 memory ceiling is 6.5 GB/vCPU, not 8 — clamped down",
+    custom("n1", 1, 10) === "custom-1-6656",
+    custom("n1", 1, 10),
+  );
+  check(
+    "N4 needs at least 2 GB/vCPU — a leaner ask is clamped up",
+    custom("n4", 4, 4) === "n4-custom-4-8192",
+    custom("n4", 4, 4),
+  );
+  check(
+    "above 32 vCPUs the count rounds up to a multiple of 4",
+    custom("n2", 33, 66) === "n2-custom-36-67584",
+    custom("n2", 33, 66),
+  );
+  check(
+    "a size beyond the family ceiling yields no shape (E2 max 32)",
+    custom("e2", 40, 80) === "",
+    custom("e2", 40, 80),
   );
 }
 
