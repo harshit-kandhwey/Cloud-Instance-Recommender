@@ -53,9 +53,14 @@ console.log("[buildCustomMachineType shapes a valid custom type to the need]");
     custom("n2", 8, 1),
   );
   check(
-    "memory above the N2 ceiling (8 GB/vCPU) is clamped down into the band",
-    custom("n2", 2, 100) === "n2-custom-2-16384",
+    "memory above the N2 ceiling (8 GB/vCPU) raises vCPU, never truncates memory",
+    custom("n2", 2, 100) === "n2-custom-14-102400",
     custom("n2", 2, 100),
+  );
+  check(
+    "a memory need beyond the family's max vCPU yields no shape",
+    custom("n2", 2, 2000) === "",
+    custom("n2", 2, 2000),
   );
 }
 
@@ -72,8 +77,8 @@ console.log("[each family applies its OWN vCPU/memory/naming rules]");
     custom("n1", 1, 2),
   );
   check(
-    "N1 memory ceiling is 6.5 GB/vCPU, not 8 — clamped down",
-    custom("n1", 1, 10) === "custom-1-6656",
+    "N1 memory past 6.5 GB/vCPU raises vCPU to cover it (prefixless form)",
+    custom("n1", 1, 10) === "custom-2-10240",
     custom("n1", 1, 10),
   );
   check(

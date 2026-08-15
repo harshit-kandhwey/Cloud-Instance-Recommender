@@ -394,11 +394,12 @@ class GCPInstanceSelector extends BaseInstanceSelector {
   }
 
   // The tightest VALID GCP custom machine type for a required size, or "" when the
-  // family can't be custom or inputs are unusable. Size rounds UP (never below the
-  // requirement) and clamps into the per-vCPU memory band; result is
-  // "<family>-custom-<vCPU>-<memoryMB>" (e.g. "n2-custom-4-16384"). Only custom-
-  // capable families qualify, else the string would be undeployable. Per-family
-  // constraints live in CUSTOM_FAMILY_RULES.
+  // family can't be custom, inputs are unusable, or the need exceeds the family's
+  // ceiling. Size rounds UP and is never below the requirement — a memory need past
+  // the per-vCPU ceiling raises the vCPU count rather than truncating memory.
+  // Result is "<family>-custom-<vCPU>-<memoryMB>" (e.g. "n2-custom-4-16384"). Only
+  // custom-capable families qualify. Per-family constraints live in
+  // CUSTOM_FAMILY_RULES.
   buildCustomMachineType(family, cpu, memory) {
     const fam = String(family || "")
       .toLowerCase()
@@ -418,15 +419,22 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
     if (vCpu > rules.maxVCpu) return "";
 
-    // Memory: round the requirement up to a whole 256 MB block, then clamp into
-    // the family's per-vCPU band. The band bounds are themselves rounded to whole
-    // 256 MB blocks (up for the floor, down for the ceiling) so the result is
-    // always a valid, in-band multiple of 256 MB.
+    // Memory: round the requirement up to a whole 256 MB block. If it exceeds the
+    // per-vCPU ceiling at the current vCPU count, RAISE vCPU (re-applying the even /
+    // multiple-of-4 rounding) until the band covers it — never clamp memory DOWN,
+    // which would emit a shape below the requirement; beyond the family vCPU ceiling
+    // there is no valid shape. Then clamp UP into the floor. The result is a valid,
+    // in-band multiple of 256 MB at or above the requirement.
     let memMb = Math.ceil((m * 1024) / 256) * 256;
+    const neededVCpu = Math.ceil(memMb / (rules.memMaxPerVCpu * 1024));
+    if (neededVCpu > vCpu) {
+      vCpu = neededVCpu;
+      if (vCpu > 32) vCpu = Math.ceil(vCpu / 4) * 4;
+      else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+      if (vCpu > rules.maxVCpu) return "";
+    }
     const minMb = Math.ceil((rules.memMinPerVCpu * vCpu * 1024) / 256) * 256;
-    const maxMb = Math.floor((rules.memMaxPerVCpu * vCpu * 1024) / 256) * 256;
     if (memMb < minMb) memMb = minMb;
-    if (memMb > maxMb) memMb = maxMb;
 
     const prefix = rules.prefix || `${fam}-custom`;
     return `${prefix}-${vCpu}-${memMb}`;
