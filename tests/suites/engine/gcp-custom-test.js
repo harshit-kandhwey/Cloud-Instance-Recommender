@@ -4,7 +4,7 @@
 //   - buildCustomMachineType: the tightest VALID custom type for a required size,
 //     applying each family's OWN GCP rules (min vCPU — E2/N2/N2D/N4/N4D need 2,
 //     only N1 allows 1; even vCPUs, multiples of 4 above 32; a per-vCPU memory
-//     band that differs by family — N1 0.9–6.5, N4/N4D ≥2, the rest 0.5–8; N1's
+//     band that differs by family — N1 0.9–6.5, N4 ≥2, the rest 0.5–8; N1's
 //     prefixless "custom-…" naming) — or "" for a family GCP does not let you
 //     customise, or a size beyond the family's ceiling;
 //   - customShapeWorthwhile: whether a standard pick wastes enough (default 25%
@@ -85,6 +85,16 @@ console.log("[each family applies its OWN vCPU/memory/naming rules]");
     "N4 needs at least 2 GB/vCPU — a leaner ask is clamped up",
     custom("n4", 4, 4) === "n4-custom-4-8192",
     custom("n4", 4, 4),
+  );
+  check(
+    "N4D floor is 0.5 GB/vCPU (not N4's 2) — a lean ask is kept, not clamped up",
+    custom("n4d", 8, 4) === "n4d-custom-8-4096",
+    custom("n4d", 8, 4),
+  );
+  check(
+    "a memory need past the N2 custom ceiling (80 vCPUs) yields no shape",
+    custom("n2", 2, 700) === "",
+    custom("n2", 2, 700),
   );
   check(
     "above 32 vCPUs the count rounds up to a multiple of 4",

@@ -752,7 +752,7 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 // has its own contract, so a uniform rule would emit undeployable strings. Verified
 // against Google's general-purpose-machines docs:
 //   - minVCpu / maxVCpu: the family's vCPU floor (N1 allows 1; rest need 2) and ceiling.
-//   - memMin/MaxPerVCpu (GB): per-vCPU band — N1 0.9–6.5; N4/N4D ≥2; rest 0.5–8.
+//   - memMin/MaxPerVCpu (GB): per-vCPU band — N1 0.9–6.5; N4 ≥2; rest 0.5–8.
 //   - prefix: N1 uses the prefixless "custom-…"; newer families "<family>-custom-…".
 GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
   e2: { minVCpu: 2, maxVCpu: 32, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
@@ -763,10 +763,10 @@ GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
     memMaxPerVCpu: 6.5,
     prefix: "custom",
   },
-  n2: { minVCpu: 2, maxVCpu: 128, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
-  n2d: { minVCpu: 2, maxVCpu: 224, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n2: { minVCpu: 2, maxVCpu: 80, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n2d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
   n4: { minVCpu: 2, maxVCpu: 80, memMinPerVCpu: 2, memMaxPerVCpu: 8 },
-  n4d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 2, memMaxPerVCpu: 8 },
+  n4d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
 };
 // The family names that offer custom shapes, derived from the rules table so the
 // two can never drift apart.
