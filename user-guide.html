@@ -1323,9 +1323,12 @@
         <p>
           It is carried through to the preview and every export untouched, and
           sits immediately left of the recommended instances.
-          <strong>It does not affect sizing</strong> — CPU Count and Memory (GB)
-          still drive that, and two VMs with the same CPU and memory get the
-          same recommendation however different the machines they run on today.
+          <strong>By default it does not affect sizing</strong> — CPU Count and
+          Memory (GB) drive that, and two VMs with the same CPU and memory get
+          the same recommendation however different the machines they run on
+          today. The exception is cloud-to-cloud mode, where a row that omits
+          CPU Count and Memory (GB) is sized from its Current Instance Type
+          instead.
         </p>
       </div>
 

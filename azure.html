@@ -378,7 +378,9 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v
                 </p>
                 <p style="margin-top: 6px; color: var(--text-muted)">
                   <strong>Current Instance Type</strong> fires no rule and does
-                  not affect sizing. It records what the VM runs on today (e.g.
+                  not affect sizing by default — only in cloud-to-cloud mode
+                  does a row without CPU Count / Memory (GB) get sized from it.
+                  It records what the VM runs on today (e.g.
                   <code>Standard_D4s_v3</code>) and is carried through to the
                   preview and every export, beside the recommendation that would
                   replace it.

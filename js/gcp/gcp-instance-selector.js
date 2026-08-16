@@ -442,7 +442,8 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 
   // Whether a standard pick wastes enough to be worth a custom suggestion: it
   // provides at least `overhead` MORE vCPU or memory than the row requires, on
-  // either axis. Default 25% (a documented, tunable threshold). Guards keep a
+  // either axis. The `overhead` parameter defaults to 25%; the current caller
+  // (customFitSuggestion) uses that default and does not override it. Guards keep a
   // missing figure from ever reading as wasteful.
   customShapeWorthwhile(stdVCpus, stdMem, reqCpu, reqMem, overhead = 0.25) {
     const sv = Number(stdVCpus);

@@ -328,12 +328,14 @@ const RuleEngine = (() => {
     return v === null ? AZURE_NO_VERSION_RANK : v;
   }
 
-  // EVERY MinGen value is NATIVE to its provider: an AWS value is a family number
+  // Live controls send a value NATIVE to its provider: AWS a family number
   // (7→m7/c7/r7), Azure a v-number (5→v5), GCP a family name ("n4"). Each page
-  // supplies one value for its own cloud (multi-cloud supplies three), so nothing is
-  // translated between clouds. A prior single cross-provider scale (7 = AWS 7 / Azure
-  // v5 / GCP N4), guessed via `minNum > 4 ? minNum-2 : minNum`, is why the Azure
-  // page's "v5+" quietly filtered to v3+. That scale is gone; nothing is translated.
+  // supplies one value for its own cloud (multi-cloud supplies three), so no
+  // cross-cloud translation happens for current input. A prior single cross-provider
+  // scale (7 = AWS 7 / Azure v5 / GCP N4), guessed via `minNum > 4 ? minNum-2 :
+  // minNum`, is why the Azure page's "v5+" quietly filtered to v3+; that scale is
+  // gone. The one residual mapping is the GCP branch below, which still translates a
+  // bare NUMBER from a legacy shared column for backward compatibility (see there).
   /**
    * @param {Instance} inst
    * @param {string} minGen
@@ -576,9 +578,10 @@ const RuleEngine = (() => {
 
     // ── GPU: require an accelerator, or keep one out of the result ──────────
     // An accelerator is not a substitute for a general-purpose box of the same shape:
-    // it costs far more and carries hardware the workload won't use. Both directions
-    // degrade rather than force a no-match — if the filter would empty the pool, the
-    // pool stands and the row says the rule didn't apply.
+    // it costs far more and carries hardware the workload won't use. Neither branch
+    // forces a no-match — if a filter would empty the pool, the pool stands. An
+    // accelerator-required workload that finds none records "not applied"; the non-GPU
+    // branch simply adds no rule entry when it changes nothing.
     if (ACCELERATOR_WORKLOADS.includes(workload)) {
       const before = filtered.length;
       const accel = filtered.filter((i) => isAccelerator(i, provider));

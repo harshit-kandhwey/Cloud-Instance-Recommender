@@ -362,9 +362,10 @@ Make a correct input file easy to produce, and make the rules say what they mean
   carries a computed delta from its source — the sizing-savings chips aggregate it
   — but no row says what the delta _means_. Label every recommendation with a
   verdict — Downsized, Upsized, or Same Size (delivered in 3.12.3); Family Changed
-  and Generation Upgrade are future scope, since they need a source instance type
-  the current inputs do not carry — as a compact badge beside the instance, so a
-  reviewer reads the sizing decision
+  and Generation Upgrade are future scope — the verdict does not yet compare
+  instance families or generations, even though Current Instance Type is now an
+  input — as a compact badge beside the instance, so a reviewer reads the sizing
+  decision
   at a glance instead of diffing the vCPU / memory columns by eye. Pure
   presentation over data the engine already produces, provider-agnostic, and no
   pricing. (S) _Sits beside rule-fired transparency above; the input for the
@@ -373,13 +374,14 @@ Make a correct input file easy to produce, and make the rules say what they mean
   of that report are excluded by the no-dollars rule (D8)._
 - **Workload-shape explainer (RAM-per-vCPU).** Classify each row by its
   memory-to-vCPU ratio — compute-optimized, general-purpose, memory-optimized —
-  and use it both to explain _why_ a family was chosen and to drive a family-mix
+  and use it both to explain _why_ a family was chosen and to drive a workload-shape
   rollup on the Portfolio page. A provider-agnostic heuristic (ratio ≥ ~6 →
   memory, ≤ ~2.5 → compute, else general) over columns already in every upload.
-  (S) _Feeds the family-mix chart in the portfolio-visualization work below._
+  (S) _Feeds the workload-shape chart in the portfolio-visualization work below._
 - **End-of-life OS advisory (delivered in 3.12.11).** When the upload carries an OS
-  column, flag rows whose OS is past vendor end-of-life and suggest a modern landing
-  OS (CentOS → Rocky / RHEL 9, Windows Server 2012 → 2022, and so on). Adjacent to
+  column, flag rows whose OS is past standard end-of-life (asking the reader to
+  verify any ESU or ESM coverage) and suggest a modern landing OS (CentOS → Rocky /
+  RHEL 9, Windows Server 2012 → 2022, and so on). Adjacent to
   the unknown-rule-values check above — the same "name what the input hides" spirit —
   but it borders on migration-assessment scope, so it ships only as a plain
   advisory that never gates a recommendation. (M) _Kept advisory-only on purpose:
@@ -391,7 +393,7 @@ Size across providers, not just within one — preponed from 4.0 so the major
 stays the performance engine alone. Neither item depends on that engine; both
 build on data and columns the tool already has. This minor also folds in the
 **portfolio-visualization** pass (KPI cards, inline-SVG distribution charts, the
-RAM-per-vCPU family-mix rollup, gradient headers) described in its own section
+RAM-per-vCPU workload-shape rollup, gradient headers) described in its own section
 below: 3.13 is where its inputs — the 3.12 right-sizing verdict and workload-shape
 classifier — already exist, and its verdict-distribution chart reads them directly.
 
@@ -454,15 +456,14 @@ either fixed as a patch when it lands, or it belongs here.
   it the UI the rest of the code already expects, or remove it from all of them.
   (S) _The allow-list work in 3.12 is the natural home for the first option._
 
-### Portfolio visualization (unscheduled — folds into a Next minor)
+### Portfolio visualization (delivered in 3.13)
 
-The Portfolio page reports in tables and text; a reference migration report
-(ACCORD MPA) makes the same class of data far more legible with cards and charts,
-and the gap is real — `app-portfolio.html` renders no charts at all. This is a
-presentation pass, not a data change, and every piece is achievable in **inline
-SVG / CSS with no new runtime dependency** — which keeps it inside the strict-CSP
-direction (`script-src 'self'`, [3.11 CSP migration](#311--accessibility-hardening--documentation))
-rather than pulling a charting library or a CDN.
+The Portfolio page once reported only in tables and text; a reference migration
+report (ACCORD MPA) makes the same class of data far more legible with cards and
+charts. 3.13 delivered this pass — a presentation change, not a data change, every
+piece built in **inline SVG / CSS with no new runtime dependency** — which keeps it
+inside the strict-CSP direction (`script-src 'self'`, [3.11 CSP migration](#311--accessibility-hardening--documentation))
+rather than pulling a charting library or a CDN. The pieces, as shipped:
 
 - **KPI card row.** Replace the top-line counts with accent-barred KPI cards
   (label / value / sub-line): servers in scope, distinct applications, environment
@@ -471,9 +472,10 @@ rather than pulling a charting library or a CDN.
   and a bar for the right-sizing-verdict distribution (from the 3.12 verdict item),
   rendered as inline SVG so they snapshot cleanly under the existing
   visual-regression rig. (M)
-- **Family-mix & shape rollup.** Summarise the RAM-per-vCPU workload-shape
-  classification across the estate, so a portfolio reads as "mostly
-  memory-optimized" at a glance. (S) _Needs the workload-shape explainer in 3.12._
+- **Workload-shape rollup.** Summarise the RAM-per-vCPU workload-shape
+  classification (estate.shapeMix — compute / general / memory) across the estate,
+  so a portfolio reads as "mostly memory-optimized" at a glance. _Built on the 3.12
+  workload-shape explainer._
 - **Gradient section headers.** Adopt banded headers for the portfolio's major
   blocks — a small, self-contained CSS lift that reads better across the page. (S)
 
@@ -481,9 +483,8 @@ _Explicitly out, by our own rules:_ everything the reference report builds on
 **pricing** — on-demand / reserved cost cards, savings bands, annual run-rate, the
 live AWS pricing-calculator estimate — is excluded by the no-dollars-in-outputs
 rule (D8), along with its AWS-only, migration-wave, and connectivity-navigator
-views. Sequencing is flexible; this folds into whichever Next minor has room and
-pairs naturally with the visual-regression snapshots, since new charts want new
-baselines.
+views. The delivered charts each gained a visual-regression baseline, since new
+charts want new snapshots.
 
 ## Blocked — awaiting external input
 
