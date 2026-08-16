@@ -97,7 +97,7 @@ console.log("[each family applies its OWN vCPU/memory/naming rules]");
     custom("n2", 2, 700),
   );
   check(
-    "above 32 vCPUs the count rounds up to a multiple of 4",
+    "N2 rounds >32 vCPUs up to a multiple of 4 (even-quad stepping)",
     custom("n2", 33, 66) === "n2-custom-36-67584",
     custom("n2", 33, 66),
   );
@@ -105,6 +105,42 @@ console.log("[each family applies its OWN vCPU/memory/naming rules]");
     "a size beyond the family ceiling yields no shape (E2 max 32)",
     custom("e2", 40, 80) === "",
     custom("e2", 40, 80),
+  );
+}
+
+console.log("[vCPU counts round UP to each family's OWN stepping]");
+{
+  // N2D / N4D step 2/4/8/16 then multiples of 16 — never a plain even like 6 or 20.
+  check(
+    "N4D rounds 6 up to 8 (not the invalid n4d-custom-6)",
+    custom("n4d", 6, 12) === "n4d-custom-8-12288",
+    custom("n4d", 6, 12),
+  );
+  check(
+    "N4D past 16 jumps to the next multiple of 16 (20 → 32)",
+    custom("n4d", 20, 40) === "n4d-custom-32-40960",
+    custom("n4d", 20, 40),
+  );
+  check(
+    "N2D rounds 10 up to 16 (not the invalid n2d-custom-10)",
+    custom("n2d", 10, 20) === "n2d-custom-16-20480",
+    custom("n2d", 10, 20),
+  );
+  check(
+    "an N4D memory raise lands on a valid step (needs 13 → 16, not 14)",
+    custom("n4d", 2, 100) === "n4d-custom-16-102400",
+    custom("n4d", 2, 100),
+  );
+  // N1 / N4 keep even stepping above 32 — no spurious multiple-of-4 rounding.
+  check(
+    "N1 keeps an even count above 32 (34 stays 34, prefixless)",
+    custom("n1", 34, 68) === "custom-34-69632",
+    custom("n1", 34, 68),
+  );
+  check(
+    "N4 keeps an even count above 32 (34 stays 34, not 36)",
+    custom("n4", 34, 68) === "n4-custom-34-69632",
+    custom("n4", 34, 68),
   );
 }
 

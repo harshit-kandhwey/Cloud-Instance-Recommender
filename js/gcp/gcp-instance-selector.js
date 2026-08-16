@@ -411,26 +411,25 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     if (!Number.isFinite(c) || !Number.isFinite(m) || c <= 0 || m <= 0)
       return "";
 
-    // vCPU: at least the family minimum, rounded UP. Above 32 GCP requires a
-    // multiple of 4; at or below, an even number (1 stays 1 where allowed). Past
-    // the family ceiling there is no valid custom shape.
-    let vCpu = Math.max(rules.minVCpu, Math.ceil(c));
-    if (vCpu > 32) vCpu = Math.ceil(vCpu / 4) * 4;
-    else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+    // vCPU: at least the family minimum, rounded UP to a count the family's
+    // stepping allows (see _roundCustomVCpu). Past the family ceiling there is no
+    // valid custom shape.
+    let vCpu = this._roundCustomVCpu(
+      Math.max(rules.minVCpu, Math.ceil(c)),
+      rules,
+    );
     if (vCpu > rules.maxVCpu) return "";
 
     // Memory: round the requirement up to a whole 256 MB block. If it exceeds the
-    // per-vCPU ceiling at the current vCPU count, RAISE vCPU (re-applying the even /
-    // multiple-of-4 rounding) until the band covers it — never clamp memory DOWN,
-    // which would emit a shape below the requirement; beyond the family vCPU ceiling
-    // there is no valid shape. Then clamp UP into the floor. The result is a valid,
-    // in-band multiple of 256 MB at or above the requirement.
+    // per-vCPU ceiling at the current vCPU count, RAISE vCPU (re-applying the family
+    // stepping) until the band covers it — never clamp memory DOWN, which would emit
+    // a shape below the requirement; beyond the family vCPU ceiling there is no valid
+    // shape. Then clamp UP into the floor. The result is a valid, in-band multiple of
+    // 256 MB at or above the requirement.
     let memMb = Math.ceil((m * 1024) / 256) * 256;
     const neededVCpu = Math.ceil(memMb / (rules.memMaxPerVCpu * 1024));
     if (neededVCpu > vCpu) {
-      vCpu = neededVCpu;
-      if (vCpu > 32) vCpu = Math.ceil(vCpu / 4) * 4;
-      else if (vCpu > 1 && vCpu % 2 !== 0) vCpu += 1;
+      vCpu = this._roundCustomVCpu(neededVCpu, rules);
       if (vCpu > rules.maxVCpu) return "";
     }
     const minMb = Math.ceil((rules.memMinPerVCpu * vCpu * 1024) / 256) * 256;
@@ -438,6 +437,25 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 
     const prefix = rules.prefix || `${fam}-custom`;
     return `${prefix}-${vCpu}-${memMb}`;
+  }
+
+  // Round a vCPU count UP to the next count the family's stepping allows. GCP steps
+  // differ by family (rules.vCpuStep): "even" (E2/N1/N4 — next even; 1 is kept for
+  // N1); "even-quad" (N2 — even up to 32, multiple of 4 above); "pow-sixteen"
+  // (N2D/N4D — 2/4/8/16, then multiples of 16). The family ceiling is enforced by
+  // the caller, not here.
+  _roundCustomVCpu(vCpu, rules) {
+    switch (rules.vCpuStep) {
+      case "pow-sixteen":
+        if (vCpu <= 16) return [2, 4, 8, 16].find((v) => v >= vCpu);
+        return Math.ceil(vCpu / 16) * 16;
+      case "even-quad":
+        if (vCpu > 32) return Math.ceil(vCpu / 4) * 4;
+        return vCpu > 1 && vCpu % 2 !== 0 ? vCpu + 1 : vCpu;
+      case "even":
+      default:
+        return vCpu > 1 && vCpu % 2 !== 0 ? vCpu + 1 : vCpu;
+    }
   }
 
   // Whether a standard pick wastes enough to be worth a custom suggestion: it
@@ -752,21 +770,55 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 // has its own contract, so a uniform rule would emit undeployable strings. Verified
 // against Google's general-purpose-machines docs:
 //   - minVCpu / maxVCpu: the family's vCPU floor (N1 allows 1; rest need 2) and ceiling.
+//   - vCpuStep: how vCPU counts step — "even" (E2/N1/N4), "even-quad" (N2: even to
+//     32, multiple of 4 above), "pow-sixteen" (N2D/N4D: 2/4/8/16 then +16). See
+//     _roundCustomVCpu; a uniform step would emit undeployable counts (e.g. n4d-6).
 //   - memMin/MaxPerVCpu (GB): per-vCPU band — N1 0.9–6.5; N4 ≥2; rest 0.5–8.
 //   - prefix: N1 uses the prefixless "custom-…"; newer families "<family>-custom-…".
 GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
-  e2: { minVCpu: 2, maxVCpu: 32, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  e2: {
+    minVCpu: 2,
+    maxVCpu: 32,
+    vCpuStep: "even",
+    memMinPerVCpu: 0.5,
+    memMaxPerVCpu: 8,
+  },
   n1: {
     minVCpu: 1,
     maxVCpu: 96,
+    vCpuStep: "even",
     memMinPerVCpu: 0.9,
     memMaxPerVCpu: 6.5,
     prefix: "custom",
   },
-  n2: { minVCpu: 2, maxVCpu: 80, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
-  n2d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
-  n4: { minVCpu: 2, maxVCpu: 80, memMinPerVCpu: 2, memMaxPerVCpu: 8 },
-  n4d: { minVCpu: 2, maxVCpu: 96, memMinPerVCpu: 0.5, memMaxPerVCpu: 8 },
+  n2: {
+    minVCpu: 2,
+    maxVCpu: 80,
+    vCpuStep: "even-quad",
+    memMinPerVCpu: 0.5,
+    memMaxPerVCpu: 8,
+  },
+  n2d: {
+    minVCpu: 2,
+    maxVCpu: 96,
+    vCpuStep: "pow-sixteen",
+    memMinPerVCpu: 0.5,
+    memMaxPerVCpu: 8,
+  },
+  n4: {
+    minVCpu: 2,
+    maxVCpu: 80,
+    vCpuStep: "even",
+    memMinPerVCpu: 2,
+    memMaxPerVCpu: 8,
+  },
+  n4d: {
+    minVCpu: 2,
+    maxVCpu: 96,
+    vCpuStep: "pow-sixteen",
+    memMinPerVCpu: 0.5,
+    memMaxPerVCpu: 8,
+  },
 };
 // The family names that offer custom shapes, derived from the rules table so the
 // two can never drift apart.
