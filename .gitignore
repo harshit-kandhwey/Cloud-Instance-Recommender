@@ -14,6 +14,14 @@ desktop.ini
 *.swo
 *~
 
+# Secrets — API keys for the build-time data/pricing refresh (3.14) live in a
+# local .env (see .env.example); in CI they are GitHub Actions secrets. The
+# shipped app never reads them — only the tools/fetch-*.js build scripts do.
+# Never commit a real .env.
+.env
+.env.local
+.env.*.local
+
 # Node (if ever added)
 node_modules/
 npm-debug.log*
