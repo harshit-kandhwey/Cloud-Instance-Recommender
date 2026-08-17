@@ -412,6 +412,16 @@ Type` column landed in 3.7 and is carried through to the outputs; what remains
 Keep the region datasets and the pricing the engine ranks on current —
 automatically, and without the served page ever calling out.
 
+**In progress — all three items in scope.** The chosen approach: fetch both the
+existing spec source and each provider's official pricing API, and **reconcile them
+with the official API as the superior precedence**, so a scraped error cannot enter
+the region files unchallenged (a field the API does not carry is kept from the spec
+source but flagged unverified). Spec refreshes run monthly and pricing refreshes on
+a longer, roughly quarterly cadence, since list prices change rarely — which avoids
+unnecessary API calls; an empty diff opens no pull request. Each refresh lands
+through a **reviewed pull request**, not a bot push to `main`, so the per-commit
+version map stays hole-free.
+
 - **Automated data refresh (build-time, CI).** A GitHub Actions job runs the
   `tools/split-data.js` pipeline on a schedule, refreshing the per-region
   instance files so a new family or a retired size does not wait for a hand-run.
