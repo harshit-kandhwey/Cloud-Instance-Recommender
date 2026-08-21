@@ -1,0 +1,142 @@
+[
+  {
+    "instance_type": "m5.large",
+    "family": "General purpose",
+    "vCPU": 2,
+    "memory": 8,
+    "arch": ["x86_64"],
+    "physical_processor": "Intel Xeon Platinum 8175",
+    "nitro_enclave_support": false,
+    "generation": "current",
+    "pricing": {
+      "us-east-1": {
+        "linux": {
+          "ondemand": "0.096"
+        },
+        "mswin": {
+          "ondemand": "0.188"
+        }
+      },
+      "eu-west-1": {
+        "linux": {
+          "ondemand": "0.107"
+        },
+        "mswin": {
+          "ondemand": "0.199"
+        }
+      },
+      "us-mars-1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "mswin": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "m5a.large",
+    "family": "General purpose",
+    "vCPU": 2,
+    "memory": 8,
+    "arch": ["x86_64"],
+    "physical_processor": "AMD EPYC 7571",
+    "nitro_enclave_support": false,
+    "generation": "current",
+    "pricing": {
+      "us-east-1": {
+        "linux": {
+          "ondemand": "0.086"
+        },
+        "mswin": {
+          "ondemand": "0.178"
+        }
+      },
+      "eu-west-1": {
+        "linux": {
+          "ondemand": "0.096"
+        },
+        "mswin": {
+          "ondemand": "0.188"
+        }
+      },
+      "us-mars-1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "mswin": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "c6g.medium",
+    "family": "Compute optimized",
+    "vCPU": 1,
+    "memory": 2,
+    "arch": ["arm64"],
+    "physical_processor": "AWS Graviton2 Processor",
+    "nitro_enclave_support": false,
+    "generation": "current",
+    "pricing": {
+      "us-east-1": {
+        "linux": {
+          "ondemand": "0.034"
+        },
+        "mswin": {}
+      },
+      "eu-west-1": {
+        "linux": {
+          "ondemand": "0.0365"
+        },
+        "mswin": {}
+      },
+      "us-mars-1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "mswin": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "c1.medium",
+    "family": "Compute optimized",
+    "vCPU": 2,
+    "memory": 1.7,
+    "arch": ["i386", "x86_64"],
+    "physical_processor": "Intel Xeon Family",
+    "nitro_enclave_support": false,
+    "generation": "previous",
+    "pricing": {
+      "us-east-1": {
+        "linux": {
+          "ondemand": "0.13"
+        },
+        "mswin": {
+          "ondemand": "0.21"
+        }
+      },
+      "eu-west-1": {
+        "linux": {
+          "ondemand": "0.148"
+        },
+        "mswin": {
+          "ondemand": "0.21"
+        }
+      },
+      "us-mars-1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "mswin": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  }
+]

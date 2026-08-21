@@ -39,6 +39,6 @@ Each refresh is reviewed via pull request (never a bot push to `main`), and the
 source data is spot-checked against the providers' own documentation before the
 automation is trusted. Record each vetting pass here.
 
-| Date      | Checked                                                            | Notes                                                                          |
-| --------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| _pending_ | initial hand-vetting of a Vantage-API sample vs provider docs (B0) | to be filled when the Vantage key is provisioned and a live sample is captured |
+| Date       | Checked                                                        | Notes                                                                                                                                                                                                                                                                                             |
+| ---------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-21 | Vantage bulk specs + pricing for AWS/Azure/GCP vs shipped data | Live-fetched all three bulk sources with the provisioned key and mapped every field against the committed region data. AWS and GCP reproduce exactly; Azure generation is absent from Vantage and is carried forward from shipped data. A live fetch→split→integrity dry run passed on all three. |

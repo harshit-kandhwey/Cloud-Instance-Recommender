@@ -1,0 +1,93 @@
+[
+  {
+    "instance_type": "n2-standard-4",
+    "family": "General purpose",
+    "vCPU": 4,
+    "memory": 16,
+    "generation": "current",
+    "pricing": {
+      "us-central1": {
+        "linux": {
+          "ondemand": "0.19423600000000002"
+        },
+        "windows": {
+          "ondemand": "0.378236"
+        }
+      },
+      "europe-west1": {
+        "linux": {
+          "ondemand": "0.213668"
+        },
+        "windows": {
+          "ondemand": "0.397668"
+        }
+      },
+      "mars-central1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "windows": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "n2d-standard-4",
+    "family": "General purpose",
+    "vCPU": 4,
+    "memory": 16,
+    "generation": "current",
+    "pricing": {
+      "us-central1": {
+        "linux": {
+          "ondemand": "0.168984"
+        },
+        "windows": {
+          "ondemand": "0.35298399999999996"
+        }
+      },
+      "europe-west1": {
+        "linux": {
+          "ondemand": "0.185892"
+        },
+        "windows": {
+          "ondemand": "0.369892"
+        }
+      },
+      "mars-central1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "windows": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "t2a-standard-4",
+    "family": "General purpose",
+    "vCPU": 4,
+    "memory": 16,
+    "generation": "current",
+    "pricing": {
+      "us-central1": {
+        "linux": {
+          "ondemand": "0.154"
+        },
+        "windows": {
+          "ondemand": "0.33799999999999997"
+        }
+      },
+      "mars-central1": {
+        "linux": {
+          "ondemand": "9.99"
+        },
+        "windows": {
+          "ondemand": "9.99"
+        }
+      }
+    }
+  }
+]
