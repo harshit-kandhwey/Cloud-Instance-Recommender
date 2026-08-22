@@ -1,0 +1,254 @@
+{
+  "formatVersion": "v1.0",
+  "offerCode": "AmazonEC2",
+  "version": "20260817000000",
+  "publicationDate": "2026-08-17T00:00:00Z",
+  "products": {
+    "SKU_M5_LINUX": {
+      "sku": "SKU_M5_LINUX",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "m5.large",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "8 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_M5_WIN": {
+      "sku": "SKU_M5_WIN",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "m5.large",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "8 GiB",
+        "operatingSystem": "Windows",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "License included",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_C6G_LINUX": {
+      "sku": "SKU_C6G_LINUX",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "c6g.medium",
+        "instanceFamily": "Compute optimized",
+        "vcpu": "1",
+        "memory": "2 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_X2_LINUX": {
+      "sku": "SKU_X2_LINUX",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "x2.large",
+        "instanceFamily": "Memory optimized",
+        "vcpu": "8",
+        "memory": "1,024 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_DEDICATED": {
+      "sku": "SKU_DEDICATED",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "m5.large",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "8 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Dedicated",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_BYOL_WIN": {
+      "sku": "SKU_BYOL_WIN",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "m5.large",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "8 GiB",
+        "operatingSystem": "Windows",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "Bring your own license",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_SQL_WIN": {
+      "sku": "SKU_SQL_WIN",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "r5.large",
+        "instanceFamily": "Memory optimized",
+        "vcpu": "2",
+        "memory": "16 GiB",
+        "operatingSystem": "Windows",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "SQL Std",
+        "licenseModel": "License included",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_RESERVED": {
+      "sku": "SKU_RESERVED",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "m5.large",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "8 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Shared",
+        "capacitystatus": "AllocatedCapacityReservation",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_STORAGE": {
+      "sku": "SKU_STORAGE",
+      "productFamily": "Storage",
+      "attributes": {
+        "volumeApiName": "gp3",
+        "regionCode": "us-east-1"
+      }
+    },
+    "SKU_NOPRICE_LINUX": {
+      "sku": "SKU_NOPRICE_LINUX",
+      "productFamily": "Compute Instance",
+      "attributes": {
+        "instanceType": "t3.micro",
+        "instanceFamily": "General purpose",
+        "vcpu": "2",
+        "memory": "1 GiB",
+        "operatingSystem": "Linux",
+        "tenancy": "Shared",
+        "capacitystatus": "Used",
+        "preInstalledSw": "NA",
+        "licenseModel": "No License required",
+        "regionCode": "us-east-1"
+      }
+    }
+  },
+  "terms": {
+    "OnDemand": {
+      "SKU_M5_LINUX": {
+        "SKU_M5_LINUX.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_M5_LINUX.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.0960000000" }
+            }
+          }
+        }
+      },
+      "SKU_M5_WIN": {
+        "SKU_M5_WIN.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_M5_WIN.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.1880000000" }
+            }
+          }
+        }
+      },
+      "SKU_C6G_LINUX": {
+        "SKU_C6G_LINUX.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_C6G_LINUX.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.0340000000" }
+            }
+          }
+        }
+      },
+      "SKU_X2_LINUX": {
+        "SKU_X2_LINUX.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_X2_LINUX.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "6.6672000000" }
+            }
+          }
+        }
+      },
+      "SKU_DEDICATED": {
+        "SKU_DEDICATED.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_DEDICATED.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.1056000000" }
+            }
+          }
+        }
+      },
+      "SKU_BYOL_WIN": {
+        "SKU_BYOL_WIN.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_BYOL_WIN.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.0960000000" }
+            }
+          }
+        }
+      },
+      "SKU_SQL_WIN": {
+        "SKU_SQL_WIN.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_SQL_WIN.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.5000000000" }
+            }
+          }
+        }
+      },
+      "SKU_RESERVED": {
+        "SKU_RESERVED.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_RESERVED.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Hrs",
+              "pricePerUnit": { "USD": "0.0960000000" }
+            }
+          }
+        }
+      },
+      "SKU_NOPRICE_LINUX": {
+        "SKU_NOPRICE_LINUX.JRTCKXETXF": {
+          "priceDimensions": {
+            "SKU_NOPRICE_LINUX.JRTCKXETXF.6YS6EN2CT7": {
+              "unit": "Quantity",
+              "pricePerUnit": { "USD": "0.0000000000" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

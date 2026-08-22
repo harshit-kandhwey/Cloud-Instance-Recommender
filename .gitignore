@@ -30,6 +30,11 @@ npm-debug.log*
 dist/
 build/
 
+# Transient pricing artifacts from the official-API fetchers (Phase D). The
+# fetchers write these for reconcile-data.js to consume in the same CI run; the
+# merged result lands in the region files, so the raw dumps are never committed.
+.refresh-cache/
+
 # Temporary files
 *.tmp
 *.bak
