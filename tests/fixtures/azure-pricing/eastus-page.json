@@ -1,0 +1,117 @@
+{
+  "BillingCurrency": "USD",
+  "Count": 10,
+  "Items": [
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.192
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5",
+      "productName": "Virtual Machines Dsv5 Series Windows",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.376
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5 Spot",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.0203
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5 Low Priority",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.0384
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Reservation",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.1152
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "DevTestConsumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D2s v5",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D2s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.05
+    },
+    {
+      "serviceName": "Storage",
+      "type": "Consumption",
+      "unitOfMeasure": "1 GB/Month",
+      "skuName": "Hot LRS",
+      "productName": "Blob Storage",
+      "armRegionName": "eastus",
+      "armSkuName": "",
+      "currencyCode": "USD",
+      "unitPrice": 0.0184
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Month",
+      "skuName": "D4s v5",
+      "productName": "Virtual Machines Dsv5 Series Reserved Capacity",
+      "armRegionName": "eastus",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 140.16
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "A0",
+      "productName": "Virtual Machines A Series Basic",
+      "armRegionName": "eastus",
+      "armSkuName": "Basic_A0",
+      "currencyCode": "USD",
+      "unitPrice": 0.02
+    },
+    {
+      "serviceName": "Virtual Machines",
+      "type": "Consumption",
+      "unitOfMeasure": "1 Hour",
+      "skuName": "D4s v5",
+      "productName": "Virtual Machines Dsv5 Series",
+      "armRegionName": "westeurope",
+      "armSkuName": "Standard_D4s_v5",
+      "currencyCode": "USD",
+      "unitPrice": 0.2
+    }
+  ],
+  "NextPageLink": null
+}
