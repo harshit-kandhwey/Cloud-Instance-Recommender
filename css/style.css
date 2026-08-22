@@ -39,6 +39,24 @@ body {
   padding-bottom: 10px;
 }
 
+/* Header data-vintage badge (populated by renderDataFreshness). Subtle pill on the
+   gradient header; [hidden] must be restated because the display rule overrides it. */
+.data-freshness {
+  display: inline-block;
+  margin: 0 auto 12px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+
+.data-freshness[hidden] {
+  display: none;
+}
+
 .main-content {
   padding: 40px;
 }

@@ -70,8 +70,42 @@ function setupBackToTop() {
   sync();
 }
 
+// ─── Data freshness badge ─────────────────────────────────────────────────────
+// Populate the header's #dataFreshness element from the loaded provider manifests'
+// {P}_DATA_DATE globals (set synchronously by the deferred data scripts, which run
+// before this one). Shows one date when the loaded providers agree — the norm,
+// split-data stamps every region with the single monolith date — and a per-provider
+// breakdown when they differ. Only providers whose manifest actually loaded appear,
+// so each page shows exactly its own data's vintage.
+function renderDataFreshness() {
+  const el = document.getElementById("dataFreshness");
+  if (!el) return;
+  const loaded = [
+    ["AWS", window.AWS_DATA_DATE],
+    ["Azure", window.AZURE_DATA_DATE],
+    ["GCP", window.GCP_DATA_DATE],
+  ].filter(([, date]) => date);
+  if (!loaded.length) {
+    el.textContent = "";
+    el.hidden = true;
+    return;
+  }
+  const dates = [...new Set(loaded.map(([, date]) => date))];
+  const label =
+    dates.length === 1
+      ? dates[0]
+      : loaded.map(([name, date]) => `${name} ${date}`).join(" · ");
+  el.textContent = `📅 Instance data updated ${label}`;
+  el.title =
+    "Snapshot date of the instance specs this tool ranks on, refreshed by the data pipeline.";
+  el.hidden = false;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Initializing Cloud Instance Recommender with Modular Selectors");
+
+  // Surface the loaded data's vintage in the header
+  renderDataFreshness();
 
   // Collapse/expand state first, so enhanceAccessibility reads the settled
   // aria-expanded rather than the markup's default

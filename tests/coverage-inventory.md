@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 259 | 321 |
+| Covered | 62 | 260 | 322 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 374 | 460 |
+| **Total** | 86 | 375 | 461 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -355,6 +355,7 @@ waiver still records the reason.
 | `renderAppTableBody` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderCallouts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderCsvMenu` | js/base/downloads.js | function | internal | covered | export/nomatch-export-test.js, workload/app-summary-test.js |
+| `renderDataFreshness` | js/base/ui-shell.js | function | internal | covered | ui/data-freshness-test.js |
 | `renderEstateCharts` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderEstateShape` | js/base/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `renderExecutiveReport` | js/base/charts.js | function+window | internal | covered | export/report-test.js |
