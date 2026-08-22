@@ -44,7 +44,13 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
+      # Check out with the PAT so the credential git persists for the push is the
+      # PAT, not the default GITHUB_TOKEN. A branch pushed and a PR opened under the
+      # PAT DO trigger the six CI checks; a GITHUB_TOKEN push would not (by design,
+      # to avoid workflow recursion).
       - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.DATA_REFRESH_PAT }}
 
       - uses: actions/setup-node@v7
         with:
@@ -128,13 +134,13 @@ jobs:
           name: data-diff-report
           path: diff-report.md
 
-      # Open the PR. GITHUB_TOKEN pushes the branch and files the PR; the six CI
-      # checks run when the human adds the required CHANGELOG row + tag commit on
-      # review (GITHUB_TOKEN pushes alone don't trigger workflows — by design).
+      # Open the PR. The PAT (persisted by checkout above) pushes the branch and
+      # files the PR, so the six CI checks run on PR open. The human still merges
+      # with the required CHANGELOG row + version tag.
       - name: Open refresh PR
         if: ${{ steps.diff.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.DATA_REFRESH_PAT }}
           PRUNED: ${{ steps.split.outputs.pruned }}
           REFRESH_PRICING: ${{ steps.scope.outputs.refresh_pricing }}
           DATE: ${{ steps.scope.outputs.date }}
@@ -156,8 +162,7 @@ jobs:
             echo "> [!IMPORTANT]"
             echo "> Merge this **with** a CHANGELOG version-map row + annotated tag — a"
             echo "> bot commit without them holes the version map. Re-baseline any goldens"
-            echo "> a price move shifted. That review commit is also what triggers the six"
-            echo "> CI checks on this PR."
+            echo "> a price move shifted."
             if [ "$PRUNED" = "true" ]; then
               echo
               echo "> [!WARNING]"
