@@ -43,6 +43,11 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # Hard cap so a hung fetch (esp. the large AWS bulk download wired in Phase D3)
+    # can never run unbounded. Actions minutes are free on this public repo, but an
+    # unbounded job is bad hygiene regardless. Revisit when D3 lands the real pricing
+    # pull and its runtime is measured.
+    timeout-minutes: 30
     steps:
       # Check out with the PAT so the credential git persists for the push is the
       # PAT, not the default GITHUB_TOKEN. A branch pushed and a PR opened under the
