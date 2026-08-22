@@ -65,6 +65,18 @@ test("aws.html: upload → region chips → generate → export results CSV", as
   const downloadSection = page.locator("#downloadSection");
   await expect(downloadSection).toBeVisible({ timeout: 15000 });
 
+  // ── CSV menu opens and closes ────────────────────────────────────────────────
+  // Regression: .csv-menu's display:flex once overrode the generic .hidden rule at
+  // equal specificity, so the checklist rendered expanded on every run and the
+  // toggle could not close it. It must start hidden, open on click, and contract
+  // again on a second click.
+  const csvMenu = page.locator("#csvMenu");
+  await expect(csvMenu).toBeHidden();
+  await page.click("#csvMenuBtn");
+  await expect(csvMenu).toBeVisible();
+  await page.click("#csvMenuBtn");
+  await expect(csvMenu).toBeHidden();
+
   // ── Export the results CSV ───────────────────────────────────────────────────
   // "Results CSV" is checked by default in the CSV menu; open it and download.
   const { filename, rows } = await exportResultsCsv(page);

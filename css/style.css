@@ -829,6 +829,12 @@ nav a.active {
   flex-direction: column;
   gap: 4px;
 }
+/* .csv-menu sets display:flex and is defined after the generic .hidden rule, so at
+   equal specificity it would win and .hidden could never close the menu. Restate the
+   hidden state on a compound selector so toggleCsvMenu()'s .hidden actually hides it. */
+.csv-menu.hidden {
+  display: none;
+}
 .csv-menu-item {
   display: flex;
   align-items: center;
