@@ -1,0 +1,175 @@
+name: Data refresh
+
+# Regenerate the shipped instance data from upstream and open a PR carrying the
+# region diff. NEVER pushes to main directly: a bot commit without a CHANGELOG row
+# + version tag would hole the version map (see ROADMAP's format gate), so this
+# only opens a PR — a human merges it with the row + tag and re-baselines any
+# goldens a price move shifted.
+#
+# Decoupled cadences (avoid wasted API calls — on-demand list prices move rarely):
+#   - specs   refresh MONTHLY   (the freshness SLA; the Vantage pull is cheap)
+#   - pricing refresh QUARTERLY (~every 45 days to a quarter upstream)
+# The monthly run cross-verifies specs WITHOUT re-querying the pricing APIs; the
+# quarterly run also refreshes pricing. workflow_dispatch can force either on demand.
+
+on:
+  schedule:
+    # Monthly specs refresh — 1st of every month, 06:00 UTC. refresh_pricing=false.
+    - cron: "0 6 1 * *"
+    # Quarterly pricing refresh — 1st of Jan/Apr/Jul/Oct, 06:00 UTC. Overlaps the
+    # monthly cron on those dates; the concurrency group below serialises them and
+    # the pricing schedule wins the refresh_pricing flag (see the resolve step).
+    - cron: "0 6 1 1,4,7,10 *"
+  workflow_dispatch:
+    inputs:
+      refresh_pricing:
+        description: "Also refresh pricing from the official catalogues (Phase D)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Generate the diff report only; do not open a PR"
+        type: boolean
+        default: false
+
+# One refresh at a time; a queued run waits rather than racing the branch push.
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      # Which refresh is this? The quarterly cron and workflow_dispatch's toggle
+      # turn pricing on; the monthly cron leaves it off. github.event.schedule is
+      # the exact cron string that fired.
+      - name: Resolve refresh scope
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            pricing="${{ github.event.inputs.refresh_pricing }}"
+          elif [ "${{ github.event.schedule }}" = "0 6 1 1,4,7,10 *" ]; then
+            pricing="true"
+          else
+            pricing="false"
+          fi
+          echo "refresh_pricing=$pricing" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          echo "Refresh scope: specs=always, pricing=$pricing"
+
+      # Specs: rewrite each js/{p}/{p}-data.js monolith from the Vantage bulk data.
+      # The Bearer key is a secret and is never printed by the tool.
+      - name: Refresh specs (Vantage)
+        env:
+          VANTAGE_API_KEY: ${{ secrets.VANTAGE_API_KEY }}
+        run: node tools/fetch-vantage.js --date "${{ steps.scope.outputs.date }}"
+
+      # Pricing reconcile against the official catalogues — folded in by Phase D3
+      # (AWS keyless Bulk, Azure Retail, GCP Cloud Billing). Gated on the flag so a
+      # monthly specs run never touches the pricing APIs. Placeholder until D3.
+      - name: Refresh pricing (official catalogues)
+        if: ${{ steps.scope.outputs.refresh_pricing == 'true' }}
+        env:
+          GCP_BILLING_API_KEY: ${{ secrets.GCP_BILLING_API_KEY }}
+        run: echo "Pricing refresh is wired in Phase D3; specs-only until then."
+
+      # Diff the committed region data (js/{p}/regions/) against the freshly written
+      # monolith. MUST run before split-data, which overwrites regions/. Line 1 is
+      # the <!-- data-diff: CHANGES|NO-CHANGES --> sentinel the no-op guard reads.
+      - name: Generate diff report
+        id: diff
+        run: |
+          node tools/data-diff.js > diff-report.md
+          sentinel=$(head -n1 diff-report.md)
+          echo "sentinel<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$sentinel" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          if printf '%s' "$sentinel" | grep -q 'data-diff: CHANGES'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat diff-report.md
+
+      # No-op guard: nothing moved upstream → no branch, no PR, no review churn.
+      - name: No changes — stop
+        if: ${{ steps.diff.outputs.changed == 'false' }}
+        run: echo "No data changes detected; skipping PR."
+
+      # Split the monolith back into js/{p}/regions/ + the manifest — the shape the
+      # page loads and the repo commits. Capture the pruned-region warning so the PR
+      # can flag the required sw.js CACHE bump.
+      - name: Split into region files
+        id: split
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        run: |
+          node tools/split-data.js | tee split.log
+          if grep -q 'regions were removed' split.log; then
+            echo "pruned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pruned=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Dry-run: keep the diff as an artifact and stop before touching git.
+      - name: Upload diff report (dry-run)
+        if: ${{ steps.diff.outputs.changed == 'true' && github.event.inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: data-diff-report
+          path: diff-report.md
+
+      # Open the PR. GITHUB_TOKEN pushes the branch and files the PR; the six CI
+      # checks run when the human adds the required CHANGELOG row + tag commit on
+      # review (GITHUB_TOKEN pushes alone don't trigger workflows — by design).
+      - name: Open refresh PR
+        if: ${{ steps.diff.outputs.changed == 'true' && github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRUNED: ${{ steps.split.outputs.pruned }}
+          REFRESH_PRICING: ${{ steps.scope.outputs.refresh_pricing }}
+          DATE: ${{ steps.scope.outputs.date }}
+        run: |
+          set -euo pipefail
+          branch="data-refresh/${DATE}-${{ github.run_number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add js/
+          scope="specs"
+          [ "$REFRESH_PRICING" = "true" ] && scope="specs + pricing"
+          git commit -m "Data refresh ($scope) ${DATE}"
+          git push origin "$branch"
+
+          {
+            echo "Automated instance-data refresh (**$scope**), snapshot \`${DATE}\`."
+            echo
+            echo "> [!IMPORTANT]"
+            echo "> Merge this **with** a CHANGELOG version-map row + annotated tag — a"
+            echo "> bot commit without them holes the version map. Re-baseline any goldens"
+            echo "> a price move shifted. That review commit is also what triggers the six"
+            echo "> CI checks on this PR."
+            if [ "$PRUNED" = "true" ]; then
+              echo
+              echo "> [!WARNING]"
+              echo "> Regions were pruned — bump \`CACHE\` in \`sw.js\` so clients drop the"
+              echo "> stale cached copies. See the diff report below."
+            fi
+            echo
+            cat diff-report.md
+          } > pr-body.md
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Data refresh ($scope) ${DATE}" \
+            --body-file pr-body.md
