@@ -1,0 +1,336 @@
+{
+  "skus": [
+    {
+      "skuId": "AAAA-N2-CORE",
+      "description": "N2 Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 31611000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "AAAA-N2-RAM",
+      "description": "N2 Instance Ram running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "RAM",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "GiBy.h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 4237000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "BBBB-N2-CORE-COMMIT1YR",
+      "description": "N2 Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "Commit1Yr"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 7660000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "CCCC-N2-SOLE",
+      "description": "N2 Sole Tenancy Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 38000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "DDDD-N2-RESERVED",
+      "description": "Reserved N2 Core in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 20000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "EEEE-CUSTOM-CORE",
+      "description": "Custom Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 33174000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "FFFF-C2D-CORE",
+      "description": "C2D AMD Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 29231000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "FFFF-C2D-RAM",
+      "description": "C2D AMD Instance Ram running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "RAM",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "GiBy.h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 3915000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "GGGG-T2A-CORE",
+      "description": "T2A Arm Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 21000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "GGGG-T2A-RAM",
+      "description": "T2A Arm Instance Ram running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "RAM",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "GiBy.h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 2800000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "WWWW-WIN-DC",
+      "description": "Licensing Fee for Windows Server 2019 Datacenter Edition (CPU cost)",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "License",
+        "resourceGroup": "WindowsServer2019",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["global"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 46000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "WWWW-WIN-BYOL",
+      "description": "Licensing Fee for Windows Server 2012 BYOL (CPU cost)",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "License",
+        "resourceGroup": "Google",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["global"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": { "currencyCode": "USD", "units": "0", "nanos": 0 }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
