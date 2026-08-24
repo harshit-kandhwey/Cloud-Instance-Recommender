@@ -281,8 +281,33 @@ function buildMonolith({
     }
   }
 
-  // Sorted region keys and instance types keep the output (and the split diff) stable.
-  const regionKeys = [...byRegion.keys()].sort();
+  // Map(rk -> Map(type -> record)) → plain { rk: { type: record } } for the shared
+  // serializer below, which is the one definition of the on-disk format.
+  const obj = {};
+  for (const [rk, recs] of byRegion) {
+    obj[rk] = {};
+    for (const [t, rec] of recs) obj[rk][t] = rec;
+  }
+  return serializeMonolith({ name, prefix, source, dataDate, byRegion: obj });
+}
+
+/**
+ * Emit the monolith string split-data.js consumes, from an already-built region map.
+ * Shared by buildMonolith (Vantage generation) and tools/reconcile-data.js (official
+ * merge) so the on-disk format has exactly one definition. Region keys and instance
+ * types are sorted so the output — and the split diff — stays stable.
+ * @param {object} o
+ * @param {"aws"|"azure"|"gcp"} o.name
+ * @param {"AWS"|"AZURE"|"GCP"} o.prefix  window-global prefix
+ * @param {string} o.source  header-comment source label
+ * @param {string} o.dataDate  YYYY-MM-DD
+ * @param {Object<string,Object<string,object>>} o.byRegion  { regionKey: { type: record } }
+ * @returns {{ monolith:string, regionKeys:string[], instanceCount:number }}
+ */
+function serializeMonolith({ name, prefix, source, dataDate, byRegion }) {
+  const fieldOrder = FIELD_ORDER[name];
+  if (!fieldOrder) throw new Error(`unknown provider ${name}`);
+  const regionKeys = Object.keys(byRegion).sort();
   const label = { AWS: "AWS", AZURE: "Azure", GCP: "GCP" }[prefix];
 
   const parts = [];
@@ -298,13 +323,13 @@ function buildMonolith({
 
   let instanceCount = 0;
   for (const rk of regionKeys) {
-    const recs = byRegion.get(rk);
-    const types = [...recs.keys()].sort();
+    const recs = byRegion[rk];
+    const types = Object.keys(recs).sort();
     instanceCount += types.length;
     const body = types
       .map(
         (t) =>
-          `  ${JSON.stringify(t)}: {\n${emitRecordBody(fieldOrder, recs.get(t))}\n  },`,
+          `  ${JSON.stringify(t)}: {\n${emitRecordBody(fieldOrder, recs[t])}\n  },`,
       )
       .join("\n");
     parts.push(`const ${rk} = {\n${body}\n};`);
@@ -428,6 +453,7 @@ async function main() {
 
 module.exports = {
   buildMonolith,
+  serializeMonolith,
   instanceRegionRecords,
   collectAzureGeneration,
   readShippedRegionKeys,
