@@ -21,7 +21,7 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
     "pricing plan is the full ordered pipeline",
     order.join(" -> ") ===
       "fetch-official-aws -> fetch-official-azure -> fetch-official-gcp -> " +
-        "fetch-vantage -> reconcile-data -> data-diff -> split-data",
+        "fetch-vantage -> reconcile-data -> data-diff -> recommendation-diff -> split-data",
     order.join(" -> "),
   );
 
@@ -36,14 +36,16 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
     order.join(" -> "),
   );
 
-  // Guard B (plant-RED: put split-data before data-diff): the diff reads regions/ as the
-  // OLD side, split overwrites it, so diff must come first — and reconcile between vantage
-  // and diff so the diff sees reconciled prices.
+  // Guard B (plant-RED: put split-data before data-diff): the diff and the flip check both
+  // read regions/ as the OLD side, split overwrites it, so both must come first — reconcile
+  // between vantage and diff so the diff sees reconciled prices; recommendation-diff after
+  // data-diff and before split.
   check(
-    "reconcile after fetch-vantage, data-diff after reconcile, split-data LAST",
+    "reconcile after fetch-vantage, data-diff after reconcile, recommendation-diff before split-data LAST",
     vantage < order.indexOf("reconcile-data") &&
       order.indexOf("reconcile-data") < order.indexOf("data-diff") &&
-      order.indexOf("data-diff") < order.indexOf("split-data") &&
+      order.indexOf("data-diff") < order.indexOf("recommendation-diff") &&
+      order.indexOf("recommendation-diff") < order.indexOf("split-data") &&
       order[order.length - 1] === "split-data",
     order.join(" -> "),
   );
@@ -53,8 +55,9 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
 {
   const order = names({ pricing: false, date: "2026-08-26" });
   check(
-    "specs-only plan is fetch-vantage -> data-diff -> split-data",
-    order.join(" -> ") === "fetch-vantage -> data-diff -> split-data",
+    "specs-only plan is fetch-vantage -> data-diff -> recommendation-diff -> split-data",
+    order.join(" -> ") ===
+      "fetch-vantage -> data-diff -> recommendation-diff -> split-data",
     order.join(" -> "),
   );
   check(

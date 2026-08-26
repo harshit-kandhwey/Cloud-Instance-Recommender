@@ -68,6 +68,16 @@ function planSteps({ pricing, date }) {
     captureTo: path.join(".refresh-cache", "diff-report.md"),
     isDiff: true,
   });
+  // Recommendation flips: run the engine over old vs new data (reads regions/ as the OLD
+  // side, so BEFORE split-data). Only when the diff found changes; its output is echoed.
+  steps.push({
+    name: "recommendation-diff",
+    script: "tools/recommendation-diff.js",
+    args: [],
+    captureTo: path.join(".refresh-cache", "rec-flips-report.md"),
+    onlyIfChanged: true,
+    echo: true,
+  });
   steps.push({
     name: "split-data",
     script: "tools/split-data.js",
@@ -174,6 +184,8 @@ function main() {
     if (step.isDiff) {
       const sentinel = out.split(/\r?\n/, 1)[0] || "";
       changed = /data-diff:\s*CHANGES/.test(sentinel);
+      process.stdout.write(out);
+    } else if (step.echo && out) {
       process.stdout.write(out);
     }
   }

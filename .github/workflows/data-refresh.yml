@@ -186,6 +186,21 @@ jobs:
         if: ${{ steps.diff.outputs.changed == 'false' }}
         run: echo "No data changes detected; skipping PR."
 
+      # Recommendation flips (Phase C2.4): run the engine over the committed data and the
+      # fresh monolith for the sample inputs and report any pick that moved. Reads
+      # regions/ as the OLD side, so BEFORE split-data. Line 1 is the FLIPS/NONE sentinel.
+      - name: Recommendation flip check
+        id: flips
+        if: ${{ steps.diff.outputs.changed == 'true' }}
+        run: |
+          node tools/recommendation-diff.js > rec-flips-report.md
+          if head -n1 rec-flips-report.md | grep -q 'rec-flips: FLIPS'; then
+            echo "flipped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "flipped=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat rec-flips-report.md
+
       # Split the monolith back into js/{p}/regions/ + the manifest — the shape the
       # page loads and the repo commits. Capture the pruned-region warning so the PR
       # can flag the required sw.js CACHE bump.
@@ -200,7 +215,7 @@ jobs:
             echo "pruned=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Dry-run: keep the diff (and the reconcile report, on a pricing run) as
+      # Dry-run: keep the diff, the reconcile report (pricing run) and the flip report as
       # artifacts and stop before touching git.
       - name: Upload diff report (dry-run)
         if: ${{ steps.diff.outputs.changed == 'true' && github.event.inputs.dry_run == 'true' }}
@@ -210,6 +225,7 @@ jobs:
           path: |
             diff-report.md
             reconcile-report.md
+            rec-flips-report.md
           if-no-files-found: ignore
 
       # Open the PR. The PAT (persisted by checkout above) pushes the branch and
@@ -220,6 +236,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.DATA_REFRESH_PAT }}
           PRUNED: ${{ steps.split.outputs.pruned }}
+          FLIPPED: ${{ steps.flips.outputs.flipped }}
           REFRESH_PRICING: ${{ needs.scope.outputs.refresh_pricing }}
           DATE: ${{ needs.scope.outputs.date }}
         run: |
@@ -247,9 +264,19 @@ jobs:
               echo "> Regions were pruned — bump \`CACHE\` in \`sw.js\` so clients drop the"
               echo "> stale cached copies. See the diff report below."
             fi
+            if [ "$FLIPPED" = "true" ]; then
+              echo
+              echo "> [!CAUTION]"
+              echo "> This refresh **flips a recommendation** for the sample inputs. Confirm"
+              echo "> the new picks are correct before re-baselining the goldens — see below."
+            fi
             echo
             if [ "$REFRESH_PRICING" = "true" ] && [ -f reconcile-report.md ]; then
               cat reconcile-report.md
+              echo
+            fi
+            if [ -f rec-flips-report.md ]; then
+              cat rec-flips-report.md
               echo
             fi
             cat diff-report.md

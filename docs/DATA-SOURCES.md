@@ -52,7 +52,9 @@ Two paths, same pipeline (the "CI + local runbook" model):
 **Pipeline order is load-bearing** (both paths): the official fetchers read the shipped
 manifest (`js/{p}/regions/` + the `{P}_REGION_KEYS` keys) that `fetch-vantage` overwrites
 with a monolith, so they run first —
-`official fetch → fetch-vantage → reconcile → data-diff → split-data`.
+`official fetch → fetch-vantage → reconcile → data-diff → recommendation-diff → split-data`.
+The recommendation-diff step runs the engine over the old and new data for the sample
+inputs and flags any refresh that flips a recommended instance, loudly, in the PR body.
 
 ## Vetting log
 

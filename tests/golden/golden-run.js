@@ -9,12 +9,9 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
+// Set when run as a script; unused when this file is require()d only for its exports.
 const REPO = process.argv[2];
 const OUT = process.argv[3];
-if (!REPO || !OUT) {
-  console.error("usage: node golden-run.js <repoDir> <outDir>");
-  process.exit(2);
-}
 
 // Same rows as downloadSampleCSV() in main-script.js
 const SAMPLE_CSV = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,AWS Min Gen,Azure Min Gen,GCP Min Gen
@@ -191,7 +188,7 @@ const SCENARIOS = [
   },
 ];
 
-(async () => {
+async function main() {
   fs.mkdirSync(OUT, { recursive: true });
   for (const { file, providers, options } of SCENARIOS) {
     const ctx = makeContext();
@@ -222,7 +219,29 @@ const SCENARIOS = [
     process.exit(1);
   }
   console.log("Done — no fallbacks, no errors.");
-})().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+}
+
+// The canary set (SAMPLE_CSV + SCENARIOS) and the engine file list are the single
+// definition of "a representative recommendation run". tools/recommendation-diff.js
+// reuses them to detect refresh-driven recommendation flips, so the flip check and the
+// goldens can never diverge on which inputs count. Guarded so requiring this module
+// (for those exports) does not run the golden generator; run-all invokes it as a
+// subprocess, where require.main === module still holds.
+module.exports = {
+  SAMPLE_CSV,
+  parseSample,
+  SCENARIOS,
+  CODE_FILES,
+  BASE_OPTIONS,
+};
+
+if (require.main === module) {
+  if (!REPO || !OUT) {
+    console.error("usage: node golden-run.js <repoDir> <outDir>");
+    process.exit(2);
+  }
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
