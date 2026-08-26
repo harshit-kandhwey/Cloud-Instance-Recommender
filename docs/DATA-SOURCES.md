@@ -33,6 +33,27 @@ list prices change rarely. An empty diff opens no pull request.
 - **CI:** the same names are GitHub Actions secrets, exposed to the data-refresh
   workflow as environment variables. AWS and Azure need no key.
 
+## Running a refresh
+
+Two paths, same pipeline (the "CI + local runbook" model):
+
+- **CI (default):** the `.github/workflows/data-refresh.yml` schedule (monthly specs;
+  pricing on the quarter) or a manual `workflow_dispatch` (`refresh_pricing`, `dry_run`).
+  It opens a reviewed PR; a human merges it with the CHANGELOG row + tag.
+- **Local, by hand:** `npm run refresh` (specs + pricing) or `npm run refresh -- --specs-only`.
+  Needs `VANTAGE_API_KEY` in `.env` (plus `GCP_BILLING_API_KEY` for a pricing run); the
+  script loads `.env` itself and never prints a key. It regenerates the `js/` tree, writes
+  the diff and reconcile reports under the gitignored `.refresh-cache/`, and prints the
+  diff — it does **not** touch git. You then review, re-baseline any shifted goldens (bump
+  `sw.js` `CACHE` if a region was pruned), commit `js/` **with** a CHANGELOG version-map
+  row + annotated tag, and open the PR. A no-op diff leaves the regenerated monolith in the
+  tree; discard it with `git checkout -- js/`.
+
+**Pipeline order is load-bearing** (both paths): the official fetchers read the shipped
+manifest (`js/{p}/regions/` + the `{P}_REGION_KEYS` keys) that `fetch-vantage` overwrites
+with a monolith, so they run first —
+`official fetch → fetch-vantage → reconcile → data-diff → split-data`.
+
 ## Vetting log
 
 Each refresh is reviewed via pull request (never a bot push to `main`), and the

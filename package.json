@@ -15,6 +15,7 @@
     "test:mutation": "stryker run",
     "syntax-check": "node tests/syntax-check.js",
     "coverage:check": "node tools/build-coverage-inventory.js --check",
+    "refresh": "node tools/refresh-local.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
