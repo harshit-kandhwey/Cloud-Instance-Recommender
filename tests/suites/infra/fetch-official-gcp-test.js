@@ -28,8 +28,8 @@ const rates = parseCoreRamSkus(page.skus);
 {
   const series = Object.keys(rates).sort();
   check(
-    "only shipped predefined series matched (c2d, n2, t2a); sole-tenancy/reserved/custom excluded",
-    series.join(",") === "c2d,n2,t2a",
+    "only shipped predefined series matched (c2, c2d, n2, t2a); sole-tenancy/reserved/custom excluded",
+    series.join(",") === "c2,c2d,n2,t2a",
     series.join(","),
   );
 }
@@ -66,6 +66,14 @@ const rates = parseCoreRamSkus(page.skus);
     classifyCoreRam("C2D AMD Instance Ram running in X").series === "c2d" &&
       classifyCoreRam("T2A Arm Instance Core running in X").series === "t2a",
   );
+  check(
+    "classifyCoreRam maps c2's token-less 'Compute optimized', rejects its hyphenated sole-tenancy form",
+    classifyCoreRam("Compute optimized Instance Core running in X").series ===
+      "c2" &&
+      classifyCoreRam(
+        "Compute-optimized Sole Tenancy Instance Core running in X",
+      ) === null,
+  );
 }
 
 // ── skuUsd ───────────────────────────────────────────────────────────────────────
@@ -92,6 +100,7 @@ const shipped = {
   us_east1: {
     "n2-standard-4": { series: "n2", vCpus: 4, memoryGiB: 16 },
     "c2d-standard-2": { series: "c2d", vCpus: 2, memoryGiB: 8 },
+    "c2-standard-8": { series: "c2", vCpus: 8, memoryGiB: 32 },
     "t2a-standard-1": { series: "t2a", vCpus: 1, memoryGiB: 4 },
     "n1-standard-1": { series: "n1", vCpus: 1, memoryGiB: 3.75 },
   },
@@ -114,6 +123,14 @@ const { byRegion, unmatched } = composePricing(
   check(
     "c2d-standard-2 composed",
     m.hourlyPrice === 0.089782 && m.windowsHourlyPrice === 0.181782,
+    JSON.stringify(m),
+  );
+}
+{
+  const m = byRegion.us_east1["c2-standard-8"];
+  check(
+    "c2-standard-8 composed from the token-less 'Compute optimized' rates",
+    m.hourlyPrice === 0.41752 && m.windowsHourlyPrice === 0.78552,
     JSON.stringify(m),
   );
 }

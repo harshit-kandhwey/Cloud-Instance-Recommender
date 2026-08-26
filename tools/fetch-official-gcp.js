@@ -51,15 +51,31 @@ const REQUEST_TIMEOUT_MS = 60_000;
 const WINDOWS_PER_VCPU_HR_FALLBACK = 0.046;
 
 // Shipped series → the EXACT SKU description token before " Instance Core"/" Instance
-// Ram" (region stripped). Grounded against the live catalog 2026-08-24. n1 omitted on
-// purpose: no dedicated SKU exists, so it falls through to UNVERIFIED in D2.
+// Ram" (region stripped). Grounded against the live catalog: the base map 2026-08-24, the
+// c2/c4n/n4a additions 2026-08-26 (composed price reproduced fresh Vantage Δ0.00% across
+// every priced type × region — c2's token-less "Compute optimized" included).
+//
+// Deliberately NOT mapped, on evidence (fresh-Vantage cross-check 2026-08-26):
+//   - n1        — no dedicated Core/Ram SKU exists in the catalog at all.
+//   - m1, m2    — both share the token-less "Memory-optimized" template, so the catalog
+//                 cannot tell them apart; mapping either would misprice the other.
+//   - c4a, c4d, h4d — their "-lssd" (Local SSD) machine types carry local-SSD cost the
+//                 core+ram composition does not add, so composed prices run 6–26% low on
+//                 those subtypes. This is the SAME local-SSD/storage-optimized gap that
+//                 already affects mapped c4/c3d/z3; adding these families would let
+//                 reconcile overwrite the correct Vantage price with a low one for the
+//                 -lssd subtypes. They stay UNVERIFIED (Vantage-priced) until composition
+//                 accounts for local SSD. See docs/DATA-SOURCES.md.
+// All of the above fall through to UNVERIFIED in reconcile (the designed safety net).
 const SERIES_SKU_NAME = {
   a2: "A2",
   a3: "A3",
+  c2: "Compute optimized",
   c2d: "C2D AMD",
   c3: "C3",
   c3d: "C3D",
   c4: "C4",
+  c4n: "C4N",
   e2: "E2",
   g2: "G2",
   h3: "H3",
@@ -68,6 +84,7 @@ const SERIES_SKU_NAME = {
   n2: "N2",
   n2d: "N2D AMD",
   n4: "N4",
+  n4a: "N4A",
   n4d: "N4D",
   t2a: "T2A Arm",
   t2d: "T2D AMD",

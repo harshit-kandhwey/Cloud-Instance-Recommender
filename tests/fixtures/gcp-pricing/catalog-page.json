@@ -281,6 +281,90 @@
       ]
     },
     {
+      "skuId": "HHHH-C2-CORE",
+      "description": "Compute optimized Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 33982000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "HHHH-C2-RAM",
+      "description": "Compute optimized Instance Ram running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "RAM",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "GiBy.h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 4552000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "skuId": "IIII-C2-SOLE",
+      "description": "Compute-optimized Sole Tenancy Instance Core running in South Carolina",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Compute",
+        "resourceGroup": "CPU",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["us-east1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 40000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "skuId": "WWWW-WIN-DC",
       "description": "Licensing Fee for Windows Server 2019 Datacenter Edition (CPU cost)",
       "category": {

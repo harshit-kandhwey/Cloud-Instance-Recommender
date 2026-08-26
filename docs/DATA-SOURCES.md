@@ -26,6 +26,17 @@ entering the region files unchallenged.
 **Cadence:** specs monthly; pricing on a longer (~quarterly) cadence, since provider
 list prices change rarely. An empty diff opens no pull request.
 
+**GCP series coverage (known limitation).** GCP pricing is composed per machine type as
+vCPU × core-hour + memory-GiB × RAM-hour from the catalogue's series Core/Ram SKUs
+(`tools/fetch-official-gcp.js` `SERIES_SKU_NAME`). This does **not** account for local-SSD
+or storage-optimized cost, so machine types that bundle local SSD — the `-lssd` variants of
+`c4a`/`c4d`/`h4d` and storage/compute-optimized `z3`/`c4` — compose 6–33% below the Vantage
+price. Those families are therefore left **unmapped/UNVERIFIED** (Vantage price kept) rather
+than reconciled to a wrong composed value, and `m1`/`m2` (indistinguishable "Memory-optimized"
+templates) and `n1` (no catalogue SKU) are UNVERIFIED too. A refresh that adds such a family
+surfaces it as UNVERIFIED in the reconcile report for review; composing local-SSD cost is a
+possible future improvement.
+
 ## Key handling
 
 - **Local:** copy `.env.example` to `.env` (gitignored) and fill in `VANTAGE_API_KEY`
