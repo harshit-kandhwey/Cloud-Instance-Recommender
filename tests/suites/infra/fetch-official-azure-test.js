@@ -9,6 +9,7 @@ const {
   parseAzureItems,
   azureTypeKey,
   isSpotOrLowPriority,
+  azureFilter,
 } = require("../../../tools/fetch-official-azure");
 
 const { check, state } = makeChecker();
@@ -94,6 +95,12 @@ const byRegion = parseAzureItems(page.Items);
     isSpotOrLowPriority("D4s v5 Spot") === true &&
       isSpotOrLowPriority("D4s v5 Low Priority") === true &&
       isSpotOrLowPriority("D4s v5") === false,
+  );
+  check(
+    "azureFilter escapes a single quote (OData '' ) so a crafted region can't break the query",
+    azureFilter("east'us").includes("armRegionName eq 'east''us'") &&
+      azureFilter("eastus").includes("armRegionName eq 'eastus'"),
+    azureFilter("east'us"),
   );
 }
 

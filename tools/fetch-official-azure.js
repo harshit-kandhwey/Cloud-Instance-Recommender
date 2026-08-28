@@ -73,22 +73,46 @@ function parseAzureItems(items) {
   return byRegion;
 }
 
+// OData $filter for one region's consumption VM meters. A single quote in the region
+// key is escaped by doubling it ('' per OData), so a crafted --region cannot break the
+// query (an unescaped quote otherwise yields HTTP 400).
+function azureFilter(regionKey) {
+  const safe = String(regionKey).replace(/'/g, "''");
+  return (
+    "serviceName eq 'Virtual Machines' and priceType eq 'Consumption' and " +
+    `armRegionName eq '${safe}'`
+  );
+}
+
 // ── Network ────────────────────────────────────────────────────────────────────
+
+// A page count far above any real region (~100 items/page; a shipped region is a few
+// pages) — bounds the loop against a runaway or repeating NextPageLink.
+const MAX_PAGES = 1000;
 
 // One region's consumption VM meters, following NextPageLink to the end. The filter
 // is server-side; the OS/Spot/hourly refinements are applied in parseAzureItems.
 async function fetchRegionItems(regionKey) {
-  const filter =
-    "serviceName eq 'Virtual Machines' and priceType eq 'Consumption' and " +
-    `armRegionName eq '${regionKey}'`;
-  let url = `${RETAIL_PRICES_URL}?$filter=${encodeURIComponent(filter)}`;
+  let url = `${RETAIL_PRICES_URL}?$filter=${encodeURIComponent(azureFilter(regionKey))}`;
   const items = [];
+  const seen = new Set();
+  let pages = 0;
   while (url) {
+    if (seen.has(url)) {
+      throw new Error(`[azure] repeating NextPageLink for region ${regionKey}`);
+    }
+    seen.add(url);
+    if (++pages > MAX_PAGES) {
+      throw new Error(
+        `[azure] page cap (${MAX_PAGES}) exceeded for region ${regionKey}`,
+      );
+    }
     const res = await fetch(url, {
       headers: {
         "User-Agent": "cloud-instance-recommender-fetch-official-azure",
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) {
       throw new Error(
@@ -110,7 +134,16 @@ async function fetchAzurePricing(shippedKeys) {
     const parsed = parseAzureItems(items);
     const types = parsed[key] || {};
     byRegion[key] = types;
-    console.log(`[azure] ${key}: ${Object.keys(types).length} priced VM types`);
+    const n = Object.keys(types).length;
+    if (n === 0) {
+      // Zero types is indistinguishable downstream from a real gap — a region-key
+      // mismatch or empty response would otherwise pass silently. Warn loudly.
+      process.stderr.write(
+        `[azure] WARNING ${key}: 0 priced VM types from ${items.length} raw items — region-key mismatch or empty response\n`,
+      );
+    } else {
+      console.log(`[azure] ${key}: ${n} priced VM types`);
+    }
   }
   return byRegion;
 }
@@ -163,6 +196,7 @@ module.exports = {
   parseAzureItems,
   azureTypeKey,
   isSpotOrLowPriority,
+  azureFilter,
 };
 
 if (require.main === module) {
