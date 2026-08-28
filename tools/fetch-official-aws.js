@@ -17,8 +17,10 @@
 
 const fs = require("fs");
 const path = require("path");
+const { ROOT, round8, argValue, readShippedRegionKeys } = require("./lib/util");
 
-const ROOT = path.join(__dirname, "..");
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+const price = round8;
 
 // Public Bulk API. The region index lists each region's current per-region offer
 // file; both are served from the same host.
@@ -39,10 +41,6 @@ function awsMemoryGiB(raw) {
   const n = Number(digits);
   return Number.isFinite(n) ? n : NaN;
 }
-
-// Round to 8 decimals — the deepest precision the shipped data uses — so a price
-// string like "0.0960000000" becomes 0.096, matching the Vantage side for diffing.
-const price = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
 
 // The on-demand USD/hour for a SKU: the single OnDemand term's Hrs price dimension.
 // Returns NaN when the SKU has no on-demand hourly rate.
@@ -162,30 +160,7 @@ async function fetchAwsPricing(shippedKeys) {
   return byRegion;
 }
 
-// ── Shipped-artifact read + CLI ──────────────────────────────────────────────────
-
-// Read AWS_REGION_KEYS from the shipped manifest without pulling in the whole page.
-function readShippedRegionKeys() {
-  const vm = require("vm");
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(
-    fs.readFileSync(path.join(ROOT, "js", "aws", "aws-data.js"), "utf8"),
-    sandbox,
-    { filename: "js/aws/aws-data.js" },
-  );
-  const keys = sandbox.AWS_REGION_KEYS;
-  if (!Array.isArray(keys) || !keys.length) {
-    throw new Error("[aws] no AWS_REGION_KEYS in shipped manifest");
-  }
-  return keys;
-}
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
-}
+// ── CLI ──────────────────────────────────────────────────────────────────────
 
 // Region keys to fetch: all shipped, or a single --region override validated against
 // the manifest — a typo would otherwise fetch nothing and write an empty file at exit 0.
@@ -204,7 +179,7 @@ async function main() {
   const out =
     argValue("--out") || path.join(".refresh-cache", "aws-pricing.json");
   const only = argValue("--region");
-  const shippedKeys = readShippedRegionKeys();
+  const shippedKeys = readShippedRegionKeys("aws", "AWS");
   const keys = resolveRegionKeys(only, shippedKeys);
 
   const byRegion = await fetchAwsPricing(keys);

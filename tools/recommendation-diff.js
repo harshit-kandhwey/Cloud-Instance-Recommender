@@ -28,14 +28,13 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
+const { ROOT, argValue } = require("./lib/util");
 const {
   SAMPLE_CSV,
   parseSample,
   SCENARIOS,
   CODE_FILES,
 } = require("../tests/golden/golden-run");
-
-const ROOT = path.join(__dirname, "..");
 
 // A result column names a chosen instance when it ends in one of these — the
 // like-to-like / optimized "… Instance" picks and the four summary picks (cost,
@@ -191,11 +190,6 @@ async function runScenario(scenario, dataBySideProvider) {
 }
 
 // ── CLI ────────────────────────────────────────────────────────────────────────
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
-}
 
 async function main() {
   const only = argValue("--provider");

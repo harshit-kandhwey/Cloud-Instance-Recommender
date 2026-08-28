@@ -22,8 +22,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-
-const ROOT = path.join(__dirname, "..");
+const { ROOT, round8, argValue } = require("./lib/util");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },
@@ -90,11 +89,6 @@ function indexTypes(regions) {
 }
 
 const byType = (a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : 0);
-
-// Normalize a price to the pipeline's 8-decimal precision (matches fetch-vantage's
-// price()). Committed data predating that normalizer carries deeper float noise, so
-// comparing raw values would report sub-ULP rounding as spurious price moves.
-const round8 = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
 
 /**
  * Diff one provider's old vs new region data.
@@ -381,11 +375,6 @@ function loadNewRegions(name) {
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
-}
 
 function main() {
   const only = argValue("--provider");

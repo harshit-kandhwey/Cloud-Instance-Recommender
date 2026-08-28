@@ -35,8 +35,7 @@
 
 const fs = require("fs");
 const path = require("path");
-
-const ROOT = path.join(__dirname, "..");
+const { ROOT, round8, argValue } = require("./lib/util");
 
 const CATALOG_HOST = "https://cloudbilling.googleapis.com";
 // Compute Engine's well-known billing service id (stable; confirmed 2026-08-17).
@@ -96,10 +95,6 @@ const NAME_TO_SERIES = Object.fromEntries(
 );
 
 // ── Pure normalisation ─────────────────────────────────────────────────────────
-
-// Round to 8 decimals — the pipeline's precision — matching the Vantage side so a
-// re-quote of the same composed price does not read as a move.
-const round8 = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
 
 // A SKU's USD unit price: units + nanos/1e9 from the last (highest-usage) tier. GCP
 // splits some SKUs into tiers; the base on-demand rate is the final tier's price.
@@ -289,11 +284,6 @@ function readShippedRecords() {
     if (region && typeof region === "object") out[rk] = region;
   }
   return out;
-}
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
 }
 
 async function main() {

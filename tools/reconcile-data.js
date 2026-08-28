@@ -32,8 +32,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { serializeMonolith } = require("./fetch-vantage");
-
-const ROOT = path.join(__dirname, "..");
+const { ROOT, argValue } = require("./lib/util");
 
 const PROVIDERS = [
   {
@@ -248,11 +247,6 @@ function loadOfficial(name) {
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
-}
 
 function main() {
   const only = argValue("--provider");

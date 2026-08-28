@@ -27,8 +27,8 @@
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
+const { ROOT, argValue } = require("./lib/util");
 
-const ROOT = path.join(__dirname, "..");
 const CACHE = path.join(ROOT, ".refresh-cache");
 
 // ── Pure plan ────────────────────────────────────────────────────────────────
@@ -126,11 +126,6 @@ function loadDotEnv() {
   for (const [k, v] of Object.entries(vals)) {
     if (process.env[k] === undefined) process.env[k] = v; // real env wins
   }
-}
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
 }
 
 function runStep(step) {

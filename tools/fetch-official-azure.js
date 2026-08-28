@@ -16,16 +16,12 @@
 
 const fs = require("fs");
 const path = require("path");
-
-const ROOT = path.join(__dirname, "..");
+const { ROOT, round8, argValue, readShippedRegionKeys } = require("./lib/util");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
 
-// ── Pure normalisation ─────────────────────────────────────────────────────────
-
-// Round to 8 decimals — the deepest precision the shipped data uses — matching the
-// Vantage side so a re-quote of the same price does not read as a move.
-const price = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+const price = round8;
 
 // armSkuName ("Standard_D4s_v5", "Basic_A0") → shipped type key ("d4sv5", "a0"):
 // drop the tier prefix, lowercase, strip underscores.
@@ -148,35 +144,13 @@ async function fetchAzurePricing(shippedKeys) {
   return byRegion;
 }
 
-// ── Shipped-artifact read + CLI ──────────────────────────────────────────────────
-
-function readShippedRegionKeys() {
-  const vm = require("vm");
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(
-    fs.readFileSync(path.join(ROOT, "js", "azure", "azure-data.js"), "utf8"),
-    sandbox,
-    { filename: "js/azure/azure-data.js" },
-  );
-  const keys = sandbox.AZURE_REGION_KEYS;
-  if (!Array.isArray(keys) || !keys.length) {
-    throw new Error("[azure] no AZURE_REGION_KEYS in shipped manifest");
-  }
-  return keys;
-}
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
-}
+// ── CLI ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   const out =
     argValue("--out") || path.join(".refresh-cache", "azure-pricing.json");
   const only = argValue("--region");
-  const shippedKeys = readShippedRegionKeys();
+  const shippedKeys = readShippedRegionKeys("azure", "AZURE");
   const keys = only ? [only] : shippedKeys;
 
   const byRegion = await fetchAzurePricing(keys);

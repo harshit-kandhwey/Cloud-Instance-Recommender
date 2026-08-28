@@ -14,9 +14,16 @@
 
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
+const {
+  ROOT,
+  round8,
+  argValue,
+  loadGlobals,
+  readShippedRegionKeys,
+} = require("./lib/util");
 
-const ROOT = path.join(__dirname, "..");
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+const price = round8;
 
 // Bulk static JSON endpoints (ec2 at the root, azure/gcp under their path).
 const BULK_URLS = {
@@ -34,10 +41,6 @@ const PROVIDERS = [
 // ── Field derivations ────────────────────────────────────────────────────────
 
 const num = (v) => (v === undefined || v === null ? NaN : Number(v));
-
-// Strip float-representation noise from a parsed price (e.g. 0.19423600000000002 →
-// 0.194236) by rounding to 8 decimal places — the deepest precision the data uses.
-const price = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
 
 // physical_processor string → manufacturer bucket.
 function awsProcessor(physical) {
@@ -358,25 +361,6 @@ function serializeMonolith({ name, prefix, source, dataDate, byRegion }) {
 
 // ── Shipped-artifact reads ───────────────────────────────────────────────────
 
-function loadGlobals(relPath) {
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(ROOT, relPath), "utf8"), sandbox, {
-    filename: relPath,
-  });
-  return sandbox;
-}
-
-function readShippedRegionKeys(name, prefix) {
-  const g = loadGlobals(`js/${name}/${name}-data.js`);
-  const keys = g[`${prefix}_REGION_KEYS`];
-  if (!Array.isArray(keys) || !keys.length) {
-    throw new Error(`[${name}] no ${prefix}_REGION_KEYS in shipped manifest`);
-  }
-  return keys;
-}
-
 // { byType, byFamily } generations from the shipped Azure region files. byType is
 // exact per instance; byFamily is the family's most common generation, for new sizes.
 function collectAzureGeneration() {
@@ -432,11 +416,6 @@ async function fetchBulk(name) {
   });
   if (!res.ok) throw new Error(`[${name}] fetch failed: HTTP ${res.status}`);
   return res.json();
-}
-
-function argValue(flag) {
-  const i = process.argv.indexOf(flag);
-  return i !== -1 ? process.argv[i + 1] : undefined;
 }
 
 async function main() {
