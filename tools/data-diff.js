@@ -164,8 +164,12 @@ function diffProvider(name, oldRegions, newRegions) {
         if (!oinfo.regions.has(rk)) continue;
         const o = round8(oldRegions[rk][t][f]);
         const n = round8(newRegions[rk][t][f]);
-        if (o === n || !Number.isFinite(o) || !Number.isFinite(n)) continue;
-        const pct = o !== 0 ? ((n - o) / o) * 100 : NaN;
+        if (o === n) continue; // genuinely unchanged
+        // A non-finite side (NaN/undefined from a broken refresh) is an anomaly, not
+        // a no-change: record it so hasChanges() is true and the reviewer sees it,
+        // instead of silently skipping and dropping the refresh PR.
+        const bothFinite = Number.isFinite(o) && Number.isFinite(n);
+        const pct = bothFinite && o !== 0 ? ((n - o) / o) * 100 : NaN;
         moves.push({ region: rk, old: o, new: n, pct });
       }
       if (!moves.length) continue;
@@ -278,9 +282,16 @@ function renderProvider(d) {
             ? fmtPct(c.minPct)
             : `${fmtPct(c.minPct)}..${fmtPct(c.maxPct)}`
           : "n/a";
+      // A non-finite side prints its raw value with an "unparseable" tag; "from 0"
+      // stays reserved for a genuine zero-baseline move (both sides finite).
+      const sPct = Number.isFinite(s.pct)
+        ? fmtPct(s.pct)
+        : Number.isFinite(s.old) && Number.isFinite(s.new)
+          ? "from 0"
+          : "unparseable";
       L.push(
         `  - ${c.type} ${c.field}: ${regionSpan(c.regionsChanged, d.totalRegions)}, ` +
-          `${range} (${s.region} ${s.old} → ${s.new} ${fmtPct(s.pct)})`,
+          `${range} (${s.region} ${s.old} → ${s.new} ${sPct})`,
       );
     }
   }
@@ -325,6 +336,9 @@ function loadCommittedRegions(name) {
   const regions = {};
   for (const f of files) {
     const key = f.replace(/\.js$/, "");
+    if (!g[key] || typeof g[key] !== "object") {
+      throw new Error(`js/${name}/regions/${f} did not assign window.${key}`);
+    }
     regions[key] = g[key];
   }
   return regions;
@@ -345,7 +359,14 @@ function regionsFromMonolith(source) {
         .filter(Boolean)
     : [];
   const regions = {};
-  for (const k of keys) regions[k] = sandbox[k];
+  for (const k of keys) {
+    if (!sandbox[k] || typeof sandbox[k] !== "object") {
+      throw new Error(
+        `monolith lists ${k} in its make-call but never defines it`,
+      );
+    }
+    regions[k] = sandbox[k];
+  }
   return regions;
 }
 
@@ -372,9 +393,11 @@ function main() {
   if (!targets.length) throw new Error(`unknown --provider ${only}`);
 
   const diffs = [];
+  let skipped = 0;
   for (const { name } of targets) {
     const newRegions = loadNewRegions(name);
     if (newRegions === null) {
+      skipped++;
       process.stderr.write(
         `[${name}] ${name}-data.js is a manifest (already split) — run fetch-vantage first; skipping\n`,
       );
@@ -382,6 +405,14 @@ function main() {
     }
     const oldRegions = loadCommittedRegions(name);
     diffs.push(diffProvider(name, oldRegions, newRegions));
+  }
+  // No provider could be diffed (every target was already split) — never print a
+  // NO-CHANGES sentinel here: that is a false negative that makes the workflow skip
+  // the PR after a real refresh. Fail loudly instead.
+  if (!diffs.length) {
+    throw new Error(
+      `no provider could be diffed (${skipped}/${targets.length} already split as manifests) — run fetch-vantage before data-diff`,
+    );
   }
   process.stdout.write(renderReport(diffs));
 }

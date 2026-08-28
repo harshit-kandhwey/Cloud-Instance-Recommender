@@ -189,6 +189,32 @@ const aws = (o) => ({
   );
 }
 
+// ── Non-finite price anomaly: reported, never a silent no-change ─────────────────
+{
+  const old = {
+    r1: { "m5.large": aws({ family: "m5", vCpus: 2, mem: 8, linux: 0.096 }) },
+  };
+  // A broken refresh emitted a non-numeric price on the new side.
+  const broken = aws({ family: "m5", vCpus: 2, mem: 8, linux: 0.096 });
+  broken.onDemandLinuxHr = NaN;
+  const nw = { r1: { "m5.large": broken } };
+  const d = diffProvider("aws", old, nw);
+  check(
+    "[anomaly] finite → NaN price is a reported change, not a silent skip",
+    hasChanges(d) === true &&
+      d.priceChanges.length === 1 &&
+      d.priceChanges[0].sample.region === "r1",
+    JSON.stringify(d.priceChanges),
+  );
+  const report = renderReport([d]);
+  check(
+    "[anomaly] report carries CHANGES sentinel + flags the unparseable side",
+    report.startsWith("<!-- data-diff: CHANGES -->") &&
+      report.includes("unparseable"),
+    report.split("\n")[0],
+  );
+}
+
 // ── No-op guard ─────────────────────────────────────────────────────────────────
 {
   const same = {
@@ -251,6 +277,29 @@ const aws = (o) => ({
   // Diff a monolith against itself → no changes (round-trip sanity).
   const d = diffProvider("gcp", regions, regionsFromMonolith(monolith));
   check("[monolith] self-diff is a no-op", hasChanges(d) === false);
+
+  // A make-call listing a region key the body never defines must fail by name,
+  // not crash later in Object.entries(undefined) with no context.
+  const orphan = [
+    "function makeGCPRegionsGlobal(regions){ for (const k in regions) window[k] = regions[k]; }",
+    'const us_central1 = { "n2-standard-2": { series: "n2" } };',
+    "const ghost_region = undefined;",
+    "makeGCPRegionsGlobal({",
+    "  us_central1,",
+    "  ghost_region,",
+    "});",
+  ].join("\n");
+  let msg = "";
+  try {
+    regionsFromMonolith(orphan);
+  } catch (e) {
+    msg = String((e && e.message) || e);
+  }
+  check(
+    "[monolith] region listed but never defined → named error",
+    /ghost_region/.test(msg),
+    msg,
+  );
 }
 
 // ── Unchanged provider section + all-quiet short-circuit ────────────────────────
