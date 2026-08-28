@@ -214,7 +214,7 @@
           "priceDimensions": {
             "SKU_BYOL_WIN.JRTCKXETXF.6YS6EN2CT7": {
               "unit": "Hrs",
-              "pricePerUnit": { "USD": "0.0960000000" }
+              "pricePerUnit": { "USD": "0.0770000000" }
             }
           }
         }
@@ -234,7 +234,7 @@
           "priceDimensions": {
             "SKU_RESERVED.JRTCKXETXF.6YS6EN2CT7": {
               "unit": "Hrs",
-              "pricePerUnit": { "USD": "0.0960000000" }
+              "pricePerUnit": { "USD": "0.1110000000" }
             }
           }
         }

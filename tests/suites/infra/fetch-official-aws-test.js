@@ -11,6 +11,7 @@ const {
   onDemandUsdHr,
   keyToRegionCode,
   regionCodeToKey,
+  resolveRegionKeys,
 } = require("../../../tools/fetch-official-aws");
 
 const { check, state } = makeChecker();
@@ -31,19 +32,28 @@ const types = parseAwsRegion(regionJson);
     kept.join(",") === "c6g.medium,m5.large,x2.large",
     kept.join(","),
   );
+  // Excluded SKUs carry prices distinct from the base rates (dedicated 0.1056,
+  // BYOL-Windows 0.077, reserved 0.111), so a broken filter would leak a value
+  // that differs from the base and the assertion below would catch it.
   check(
-    "dedicated tenancy dropped",
+    "dedicated tenancy dropped (base Linux 0.096 survives, dedicated 0.1056 did not leak)",
     types["m5.large"].onDemandLinuxHr === 0.096,
+    String(types["m5.large"].onDemandLinuxHr),
   );
-  check("BYOL Windows dropped (no windows price leaks in)", true);
+  check(
+    "BYOL Windows dropped (base Windows 0.188 survives, BYOL 0.077 did not leak)",
+    types["m5.large"].onDemandWindowsHr === 0.188,
+    String(types["m5.large"].onDemandWindowsHr),
+  );
   check(
     "SQL-bundled Windows type r5.large dropped",
     types["r5.large"] === undefined,
   );
   check("non-compute Storage product dropped", !("gp3" in types));
   check(
-    "reserved capacitystatus dropped (m5 windows price is the base one)",
-    types["m5.large"].onDemandWindowsHr === 0.188,
+    "reserved capacitystatus dropped (base Linux 0.096 survives, reserved 0.111 did not leak)",
+    types["m5.large"].onDemandLinuxHr === 0.096,
+    String(types["m5.large"].onDemandLinuxHr),
   );
   check(
     "compute type with no Hrs on-demand rate dropped (t3.micro)",
@@ -124,6 +134,29 @@ const types = parseAwsRegion(regionJson);
     "region key/code round trip",
     keyToRegionCode("us_east_1") === "us-east-1" &&
       regionCodeToKey("ap-southeast-4") === "ap_southeast_4",
+  );
+}
+
+// ── --region validated against the manifest (no silent empty file) ────────────────
+{
+  const shipped = ["us_east_1", "eu_west_1"];
+  check(
+    "no --region → all shipped keys",
+    resolveRegionKeys(undefined, shipped) === shipped,
+  );
+  check(
+    "valid --region → the single shipped key",
+    resolveRegionKeys("us-east-1", shipped).join(",") === "us_east_1",
+  );
+  let threw = false;
+  try {
+    resolveRegionKeys("us-east-9", shipped);
+  } catch {
+    threw = true;
+  }
+  check(
+    "a --region not in the manifest throws (typo can't fetch nothing)",
+    threw,
   );
 }
 

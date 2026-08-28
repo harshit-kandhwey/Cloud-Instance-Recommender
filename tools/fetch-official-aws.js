@@ -112,11 +112,14 @@ function parseAwsRegion(regionJson) {
 // ── Network ────────────────────────────────────────────────────────────────────
 
 async function getJson(url) {
+  // Generous upper bound: a per-region offer file is 116–480 MB, so this caps a
+  // stalled download/parse without cutting off a legitimately slow one.
   const res = await fetch(url, {
     headers: {
       "User-Agent": "cloud-instance-recommender-fetch-official-aws",
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(300000),
   });
   if (!res.ok) throw new Error(`fetch failed: HTTP ${res.status} for ${url}`);
   return res.json();
@@ -184,12 +187,25 @@ function argValue(flag) {
   return i !== -1 ? process.argv[i + 1] : undefined;
 }
 
+// Region keys to fetch: all shipped, or a single --region override validated against
+// the manifest — a typo would otherwise fetch nothing and write an empty file at exit 0.
+function resolveRegionKeys(only, shippedKeys) {
+  if (!only) return shippedKeys;
+  const key = regionCodeToKey(only);
+  if (!shippedKeys.includes(key)) {
+    throw new Error(
+      `--region ${only} is not a shipped region (not in AWS_REGION_KEYS) — a typo would fetch nothing`,
+    );
+  }
+  return [key];
+}
+
 async function main() {
   const out =
     argValue("--out") || path.join(".refresh-cache", "aws-pricing.json");
   const only = argValue("--region");
   const shippedKeys = readShippedRegionKeys();
-  const keys = only ? [regionCodeToKey(only)] : shippedKeys;
+  const keys = resolveRegionKeys(only, shippedKeys);
 
   const byRegion = await fetchAwsPricing(keys);
   const outPath = path.isAbsolute(out) ? out : path.join(ROOT, out);
@@ -210,6 +226,7 @@ module.exports = {
   onDemandUsdHr,
   keyToRegionCode,
   regionCodeToKey,
+  resolveRegionKeys,
 };
 
 if (require.main === module) {
