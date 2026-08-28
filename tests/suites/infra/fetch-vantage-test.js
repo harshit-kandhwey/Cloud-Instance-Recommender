@@ -10,6 +10,7 @@ const {
   gcpPlatform,
   azureRegionKey,
   awsProcessor,
+  mostCommonGeneration,
 } = require("../../../tools/fetch-vantage");
 
 const { check, state } = makeChecker();
@@ -243,6 +244,81 @@ function splitDataParity(monolith) {
     "azureRegionKey normalises display names",
     azureRegionKey("East US") === "eastus" &&
       azureRegionKey("Australia Central 2") === "australiacentral2",
+  );
+
+  check(
+    "mostCommonGeneration ties break to the higher generation",
+    mostCommonGeneration({ 1: 1, 2: 1 }) === 2 &&
+      mostCommonGeneration({ 1: 3, 2: 1 }) === 1,
+    JSON.stringify([
+      mostCommonGeneration({ 1: 1, 2: 1 }),
+      mostCommonGeneration({ 1: 3, 2: 1 }),
+    ]),
+  );
+}
+
+// ── Record hygiene: missing spec skipped, missing Windows rate → 0 ──────────────
+{
+  // A record with a valid Linux price but no vCPU/memory must be dropped, never
+  // emitted with a NaN spec (would ship "NaN" into the monolith).
+  const noSpec = {
+    instance_type: "x9.huge",
+    family: "General purpose",
+    vCPU: null,
+    memory: 64,
+    pricing: {
+      "us-east-1": { linux: { ondemand: 0.5 }, mswin: { ondemand: 1 } },
+    },
+  };
+  const withSpec = {
+    instance_type: "m5.large",
+    family: "General purpose",
+    vCPU: 2,
+    memory: 8,
+    physical_processor: "Intel Xeon",
+    // no mswin block → Windows rate must fall back to 0
+    pricing: { "us-east-1": { linux: { ondemand: 0.096 } } },
+  };
+  const { monolith } = buildMonolith({
+    name: "aws",
+    prefix: "AWS",
+    source: "instances.vantage.sh",
+    instances: [noSpec, withSpec],
+    shippedKeys: ["us_east_1"],
+    dataDate: "2026-08-21",
+  });
+  const g = runMonolith(monolith);
+  check(
+    "[aws] missing-spec record dropped (no NaN shipped)",
+    g.us_east_1["x9.huge"] === undefined && !/NaN|undefined/.test(monolith),
+  );
+  check(
+    "[aws] missing Windows rate falls back to 0",
+    g.us_east_1["m5.large"].onDemandWindowsHr === 0,
+    JSON.stringify(g.us_east_1["m5.large"]),
+  );
+
+  // GCP uses the `windows` pricing key (not `mswin`); same fallback.
+  const gcpNoWin = {
+    instance_type: "n2-standard-2",
+    family: "General purpose",
+    vCPU: 2,
+    memory: 8,
+    pricing: { "us-central1": { linux: { ondemand: 0.1 } } },
+  };
+  const gcp = runMonolith(
+    buildMonolith({
+      name: "gcp",
+      prefix: "GCP",
+      source: "instances.vantage.sh/gcp",
+      instances: [gcpNoWin],
+      shippedKeys: ["us_central1"],
+      dataDate: "2026-08-21",
+    }).monolith,
+  );
+  check(
+    "[gcp] missing Windows rate falls back to 0",
+    gcp.us_central1["n2-standard-2"].windowsHourlyPrice === 0,
   );
 }
 

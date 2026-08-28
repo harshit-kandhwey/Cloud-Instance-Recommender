@@ -113,6 +113,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       memorySizeInGiB: num(raw.memory),
       nitroEnclavesSupport: raw.nitro_enclave_support ? 1 : 0,
     };
+    if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memorySizeInGiB))
+      return out; // missing spec → don't ship a NaN-spec record
     for (const slug of Object.keys(pricing)) {
       const key = underscoreKey(slug);
       if (!shippedKeys.has(key)) continue;
@@ -143,6 +145,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       vCpus: num(raw.vCPU),
       memoryGiB: num(raw.memory),
     };
+    if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
+      return out; // missing spec → don't ship a NaN-spec record
     for (const slug of Object.keys(pricing)) {
       const key = underscoreKey(slug);
       if (!shippedKeys.has(key)) continue;
@@ -177,6 +181,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     vCpus: num(raw.vcpu),
     memoryGiB: num(raw.memory),
   };
+  if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
+    return out; // missing spec → don't ship a NaN-spec record
   const regionsMap = raw.regions || {};
   for (const slug of Object.keys(pricing)) {
     const key = azureRegionKey(regionsMap[slug]);
@@ -200,8 +206,14 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 // ── Serialisation ────────────────────────────────────────────────────────────
 
 // Match the committed region-file style: string values JSON-quoted, numbers bare.
-const emitValue = (v) =>
-  typeof v === "string" ? JSON.stringify(v) : String(v);
+// A non-finite number or undefined would serialize to a "NaN"/"undefined" token and
+// silently ship a broken record — fail the build instead (tripwire behind the
+// missing-spec skip in instanceRegionRecords).
+const emitValue = (v) => {
+  if (typeof v === "string") return JSON.stringify(v);
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  throw new Error(`emitValue: non-serializable field value ${String(v)}`);
+};
 
 const FIELD_ORDER = {
   aws: [
@@ -386,11 +398,19 @@ function collectAzureGeneration() {
   }
   const byFamily = {};
   for (const [fam, counts] of Object.entries(familyCounts)) {
-    byFamily[fam] = Number(
-      Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0],
-    );
+    byFamily[fam] = mostCommonGeneration(counts);
   }
   return { byType, byFamily };
+}
+
+// { generation: count } → the most common generation; a count tie breaks to the
+// HIGHER generation (a newer size is likelier current than a stale carried value).
+function mostCommonGeneration(counts) {
+  return Number(
+    Object.entries(counts).sort(
+      (a, b) => b[1] - a[1] || Number(b[0]) - Number(a[0]),
+    )[0][0],
+  );
 }
 
 // ── Network + CLI ─────────────────────────────────────────────────────────────
@@ -408,6 +428,7 @@ async function fetchBulk(name) {
       "User-Agent": "cloud-instance-recommender-fetch-vantage",
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(120000),
   });
   if (!res.ok) throw new Error(`[${name}] fetch failed: HTTP ${res.status}`);
   return res.json();
@@ -424,19 +445,36 @@ async function main() {
   const targets = PROVIDERS.filter((p) => !only || p.name === only);
   if (!targets.length) throw new Error(`unknown --provider ${only}`);
 
+  // Fetch + build every target before writing any file: a mid-run failure must not
+  // leave a partially-regenerated set. A clobbered manifest would break
+  // readShippedRegionKeys on the next run until `git restore`.
+  const built = [];
   for (const { name, prefix, source } of targets) {
     const shippedKeys = readShippedRegionKeys(name, prefix);
     const azureGen = name === "azure" ? collectAzureGeneration() : undefined;
     const instances = await fetchBulk(name);
-    const { monolith, regionKeys, instanceCount } = buildMonolith({
+    built.push({
       name,
-      prefix,
-      source,
-      instances,
       shippedKeys,
-      dataDate,
-      azureGen,
+      ...buildMonolith({
+        name,
+        prefix,
+        source,
+        instances,
+        shippedKeys,
+        dataDate,
+        azureGen,
+      }),
     });
+  }
+
+  for (const {
+    name,
+    shippedKeys,
+    monolith,
+    regionKeys,
+    instanceCount,
+  } of built) {
     fs.writeFileSync(
       path.join(ROOT, "js", name, `${name}-data.js`),
       monolith,
@@ -456,6 +494,7 @@ module.exports = {
   serializeMonolith,
   instanceRegionRecords,
   collectAzureGeneration,
+  mostCommonGeneration,
   readShippedRegionKeys,
   awsProcessor,
   azureFamilyName,
