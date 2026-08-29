@@ -773,7 +773,8 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 //   - vCpuStep: how vCPU counts step — "even" (E2/N1/N4), "even-quad" (N2: even to
 //     32, multiple of 4 above), "pow-sixteen" (N2D/N4D: 2/4/8/16 then +16). See
 //     _roundCustomVCpu; a uniform step would emit undeployable counts (e.g. n4d-6).
-//   - memMin/MaxPerVCpu (GB): per-vCPU band — N1 0.9–6.5; N4 ≥2; rest 0.5–8.
+//   - memMin/MaxPerVCpu (GB): per-vCPU band, exact per family — N1 0.9–6.5; N4 2–8;
+//     E2/N2/N2D/N4D 0.5–8. N4D does NOT inherit N4's 2 GB floor despite the name.
 //   - prefix: N1 uses the prefixless "custom-…"; newer families "<family>-custom-…".
 GCPInstanceSelector.CUSTOM_FAMILY_RULES = {
   e2: {

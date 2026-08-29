@@ -351,6 +351,21 @@ window.getInstanceRecommendationWithSelector = async function (
           : options.includeOnlyTypes,
       };
 
+      // Fired user-rule labels are the row's audit of which authored rules matched
+      // it, which is true whether or not a pick came back — so every outcome path
+      // (a match, a missing-data row, an error row) routes through here. Applied at
+      // most once: an error thrown AFTER the success-path call would otherwise
+      // prepend the same labels a second time.
+      let userLabelsApplied = false;
+      const applyUserRuleLabels = () => {
+        if (userLabelsApplied || !userRuleLabels.length) return;
+        userLabelsApplied = true;
+        const key = `${providerUpper} Rules Applied`;
+        result[key] = [userRuleLabels.join(" | "), result[key] || ""]
+          .filter(Boolean)
+          .join(" | ");
+      };
+
       if (!region || cpu === 0 || memory === 0) {
         const noMatchReason = !region
           ? `No ${providerUpper} region specified in CSV`
@@ -381,6 +396,7 @@ window.getInstanceRecommendationWithSelector = async function (
         result[`${providerUpper} Most Cost Optimized`] = "";
         result[`${providerUpper} Workload Based`] = "";
         result[`${providerUpper} Newest Generation`] = "";
+        applyUserRuleLabels();
         return;
       }
 
@@ -468,14 +484,9 @@ window.getInstanceRecommendationWithSelector = async function (
         }
 
         // User-defined rules that fired for this row are named in Rules Applied
-        // alongside the built-in rules. Prepended once here so it covers both the
+        // alongside the built-in rules. Prepended here so it covers both the
         // like-to-like and optimized-only assignments above.
-        if (userRuleLabels.length) {
-          const key = `${providerUpper} Rules Applied`;
-          result[key] = [userRuleLabels.join(" | "), result[key] || ""]
-            .filter(Boolean)
-            .join(" | ");
-        }
+        applyUserRuleLabels();
 
         // GCP custom-machine-type suggestion: when the standard pick (altSource)
         // over-provisions past the threshold and the run doesn't exclude Custom, name
@@ -527,6 +538,7 @@ window.getInstanceRecommendationWithSelector = async function (
         result[`${providerUpper} Most Cost Optimized`] = "Error";
         result[`${providerUpper} Workload Based`] = "Error";
         result[`${providerUpper} Newest Generation`] = "Error";
+        applyUserRuleLabels();
       }
     });
 

@@ -261,6 +261,116 @@ console.log(
         !/User:/.test(results[1]["AWS Rules Applied"] || ""),
         results[1]["AWS Rules Applied"],
       );
+
+      // ── The label survives the rows that never reach a pick ────────────────
+      // Rules Applied is the audit of which authored rules matched the row, so a
+      // row the run could not size still has to name them — otherwise the same
+      // rule appears on one row and vanishes on another purely because that row's
+      // CSV was short a region or a CPU count.
+      ctx.rowsURBad = [
+        {
+          "VM Name": "noregion",
+          "CPU Count": "4",
+          "Memory (GB)": "16",
+          Workload: "Database",
+        },
+        {
+          "VM Name": "zerocpu",
+          "CPU Count": "0",
+          "Memory (GB)": "16",
+          "AWS Region": "us-east-1",
+          Workload: "Database",
+        },
+      ];
+      const bad = await run(
+        `getInstanceRecommendationWithSelector(rowsURBad, ['aws'], { generateLikeToLike: true, userRules: [{ dimension: "workload", equals: "database", action: "includeOnly", tokens: ["r5"] }] })`,
+      );
+      check(
+        "a missing-region row still names the fired rule",
+        /User: Workload=database → include only r5/.test(
+          bad[0]["AWS Rules Applied"] || "",
+        ),
+        bad[0]["AWS Rules Applied"],
+      );
+      check(
+        "a zero-CPU row still names the fired rule",
+        /User: Workload=database → include only r5/.test(
+          bad[1]["AWS Rules Applied"] || "",
+        ),
+        bad[1]["AWS Rules Applied"],
+      );
+
+      // ── The label survives an error row, and is not applied twice ──────────
+      // Two throw sites, on opposite sides of the success-path merge, because they
+      // guard different things: a throw BEFORE it leaves the error path as the only
+      // place the labels can come from, while a throw AFTER it would re-prepend the
+      // same labels unless the helper applies once per row.
+      ctx.rowsURErr = [
+        {
+          "VM Name": "boom",
+          "CPU Count": "4",
+          "Memory (GB)": "16",
+          "AWS Region": "us-east-1",
+          Workload: "Database",
+        },
+      ];
+      // Substitute a like-to-like implementation, run one row through it, restore.
+      const withSelector = async (body) => {
+        const restore = run(`(() => {
+          const proto = AWSInstanceSelector.prototype;
+          const original = proto.getLikeToLikeInstance;
+          proto.getLikeToLikeInstance = ${body};
+          return () => { proto.getLikeToLikeInstance = original; };
+        })()`);
+        try {
+          return await run(
+            `getInstanceRecommendationWithSelector(rowsURErr, ['aws'], { generateLikeToLike: true, userRules: [{ dimension: "workload", equals: "database", action: "includeOnly", tokens: ["r5"] }] })`,
+          );
+        } finally {
+          restore();
+        }
+      };
+
+      // Throws before the merge — only the error path can name the rule.
+      {
+        const err = await withSelector(
+          `function () { throw new Error("forced failure before the label merge"); }`,
+        );
+        check(
+          "an error row thrown before the merge still names the fired rule",
+          /User: Workload=database → include only r5/.test(
+            err[0]["AWS Rules Applied"] || "",
+          ),
+          err[0]["AWS Rules Applied"],
+        );
+        check(
+          "that error row still reports the failure",
+          /^Error: /.test(err[0]["AWS No Match Reason"] || ""),
+          err[0]["AWS No Match Reason"],
+        );
+      }
+
+      // Reads fine until the alternatives are pulled, which is past the merge.
+      {
+        const err = await withSelector(`function () {
+          return {
+            instanceType: "r5.xlarge",
+            familyName: "r5",
+            vCpus: 4,
+            memory: 32,
+            rulesApplied: "",
+            get alternatives() {
+              throw new Error("forced failure past the label merge");
+            },
+          };
+        }`);
+        const applied = err[0]["AWS Rules Applied"] || "";
+        check(
+          "an error row thrown after the merge names the fired rule once, not twice",
+          applied.match(/User: Workload=database/g)?.length === 1,
+          applied,
+        );
+      }
     } catch (e) {
       check(
         "the factory run completes without throwing",
