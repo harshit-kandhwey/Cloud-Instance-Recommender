@@ -18,6 +18,8 @@ const {
   ROOT,
   round8,
   argValue,
+  resolveDataDate,
+  writeFileAtomic,
   loadGlobals,
   readShippedRegionKeys,
 } = require("./lib/util");
@@ -473,7 +475,7 @@ async function fetchBulk(name) {
 
 async function main() {
   const only = argValue("--provider");
-  const dataDate = argValue("--date") || new Date().toISOString().slice(0, 10);
+  const dataDate = resolveDataDate(argValue("--date"));
   const targets = PROVIDERS.filter((p) => !only || p.name === only);
   if (!targets.length) throw new Error(`unknown --provider ${only}`);
 
@@ -507,11 +509,7 @@ async function main() {
     regionKeys,
     instanceCount,
   } of built) {
-    fs.writeFileSync(
-      path.join(ROOT, "js", name, `${name}-data.js`),
-      monolith,
-      "utf8",
-    );
+    writeFileAtomic(path.join(ROOT, "js", name, `${name}-data.js`), monolith);
     const dropped = shippedKeys.length - regionKeys.length;
     console.log(
       `[${name}] wrote monolith: ${regionKeys.length}/${shippedKeys.length} shipped regions, ` +

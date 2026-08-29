@@ -16,7 +16,13 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, round8, argValue, readShippedRegionKeys } = require("./lib/util");
+const {
+  ROOT,
+  round8,
+  argValue,
+  writeFileAtomic,
+  readShippedRegionKeys,
+} = require("./lib/util");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
 
@@ -156,7 +162,7 @@ async function main() {
   const byRegion = await fetchAzurePricing(keys);
   const outPath = path.isAbsolute(out) ? out : path.join(ROOT, out);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(byRegion, null, 2), "utf8");
+  writeFileAtomic(outPath, JSON.stringify(byRegion, null, 2));
   const total = Object.values(byRegion).reduce(
     (n, r) => n + Object.keys(r).length,
     0,

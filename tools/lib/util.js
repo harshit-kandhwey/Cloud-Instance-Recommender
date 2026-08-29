@@ -79,10 +79,56 @@ function readShippedRegionKeys(name, prefix, root = ROOT) {
   return keys;
 }
 
+// --date for a refresh: the value becomes {PREFIX}_DATA_DATE, which the page renders
+// verbatim in the "Instance data updated" badge, so whatever is passed here ships to
+// users as-is. Must be a real calendar day in YYYY-MM-DD: the round-trip is what
+// rejects 2026-02-30, which the pattern admits and Date silently rolls to 2026-03-02.
+function resolveDataDate(arg, today = new Date()) {
+  if (arg === undefined) return today.toISOString().slice(0, 10);
+  const d = new Date(`${arg}T00:00:00.000Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(arg) ||
+    Number.isNaN(d.getTime()) ||
+    d.toISOString().slice(0, 10) !== arg
+  ) {
+    throw new Error(
+      `invalid --date ${arg} — expected a real calendar date as YYYY-MM-DD`,
+    );
+  }
+  return arg;
+}
+
+// Write through a sibling .tmp and rename. The rename is atomic, so a reader never
+// sees a half-written artifact and a write that fails part-way cannot truncate the
+// file it was replacing — a clobbered monolith breaks readShippedRegionKeys on the
+// next run until git restore. .tmp is gitignored, so a hard kill leaves nothing the
+// refresh PR could pick up.
+//
+// Per FILE, not per run: the pipeline writes several artifacts and each rename is
+// its own operation, so a failure between two still leaves a mixed set. Making the
+// set all-or-nothing would need a journal this tooling does not have; what this
+// buys is that no single artifact is ever torn or truncated.
+function writeFileAtomic(target, contents) {
+  const tmp = `${target}.tmp`;
+  try {
+    fs.writeFileSync(tmp, contents, "utf8");
+    fs.renameSync(tmp, target);
+  } catch (err) {
+    try {
+      fs.unlinkSync(tmp);
+    } catch {
+      // Best effort — the write error is the one worth reporting.
+    }
+    throw err;
+  }
+}
+
 module.exports = {
   ROOT,
   round8,
   argValue,
+  resolveDataDate,
+  writeFileAtomic,
   loadGlobals,
   loadCommittedRegions,
   readShippedRegionKeys,

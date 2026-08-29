@@ -27,7 +27,12 @@
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
-const { ROOT, argValue } = require("./lib/util");
+const {
+  ROOT,
+  argValue,
+  resolveDataDate,
+  writeFileAtomic,
+} = require("./lib/util");
 
 const CACHE = path.join(ROOT, ".refresh-cache");
 
@@ -138,7 +143,7 @@ function runStep(step) {
       stdio: ["inherit", "pipe", "inherit"],
       maxBuffer: 64 * 1024 * 1024,
     });
-    fs.writeFileSync(path.join(ROOT, step.captureTo), out, "utf8");
+    writeFileAtomic(path.join(ROOT, step.captureTo), out);
     return out;
   }
   execFileSync(process.execPath, [scriptPath, ...step.args], {
@@ -151,7 +156,7 @@ function runStep(step) {
 
 function main() {
   const pricing = !process.argv.includes("--specs-only");
-  const date = argValue("--date") || new Date().toISOString().slice(0, 10);
+  const date = resolveDataDate(argValue("--date"));
 
   loadDotEnv();
   const missing = missingKeys({ pricing }, process.env);

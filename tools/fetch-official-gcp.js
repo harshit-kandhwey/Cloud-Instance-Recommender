@@ -35,7 +35,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, round8, argValue } = require("./lib/util");
+const { ROOT, round8, argValue, writeFileAtomic } = require("./lib/util");
 
 const CATALOG_HOST = "https://cloudbilling.googleapis.com";
 // Compute Engine's well-known billing service id (stable; confirmed 2026-08-17).
@@ -305,7 +305,7 @@ async function main() {
 
   const outPath = path.isAbsolute(out) ? out : path.join(ROOT, out);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(byRegion, null, 2), "utf8");
+  writeFileAtomic(outPath, JSON.stringify(byRegion, null, 2));
 
   const total = Object.values(byRegion).reduce(
     (n, r) => n + Object.keys(r).length,

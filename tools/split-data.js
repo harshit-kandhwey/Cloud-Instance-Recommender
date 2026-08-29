@@ -21,6 +21,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { writeFileAtomic } = require("./lib/util");
 
 const ROOT = path.join(__dirname, "..");
 
@@ -131,7 +132,7 @@ function splitProvider({ name, prefix }) {
   fs.mkdirSync(regionsDir, { recursive: true });
   const newFileNames = new Set(files.map(({ key }) => `${key}.js`));
   for (const { key, fileContent } of files) {
-    fs.writeFileSync(path.join(regionsDir, `${key}.js`), fileContent, "utf8");
+    writeFileAtomic(path.join(regionsDir, `${key}.js`), fileContent);
   }
   const pruned = [];
   for (const stale of fs.readdirSync(regionsDir)) {
@@ -151,7 +152,7 @@ function splitProvider({ name, prefix }) {
     extractedKeys.map((k) => `  "${k}",`).join("\n") +
     `\n];\n` +
     `window.${prefix}_DATA_READY = true;\n`;
-  fs.writeFileSync(dataPath, manifest, "utf8");
+  writeFileAtomic(dataPath, manifest);
 
   console.log(
     `[${name}] split ${regions.length} regions into js/${name}/regions/ and rewrote manifest`,

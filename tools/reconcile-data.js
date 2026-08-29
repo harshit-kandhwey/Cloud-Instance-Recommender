@@ -32,7 +32,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { serializeMonolith } = require("./fetch-vantage");
-const { ROOT, argValue } = require("./lib/util");
+const { ROOT, argValue, writeFileAtomic } = require("./lib/util");
 
 const PROVIDERS = [
   {
@@ -281,11 +281,7 @@ function main() {
       dataDate: mono.dataDate,
       byRegion,
     });
-    fs.writeFileSync(
-      path.join(ROOT, "js", name, `${name}-data.js`),
-      monolith,
-      "utf8",
-    );
+    writeFileAtomic(path.join(ROOT, "js", name, `${name}-data.js`), monolith);
     reports.push(report);
     process.stderr.write(
       `[${name}] reconciled: ${report.typesVerified} verified, ` +
