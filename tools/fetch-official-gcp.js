@@ -218,8 +218,14 @@ function composePricing(rates, winHr, shipped) {
 
 // ── Network ────────────────────────────────────────────────────────────────────
 
-// Every Compute Engine SKU, following nextPageToken to the end (capped). The catalog
-// is not filterable server-side, so the Core/Ram/OS refinement happens in the parsers.
+// Every Compute Engine SKU, following nextPageToken to the end. The catalog is not
+// filterable server-side, so the Core/Ram/OS refinement happens in the parsers.
+//
+// The cap and the repeat check both THROW rather than returning what has been
+// collected so far: a short catalog composes prices for only some series, and the
+// reconcile step would read that partial dump as authoritative and mark the missing
+// families UNVERIFIED — a silent quality regression at exit 0. The azure fetcher's
+// pagination guards it the same way.
 async function fetchAllSkus() {
   const key = process.env.GCP_BILLING_API_KEY;
   if (!key) {
@@ -228,8 +234,21 @@ async function fetchAllSkus() {
     );
   }
   const skus = [];
+  const seen = new Set();
   let token = "";
-  for (let page = 0; page < MAX_PAGES; page++) {
+  for (let page = 0; ; page++) {
+    if (page >= MAX_PAGES) {
+      throw new Error(
+        `[gcp] page cap (${MAX_PAGES}) exceeded with a nextPageToken still pending — ` +
+          `refusing to write a partial catalog`,
+      );
+    }
+    if (token && seen.has(token)) {
+      throw new Error(
+        `[gcp] repeating nextPageToken at catalog page ${page + 1}`,
+      );
+    }
+    if (token) seen.add(token);
     const url =
       `${CATALOG_HOST}/v1/${COMPUTE_SERVICE}/skus?key=${key}` +
       `&pageSize=${PAGE_SIZE}${token ? `&pageToken=${token}` : ""}`;
@@ -325,6 +344,8 @@ async function main() {
 
 module.exports = {
   parseCoreRamSkus,
+  fetchAllSkus,
+  MAX_PAGES,
   windowsPerVCpuHr,
   composePricing,
   classifyCoreRam,

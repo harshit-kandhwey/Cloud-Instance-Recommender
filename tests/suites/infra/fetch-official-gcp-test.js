@@ -12,6 +12,8 @@ const {
   composePricing,
   classifyCoreRam,
   skuUsd,
+  fetchAllSkus,
+  MAX_PAGES,
 } = require("../../../tools/fetch-official-gcp");
 
 const { check, state } = makeChecker();
@@ -151,10 +153,92 @@ const { byRegion, unmatched } = composePricing(
   );
 }
 
-if (state.failures) {
-  console.error(`\nfetch-official-gcp: ${state.failures} check(s) FAILED`);
-  process.exitCode = 1;
-} else {
-  console.log("\nfetch-official-gcp: all checks passed");
-  process.exitCode = 0;
+// ── Pagination: a truncated catalog is an error, never a partial dump ────────────
+// The only place a stub stands in for the network: fetch is replaced with a local
+// function, so nothing leaves the machine. What is under test is the loop's exit
+// conditions, which no recorded fixture can express.
+async function paginationChecks() {
+  const realFetch = globalThis.fetch;
+  const realKey = process.env.GCP_BILLING_API_KEY;
+  process.env.GCP_BILLING_API_KEY = "test-key-unused-by-the-stub";
+
+  // Serves pages built by `plan(page)`; every response is a 200 with a skus array.
+  const stub = (plan) => {
+    let calls = 0;
+    globalThis.fetch = async () => {
+      const body = plan(calls++);
+      return { ok: true, json: async () => body };
+    };
+    return () => calls;
+  };
+  const run = async (plan) => {
+    const calls = stub(plan);
+    try {
+      return { skus: await fetchAllSkus(), calls: calls(), error: "" };
+    } catch (e) {
+      return { skus: null, calls: calls(), error: e.message };
+    }
+  };
+
+  try {
+    const ok = await run((n) =>
+      n === 0
+        ? { skus: [{ name: "a" }], nextPageToken: "t1" }
+        : { skus: [{ name: "b" }] },
+    );
+    check(
+      "fetchAllSkus follows nextPageToken and stops when it is absent",
+      ok.error === "" && ok.calls === 2 && ok.skus.length === 2,
+      JSON.stringify({ calls: ok.calls, error: ok.error }),
+    );
+
+    // Guard (plant-RED: return the collected skus at the cap instead of throwing).
+    // A catalog still handing out a token at the cap means the dump is short, and a
+    // short dump prices only some series while reconcile treats it as authoritative.
+    const capped = await run((n) => ({
+      skus: [{ name: `s${n}` }],
+      nextPageToken: `t${n}`,
+    }));
+    check(
+      "a live nextPageToken at the page cap throws instead of returning partial",
+      capped.skus === null &&
+        capped.error.includes(`page cap (${MAX_PAGES}) exceeded`) &&
+        capped.calls === MAX_PAGES,
+      JSON.stringify({ calls: capped.calls, error: capped.error }),
+    );
+
+    // Guard (plant-RED: drop the seen-token check): a token the catalog repeats
+    // would otherwise be walked MAX_PAGES times, collecting the same page over and
+    // over before failing with the vaguer cap message.
+    const looping = await run(() => ({
+      skus: [{ name: "same" }],
+      nextPageToken: "stuck",
+    }));
+    check(
+      "a repeating nextPageToken fails fast and by name",
+      looping.skus === null &&
+        looping.error.includes("repeating nextPageToken") &&
+        looping.calls === 2,
+      JSON.stringify({ calls: looping.calls, error: looping.error }),
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realKey === undefined) delete process.env.GCP_BILLING_API_KEY;
+    else process.env.GCP_BILLING_API_KEY = realKey;
+  }
 }
+
+// The pagination checks are async, so the verdict is reported after they settle.
+paginationChecks()
+  .catch((e) => {
+    check("pagination checks run to completion", false, e && e.message);
+  })
+  .then(() => {
+    if (state.failures) {
+      console.error(`\nfetch-official-gcp: ${state.failures} check(s) FAILED`);
+      process.exitCode = 1;
+    } else {
+      console.log("\nfetch-official-gcp: all checks passed");
+      process.exitCode = 0;
+    }
+  });
