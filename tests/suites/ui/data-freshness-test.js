@@ -10,12 +10,13 @@ const { check, state } = makeChecker();
 (async () => {
   // ── Single provider ──────────────────────────────────────────────────────────
   {
-    const { ctx } = buildContext({ dataScript: "js/aws/aws-data.js" });
+    const { ctx, run } = buildContext({ dataScript: "js/aws/aws-data.js" });
+    const awsDate = run("window.AWS_DATA_DATE");
     ctx.renderDataFreshness();
     const el = ctx.document.getElementById("dataFreshness");
     check(
       "[single] badge shows the provider's data date",
-      el.textContent === "📅 Instance data updated 2026-06-27",
+      el.textContent === `📅 Instance data updated ${awsDate}`,
       el.textContent,
     );
     check("[single] badge is unhidden", el.hidden === false);
@@ -24,18 +25,21 @@ const { check, state } = makeChecker();
 
   // ── Multiple providers, same date → deduped to one ───────────────────────────
   {
-    const { ctx } = buildContext({
+    const { ctx, run } = buildContext({
       dataScripts: [
         "js/aws/aws-data.js",
         "js/azure/azure-data.js",
         "js/gcp/gcp-data.js",
       ],
     });
+    // A refresh stamps every provider with the same snapshot date, so the three
+    // loaded globals agree and the badge dedupes to that one date.
+    const awsDate = run("window.AWS_DATA_DATE");
     ctx.renderDataFreshness();
     const el = ctx.document.getElementById("dataFreshness");
     check(
       "[multi-same] one date, no per-provider breakdown",
-      el.textContent === "📅 Instance data updated 2026-06-27" &&
+      el.textContent === `📅 Instance data updated ${awsDate}` &&
         !el.textContent.includes("AWS"),
       el.textContent,
     );
@@ -50,13 +54,19 @@ const { check, state } = makeChecker();
         "js/gcp/gcp-data.js",
       ],
     });
-    run('window.AZURE_DATA_DATE = "2026-07-01"');
+    const awsDate = run("window.AWS_DATA_DATE");
+    const gcpDate = run("window.GCP_DATA_DATE");
+    // Force a divergence: inject an Azure date guaranteed to differ from the
+    // loaded snapshot, so the per-provider breakdown path renders regardless of
+    // what date the shipped data currently carries.
+    const azureDate = awsDate === "2026-07-01" ? "2026-07-02" : "2026-07-01";
+    run(`window.AZURE_DATA_DATE = ${JSON.stringify(azureDate)}`);
     ctx.renderDataFreshness();
     const el = ctx.document.getElementById("dataFreshness");
     check(
       "[multi-diff] each provider's date is named",
       el.textContent ===
-        "📅 Instance data updated AWS 2026-06-27 · Azure 2026-07-01 · GCP 2026-06-27",
+        `📅 Instance data updated AWS ${awsDate} · Azure ${azureDate} · GCP ${gcpDate}`,
       el.textContent,
     );
   }
