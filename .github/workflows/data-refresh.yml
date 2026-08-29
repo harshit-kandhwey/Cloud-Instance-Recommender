@@ -16,7 +16,8 @@ name: Data refresh
 # Two stages (Phase D3):
 #   fetch (matrix, one job per provider) — ONLY on a pricing run. Each reads the
 #     intact shipped manifest and uploads a tiny {p}-pricing.json artifact.
-#   assemble (one job) — fetch-vantage → reconcile → data-diff → split-data → PR.
+#   assemble (one job) — fetch-vantage → reconcile-data → data-diff →
+#     recommendation-diff → split-data → PR.
 # ORDER IS LOAD-BEARING: the official fetchers read the shipped manifest
 # (js/{p}/regions/ + the {P}_REGION_KEYS keys) that fetch-vantage overwrites with a
 # monolith, so they MUST run before it — hence a separate fetch stage on the intact

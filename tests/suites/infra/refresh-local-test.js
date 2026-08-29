@@ -3,9 +3,12 @@
 // they read; data-diff before split-data, which overwrites the regions/ it reads as the
 // OLD side), that --specs-only drops the official fetch + reconcile, the .env parser, and
 // the required-key gate. The order IS the reason this tool exists, so it is guarded RED.
-const { makeChecker } = require("../harness");
+const fs = require("fs");
+const path = require("path");
+const { REPO, makeChecker } = require("../harness");
 const {
   planSteps,
+  skipNotice,
   parseEnv,
   missingKeys,
 } = require("../../../tools/refresh-local");
@@ -137,6 +140,68 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
         },
       ).length === 0,
   );
+}
+
+// ── The skip notice names the step it is actually skipping ──────────────────────
+{
+  const gated = planSteps({ pricing: true, date: "x" }).filter(
+    (s) => s.onlyIfChanged,
+  );
+  check(
+    "more than one step is gated on the diff finding changes",
+    gated.length >= 2,
+    gated.map((s) => s.name).join(","),
+  );
+
+  // Guard (plant-RED: hardcode one step name in skipNotice): a no-op diff skips
+  // BOTH gated steps and prints the notice once each, so a fixed name mislabels
+  // every step but the one it names.
+  const wrong = gated.filter((s) => !skipNotice(s).includes(s.name));
+  check(
+    "the skip notice names each gated step it skips",
+    wrong.length === 0,
+    wrong.map((s) => `${s.name}: ${skipNotice(s).trim()}`).join(" | ") ||
+      "none",
+  );
+}
+
+// ── The three places that state the order stay in step with the plan ────────────
+// The order is load-bearing, so a stale statement of it is a real hazard: a
+// maintainer following a header that omits a step reorders the pipeline by hand.
+// recommendation-diff was added to planSteps and to the workflow body but not to
+// these headers, which is exactly the drift this pins.
+{
+  const chainSteps = planSteps({ pricing: true, date: "x" })
+    .map((s) => s.name)
+    .filter((n) => !n.startsWith("fetch-official-"));
+
+  // The arrow chain itself, not the surrounding prose: each file states the order
+  // once, from the fetch-vantage arrow through split-data, wrapped over one or two
+  // lines. Reading the whole file would pass on a prose mention of a step the chain
+  // omits, which is the drift being pinned.
+  const chainOf = (rel) => {
+    const lines = fs.readFileSync(path.join(REPO, rel), "utf8").split("\n");
+    const start = lines.findIndex((l) => /fetch-vantage\s*(->|→)/.test(l));
+    if (start === -1) return "";
+    const end = lines.findIndex(
+      (l, i) => i >= start && l.includes("split-data"),
+    );
+    return end === -1 ? "" : lines.slice(start, end + 1).join(" ");
+  };
+
+  for (const rel of [
+    "tools/refresh-local.js",
+    ".github/workflows/data-refresh.yml",
+    "docs/DATA-SOURCES.md",
+  ]) {
+    const chain = chainOf(rel);
+    const missing = chainSteps.filter((n) => !chain.includes(n));
+    check(
+      `${rel} states the full pipeline order`,
+      chain !== "" && missing.length === 0,
+      chain === "" ? "no order chain found" : missing.join(",") || "complete",
+    );
+  }
 }
 
 if (state.failures) {

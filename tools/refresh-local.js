@@ -14,7 +14,8 @@
  * shipped manifest — js/{p}/regions/ + the {P}_REGION_KEYS keys — that fetch-vantage
  * overwrites with a monolith, so they MUST run first:
  *
- *   official fetch (aws,azure,gcp) -> fetch-vantage -> reconcile -> data-diff -> split-data
+ *   official fetch (aws,azure,gcp) -> fetch-vantage -> reconcile-data -> data-diff
+ *     -> recommendation-diff -> split-data
  *
  * Keys come from the environment; a gitignored .env is loaded first if present
  * (values never printed). This script does NOT touch git: it leaves the regenerated
@@ -91,6 +92,12 @@ function planSteps({ pricing, date }) {
   });
   return steps;
 }
+
+// What a diff-gated step prints when the diff found nothing. MORE THAN ONE step
+// carries the gate, so the notice names the step it is actually skipping rather
+// than a fixed one — a hardcoded name mislabels every other gated step.
+const skipNotice = (step) =>
+  `• data-diff reported NO CHANGES — skipping ${step.name}.\n`;
 
 // Parse a KEY=VALUE .env into a map (no dependency, values never logged). Blank
 // lines and #-comments skipped; surrounding quotes and a trailing CR stripped.
@@ -174,9 +181,7 @@ function main() {
   let changed = false;
   for (const step of steps) {
     if (step.onlyIfChanged && !changed) {
-      process.stderr.write(
-        "• data-diff reported NO CHANGES — skipping split-data.\n",
-      );
+      process.stderr.write(skipNotice(step));
       continue;
     }
     process.stderr.write(`\n── ${step.name} ─────────────\n`);
@@ -209,7 +214,7 @@ function main() {
   );
 }
 
-module.exports = { planSteps, parseEnv, missingKeys };
+module.exports = { planSteps, skipNotice, parseEnv, missingKeys };
 
 if (require.main === module) {
   try {
