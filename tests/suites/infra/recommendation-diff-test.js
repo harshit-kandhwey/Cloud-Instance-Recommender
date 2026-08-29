@@ -5,12 +5,17 @@
 // and disk loaders are impure and exercised live (they reproduce the goldens from
 // injected data); here the diff over result-row shapes is unit-tested. Inputs are result
 // rows shaped like the golden CSV columns, built inline.
+const fs = require("fs");
+const path = require("path");
 const { makeChecker } = require("../harness");
 const {
   recommendationColumns,
   diffScenario,
   renderReport,
+  selectScenarios,
+  SINGLE_PROVIDERS,
 } = require("../../../tools/recommendation-diff");
+const { SCENARIOS } = require("../../golden/golden-run");
 
 const { check, state } = makeChecker();
 
@@ -131,6 +136,73 @@ const { check, state } = makeChecker();
       none: none.split("\n")[0],
       flipped: flipped.split("\n")[0],
     }),
+  );
+}
+
+// ── selectScenarios: --provider never silently selects nothing ───────────────────
+{
+  check(
+    "no --provider runs every golden scenario",
+    SCENARIOS.length > 0 &&
+      selectScenarios(undefined).length === SCENARIOS.length,
+    `${selectScenarios(undefined).length}/${SCENARIOS.length}`,
+  );
+
+  const aws = selectScenarios("aws");
+  check(
+    "--provider aws selects only the single-provider aws scenarios",
+    aws.length > 0 &&
+      aws.every((s) => s.providers.length === 1 && s.providers[0] === "aws"),
+    JSON.stringify(aws.map((s) => s.file)),
+  );
+
+  // Guard C (plant-RED: drop the throw so the filter returns []): an unrecognised
+  // provider must fail loudly. An empty scenario list runs no comparison at all yet
+  // renders the NONE sentinel at exit 0 — the workflow then reads "this refresh
+  // flipped no recommendation" for a check that never happened.
+  let msg = "";
+  try {
+    selectScenarios("awss");
+  } catch (e) {
+    msg = e.message;
+  }
+  check(
+    "an unknown --provider throws instead of reporting a false NONE",
+    msg.includes("unknown --provider awss") &&
+      SINGLE_PROVIDERS.every((p) => msg.includes(p)),
+    msg || "(did not throw)",
+  );
+
+  // A multi-provider scenario's name is not a --provider value: the flag selects
+  // single-provider runs only, so the accepted set must match what those name.
+  const expected = [
+    ...new Set(
+      SCENARIOS.filter((s) => s.providers.length === 1).map(
+        (s) => s.providers[0],
+      ),
+    ),
+  ].sort();
+  check(
+    "SINGLE_PROVIDERS is exactly what the single-provider scenarios name",
+    SINGLE_PROVIDERS.join(",") === expected.join(","),
+    SINGLE_PROVIDERS.join(","),
+  );
+}
+
+// ── The old side comes from the shared loader, never a private copy ─────────────
+// Structural, because the defect was structural: this tool carried its own
+// regions-directory loader that nobody kept in step with data-diff's, so the
+// missing-assignment guard added to one never reached the other. Sharing the loader
+// is the fix; a second readdirSync here would be the drift coming back.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "recommendation-diff.js"),
+    "utf8",
+  );
+  check(
+    "recommendation-diff reads the old side through the shared loader",
+    src.includes("loadCommittedRegions") && !src.includes("readdirSync"),
+    src.includes("readdirSync") ? "has its own readdirSync" : "shared",
   );
 }
 

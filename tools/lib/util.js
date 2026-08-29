@@ -23,15 +23,50 @@ function argValue(flag, argv = process.argv) {
   return i !== -1 ? argv[i + 1] : undefined;
 }
 
-// Run a shipped JS artifact in a window-like sandbox and return its globals.
-function loadGlobals(relPath, root = ROOT) {
+// Run shipped JS artifacts in one shared window-like sandbox and return its globals.
+// Shared, not one context each: region files are read as a set and may reference
+// each other's globals exactly as the page would.
+function runFiles(relPaths, root = ROOT) {
   const sandbox = {};
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(path.join(root, relPath), "utf8"), sandbox, {
-    filename: relPath,
-  });
+  for (const rel of relPaths) {
+    vm.runInContext(fs.readFileSync(path.join(root, rel), "utf8"), sandbox, {
+      filename: rel,
+    });
+  }
   return sandbox;
+}
+
+// Run a shipped JS artifact in a window-like sandbox and return its globals.
+function loadGlobals(relPath, root = ROOT) {
+  return runFiles([relPath], root);
+}
+
+// Committed region data — the "old" side for BOTH refresh diffs. Read straight from
+// js/{name}/regions/: the diffs run after fetch-vantage has overwritten the manifest
+// with the new monolith but before split-data touches the region files, so the
+// directory still holds the previous data. Each file is `window.<key> = {...}`.
+//
+// Lives here rather than in either diff so the two cannot drift: data-diff carried
+// the missing-assignment guard and recommendation-diff did not, which published an
+// undefined region into the engine's {PREFIX}_REGION_KEYS instead of failing by name.
+function loadCommittedRegions(name, root = ROOT) {
+  const dir = path.join(root, "js", name, "regions");
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".js"));
+  const g = runFiles(
+    files.map((f) => `js/${name}/regions/${f}`),
+    root,
+  );
+  const regions = {};
+  for (const f of files) {
+    const key = f.replace(/\.js$/, "");
+    if (!g[key] || typeof g[key] !== "object") {
+      throw new Error(`js/${name}/regions/${f} did not assign window.${key}`);
+    }
+    regions[key] = g[key];
+  }
+  return regions;
 }
 
 // The {PREFIX}_REGION_KEYS manifest array from js/{name}/{name}-data.js.
@@ -44,4 +79,11 @@ function readShippedRegionKeys(name, prefix, root = ROOT) {
   return keys;
 }
 
-module.exports = { ROOT, round8, argValue, loadGlobals, readShippedRegionKeys };
+module.exports = {
+  ROOT,
+  round8,
+  argValue,
+  loadGlobals,
+  loadCommittedRegions,
+  readShippedRegionKeys,
+};

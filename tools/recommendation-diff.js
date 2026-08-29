@@ -28,7 +28,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
-const { ROOT, argValue } = require("./lib/util");
+const { ROOT, argValue, loadCommittedRegions } = require("./lib/util");
 const {
   SAMPLE_CSV,
   parseSample,
@@ -123,24 +123,9 @@ function renderReport(perScenario) {
 
 // ── Data loading (impure) ─────────────────────────────────────────────────────────
 
-// Committed region data — the "old" engine input. Same source as data-diff's old side:
-// js/{name}/regions/, each file `window.<key> = {...}`.
-function loadOldRegions(name) {
-  const dir = path.join(ROOT, "js", name, "regions");
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".js"));
-  const sb = {};
-  sb.window = sb;
-  vm.createContext(sb);
-  for (const f of files) {
-    vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), sb, {
-      filename: `js/${name}/regions/${f}`,
-    });
-  }
-  const out = {};
-  for (const f of files)
-    out[f.replace(/\.js$/, "")] = sb[f.replace(/\.js$/, "")];
-  return out;
-}
+// The "old" engine input is js/{name}/regions/ via the shared loadCommittedRegions —
+// literally the same loader data-diff uses, so the two diffs can never disagree on
+// what the old side is or on which malformed region files they reject.
 
 // Fresh monolith — the "new" engine input. Null when the file is a manifest (already
 // split, or fetch-vantage did not run), so the caller skips rather than comparing stale.
@@ -191,13 +176,36 @@ async function runScenario(scenario, dataBySideProvider) {
 
 // ── CLI ────────────────────────────────────────────────────────────────────────
 
+// The values --provider accepts, derived from the harness rather than listed again
+// so a scenario added there is selectable here without a second edit.
+const SINGLE_PROVIDERS = [
+  ...new Set(
+    SCENARIOS.filter((s) => s.providers.length === 1).map(
+      (s) => s.providers[0],
+    ),
+  ),
+].sort();
+
+// Scenarios --provider selects. An unrecognised value must NOT quietly select
+// nothing: an empty run renders the NONE sentinel and exits 0, so a typo would read
+// as "this refresh flipped no recommendation" for a comparison that never ran — the
+// same false-negative class as data-diff's all-skipped guard, and the tools it runs
+// beside (data-diff, fetch-vantage, reconcile-data) all throw here.
+function selectScenarios(only) {
+  if (only === undefined) return SCENARIOS;
+  const picked = SCENARIOS.filter(
+    (s) => s.providers.length === 1 && s.providers[0] === only,
+  );
+  if (!picked.length) {
+    throw new Error(
+      `unknown --provider ${only} (expected one of: ${SINGLE_PROVIDERS.join(", ")})`,
+    );
+  }
+  return picked;
+}
+
 async function main() {
-  const only = argValue("--provider");
-  const scenarios = only
-    ? SCENARIOS.filter(
-        (s) => s.providers.length === 1 && s.providers[0] === only,
-      )
-    : SCENARIOS;
+  const scenarios = selectScenarios(argValue("--provider"));
 
   // Every provider any selected scenario needs, loaded once per side.
   const providers = [...new Set(scenarios.flatMap((s) => s.providers))];
@@ -213,7 +221,7 @@ async function main() {
       );
       return;
     }
-    data.old[p] = loadOldRegions(p);
+    data.old[p] = loadCommittedRegions(p);
     data.new[p] = fresh;
   }
 
@@ -235,7 +243,9 @@ module.exports = {
   recommendationColumns,
   diffScenario,
   renderReport,
+  selectScenarios,
   PICK_SUFFIXES,
+  SINGLE_PROVIDERS,
   SAMPLE_CSV,
 };
 

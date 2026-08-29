@@ -22,7 +22,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-const { ROOT, round8, argValue } = require("./lib/util");
+const { ROOT, round8, argValue, loadCommittedRegions } = require("./lib/util");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },
@@ -307,36 +307,8 @@ function renderReport(diffs) {
 
 // ── Disk loaders ────────────────────────────────────────────────────────────────
 
-function runFiles(relPaths) {
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  for (const rel of relPaths) {
-    vm.runInContext(fs.readFileSync(path.join(ROOT, rel), "utf8"), sandbox, {
-      filename: rel,
-    });
-  }
-  return sandbox;
-}
-
-// Committed region data — the "old" side. Read straight from js/{name}/regions/:
-// data-diff runs after fetch-vantage has already overwritten the manifest with the
-// new monolith, but before split-data touches the region files, so the directory
-// still holds the previous data. Each file is `window.<key> = {...}`.
-function loadCommittedRegions(name) {
-  const dir = path.join(ROOT, "js", name, "regions");
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".js"));
-  const g = runFiles(files.map((f) => `js/${name}/regions/${f}`));
-  const regions = {};
-  for (const f of files) {
-    const key = f.replace(/\.js$/, "");
-    if (!g[key] || typeof g[key] !== "object") {
-      throw new Error(`js/${name}/regions/${f} did not assign window.${key}`);
-    }
-    regions[key] = g[key];
-  }
-  return regions;
-}
+// The "old" side — js/{name}/regions/ — is loaded by the shared
+// loadCommittedRegions in tools/lib/util.js, which recommendation-diff reads too.
 
 // Extract { regionKey: {type:record} } from a freshly generated monolith by
 // running it and reading the keys the make{PREFIX}RegionsGlobal({...}) call lists.
