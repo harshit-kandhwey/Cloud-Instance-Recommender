@@ -66,15 +66,52 @@ function azureFamilyName(category) {
   return c ? c.charAt(0).toUpperCase() + c.slice(1) : "";
 }
 
-// Vantage carries no cpuPlatform/isARM for GCP; derive from series (consistent in
-// the shipped data). Unknown series default to Intel.
-const GCP_ARM_SERIES = new Set(["t2a"]);
-const GCP_AMD_SERIES = new Set(["c2d", "c3d", "n2d", "n4d", "t2d"]);
+// Vantage carries no cpuPlatform/isARM for GCP; derive from the series. Google's
+// suffix convention ("a" = Arm, "d" = AMD, bare = Intel) holds for the general-purpose
+// families but NOT for the accelerator ones — a4x is Arm on NVIDIA Grace — so this
+// stays a table rather than a rule. Verified against Google's machine-family docs:
+// Axion Arm c4a (Neoverse V2) / n4a (Neoverse N3), Ampere Altra t2a, Grace Arm a4x;
+// AMD EPYC Turin c4d/n4d/h4d, Milan c2d, Genoa c3d, plus n2d/t2d.
+// A series in NONE of the three tables falls back to Intel — a guess, and the wrong
+// one for every Arm or AMD family Google adds, which is exactly how c4a would have
+// shipped as Intel. buildMonolith reports those rather than let them ship silently.
+const GCP_ARM_SERIES = new Set(["a4x", "c4a", "n4a", "t2a"]);
+const GCP_AMD_SERIES = new Set([
+  "c2d",
+  "c3d",
+  "c4d",
+  "h4d",
+  "n2d",
+  "n4d",
+  "t2d",
+]);
+const GCP_INTEL_SERIES = new Set([
+  "a2",
+  "a3",
+  "c2",
+  "c3",
+  "c4",
+  "e2",
+  "g2",
+  "h3",
+  "m1",
+  "m2",
+  "m3",
+  "m4",
+  "n1",
+  "n2",
+  "n4",
+  "z3",
+]);
 function gcpPlatform(series) {
   if (GCP_ARM_SERIES.has(series)) return { cpuPlatform: "ARM", isARM: 1 };
   if (GCP_AMD_SERIES.has(series)) return { cpuPlatform: "AMD", isARM: 0 };
   return { cpuPlatform: "Intel", isARM: 0 };
 }
+const isMappedGcpSeries = (series) =>
+  GCP_ARM_SERIES.has(series) ||
+  GCP_AMD_SERIES.has(series) ||
+  GCP_INTEL_SERIES.has(series);
 
 // AWS/GCP region key = pricing slug with hyphens → underscores. Azure pricing slugs
 // are Vantage codes, so map through the record's regions table to the Azure display
@@ -296,6 +333,22 @@ function buildMonolith({
     }
   }
 
+  // A GCP series in none of the platform tables just shipped on the Intel fallback.
+  // Name it here, at the one point that sees everything built, so a new Arm or AMD
+  // family is caught at refresh time instead of surfacing later as wrong data.
+  if (name === "gcp") {
+    const unmapped = new Set();
+    for (const recs of byRegion.values())
+      for (const rec of recs.values())
+        if (!isMappedGcpSeries(rec.series)) unmapped.add(rec.series);
+    if (unmapped.size)
+      process.stderr.write(
+        `WARNING: GCP series with no platform mapping, shipped as Intel: ` +
+          `${[...unmapped].sort().join(", ")} — add each to GCP_ARM_SERIES / ` +
+          `GCP_AMD_SERIES / GCP_INTEL_SERIES in tools/fetch-vantage.js\n`,
+      );
+  }
+
   // Map(rk -> Map(type -> record)) → plain { rk: { type: record } } for the shared
   // serializer below, which is the one definition of the on-disk format.
   const obj = {};
@@ -478,6 +531,7 @@ module.exports = {
   awsProcessor,
   azureFamilyName,
   gcpPlatform,
+  isMappedGcpSeries,
   azureRegionKey,
 };
 

@@ -89,5 +89,39 @@
         }
       }
     }
+  },
+  {
+    "instance_type": "c4a-standard-4",
+    "family": "General purpose",
+    "vCPU": 4,
+    "memory": 16,
+    "generation": "current",
+    "pricing": {
+      "us-central1": {
+        "linux": {
+          "ondemand": "0.1712"
+        },
+        "windows": {
+          "ondemand": "0.3552"
+        }
+      }
+    }
+  },
+  {
+    "instance_type": "q9z-standard-4",
+    "family": "General purpose",
+    "vCPU": 4,
+    "memory": 16,
+    "generation": "current",
+    "pricing": {
+      "us-central1": {
+        "linux": {
+          "ondemand": "0.1"
+        },
+        "windows": {
+          "ondemand": "0.2"
+        }
+      }
+    }
   }
 ]

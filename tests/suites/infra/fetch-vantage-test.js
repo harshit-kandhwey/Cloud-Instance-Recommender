@@ -8,6 +8,7 @@ const { REPO, makeChecker } = require("../harness");
 const {
   buildMonolith,
   gcpPlatform,
+  isMappedGcpSeries,
   azureRegionKey,
   awsProcessor,
   mostCommonGeneration,
@@ -179,14 +180,27 @@ function splitDataParity(monolith) {
 // ── GCP ───────────────────────────────────────────────────────────────────────
 {
   const gcpShipped = ["us_central1", "europe_west1"]; // mars_central1 omitted
-  const { monolith, regionKeys } = buildMonolith({
-    name: "gcp",
-    prefix: "GCP",
-    source: "instances.vantage.sh/gcp",
-    instances: fixture("gcp.json"),
-    shippedKeys: gcpShipped,
-    dataDate: "2026-08-21",
-  });
+  // The fixture carries an invented q9z series, so this build also exercises the
+  // unmapped-series report; capture stderr rather than let it litter the run.
+  const written = [];
+  const realWrite = process.stderr.write;
+  process.stderr.write = (s) => {
+    written.push(String(s));
+    return true;
+  };
+  let monolith, regionKeys;
+  try {
+    ({ monolith, regionKeys } = buildMonolith({
+      name: "gcp",
+      prefix: "GCP",
+      source: "instances.vantage.sh/gcp",
+      instances: fixture("gcp.json"),
+      shippedKeys: gcpShipped,
+      dataDate: "2026-08-21",
+    }));
+  } finally {
+    process.stderr.write = realWrite;
+  }
   const g = runMonolith(monolith);
 
   check("[gcp] unshipped mars_central1 dropped", g.mars_central1 === undefined);
@@ -222,6 +236,30 @@ function splitDataParity(monolith) {
     g.us_central1["t2a-standard-4"].cpuPlatform === "ARM" &&
       g.us_central1["t2a-standard-4"].isARM === 1,
   );
+  // c4a is Axion Arm. It was absent from the series table, so it would have shipped
+  // as Intel and read as x86 to every processor filter — the whole point of the fix.
+  check(
+    "[gcp] Axion c4a → cpuPlatform ARM, isARM 1 (not the Intel default)",
+    g.us_central1["c4a-standard-4"].cpuPlatform === "ARM" &&
+      g.us_central1["c4a-standard-4"].isARM === 1,
+    JSON.stringify(g.us_central1["c4a-standard-4"]),
+  );
+  // An unmapped series still ships (on the Intel fallback) but must not do so quietly.
+  check(
+    "[gcp] an unmapped series is reported, naming the series and the tables to fix",
+    written.some(
+      (s) =>
+        /no platform mapping/.test(s) &&
+        /q9z/.test(s) &&
+        /GCP_ARM_SERIES/.test(s),
+    ),
+    JSON.stringify(written),
+  );
+  check(
+    "[gcp] the report names only the unmapped series, not the mapped ones",
+    written.every((s) => !/\b(c4a|t2a|n2d|n2)\b/.test(s)),
+    JSON.stringify(written),
+  );
 }
 
 // ── Exported derivation helpers ────────────────────────────────────────────────
@@ -240,6 +278,57 @@ function splitDataParity(monolith) {
       gcpPlatform("n2").cpuPlatform === "Intel" &&
       gcpPlatform("zzz").cpuPlatform === "Intel",
   );
+  // Every Arm family Google ships, per its machine-family docs: Axion c4a/n4a,
+  // Ampere Altra t2a, Grace a4x. Each defaulted to Intel before the series table
+  // was completed, and an Arm box read as x86 is wrong in both directions — it
+  // passes an x86-only filter and fails an Arm-only one.
+  check(
+    "every Arm GCP series maps to ARM (Axion c4a/n4a, Altra t2a, Grace a4x)",
+    ["c4a", "n4a", "t2a", "a4x"].every(
+      (s) => gcpPlatform(s).cpuPlatform === "ARM" && gcpPlatform(s).isARM === 1,
+    ),
+    JSON.stringify(
+      ["c4a", "n4a", "t2a", "a4x"].map((s) => [s, gcpPlatform(s).cpuPlatform]),
+    ),
+  );
+  check(
+    "every AMD GCP series maps to AMD (Turin c4d/n4d/h4d, Milan c2d, Genoa c3d, n2d, t2d)",
+    ["c2d", "c3d", "c4d", "h4d", "n2d", "n4d", "t2d"].every(
+      (s) => gcpPlatform(s).cpuPlatform === "AMD" && gcpPlatform(s).isARM === 0,
+    ),
+    JSON.stringify(
+      ["c2d", "c3d", "c4d", "h4d", "n2d", "n4d", "t2d"].map((s) => [
+        s,
+        gcpPlatform(s).cpuPlatform,
+      ]),
+    ),
+  );
+  check(
+    "isMappedGcpSeries knows the mapped families and flags an unseen one",
+    ["c4a", "n4a", "a4x", "c4d", "h4d", "t2a", "n2", "z3", "m4"].every(
+      isMappedGcpSeries,
+    ) && !isMappedGcpSeries("q9z"),
+  );
+  // The shipped data is the list the mapping has to cover: any series already on
+  // disk that the tables don't know would be riding the Intel fallback right now.
+  {
+    const shipped = new Set();
+    for (const f of fs.readdirSync(path.join(REPO, "js", "gcp", "regions"))) {
+      const sb = { window: {} };
+      vm.runInNewContext(
+        fs.readFileSync(path.join(REPO, "js", "gcp", "regions", f), "utf8"),
+        sb,
+      );
+      for (const region of Object.values(sb.window))
+        for (const rec of Object.values(region)) shipped.add(rec.series);
+    }
+    const unmapped = [...shipped].filter((s) => !isMappedGcpSeries(s)).sort();
+    check(
+      "every series in the shipped GCP data has a platform mapping",
+      unmapped.length === 0,
+      `unmapped: ${unmapped.join(", ") || "none"} (of ${shipped.size} shipped)`,
+    );
+  }
   check(
     "azureRegionKey normalises display names",
     azureRegionKey("East US") === "eastus" &&
