@@ -40,9 +40,14 @@ top of it.
   **workload-shape explainer**, and a **portfolio-visualization** pass (KPI cards
   and inline-SVG charts) fold into these minors as presentation over data the
   engine already produces — no new dependency, no pricing on a report.
-- **Later** — _3.15 Closing out 3.x_ → _4.0 Performance-based right-sizing_. Empty
-  the known-issues list, then ship the one platform-defining major: a
-  policy-driven, per-row sizing engine.
+- **Later** — _3.15 Data model & catalogue fidelity_ · _3.16 Attribute filters &
+  rule fidelity_ · _3.17 Closing out 3.x_ → _4.0 Performance-based right-sizing_.
+  Split the region format so specs stop repeating per region — which pays for the
+  catalogue accuracy and the attribute filters that follow, and turns three of the
+  engine's admitted proxies into the measurements the providers publish. Then empty
+  the known-issues list, and ship the one platform-defining major: a policy-driven,
+  per-row sizing engine. Further out, and deliberately unscheduled:
+  [beyond compute](#later--beyond-compute).
 
 **Success measures.** Targets, not yet commitments — set the exact numbers when
 each item is scheduled:
@@ -445,9 +450,65 @@ version map stays hole-free.
   outputs" rule is unchanged; this is freshness, not a number on a report. The
   GCP catalogue's API key lives in CI secrets. (L) _Feeds 4.0's relative
   Optimization Impact, which needs current prices to rank well even though it
-  never prints them._
+  never prints them._ ⚠ _GCP composes prices per vCPU and per GB, which omits the
+  local-SSD component; the affected series stay unverified until
+  [3.15](#315--data-model--catalogue-fidelity) closes that gap._
 
-### 3.15 — Closing out 3.x
+### 3.15 — Data model & catalogue fidelity
+
+One structural change and the accuracy it unlocks. The region files repeat each
+type's **specs in every region that offers it** — eight of the ten fields per
+record are identical across regions, duplicated some 23,000 times for AWS alone,
+and the three providers' region files come to roughly 23 MB. Splitting **specs
+(per type)** from **prices (per type × region)** cuts that, serves the initial-load
+budget in the success measures above, and turns every future field from a
+per-region cost into a nearly free one. Until it lands, every field added to a
+record multiplies by the number of regions carrying it — which is why the
+catalogue work below waits on it rather than running first.
+
+The split forces a full regenerate, so the refresh that carries it also picks up
+the fields the format could not previously afford.
+
+- **Specs / prices split in the region format.** Move the per-type specs out of
+  the per-region records, leaving regions to carry pricing and availability. Touches
+  `tools/split-data.js`, the manifest shape, `base-instance-selector`'s lazy region
+  loading, the `sw.js` `CACHE` version, and the data-integrity suite. (L)
+  ⚠ **Decide explicitly, while the format is open, whether a record is keyed
+  `{type → specs}` or `{service, type → specs}`** — see
+  [Later — beyond compute](#later--beyond-compute). Leaving room costs almost
+  nothing here and is expensive to retrofit.
+- **Close the GCP local-SSD pricing gap.** GCP prices are composed per vCPU and
+  per GB, which omits the local-SSD component, so `c4a`, `c4d`, `h4d`, `c4`, `c3d`
+  and `z3` compose **6–33% low** and are kept unverified today. The specs feed
+  carries `local_ssd` and `local_ssd_size`; the composition can use them. This is
+  a ranking error, not a labelling one — the highest-value accuracy item on the
+  list. (M) _Documented as a known limitation in `docs/DATA-SOURCES.md`._
+- **Zero-priced instances are invisible** — see [Known issues](#known-issues-patch-level).
+  Scheduled here rather than in 3.17 because the fix changes recommendations and
+  this minor re-baselines the goldens once anyway; folding it into an unrelated
+  re-baseline would put two causes behind one baseline diff. (S)
+
+### 3.16 — Attribute filters & rule fidelity
+
+Spend what 3.15 makes affordable: replace the engine's admitted proxies with the
+measurements the providers actually publish, and offer the attributes the data has
+always carried.
+
+- **Turn three proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
+  explicit stand-in for a higher network tier — the feeds carry real bandwidth
+  (AWS baseline/burst Gbps, GCP network performance, Azure accelerated networking).
+  The SQL Server rule sets a vCPU floor while its own rationale is that SQL Server
+  is **licensed per core** — AWS publishes `cores` and Azure `vcpus_percore`, which
+  is the exact figure. Burstable detection is a hardcoded family list plus a
+  shared-core name pattern — GCP publishes `shared_cpu`, and AWS's burst fields mark
+  exactly the burstable set, so a future `t5` would classify itself. (M)
+- **Instance attribute filters.** A numeric GPU count (all three clouds publish
+  one) replaces the family-name regex the accelerator check uses today; bare metal
+  becomes an exclude type rather than competing as an ordinary very large instance;
+  confidential computing becomes a compliance option, which the Compliance rule and
+  AWS's already-consumed Nitro Enclaves support make a natural fit. (M)
+
+### 3.17 — Closing out 3.x
 
 The last minor before the major. Its only content is **every open item under
 [Known issues](#known-issues-patch-level)** — 4.0 is gated on this list being
@@ -521,7 +582,7 @@ One platform-defining shift: a policy-driven, per-row sizing engine — and only
 the work built directly on it. Cloud-to-cloud, GCP custom shapes, the
 user-defined rules UI, and the strict-CSP migration have been **preponed into the
 3.x series** so this major stays a single coherent theme rather than a bundle.
-**Gated on 3.15:** no known issue crosses this line.
+**Gated on 3.17:** no known issue crosses this line.
 
 - **Performance-based right-sizing engine** — the flagship. Today's Optimization
   pass sizes on one statistic chosen for the whole run; 3.9.3 gave that statistic
@@ -556,6 +617,15 @@ user-defined rules UI, and the strict-CSP migration have been **preponed into th
   uses whatever the file carries and degrades per dimension (p95 → Peak → Average,
   recorded in `Sized On`). This is the honest boundary of "parameter-driven": a
   new percentile _column_ needs no code, a new sizing _rule_ does.
+
+  **Benchmark normalisation is deliberately not part of this.** The specs feed
+  publishes a CoreMark score for most AWS types, which would allow sizing on
+  measured throughput instead of vCPU-count equivalence. It is **AWS-only** — no
+  equivalent exists for Azure or GCP — so it cannot serve the cloud-to-cloud
+  comparison that is the point of this tool, and a normalisation that works on one
+  provider would make multicloud rows silently incomparable. Recorded here so the
+  option is not rediscovered without its blocker. _Revisit only if a comparable
+  figure appears for the other two._
 
   **Multi-metric safety, not single-metric trust.** The failure mode of
   aggressive right-sizing is a downsize off a number that hid the busy periods, so
@@ -623,10 +693,41 @@ user-defined rules UI, and the strict-CSP migration have been **preponed into th
   Per-VM history is a data-model change, not a sizing tweak. Revisit only if the
   input format ever grows a time dimension.
 
+## Later — beyond compute
+
+**Not scheduled, and not committed to.** Recorded so the shape of the decision is
+written down before anyone starts, rather than discovered halfway through.
+
+Today the tool sizes **virtual machines**. The natural expansion is the managed
+services alongside them, each with a cross-provider equivalent:
+
+| Compute-adjacent     | AWS    | Azure                               | GCP                 |
+| -------------------- | ------ | ----------------------------------- | ------------------- |
+| Relational database  | RDS    | Azure SQL / Database for PostgreSQL | Cloud SQL           |
+| Managed Kubernetes   | EKS    | AKS                                 | GKE                 |
+| Serverless functions | Lambda | Functions                           | Cloud Run functions |
+| Object storage       | S3     | Blob Storage                        | Cloud Storage       |
+
+**What makes this a structural change rather than more data.** Every layer assumes
+one record shape — a type with vCPU, memory and a price, offered in a region — and
+that assumption reaches further than the data layer: the upload's column vocabulary,
+the rule engine's ENV/OS/Workload axes, the family-equivalence fold, and the exports
+all speak it. The managed services do not fit it. A database is sized on engine,
+storage and IOPS with a Multi-AZ multiplier; Kubernetes splits a control plane from
+node groups that are themselves VMs; serverless has no instance at all and prices on
+memory × duration. Sizing rules that assume "pick a machine that fits the CPU and
+memory" do not carry across.
+
+⚠ **The cheapest moment to leave room is [3.15](#315--data-model--catalogue-fidelity)**,
+the one release that deliberately reopens the record format. Deciding there whether a
+record is keyed `{type → specs}` or `{service, type → specs}` costs almost nothing
+during a rewrite that is happening anyway, and is expensive to retrofit afterwards.
+That is a decision to take knowingly in 3.15 — not a commitment to build any of this.
+
 ## Known issues (patch-level)
 
 Tracked and fixed continuously rather than scheduled into a release — but this
-list is also the whole content of [3.15](#315--closing-out-3x), and **4.0 does
+list is also the whole content of [3.17](#317--closing-out-3x), and **4.0 does
 not ship while anything is on it**. A known defect carried into a major release
 says the new path was reached for instead of the old one being finished.
 
@@ -634,8 +735,22 @@ says the new path was reached for instead of the old one being finished.
   is read by the engine, the option gatherer, the presets, and the scenario diff,
   but no page renders its checkbox — so the filter can never be switched on, and
   its nearest-miss probe can never fire. Either give it the UI the rest of the
-  code already expects, or remove it from all of them. _Scheduled in 3.15; the
+  code already expects, or remove it from all of them. _Scheduled in 3.17; the
   allow-list work in 3.12 is the natural home for the first option._
+- **The GCP processor filter cannot match the data** — the same species as the
+  entry above. `gcpAdvancedFilterData.processorPlatforms` offers named platforms
+  (`Intel Skylake`, `AMD Rome`, `ARM Ampere Altra`, …) while the shipped records
+  carry only `Intel`, `AMD` or `ARM`, so nothing a user ticks can ever match a
+  record. Either populate the list from the values the data actually uses, or drop
+  it. _Scheduled in 3.17 alongside the filter above._
+- **Zero-priced instances are dropped from every run.** `isValidInstance` requires
+  `price > 0`, so any record the feeds price at zero is discarded before ranking.
+  That currently hides the top GPU instances — `p5.48xlarge`, `p5en.48xlarge`,
+  `p6-b200.48xlarge`, `p6-b300.48xlarge`, `p4d.24xlarge` — from every GPU workload,
+  and `u-6tb1.metal` from every Linux run, with no warning. Decide whether an
+  unpriced instance should be excluded, surfaced as unpriced, or ranked last.
+  _Scheduled in [3.15](#315--data-model--catalogue-fidelity), which re-baselines the
+  goldens once._
 
 ## Suggesting an item
 
