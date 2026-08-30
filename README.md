@@ -211,8 +211,19 @@ Cloud-Instance-Recommender/
 │
 ├── logos/                   # Cloud provider logos
 │
-├── tools/
-│   └── split-data.js        # Node tool: splits monolithic data into per-region files
+├── docs/                    # Data-source provenance (see DATA-SOURCES.md)
+│
+├── tools/                   # Node build tooling (never shipped to the page)
+│   ├── refresh-local.js                   # npm run refresh: the whole pipeline, in order
+│   ├── fetch-official-{aws,azure,gcp}.js  # Official provider pricing APIs
+│   ├── fetch-vantage.js                   # Specs + families (Vantage API)
+│   ├── reconcile-data.js                  # Merge; official API wins, rest flagged UNVERIFIED
+│   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
+│   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
+│   ├── split-data.js                      # Monolith to manifest + per-region files
+│   ├── lib/util.js                        # Shared helpers (round8, atomic write, loaders)
+│   ├── build-coverage-inventory.js        # npm run coverage:check gate
+│   └── static-server.js                   # Zero-dep static server for the Playwright rig
 │
 ├── tests/                   # Plain-Node test harness: suites + golden compare (see tests/README.md)
 │
@@ -264,7 +275,7 @@ Cloud-Instance-Recommender/
 
 ### Instance data layout
 
-Each provider ships a small **manifest** (`js/{provider}/{provider}-data.js`) declaring the data date and the list of available region keys, plus one file per region under `js/{provider}/regions/`. Pages load only the manifest up front; region files are `<script>`-injected on demand (the CSP forbids `fetch`). A monolithic data file dropped in place of the manifest also works — the loader detects it and behaves as before — which keeps the site functional mid-data-refresh.
+Each provider ships a small **manifest** (`js/{provider}/{provider}-data.js`) declaring the data date and the list of available region keys, plus one file per region under `js/{provider}/regions/`. Pages load only the manifest up front; region files are `<script>`-injected on demand (the CSP forbids `fetch`). A monolithic data file dropped in place of the manifest also works — the loader detects it and behaves as before — which keeps the site functional mid-data-refresh. The data is regenerated at build time from provider APIs; [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) records every source, why the official provider APIs take precedence over the aggregated specs feed, and the known coverage gaps. The served page never fetches anything external.
 
 ---
 
@@ -456,6 +467,7 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **User Guide**: See `user-guide.html` in this repository
 - **Version History**: See [CHANGELOG.md](CHANGELOG.md)
 - **Roadmap**: See [ROADMAP.md](ROADMAP.md)
+- **Data Sources**: See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md)
 - **Release Process**: See [RELEASING.md](RELEASING.md)
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com

@@ -60,8 +60,19 @@ npm run typecheck
 │
 ├── logos/                  # Cloud provider logos
 │
-├── tools/
-│   └── split-data.js       # Splits monolithic data files into per-region files
+├── docs/                   # Data-source provenance (see DATA-SOURCES.md)
+│
+├── tools/                  # Node build tooling (never shipped to the page)
+│   ├── refresh-local.js                   # npm run refresh: the whole pipeline, in order
+│   ├── fetch-official-{aws,azure,gcp}.js  # Official provider pricing APIs
+│   ├── fetch-vantage.js                   # Specs + families (Vantage API)
+│   ├── reconcile-data.js                  # Merge; official API wins, rest flagged UNVERIFIED
+│   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
+│   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
+│   ├── split-data.js                      # Monolith to manifest + per-region files
+│   ├── lib/util.js                        # Shared helpers (round8, atomic write, loaders)
+│   ├── build-coverage-inventory.js        # npm run coverage:check gate
+│   └── static-server.js                   # Zero-dep static server for the Playwright rig
 │
 ├── tests/                  # Plain-Node suites + golden compare (see tests/README.md)
 │
@@ -98,11 +109,16 @@ npm run typecheck
 
 Instance data is auto-generated from provider APIs — do not edit it manually. Each provider has a small manifest (`js/{p}/{p}-data.js` with the data date and region key list) plus one file per region under `js/{p}/regions/`.
 
-To refresh the data:
+To refresh the data, run the pipeline — never hand-edit a region file:
 
-1. Generate the fresh **monolithic** `{provider}-data.js` as before (PowerShell scripts documented in the internal wiki) and drop it in place of the manifest at `js/{provider}/{provider}-data.js` — the site keeps working in this state, so you can verify it before splitting
-2. Run `node tools/split-data.js` — it rewrites the manifest and regenerates `js/{provider}/regions/`, removing region files that no longer exist upstream. The tool is idempotent (skips providers already in manifest form) and hard-fails rather than writing anything if the input doesn't parse cleanly
-3. Verify with spot-checks on known instance types, then commit the manifest **and** the regenerated `regions/` files together
+1. Put `VANTAGE_API_KEY` and `GCP_BILLING_API_KEY` in a gitignored `.env` at the repo root (the run fails early, naming any key it is missing)
+2. Run `npm run refresh` — add `-- --specs-only` to skip the official pricing fetch and reconcile, or `-- --date YYYY-MM-DD` to stamp a specific snapshot date. The order is **load-bearing**: `fetch-official-{aws,azure,gcp}` → `fetch-vantage` → `reconcile-data` → `data-diff` → `recommendation-diff` → `split-data`. The official fetchers run first because they read the manifest that `fetch-vantage` overwrites, and `split-data` runs last because it rewrites `js/{provider}/regions/`, which both diffs read as the old side. Reports land in the gitignored `.refresh-cache/`
+3. Review `.refresh-cache/diff-report.md` and `rec-flips-report.md` (plus `reconcile-report.md` on a pricing run), spot-check known instance types, then commit the manifest **and** the regenerated `regions/` files together, with a CHANGELOG row. Re-baseline any golden a price move shifted
+4. **Open a pull request** — refreshed data reaches `main` through review, never a direct push. The scheduled `.github/workflows/data-refresh.yml` runs this same pipeline and opens the same kind of PR
+
+On a no-op diff nothing downstream runs and the tool tells you to `git checkout -- js/`, discarding the regenerated monolith. `tools/split-data.js` can also be run alone against a hand-dropped monolith: it is idempotent (skips a provider already in manifest form) and hard-fails rather than writing a partial result.
+
+Where each field comes from, why the official provider APIs outrank the specs source, and which GCP series stay unverified are documented in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md).
 
 If the refresh **adds** a region, also add it to the hardcoded list the provider's selector filters through (`awsRegions` in `js/aws/aws-instance-selector.js`, the display-name map in `js/azure/azure-instance-selector.js`). Those lists feed the manual-entry region autocomplete, while the upload's region chips validate straight against the manifest — so a region that is only in the manifest is accepted from a CSV but never suggested for manual entry. `tests/suites/lazy-test.js` fails when the two disagree. If the refresh **removes** a region, bump `CACHE` in `sw.js` (see "Service Worker" below).
 
