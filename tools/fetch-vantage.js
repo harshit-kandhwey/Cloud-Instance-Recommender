@@ -68,6 +68,92 @@ function azureFamilyName(category) {
   return c ? c.charAt(0).toUpperCase() + c.slice(1) : "";
 }
 
+// Azure's specs feed carries no CPU vendor — only arch (x64 / Arm64) — so an AMD VM
+// is indistinguishable from an Intel one by field alone, and every one of them used
+// to ship labelled "Intel". Microsoft's naming convention does encode it ("if the CPU
+// is AMD, it will be listed as a"), but that is NOT safe as a rule in either
+// direction: the legacy A-series (a, av2) is not AMD, and in the GPU families the
+// letter belongs to the accelerator, not the vendor — nca100v4 is an NVIDIA A100 on
+// an AMD host, while ndsrh200v5 (ND H100 v5) is Intel. So the vendor comes from a
+// table, and the naming pattern is demoted to a tripwire for anything absent from it.
+// Verified against Microsoft's per-series size docs.
+const AZURE_AMD_FAMILIES = new Set([
+  // General purpose / compute / memory / storage — the "a" is the documented vendor.
+  "basv2",
+  "dadsv5",
+  "dadsv6",
+  "dadsv7",
+  "daldsv6",
+  "daldsv7",
+  "dalsv6",
+  "dalsv7",
+  "dasv4",
+  "dasv5",
+  "dasv6",
+  "dasv7",
+  "dav4",
+  "dcadsv5",
+  "dcadsv6",
+  "dcasv5",
+  "dcasv6",
+  "eadsv5",
+  "eadsv6",
+  "eadsv7",
+  "easv4",
+  "easv5",
+  "easv6",
+  "easv7",
+  "eav4",
+  "ecadsv5",
+  "ecadsv6",
+  "ecasv5",
+  "ecasv6",
+  "fadsv7",
+  "faldsv7",
+  "falsv6",
+  "falsv7",
+  "famdsv7",
+  "famsv6",
+  "famsv7",
+  "fasv6",
+  "fasv7",
+  "laosv4",
+  "lasv3",
+  "lasv4",
+  // GPU families whose AMD host CPU each size doc states outright: NCasT4_v3 (EPYC
+  // Rome), NC A100 v4 (EPYC Milan), NCads H100 v5 (EPYC Genoa), NDasrA100_v4 (EPYC
+  // Rome), NVads V710 v5 (EPYC Genoa). Their siblings are deliberately NOT here —
+  // see the tripwire.
+  "ncast4v3",
+  "nca100v4",
+  "ncadsh100v5",
+  "ndasrv4",
+  "nvadsv710v5",
+]);
+
+// Families whose name carries the AMD marker: the "a" immediately after the family
+// letter and size digits. Anchored so the legacy A-series can never match. Used ONLY
+// to report families the table has not classified — never to classify one.
+const AZURE_AMD_NAME_HINT = /^[bdefhlmn][a-z]*a/;
+const looksAzureAmd = (family) =>
+  AZURE_AMD_NAME_HINT.test(family) && !/^a/.test(family);
+
+// Azure CPU vendor for a family. Arm wins (it comes from the source's own arch), then
+// the table; anything else is Intel, which is right for the large Intel majority and
+// is what the tripwire below exists to keep honest.
+function azureProcessor(family, isARM) {
+  if (isARM) return "ARM";
+  return AZURE_AMD_FAMILIES.has(String(family)) ? "AMD" : "Intel";
+}
+
+// Families that look AMD by Microsoft's convention but are absent from the table, so
+// they ship as Intel. Pure, so the report and its test share one definition.
+function unmappedAzureAmdFamilies(families) {
+  return [...new Set(families)]
+    .filter((f) => looksAzureAmd(f) && !AZURE_AMD_FAMILIES.has(f))
+    .sort();
+}
+
 // Vantage carries no cpuPlatform/isARM for GCP; derive from the series. Google's
 // suffix convention ("a" = Arm, "d" = AMD, bare = Intel) holds for the general-purpose
 // families but NOT for the accelerator ones — a4x is Arm on NVIDIA Grace — so this
@@ -93,6 +179,10 @@ const GCP_INTEL_SERIES = new Set([
   "c2",
   "c3",
   "c4",
+  // c4n/m4n are the network-optimized family: Intel Emerald Rapids per Google's
+  // network-optimized-machines doc. The "n" is the family's purpose, not a vendor —
+  // reading it as one is the same mistake the a4x note above warns about.
+  "c4n",
   "e2",
   "g2",
   "h3",
@@ -100,6 +190,7 @@ const GCP_INTEL_SERIES = new Set([
   "m2",
   "m3",
   "m4",
+  "m4n",
   "n1",
   "n2",
   "n4",
@@ -219,7 +310,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     familyName: azureFamilyName(raw.category),
     isARM,
     generation: resolveAzureGeneration(type, family, azureGen),
-    processorArchitecture: isARM ? "ARM" : "Intel",
+    processorArchitecture: azureProcessor(family, isARM),
     vCpus: num(raw.vcpu),
     memoryGiB: num(raw.memory),
   };
@@ -348,6 +439,24 @@ function buildMonolith({
         `WARNING: GCP series with no platform mapping, shipped as Intel: ` +
           `${[...unmapped].sort().join(", ")} — add each to GCP_ARM_SERIES / ` +
           `GCP_AMD_SERIES / GCP_INTEL_SERIES in tools/fetch-vantage.js\n`,
+      );
+  }
+
+  // Same idea for Azure, but inverted: the vendor table is authoritative and the
+  // naming convention is only a hint, so what gets reported is a family that LOOKS
+  // AMD and is not in the table. It shipped as Intel; the doc for that size says
+  // which it is. Not an error — some are genuinely Intel, and a few carry the letter
+  // for an accelerator rather than a vendor.
+  if (name === "azure") {
+    const families = [];
+    for (const recs of byRegion.values())
+      for (const rec of recs.values()) families.push(rec.family);
+    const unclassified = unmappedAzureAmdFamilies(families);
+    if (unclassified.length)
+      process.stderr.write(
+        `WARNING: Azure families named as AMD but absent from the vendor table, ` +
+          `shipped as Intel: ${unclassified.join(", ")} — check each size doc and ` +
+          `add the AMD ones to AZURE_AMD_FAMILIES in tools/fetch-vantage.js\n`,
       );
   }
 
@@ -528,6 +637,9 @@ module.exports = {
   readShippedRegionKeys,
   awsProcessor,
   azureFamilyName,
+  azureProcessor,
+  unmappedAzureAmdFamilies,
+  AZURE_AMD_FAMILIES,
   gcpPlatform,
   isMappedGcpSeries,
   azureRegionKey,

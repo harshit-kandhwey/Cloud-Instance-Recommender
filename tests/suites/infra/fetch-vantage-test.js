@@ -11,6 +11,9 @@ const {
   isMappedGcpSeries,
   azureRegionKey,
   awsProcessor,
+  azureProcessor,
+  unmappedAzureAmdFamilies,
+  AZURE_AMD_FAMILIES,
   mostCommonGeneration,
 } = require("../../../tools/fetch-vantage");
 
@@ -171,9 +174,70 @@ function splitDataParity(monolith) {
     "[azure] legacy a0 → generation 0 carried",
     g.eastus.a0.generation === 0,
   );
+  // Guard (plant-RED: return isARM ? "ARM" : "Intel" again): Azure's feed carries no
+  // CPU vendor, so every AMD VM used to ship labelled Intel — 356 of 1257 types. The
+  // vendor now comes from a table keyed on the family.
   check(
-    "[azure] AMD family e8asv5 labelled Intel (matches shipped convention)",
-    g.eastus.e8asv5.processorArchitecture === "Intel",
+    "[azure] AMD family e8asv5 is labelled AMD, not Intel",
+    g.eastus.e8asv5.processorArchitecture === "AMD" &&
+      g.eastus.e8asv5.isARM === 0,
+    JSON.stringify(g.eastus.e8asv5),
+  );
+  check(
+    "[azure] Intel dsv5 and Arm dpsv5 are unchanged by the vendor table",
+    g.eastus.d4sv5.processorArchitecture === "Intel" &&
+      g.eastus.d4psv5.processorArchitecture === "ARM",
+  );
+  // Guard (plant-RED: classify on a bare /a/ substring): the legacy A-series is not
+  // AMD. A substring rule labels it AMD and is wrong for every one of these.
+  check(
+    "[azure] legacy A-series a0 stays Intel",
+    g.eastus.a0.processorArchitecture === "Intel",
+    JSON.stringify(g.eastus.a0),
+  );
+}
+
+// ── Azure vendor table: the pure classifier and its tripwire ────────────────────
+{
+  check(
+    "azureProcessor: Arm wins, table decides the rest",
+    azureProcessor("dpsv6", 1) === "ARM" &&
+      azureProcessor("easv5", 0) === "AMD" &&
+      azureProcessor("dsv5", 0) === "Intel",
+  );
+
+  // Every family the shipped data carries whose name marks it AMD must be classified,
+  // or it silently ships as Intel — the failure this whole table exists to end.
+  for (const fam of [
+    "dasv5",
+    "eadsv7",
+    "fasv7",
+    "lasv3",
+    "basv2",
+    "ncast4v3",
+  ]) {
+    check(`AZURE_AMD_FAMILIES carries ${fam}`, AZURE_AMD_FAMILIES.has(fam));
+  }
+  // Verified Intel despite sitting in the GPU block: the "a" in a GPU family can
+  // belong to the accelerator (ND H100 v5 is Intel), which is why this is a table.
+  check(
+    "AZURE_AMD_FAMILIES does not sweep in the Intel GPU families",
+    !AZURE_AMD_FAMILIES.has("ndsrh200v5") && !AZURE_AMD_FAMILIES.has("ndsrv5"),
+  );
+
+  // Guard (plant-RED: drop the !/^a/ anchor): the tripwire reports an AMD-named
+  // family the table has not classified, and must never report the A-series.
+  const flagged = unmappedAzureAmdFamilies([
+    "dasv5", // classified → not reported
+    "dsv5", // not AMD-named → not reported
+    "a", // legacy A-series → never reported
+    "av2",
+    "masv9", // AMD-named, unclassified → reported
+  ]);
+  check(
+    "the tripwire reports only AMD-named families absent from the table",
+    flagged.join(",") === "masv9",
+    flagged.join(",") || "none",
   );
 }
 
@@ -289,6 +353,26 @@ function splitDataParity(monolith) {
     ),
     JSON.stringify(
       ["c4a", "n4a", "t2a", "a4x"].map((s) => [s, gcpPlatform(s).cpuPlatform]),
+    ),
+  );
+  // Guard (plant-RED: drop either from GCP_INTEL_SERIES): the network-optimized pair
+  // is Intel Emerald Rapids. Asserted directly rather than through the shipped data,
+  // which does not carry them until the refresh that introduced them lands — until
+  // then the "every shipped series is mapped" check cannot see them.
+  check(
+    "network-optimized c4n/m4n map to Intel, and the n is not read as a vendor",
+    ["c4n", "m4n"].every(
+      (s) =>
+        isMappedGcpSeries(s) &&
+        gcpPlatform(s).cpuPlatform === "Intel" &&
+        gcpPlatform(s).isARM === 0,
+    ),
+    JSON.stringify(
+      ["c4n", "m4n"].map((s) => [
+        s,
+        gcpPlatform(s).cpuPlatform,
+        isMappedGcpSeries(s),
+      ]),
     ),
   );
   check(

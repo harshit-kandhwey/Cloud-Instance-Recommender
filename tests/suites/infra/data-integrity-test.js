@@ -241,6 +241,49 @@ for (const { name, prefix } of PROVIDERS) {
   );
 }
 
+// ── The GCP family filter is an ALLOW-LIST, so it must cover the shipped data ────
+// With "restrict main families" on, gcp-instance-selector keeps only instances whose
+// series is in gcpAdvancedFilterData.machineFamilies. A series the data ships but the
+// list omits cannot be checked, so it is excluded even when the user ticks every box
+// — it does not merely go unoffered. A refresh that adds a series must add it here,
+// which is what this pins. (c4n and m4n arrived in the 2026-08-30 refresh; seven more
+// had been missing for longer.)
+{
+  const { gcpAdvancedFilterData } = require("../../../js/gcp/gcp-specific.js");
+  const listed = new Set(
+    (gcpAdvancedFilterData.machineFamilies || []).map((f) => f.toLowerCase()),
+  );
+
+  const dir = path.join(REPO, "js", "gcp", "regions");
+  const shipped = new Set();
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+    const sandbox = { window: {} };
+    sandbox.window = sandbox;
+    vm.createContext(sandbox);
+    vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
+      filename: file,
+    });
+    const region = sandbox[file.replace(/\.js$/, "")] || {};
+    for (const type of Object.keys(region)) shipped.add(type.split("-")[0]);
+  }
+
+  const unlistable = [...shipped].filter((s) => !listed.has(s)).sort();
+  check(
+    "every GCP series in the shipped data can be selected in the family filter",
+    unlistable.length === 0,
+    unlistable.join(",") || `${shipped.size} series all listed`,
+  );
+
+  // The other direction: a listed series the data no longer carries renders a
+  // checkbox that silently matches nothing.
+  const stale = [...listed].filter((f) => !shipped.has(f)).sort();
+  check(
+    "the GCP family filter lists no series the data no longer ships",
+    stale.length === 0,
+    stale.join(",") || "none",
+  );
+}
+
 if (state.failures) {
   console.error(`\ndata-integrity: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;
