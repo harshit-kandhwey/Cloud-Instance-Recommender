@@ -142,6 +142,28 @@ const shipped = [
   }
 }
 
+// ── Every tools/ path a doc names must exist ───────────────────────────────────
+// .env.example told the reader GCP_BILLING_API_KEY was "used by
+// tools/fetch-pricing-gcp.js", a file that has never existed — the real consumer is
+// fetch-official-gcp.js, which in turn points back at .env.example. Prose naming a
+// path is the one kind of doc claim that can be checked mechanically, so check it
+// everywhere rather than only where it was found wrong.
+{
+  for (const rel of [".env.example", "README.md", "CONTRIBUTING.md"]) {
+    const named = [...read(rel).matchAll(/\btools\/[\w.-]+\.js\b/g)].map(
+      (m) => m[0],
+    );
+    const missing = [
+      ...new Set(named.filter((p) => !fs.existsSync(path.join(REPO, p)))),
+    ];
+    check(
+      `${rel} names no tools/ file that does not exist`,
+      missing.length === 0,
+      missing.join(",") || `${new Set(named).size} tool paths resolve`,
+    );
+  }
+}
+
 if (state.failures) {
   console.error(`\ndocs-currency: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;

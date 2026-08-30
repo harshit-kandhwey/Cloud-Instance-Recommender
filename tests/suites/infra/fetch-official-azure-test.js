@@ -10,6 +10,7 @@ const {
   azureTypeKey,
   isSpotOrLowPriority,
   azureFilter,
+  resolveRegionKeys,
 } = require("../../../tools/fetch-official-azure");
 
 const { check, state } = makeChecker();
@@ -101,6 +102,44 @@ const byRegion = parseAzureItems(page.Items);
     azureFilter("east'us").includes("armRegionName eq 'east''us'") &&
       azureFilter("eastus").includes("armRegionName eq 'eastus'"),
     azureFilter("east'us"),
+  );
+}
+
+// ── --region validated against the manifest (no silent empty file) ────────────────
+// The twin of the AWS guard added in v3.14.20. Azure took --region verbatim, so a typo
+// fetched nothing, wrote {"eastuss":{}} and exited 0 — the failure the downstream
+// "0 priced VM types" warning cannot see, because that region is never fetched at all.
+{
+  const shipped = ["eastus", "westeurope"];
+  check(
+    "no --region → all shipped keys",
+    resolveRegionKeys(undefined, shipped) === shipped,
+  );
+  check(
+    "valid --region → that single shipped key",
+    resolveRegionKeys("eastus", shipped).join(",") === "eastus",
+  );
+  let threw = false;
+  try {
+    resolveRegionKeys("eastuss", shipped);
+  } catch {
+    threw = true;
+  }
+  check("a --region typo throws rather than writing an empty file", threw);
+
+  // The checks above exercise the function directly, so they stay green even if the
+  // CLI stops calling it — which is precisely the bug being fixed. Pin the wiring
+  // separately, scoped to main()'s body so the export list cannot satisfy it.
+  const src = fs.readFileSync(
+    path.join(REPO, "tools", "fetch-official-azure.js"),
+    "utf8",
+  );
+  const mainFn = src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/);
+  const body = mainFn ? mainFn[0] : "";
+  check(
+    "the CLI derives its region keys through resolveRegionKeys",
+    /const keys = resolveRegionKeys\(only, shippedKeys\)/.test(body),
+    body ? "main() found" : "main() not matched",
   );
 }
 

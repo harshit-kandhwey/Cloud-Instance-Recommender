@@ -158,6 +158,21 @@ const types = parseAwsRegion(regionJson);
     "a --region not in the manifest throws (typo can't fetch nothing)",
     threw,
   );
+
+  // The checks above exercise the function directly, so they stay green even if the
+  // CLI stops calling it. Pin the wiring separately, scoped to main()'s body so the
+  // export list cannot satisfy it. (The Azure twin shipped exactly that way.)
+  const src = fs.readFileSync(
+    path.join(REPO, "tools", "fetch-official-aws.js"),
+    "utf8",
+  );
+  const mainFn = src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/);
+  const body = mainFn ? mainFn[0] : "";
+  check(
+    "the CLI derives its region keys through resolveRegionKeys",
+    /const keys = resolveRegionKeys\(only, shippedKeys\)/.test(body),
+    body ? "main() found" : "main() not matched",
+  );
 }
 
 if (state.failures) {

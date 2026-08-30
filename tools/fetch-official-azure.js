@@ -152,12 +152,26 @@ async function fetchAzurePricing(shippedKeys) {
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
+// Region keys to fetch: all shipped, or a single --region override validated against
+// the manifest — a typo would otherwise fetch nothing and write an empty file at exit 0.
+// Azure's armRegionName IS the shipped key, so unlike AWS there is no region code to
+// translate first; only the membership check carries over.
+function resolveRegionKeys(only, shippedKeys) {
+  if (!only) return shippedKeys;
+  if (!shippedKeys.includes(only)) {
+    throw new Error(
+      `--region ${only} is not a shipped region (not in AZURE_REGION_KEYS) — a typo would fetch nothing`,
+    );
+  }
+  return [only];
+}
+
 async function main() {
   const out =
     argValue("--out") || path.join(".refresh-cache", "azure-pricing.json");
   const only = argValue("--region");
   const shippedKeys = readShippedRegionKeys("azure", "AZURE");
-  const keys = only ? [only] : shippedKeys;
+  const keys = resolveRegionKeys(only, shippedKeys);
 
   const byRegion = await fetchAzurePricing(keys);
   const outPath = path.isAbsolute(out) ? out : path.join(ROOT, out);
@@ -177,6 +191,7 @@ module.exports = {
   azureTypeKey,
   isSpotOrLowPriority,
   azureFilter,
+  resolveRegionKeys,
 };
 
 if (require.main === module) {
