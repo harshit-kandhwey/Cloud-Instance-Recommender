@@ -284,6 +284,43 @@ for (const { name, prefix } of PROVIDERS) {
   );
 }
 
+// ── The shipped Azure CPU vendor must agree with the classifier that produced it ──
+// The Azure feed carries no processor field, so fetch-vantage derives the vendor from
+// AZURE_AMD_FAMILIES. The tool's own suite pins that function; this pins the artifact,
+// which is where a stale label actually hurts: the 2026-08-30 capture shipped every AMD
+// type labelled Intel because the classifier was fixed after the data was fetched, and
+// nothing compared the two. Cheap to re-derive (family + isARM live on each record), so
+// any future refresh that lands data the current table disagrees with fails here.
+{
+  const { azureProcessor } = require("../../../tools/fetch-vantage.js");
+  const dir = path.join(REPO, "js", "azure", "regions");
+  let mismatch = null;
+  let checked = 0;
+
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+    const key = file.replace(/\.js$/, "");
+    const sandbox = {};
+    sandbox.window = sandbox;
+    vm.createContext(sandbox);
+    vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
+      filename: file,
+    });
+    for (const [type, rec] of Object.entries(sandbox[key] || {})) {
+      checked++;
+      const want = azureProcessor(rec.family, rec.isARM);
+      if (rec.processorArchitecture !== want && !mismatch) {
+        mismatch = `${key}/${type} (family ${rec.family}): shipped ${rec.processorArchitecture}, classifier says ${want}`;
+      }
+    }
+  }
+
+  check(
+    "[AZURE] every shipped record's CPU vendor matches azureProcessor(family, isARM)",
+    mismatch === null,
+    mismatch || `${checked} records agree`,
+  );
+}
+
 if (state.failures) {
   console.error(`\ndata-integrity: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;
