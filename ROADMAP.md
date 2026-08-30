@@ -28,26 +28,26 @@ this project's dominant, documented failure mode is a silent defect that only a
 test catches — so the safety net is built first and every later release lands on
 top of it.
 
-- **Now** — _3.10 Test foundation & CI gates_ · _3.11 Accessibility, hardening
-  & docs_. Real-browser end-to-end coverage, an accessibility regression gate,
-  property-based engine invariants, a mutation-testing gate that proves the guards
-  actually catch defects, and the hardening/logging/bootstrap groundwork that makes
-  every later feature cheaper and safer to ship.
-- **Next** — _3.12 Input authoring & rules_ · _3.13 Cross-provider sizing_ ·
-  _3.14 Data & pricing freshness_. The user-facing capability jumps that do not
-  need the 4.0 engine: better inputs and rule expression, cloud-to-cloud and GCP
-  custom shapes, and always-current data. A per-row **right-sizing verdict**, a
-  **workload-shape explainer**, and a **portfolio-visualization** pass (KPI cards
-  and inline-SVG charts) fold into these minors as presentation over data the
-  engine already produces — no new dependency, no pricing on a report.
-- **Later** — _3.15 Data model & catalogue fidelity_ · _3.16 Attribute filters &
-  rule fidelity_ · _3.17 Closing out 3.x_ → _4.0 Performance-based right-sizing_.
-  Split the region format so specs stop repeating per region — which pays for the
-  catalogue accuracy and the attribute filters that follow, and turns three of the
-  engine's admitted proxies into the measurements the providers publish. Then empty
-  the known-issues list, and ship the one platform-defining major: a policy-driven,
-  per-row sizing engine. Further out, and deliberately unscheduled:
-  [beyond compute](#later--beyond-compute).
+- **Shipped** — _3.10 Test foundation & CI gates_ · _3.11 Accessibility, hardening
+  & docs_ · _3.12 Input authoring & rules_ · _3.13 Cross-provider sizing_ ·
+  _3.14 Data & pricing freshness_. The safety net first — real-browser end-to-end
+  coverage, an accessibility regression gate, property-based engine invariants and a
+  mutation-testing gate that proves the guards actually catch defects — then the
+  capability jumps that did not need the 4.0 engine: better inputs and rule
+  expression, cloud-to-cloud sizing and GCP custom shapes, and data the pipeline
+  keeps current on its own.
+- **Now** — _3.15 Data model & catalogue fidelity_. Split the region format so
+  specs stop repeating per region. It is sequenced first because it is what makes
+  everything after it cheap: today each added field costs one copy per region
+  rather than one per type, and the same regenerate closes the local-SSD pricing
+  gap and the catalogue defects filed against it.
+- **Next** — _3.16 Attribute filters & rule fidelity_ · _3.17 Closing out 3.x_.
+  Spend what the split makes affordable: turn three of the engine's admitted
+  proxies into the measurements the providers publish, offer the instance
+  attributes the data already carries, then empty the known-issues list.
+- **Later** — _4.0 Performance-based right-sizing_. The one platform-defining
+  major: a policy-driven, per-row sizing engine. Further out, and deliberately
+  unscheduled: [beyond compute](#later--beyond-compute).
 
 **Success measures.** Targets, not yet commitments — set the exact numbers when
 each item is scheduled:
@@ -417,7 +417,7 @@ Type` column landed in 3.7 and is carried through to the outputs; what remains
 Keep the region datasets and the pricing the engine ranks on current —
 automatically, and without the served page ever calling out.
 
-**In progress — all three items in scope.** The chosen approach: fetch both the
+**Shipped — all three items delivered.** The chosen approach: fetch both the
 existing spec source and each provider's official pricing API, and **reconcile them
 with the official API as the superior precedence**, so a scraped error cannot enter
 the region files unchallenged (a field the API does not carry is kept from the spec
