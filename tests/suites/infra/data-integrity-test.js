@@ -321,6 +321,79 @@ for (const { name, prefix } of PROVIDERS) {
   );
 }
 
+// ── A type's specs must be identical in every region that offers it ──────────
+// The region files repeat each type's specs in every region carrying it, so the
+// same value is stored tens of times (16.9x on AWS, 41x on Azure, 38.2x on GCP).
+// 3.15 removes that duplication by storing specs once per type and leaving the
+// regions to carry price only — which is lossless if and ONLY if the duplicated
+// copies actually agree. They do today: 0 disagreements across all shipped
+// records. Nothing else would notice the day a provider ships a genuinely
+// region-varying spec (a family whose vCPU count differs by region, say), and
+// the split would then silently publish one region's value as every region's.
+//
+// Price is the one thing that legitimately varies, so it is excluded — the
+// primary price field is read LIVE from the selector's mapping so it cannot
+// drift, and the Windows counterpart is named here because NO product code
+// reads it (it is written by the pipeline and consumed only by tools/ and
+// tests/), so there is no mapping to read it from. A provider renaming its
+// Windows field needs no edit here: the new name simply shows up as a varying
+// non-price field and fails this check, which is the correct outcome.
+{
+  const WINDOWS_PRICE_FIELD = {
+    aws: "onDemandWindowsHr",
+    azure: "windowsPrice",
+    gcp: "windowsHourlyPrice",
+  };
+
+  for (const { name } of PROVIDERS) {
+    const priceFields = new Set([
+      fieldMappings[name].price,
+      WINDOWS_PRICE_FIELD[name],
+    ]);
+    const dir = path.join(REPO, "js", name, "regions");
+    const firstSeen = new Map(); // type -> { region, rec }
+    let disagreement = null;
+    let records = 0;
+
+    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+      const key = file.replace(/\.js$/, "");
+      const sandbox = {};
+      sandbox.window = sandbox;
+      vm.createContext(sandbox);
+      vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
+        filename: file,
+      });
+
+      for (const [type, rec] of Object.entries(sandbox[key] || {})) {
+        records++;
+        const prior = firstSeen.get(type);
+        if (!prior) {
+          firstSeen.set(type, { region: key, rec });
+          continue;
+        }
+        if (disagreement) continue;
+        for (const field of new Set([
+          ...Object.keys(prior.rec),
+          ...Object.keys(rec),
+        ])) {
+          if (priceFields.has(field)) continue;
+          if (prior.rec[field] !== rec[field]) {
+            disagreement = `${type}.${field}: ${prior.region} has ${JSON.stringify(prior.rec[field])}, ${key} has ${JSON.stringify(rec[field])}`;
+            break;
+          }
+        }
+      }
+    }
+
+    check(
+      `[${name.toUpperCase()}] every type's specs are identical in all regions offering it`,
+      disagreement === null,
+      disagreement ||
+        `${firstSeen.size} types across ${records} records agree on every non-price field`,
+    );
+  }
+}
+
 if (state.failures) {
   console.error(`\ndata-integrity: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;
