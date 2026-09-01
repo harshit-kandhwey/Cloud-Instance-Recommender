@@ -44,7 +44,8 @@ top of it.
 - **Next** — _3.16 Attribute filters & rule fidelity_ · _3.17 Closing out 3.x_.
   Spend what the split makes affordable: turn three of the engine's admitted
   proxies into the measurements the providers publish, offer the instance
-  attributes the data already carries, then empty the known-issues list.
+  attributes the data already carries, widen the workload vocabulary the
+  recommendations key off, then empty the known-issues list.
 - **Later** — _4.0 Performance-based right-sizing_. The one platform-defining
   major: a policy-driven, per-row sizing engine. Further out, and deliberately
   unscheduled: [beyond compute](#later--beyond-compute).
@@ -473,10 +474,17 @@ the fields the format could not previously afford.
   the per-region records, leaving regions to carry pricing and availability. Touches
   `tools/split-data.js`, the manifest shape, `base-instance-selector`'s lazy region
   loading, the `sw.js` `CACHE` version, and the data-integrity suite. (L)
-  ⚠ **Decide explicitly, while the format is open, whether a record is keyed
-  `{type → specs}` or `{service, type → specs}`** — see
-  [Later — beyond compute](#later--beyond-compute). Leaving room costs almost
-  nothing here and is expensive to retrofit.
+  **Decided (2026-09-01): a record is keyed `{service, type → specs}`**, with
+  `compute` the only service for the foreseeable future — see
+  [Later — beyond compute](#later--beyond-compute). One constant level of nesting,
+  bought during a rewrite that is happening anyway, so that widening past virtual
+  machines later does not mean migrating the format a second time. It commits to
+  building none of that.
+  The precondition was **measured, not assumed**: every one of the 3,203 shipped
+  types carries byte-identical specs in each region offering it — 0 conflicts
+  across all 96,395 records — so the split is lossless. That check becomes a
+  permanent guard, because it is the only thing that would notice the day a
+  provider ships a region-varying spec.
 - **Close the GCP local-SSD pricing gap.** GCP prices are composed per vCPU and
   per GB, which omits the local-SSD component, so `c4a`, `c4d`, `h4d`, `c4`, `c3d`
   and `z3` compose **6–33% low** and are kept unverified today. The specs feed
@@ -487,6 +495,10 @@ the fields the format could not previously afford.
   Scheduled here rather than in 3.17 because the fix changes recommendations and
   this minor re-baselines the goldens once anyway; folding it into an unrelated
   re-baseline would put two causes behind one baseline diff. (S)
+  **Decided (2026-09-01): they stay excluded, but the exclusion becomes visible** —
+  a notice naming what was dropped and why. The harm today is not that an unpriced
+  instance loses, it is that it disappears without a word; ranking one that has no
+  price is the larger claim, and this makes the smaller one honestly.
 
 ### 3.16 — Attribute filters & rule fidelity
 
@@ -507,6 +519,26 @@ always carried.
   becomes an exclude type rather than competing as an ordinary very large instance;
   confidential computing becomes a compliance option, which the Compliance rule and
   AWS's already-consumed Nitro Enclaves support make a natural fit. (M)
+- **Expand the workload vocabulary.** The engine recognises eight workload concepts
+  in twenty-four tokens, matched by exact lookup, and **anything it does not
+  recognise falls back to general-purpose families**. A real inventory is full of
+  roles with no entry — analytics and Spark, file and backup servers, NoSQL and
+  search clusters, application and middleware servers, container hosts, build
+  farms, domain controllers and jump boxes, and further out VDI, media
+  transcoding, message brokers and network appliances. Each is a row in a table:
+  no data change, no format change, no new fetch, which makes it the cheapest
+  accuracy work left in the engine. The recognised-value list is derived from one
+  provider's table, so **a token added to one provider and not the others would
+  make the upload hygiene check report a value as recognised while no rule reads
+  it** — the vocabularies must move together, and a test should say so. (M)
+- **Let the sample gallery demonstrate what the tool can do.** The gallery already
+  offers three labelled datasets on every tool page, but the builder they share
+  emits only ten columns and omits Compliance, Min Gen, Exclude and Current
+  Instance Type. So **no sample can demonstrate cloud-to-cloud sizing or the
+  compliance rules**, and the samples between them use five of the eight workload
+  values. Widen the builder to the full canonical column set and add a dataset
+  whose rows each light up a different optional column. Paired with the item above,
+  because expanding a vocabulary that no sample ever shows is half a feature. (S)
 
 ### 3.17 — Closing out 3.x
 
@@ -745,12 +777,24 @@ says the new path was reached for instead of the old one being finished.
   it. _Scheduled in 3.17 alongside the filter above._
 - **Zero-priced instances are dropped from every run.** `isValidInstance` requires
   `price > 0`, so any record the feeds price at zero is discarded before ranking.
-  That currently hides the top GPU instances — `p5.48xlarge`, `p5en.48xlarge`,
-  `p6-b200.48xlarge`, `p6-b300.48xlarge`, `p4d.24xlarge` — from every GPU workload,
-  and `u-6tb1.metal` from every Linux run, with no warning. Decide whether an
-  unpriced instance should be excluded, surfaced as unpriced, or ranked last.
+  Measured 2026-09-01: **thirteen types across thirty-seven records**. On AWS the
+  top GPU instances — `p5.4xlarge`, `p5.48xlarge`, `p5en.48xlarge`,
+  `p6-b200.48xlarge`, `p6-b300.48xlarge`, `p4d.24xlarge` — vanish from every GPU
+  workload, and `u-6tb1.metal` from every Linux run. On Azure, six storage-optimized
+  sizes `l8asv3` through `l80asv3` go the same way, one region each. All of it
+  happens with no warning. Not to be confused with a zero **Windows** price, which
+  is carried by thousands of records and almost always means the type does not offer
+  Windows at all. **Decided (2026-09-01): keep excluding them, but say so** — the
+  defect is the silence, not the exclusion.
   _Scheduled in [3.15](#315--data-model--catalogue-fidelity), which re-baselines the
   goldens once._
+- **The background region pre-warm is unreachable.** `preloadAllRegions` would load
+  every region of a provider in the background, and nothing in the product or the
+  tests ever calls it. So the only region data ever fetched is what an upload names,
+  and the method is dead code that reads like a live optimisation. Either wire it to
+  a deliberate trigger or remove it. _Found while planning
+  [3.15](#315--data-model--catalogue-fidelity); scheduled in 3.17. The specs/prices
+  split makes the version that does run far cheaper, so decide after it lands._
 
 ## Suggesting an item
 
