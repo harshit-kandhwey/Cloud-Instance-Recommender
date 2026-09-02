@@ -227,6 +227,11 @@ const FIELD_ORDER = {
     "generation",
     "vCpus",
     "memoryGiB",
+    // Attached local SSD in GiB, 0 when the type has none. A spec: it is a property
+    // of the machine type, identical in every region. Needed because GCP prices
+    // local SSD as a separate per-GiB SKU, so a type that bundles one cannot be
+    // composed from cores and memory alone.
+    "localSsdGiB",
     "hourlyPrice",
     "windowsHourlyPrice",
     "cpuPlatform",

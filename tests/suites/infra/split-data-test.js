@@ -119,6 +119,7 @@ const RECORDS = {
     generation: 2,
     vCpus: 2,
     memoryGiB: 8,
+    localSsdGiB: 0,
     hourlyPrice: 0.0971,
     windowsHourlyPrice: 0.1911,
     cpuPlatform: "Intel",
@@ -639,15 +640,27 @@ console.log("[upstream drift]");
 // all three every refresh, and --provider-scoped or partial runs are normal.
 {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
+  let lines = [];
   const msg = threw(() => {
-    const r = splitProvider(AWS, root);
-    check("an absent monolith is skipped, not thrown on", r.skipped === true);
+    const captured = capturingLog(() => splitProvider(AWS, root));
+    lines = captured.lines;
+    check(
+      "an absent monolith is skipped, not thrown on",
+      captured.result.skipped === true,
+    );
   });
   check("skipping an absent provider raises nothing", msg === null, msg || "");
+  // Assert the MESSAGE, not just that nothing was written. The operator's only clue
+  // is the path it names, and a skip that stopped naming it would leave this check
+  // green while telling them nothing.
   check(
     "and the skip names the scratch path the operator must produce",
-    !fs.existsSync(path.join(root, "js")),
+    lines.some((l) =>
+      l.includes(path.relative(root, monolithPath("aws", root))),
+    ),
+    lines.join(" | ") || "nothing logged",
   );
+  check("the skip wrote nothing", !fs.existsSync(path.join(root, "js")));
   fs.rmSync(root, { recursive: true, force: true });
 }
 

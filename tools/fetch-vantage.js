@@ -286,6 +286,9 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       generation: raw.generation === "current" ? 1 : 0,
       vCpus: num(raw.vCPU),
       memoryGiB: num(raw.memory),
+      // Absent or false reads as 0, never undefined: emitValue refuses undefined,
+      // and "no local SSD" must be a value rather than a hole in the record.
+      localSsdGiB: num(raw.local_ssd_size) || 0,
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
       return out; // missing spec → don't ship a NaN-spec record
