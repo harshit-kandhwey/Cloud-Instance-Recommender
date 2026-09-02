@@ -1,32 +1,26 @@
 // Coverage inventory + behavioral-coverage gate.
 //
-// Enumerates the app's GLOBAL surface — top-level `function NAME()` declarations
-// and `window.NAME =` assignments, across every non-vendor, non-generated js
-// file — and records, for each name, whether a suite covers it and whether it is
-// part of the BEHAVIORAL surface a user can reach.
-//
-// Why a global surface at all: these are classic scripts, so every top-level
-// function is a window property the pages and the worker call by name. That is
-// exactly why a silent defect hides here — a renderer written to survive a
-// missing element just stops offering a feature rather than throwing.
-//
-// The tier is the point. "One suite per exported function" over ~330 globals is
-// unfinishable, and an unfinishable gate gets switched off. So the MUST-COVER
-// set is the behavioral surface — anything a page wires to an event, anything
-// the worker calls — and everything else is a helper that is waivable IN BULK,
-// each with a reason recorded in coverage-waivers.json. Nothing is skipped by
-// accident; only by a decision someone wrote down.
-//
-// Coverage is EXECUTION-based, not source-text: the tool runs every suite once
-// under V8's coverage collector and a name counts as covered only when a suite
-// actually ran its function (see the coverage section below). That is why both
-// invocations below run the suites (~10-15s) rather than scanning their text.
+// THE POLICY THIS ENFORCES IS DOCUMENTED IN tests/README.md ("What must be
+// covered" / "What is NOT covered"), and is stated there rather than here so
+// there is one copy of it to keep true. In short: enumerate the app's global
+// surface, require the BEHAVIORAL part of it to be covered or explicitly waived,
+// and leave internal helpers waivable in bulk. What follows is how that is
+// implemented, not why.
 //
 //   node tools/build-coverage-inventory.js          # write the report
 //   node tools/build-coverage-inventory.js --check   # read-only gate; exit 1 on
 //                                                     #   a behavioral gap
-// Either mode also exits 1 (writing nothing) if a suite fails during the
-// coverage pass — a partial run can't produce a trustworthy inventory or gate.
+//
+// Coverage is EXECUTION-based, not source-text: the tool runs every suite once
+// under V8's coverage collector and a name counts as covered only when a suite
+// actually ran its function (see the coverage section below). That is why both
+// invocations run the suites (~10-15s) rather than scanning their text. Either
+// mode also exits 1 (writing nothing) if a suite fails during the coverage pass
+// — a partial run can't produce a trustworthy inventory or gate.
+//
+// Scope note, deliberate and documented under "What is NOT covered": the surface
+// walk below reads js/ ONLY. Nothing under tools/ is counted, so this gate makes
+// no claim at all about build-tool coverage.
 "use strict";
 const fs = require("fs");
 const os = require("os");

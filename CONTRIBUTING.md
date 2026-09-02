@@ -137,11 +137,10 @@ Note the service worker only registers on a secure context (GitHub Pages, `local
 ## Running Tests
 
 ```bash
-node tests/run-all.js       # all suites + golden byte-compare
-node tests/syntax-check.js  # syntax check over first-party JS
+node tests/run-all.js       # all suites + golden byte-compare — no install needed
 ```
 
-No framework or npm install needed — see [tests/README.md](tests/README.md) for how the harness works and when to regenerate goldens.
+That is the quick loop, **not** the full bar. Eight commands across six CI jobs gate every pull request, and the rest need `npm ci` first. [tests/README.md](tests/README.md) is the single source of truth for testing: the gate list, how to run each one, what the coverage policy requires, what is deliberately left uncovered, and when to regenerate goldens. Check your work against the gate table there before opening a PR rather than against the one command above.
 
 ## Versioning and Releases
 
@@ -151,7 +150,7 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 
 1. **Fork** the repository and create a branch from `main`
 2. **Describe** what you changed and why in the PR description
-3. **Test** your changes: run `node tests/run-all.js` (all suites + golden compare must pass — CI enforces this on every PR), and check the full flow in a browser with a sample CSV
+3. **Test** your changes against every gate in [tests/README.md](tests/README.md#the-gates) — CI runs all of them on every PR — and check the full flow in a browser with a sample CSV. If you added a guard, plant the bug it exists to catch and watch it go red before trusting it
 4. **Keep PRs focused** — one logical change per PR
 5. **Do not** commit generated data files unless you are refreshing instance data
 
@@ -179,7 +178,7 @@ so an export earlier in the session would decide which engine parses the next
 upload. `tests/suites/xlsx-engine-isolation-test.js` enforces this; the reasoning
 is in [SECURITY.md](SECURITY.md).
 
-Formatting is Prettier's job, not yours: run `npm run format` before you commit (`npm run format:check` shows what it would change). CI runs the same check on every push and pull request and fails if anything is unformatted. `.prettierignore` keeps Prettier away from the vendored SheetJS builds and the generated region data — never reformat those.
+Formatting is Prettier's job, not yours: run `npm run format` before you commit (`npm run format:check` shows what it would change, and is one of the CI gates). `.prettierignore` keeps Prettier away from the vendored SheetJS builds and the generated region data — never reformat those.
 
 ## Input Format
 

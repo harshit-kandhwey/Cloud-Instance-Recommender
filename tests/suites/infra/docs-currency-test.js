@@ -164,6 +164,63 @@ const shipped = [
   }
 }
 
+// ── tests/README.md's gate table matches the CI it describes ───────────────────
+// Testing instructions used to be split across CONTRIBUTING (two commands) and
+// this file's subject docs, so a contributor could follow CONTRIBUTING exactly,
+// run one of the eight gate commands, and still fail CI. 3.15 collapsed all of it
+// into tests/README.md — which only helps for as long as that one copy stays
+// true, and nothing pinned it. So pin it: a CI job nobody documented, or a table
+// row naming a command that no longer exists, both fail here.
+{
+  const gates = section("tests/README.md", "## The gates");
+  check(
+    "tests/README.md has a gate table",
+    gates.includes("| Command") && gates.split("\n").length > 6,
+    gates === "" ? "section missing" : `${gates.split("\n").length} lines`,
+  );
+
+  // Top-level keys under `jobs:` — two-space indent, which nothing nested reaches.
+  const ci = read(".github/workflows/ci.yml");
+  const jobNames = [
+    ...ci.slice(ci.indexOf("\njobs:")).matchAll(/^ {2}([a-z][\w-]*):$/gm),
+  ].map((m) => m[1]);
+  check(
+    "the CI workflow declares jobs this check can read",
+    jobNames.length >= 5,
+    jobNames.join(",") || "none parsed",
+  );
+  const undocumented = jobNames.filter((j) => !gates.includes(`\`${j}\``));
+  check(
+    "every CI job appears in the gate table",
+    undocumented.length === 0,
+    undocumented.length
+      ? `${undocumented.join(",")} — add a row to tests/README.md`
+      : `${jobNames.length} jobs documented`,
+  );
+
+  // The other direction: a row promising a command that does not exist sends a
+  // contributor to a broken shell line. Resolve `npm run X` against package.json
+  // and `node path/to.js` against the filesystem.
+  const scripts = JSON.parse(read("package.json")).scripts || {};
+  const npmRuns = [...gates.matchAll(/`npm run ([\w:]+)`/g)].map((m) => m[1]);
+  const nodeRuns = [...gates.matchAll(/`node ([\w./-]+\.js)/g)].map(
+    (m) => m[1],
+  );
+  check(
+    "the gate table names commands to resolve",
+    npmRuns.length + nodeRuns.length >= 6,
+    `${npmRuns.length} npm + ${nodeRuns.length} node`,
+  );
+  const deadScripts = npmRuns.filter((s) => !(s in scripts));
+  const deadPaths = nodeRuns.filter((p) => !fs.existsSync(path.join(REPO, p)));
+  check(
+    "every command in the gate table resolves",
+    deadScripts.length === 0 && deadPaths.length === 0,
+    [...deadScripts.map((s) => `npm run ${s}`), ...deadPaths].join(",") ||
+      `${npmRuns.length + nodeRuns.length} commands resolve`,
+  );
+}
+
 if (state.failures) {
   console.error(`\ndocs-currency: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;

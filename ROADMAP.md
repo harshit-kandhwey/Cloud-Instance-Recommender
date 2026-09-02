@@ -42,7 +42,7 @@ top of it.
   rather than one per type, and the same regenerate closes the local-SSD pricing
   gap and the catalogue defects filed against it.
 - **Next** — _3.16 Attribute filters & rule fidelity_ · _3.17 Closing out 3.x_.
-  Spend what the split makes affordable: turn three of the engine's admitted
+  Spend what the split makes affordable: turn four of the engine's admitted
   proxies into the measurements the providers publish, offer the instance
   attributes the data already carries, widen the workload vocabulary the
   recommendations key off, then empty the known-issues list.
@@ -69,7 +69,10 @@ each item is scheduled:
   covered or explicitly waived with a reason, every guard has been proven to fail
   (by hand and, on the engine core, by a mutation score held above an agreed
   threshold), and the engine's must-always-hold properties are asserted over
-  randomly generated input, not just enumerated cases.
+  randomly generated input, not just enumerated cases. **Met for the application
+  surface, not yet for the build tools** — the coverage ledger walks `js/` only, so
+  no tool function is counted by it; see the practices list below. What is and is
+  not covered is stated in [tests/README.md](tests/README.md).
 
 ## Engineering practices (continuous)
 
@@ -81,6 +84,33 @@ Not tied to any release — adopted once, then maintained every cycle:
   committing the fix from CI was considered and rejected: a bot commit would
   land without a changelog row or a version tag, putting holes in the
   per-commit version map. `npm run format` fixes it locally instead.
+- **Test the build tools, and gate them like the app** — the behavioral-coverage
+  ledger walks `js/` only, so **no build-tool function is counted by it at all**.
+  The tools are exercised by `tests/suites/infra/`, but nothing requires that and
+  nothing reports which of them has no test, which makes the gate's silence read
+  as coverage it never claimed. The cost is not hypothetical: `split-data.js`
+  rewrote every shipped data file for several releases with no suite of its own,
+  and two tools were found reading region records through private loops no test
+  named — one of them failing silently.
+
+  The tools are not incidental to this project. They fetch, reconcile, diff and
+  write the data the product recommends from, so a defect in one ships wrong
+  answers to users exactly as a defect in the engine would, but without a user
+  ever touching the code path that produced it. They deserve the same bar.
+
+  Definition of done: extend the surface walk to `tools/` with its own tier — a
+  tool's `main()` and its exported functions are the reachable set — hold every
+  pipeline tool to covered-or-waived-with-a-reason, and pin each tool's CLI wiring
+  as well as its helpers, since a green suite for a function nothing calls has
+  already shipped here once. **Adopt before 4.0** — deliberately here rather than
+  in [3.17](#317--closing-out-3x), whose charter admits only open
+  [Known issues](#known-issues-patch-level), and a gate that under-claims is a
+  practice gap rather than a product defect. Documented meanwhile under "What is
+  NOT covered" in [tests/README.md](tests/README.md). _Partly paid down in
+  [3.15](#315--data-model--catalogue-fidelity), which gave the splitter and the
+  shared record contract their first suites — but by hand, which is precisely the
+  mechanism this item exists to replace._ (M)
+
 - **Dependency-CVE watch** — monthly, and before each release, check the
   vendored SheetJS builds under `js/vendor/` for advisories, treating the
   versions embedded in those artifacts as the source of truth (today `xlsx.full`
@@ -485,6 +515,20 @@ the fields the format could not previously afford.
   across all 96,395 records — so the split is lossless. That check becomes a
   permanent guard, because it is the only thing that would notice the day a
   provider ships a region-varying spec.
+- **Test coverage for the tool that writes the shipped data.** Reopening the
+  format made an old gap urgent: `tools/split-data.js` rewrites every region file
+  and manifest in the repository and **had no suite of its own**, because the repo
+  only ever held its output and the tool skips anything already converted. The
+  split adds one, driving the real tool over a generated monolith across **all
+  three providers** — necessary rather than tidy, since GCP is the only provider
+  whose price fields sit mid-record and so the only one that would catch a
+  positional partition bug. The shared record contract in `tools/lib/util.js` gains
+  direct coverage of the specs/prices partition and of the serializer that refuses
+  to emit a non-serializable value, and the splitter gains a round-trip
+  self-check that runs before it writes anything — the old format could only lose a
+  whole region, which failed to compile, while the two-part format can lose a
+  single field, which compiles and ships. Progress against the build-tool coverage
+  gap in the practices list, not a closure of it. (S)
 - **Close the GCP local-SSD pricing gap.** GCP prices are composed per vCPU and
   per GB, which omits the local-SSD component, so `c4a`, `c4d`, `h4d`, `c4`, `c3d`
   and `z3` compose **6–33% low** and are kept unverified today. The specs feed
@@ -506,14 +550,18 @@ Spend what 3.15 makes affordable: replace the engine's admitted proxies with the
 measurements the providers actually publish, and offer the attributes the data has
 always carried.
 
-- **Turn three proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
+- **Turn four proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
   explicit stand-in for a higher network tier — the feeds carry real bandwidth
   (AWS baseline/burst Gbps, GCP network performance, Azure accelerated networking).
   The SQL Server rule sets a vCPU floor while its own rationale is that SQL Server
   is **licensed per core** — AWS publishes `cores` and Azure `vcpus_percore`, which
   is the exact figure. Burstable detection is a hardcoded family list plus a
   shared-core name pattern — GCP publishes `shared_cpu`, and AWS's burst fields mark
-  exactly the burstable set, so a future `t5` would classify itself. (M)
+  exactly the burstable set, so a future `t5` would classify itself. The fourth is
+  **Windows support**, which the engine infers by excluding ARM while every record
+  already carries a Windows rate the product never reads — see the Known issue
+  below for what the proxy misses and for the constraint that the answer is
+  per-region, not per-type. (M)
 - **Instance attribute filters.** A numeric GPU count (all three clouds publish
   one) replaces the family-name regex the accelerator check uses today; bare metal
   becomes an exclude type rather than competing as an ordinary very large instance;
@@ -788,6 +836,21 @@ says the new path was reached for instead of the old one being finished.
   defect is the silence, not the exclusion.
   _Scheduled in [3.15](#315--data-model--catalogue-fidelity), which re-baselines the
   goldens once._
+- **Windows support is decided by a proxy that misses dozens of types.** The OS
+  rule treats "not ARM" as "runs Windows", so a Windows row can be recommended a
+  type the provider never offers for Windows. Measured 2026-09-01: **28 AWS and 15
+  Azure non-ARM types** are priced for Linux and never for Windows — the AWS
+  inference and FPGA families (`inf1`, `inf2`, `f2`), `p4d`, and Azure's `nc`, `nv`
+  and `nd` GPU sizes and `m96`. Every record already carries a Windows rate, and
+  **no product code reads it** — it is written by the refresh pipeline and consumed
+  only by build tooling and tests, which is how the proxy survived. Two constraints
+  on the fix: Windows availability is **not region-invariant** (74 Azure types offer
+  it in some regions and not others), so it has to be read per region rather than
+  treated as a property of the type; and a missing rate must be confirmed against
+  provider documentation before it is allowed to filter, because an absent price
+  can be a gap in the feed rather than a statement about the product.
+  _Found while planning [3.15](#315--data-model--catalogue-fidelity); scheduled in
+  3.16 as the fourth proxy._
 - **The background region pre-warm is unreachable.** `preloadAllRegions` would load
   every region of a provider in the background, and nothing in the product or the
   tests ever calls it. So the only region data ever fetched is what an upload names,

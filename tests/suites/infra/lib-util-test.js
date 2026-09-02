@@ -12,6 +12,12 @@ const {
   writeFileAtomic,
   loadCommittedRegions,
   readShippedRegionKeys,
+  FIELD_ORDER,
+  PRICE_FIELDS,
+  specFields,
+  priceFields,
+  emitValue,
+  emitRecordBody,
 } = require("../../../tools/lib/util");
 
 const { check, state } = makeChecker();
@@ -200,6 +206,159 @@ const { check, state } = makeChecker();
     raw.length === 0,
     raw.join(",") || "none",
   );
+}
+
+// ── The record-shape contract: FIELD_ORDER and its specs/prices partition ───────
+// fetch-vantage serializes the fat monolith from this list and split-data writes
+// both halves from it, so a disagreement here is a field written by one writer and
+// dropped by the other. split-data-test drives the partition end to end through
+// the real tool, on all three providers; what is pinned here is the arithmetic
+// itself — exhaustive, disjoint, order-preserving — so a partition bug is named as
+// such rather than arriving as a round-trip failure several layers away.
+{
+  const PROVIDERS = ["aws", "azure", "gcp"];
+
+  check(
+    "every provider declares a field order and a price list",
+    PROVIDERS.every(
+      (p) => Array.isArray(FIELD_ORDER[p]) && Array.isArray(PRICE_FIELDS[p]),
+    ),
+    Object.keys(FIELD_ORDER).join(",") +
+      " / " +
+      Object.keys(PRICE_FIELDS).join(","),
+  );
+
+  for (const p of PROVIDERS) {
+    const specs = specFields(p);
+    const prices = priceFields(p);
+
+    // The partition must be exhaustive and disjoint. Asserting only "specs are
+    // the non-price fields" would pass if a field vanished from both halves.
+    check(
+      `[${p}] specs + prices partition FIELD_ORDER exactly`,
+      specs.length + prices.length === FIELD_ORDER[p].length &&
+        [...specs, ...prices].sort().join(",") ===
+          [...FIELD_ORDER[p]].sort().join(",") &&
+        specs.every((f) => !prices.includes(f)),
+      `${specs.length} specs + ${prices.length} prices vs ${FIELD_ORDER[p].length} fields`,
+    );
+    check(
+      `[${p}] priceFields returns exactly the declared price fields`,
+      prices.join(",") === PRICE_FIELDS[p].join(","),
+      prices.join(","),
+    );
+    // Order matters: a region file's fields should appear in the order they had
+    // inside the fat record, so a diff of the two formats stays readable.
+    check(
+      `[${p}] both halves keep FIELD_ORDER's relative order`,
+      specs.join(",") ===
+        FIELD_ORDER[p].filter((f) => specs.includes(f)).join(",") &&
+        prices.join(",") ===
+          FIELD_ORDER[p].filter((f) => prices.includes(f)).join(","),
+      `${specs.join(",")} | ${prices.join(",")}`,
+    );
+    // Every provider prices Linux and Windows separately, and both are the fields
+    // that legitimately vary by region. A spec half that captured either would
+    // publish one region's price as every region's.
+    check(
+      `[${p}] exactly two price fields, and no spec field looks like a price`,
+      prices.length === 2 && !specs.some((f) => /price|hr$|hourly/i.test(f)),
+      `prices=${prices.join(",")} suspicious specs=${specs.filter((f) => /price|hr$|hourly/i.test(f)).join(",")}`,
+    );
+  }
+
+  // The guard that catches the other direction of drift: a price field renamed in
+  // FIELD_ORDER but not in PRICE_FIELDS would otherwise fall out of BOTH halves
+  // and be silently dropped from the shipped data. Drive it with a real bad map
+  // rather than trusting the branch exists.
+  {
+    const saved = PRICE_FIELDS.aws.slice();
+    PRICE_FIELDS.aws.push("onDemandKlingonHr");
+    let msg = null;
+    try {
+      specFields("aws");
+    } catch (err) {
+      msg = String(err.message || err);
+    }
+    PRICE_FIELDS.aws.length = 0;
+    PRICE_FIELDS.aws.push(...saved);
+    check(
+      "a price field absent from FIELD_ORDER is rejected by name",
+      msg !== null && msg.includes("onDemandKlingonHr"),
+      msg || "did not throw",
+    );
+    check(
+      "and the map was restored, so later checks see the real contract",
+      PRICE_FIELDS.aws.join(",") === saved.join(","),
+      PRICE_FIELDS.aws.join(","),
+    );
+  }
+
+  check(
+    "an unknown provider is rejected rather than returning an empty partition",
+    (() => {
+      try {
+        specFields("azure-classic");
+        return false;
+      } catch {
+        return true;
+      }
+    })(),
+  );
+}
+
+// ── emitValue / emitRecordBody: the serializer both writers share ──────────────
+// A non-finite number or an undefined would serialize to a bare NaN/undefined
+// token — syntactically valid JavaScript that ships a broken record. The throw is
+// the tripwire for a field lost upstream, so pin that it actually fires.
+{
+  check(
+    "emitValue quotes strings and leaves finite numbers bare",
+    emitValue("m5") === '"m5"' &&
+      emitValue(2) === "2" &&
+      emitValue(0) === "0" &&
+      emitValue(0.096) === "0.096",
+    [emitValue("m5"), emitValue(2), emitValue(0)].join(" "),
+  );
+  for (const [label, bad] of [
+    ["undefined", undefined],
+    ["NaN", NaN],
+    ["Infinity", Infinity],
+    ["null", null],
+    ["an object", {}],
+  ]) {
+    let threw = false;
+    try {
+      emitValue(bad);
+    } catch {
+      threw = true;
+    }
+    check(`emitValue refuses ${label}`, threw);
+  }
+
+  const rec = { instanceFamily: "m5", vCpus: 2 };
+  check(
+    "emitRecordBody emits the named fields in the order given, at the default indent",
+    emitRecordBody(["instanceFamily", "vCpus"], rec) ===
+      '    instanceFamily: "m5",\n    vCpus: 2,',
+    JSON.stringify(emitRecordBody(["instanceFamily", "vCpus"], rec)),
+  );
+  check(
+    "emitRecordBody honours a custom indent (the specs blob nests one level deeper)",
+    emitRecordBody(["vCpus"], rec, "      ") === "      vCpus: 2,",
+    JSON.stringify(emitRecordBody(["vCpus"], rec, "      ")),
+  );
+  {
+    // A field the record lacks must throw, not be skipped: silently emitting a
+    // shorter record is exactly the field-level loss the split makes possible.
+    let threw = false;
+    try {
+      emitRecordBody(["vCpus", "memorySizeInGiB"], rec);
+    } catch {
+      threw = true;
+    }
+    check("emitRecordBody refuses a record missing a named field", threw);
+  }
 }
 
 if (state.failures) {

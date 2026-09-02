@@ -123,6 +123,103 @@ function writeFileAtomic(target, contents) {
   }
 }
 
+// ── The shipped record shape ─────────────────────────────────────────────────
+// One declared field order per provider, and the partition of it into the two
+// halves the data is stored as: SPECS, which every region offering a type repeats
+// identically, and PRICES, the only fields that legitimately vary region to region.
+//
+// Both writers read this list. fetch-vantage serializes the fat monolith from it;
+// split-data writes the specs blob and the price-only region files from it. One
+// source is the point — a field added to the feed but named in only one of two
+// partitions would be written by one tool and dropped by the other, and the loss
+// would read as a data change rather than as a bug.
+const FIELD_ORDER = {
+  aws: [
+    "instanceFamily",
+    "instanceFamilyName",
+    "isGraviton",
+    "currentGeneration",
+    "processorManufacturer",
+    "vCpus",
+    "memorySizeInGiB",
+    "nitroEnclavesSupport",
+    "onDemandLinuxHr",
+    "onDemandWindowsHr",
+  ],
+  azure: [
+    "family",
+    "familyName",
+    "isARM",
+    "generation",
+    "processorArchitecture",
+    "vCpus",
+    "memoryGiB",
+    "linuxPrice",
+    "windowsPrice",
+  ],
+  gcp: [
+    "series",
+    "seriesName",
+    "generation",
+    "vCpus",
+    "memoryGiB",
+    "hourlyPrice",
+    "windowsHourlyPrice",
+    "cpuPlatform",
+    "isARM",
+  ],
+};
+
+// The Windows rate counts as a price even though no product code reads it — it is
+// written by the refresh pipeline and consumed only by build tooling and tests.
+// It is also genuinely region-varying (Azure types offered for Windows in some
+// regions and not others), so it has to sit on the price side: carrying it in
+// specs would publish one region's Windows availability as every region's.
+const PRICE_FIELDS = {
+  aws: ["onDemandLinuxHr", "onDemandWindowsHr"],
+  azure: ["linuxPrice", "windowsPrice"],
+  gcp: ["hourlyPrice", "windowsHourlyPrice"],
+};
+
+// Derived, never hand-listed: a field added to FIELD_ORDER and not named a price
+// becomes a spec automatically, so the two lists cannot disagree about coverage.
+// The membership check catches the other direction — a price field renamed in
+// FIELD_ORDER but not here would otherwise silently drop out of both halves.
+function specFields(name) {
+  const order = FIELD_ORDER[name];
+  const prices = PRICE_FIELDS[name];
+  if (!order || !prices) throw new Error(`unknown provider ${name}`);
+  const stray = prices.filter((f) => !order.includes(f));
+  if (stray.length) {
+    throw new Error(
+      `[${name}] PRICE_FIELDS names a field FIELD_ORDER does not have: ${stray.join(", ")}`,
+    );
+  }
+  return order.filter((f) => !prices.includes(f));
+}
+
+// Price fields in FIELD_ORDER's order, so a region file's field order matches the
+// order those same fields had in the fat record.
+function priceFields(name) {
+  const specs = new Set(specFields(name));
+  return FIELD_ORDER[name].filter((f) => !specs.has(f));
+}
+
+// Match the committed region-file style: string values JSON-quoted, numbers bare.
+// A non-finite number or undefined would serialize to a "NaN"/"undefined" token and
+// silently ship a broken record — fail the build instead.
+const emitValue = (v) => {
+  if (typeof v === "string") return JSON.stringify(v);
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  throw new Error(`emitValue: non-serializable field value ${String(v)}`);
+};
+
+// The named fields in the given order, one per line at the given indent. A missing
+// field is NOT skipped — emitValue throws on undefined, which is the tripwire for a
+// record that lost a field upstream.
+const emitRecordBody = (fields, record, indent = "    ") =>
+  fields.map((f) => `${indent}${f}: ${emitValue(record[f])},`).join("\n");
+
 module.exports = {
   ROOT,
   round8,
@@ -132,4 +229,10 @@ module.exports = {
   loadGlobals,
   loadCommittedRegions,
   readShippedRegionKeys,
+  FIELD_ORDER,
+  PRICE_FIELDS,
+  specFields,
+  priceFields,
+  emitValue,
+  emitRecordBody,
 };

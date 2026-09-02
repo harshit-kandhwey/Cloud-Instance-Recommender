@@ -22,6 +22,8 @@ const {
   writeFileAtomic,
   loadGlobals,
   readShippedRegionKeys,
+  FIELD_ORDER,
+  emitRecordBody,
 } = require("./lib/util");
 
 // Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
@@ -337,56 +339,12 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 }
 
 // ── Serialisation ────────────────────────────────────────────────────────────
-
-// Match the committed region-file style: string values JSON-quoted, numbers bare.
-// A non-finite number or undefined would serialize to a "NaN"/"undefined" token and
-// silently ship a broken record — fail the build instead (tripwire behind the
-// missing-spec skip in instanceRegionRecords).
-const emitValue = (v) => {
-  if (typeof v === "string") return JSON.stringify(v);
-  if (typeof v === "number" && Number.isFinite(v)) return String(v);
-  throw new Error(`emitValue: non-serializable field value ${String(v)}`);
-};
-
-const FIELD_ORDER = {
-  aws: [
-    "instanceFamily",
-    "instanceFamilyName",
-    "isGraviton",
-    "currentGeneration",
-    "processorManufacturer",
-    "vCpus",
-    "memorySizeInGiB",
-    "nitroEnclavesSupport",
-    "onDemandLinuxHr",
-    "onDemandWindowsHr",
-  ],
-  azure: [
-    "family",
-    "familyName",
-    "isARM",
-    "generation",
-    "processorArchitecture",
-    "vCpus",
-    "memoryGiB",
-    "linuxPrice",
-    "windowsPrice",
-  ],
-  gcp: [
-    "series",
-    "seriesName",
-    "generation",
-    "vCpus",
-    "memoryGiB",
-    "hourlyPrice",
-    "windowsHourlyPrice",
-    "cpuPlatform",
-    "isARM",
-  ],
-};
-
-const emitRecordBody = (fieldOrder, record) =>
-  fieldOrder.map((f) => `    ${f}: ${emitValue(record[f])},`).join("\n");
+//
+// FIELD_ORDER and emitRecordBody live in tools/lib/util.js: split-data writes the
+// same fields, partitioned into specs and prices, and the two writers must not
+// keep separate ideas of what a record contains. emitValue's throw on a
+// non-serializable value is the tripwire behind the missing-spec skip in
+// instanceRegionRecords.
 
 /**
  * Build the monolith string for one provider.
