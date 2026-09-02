@@ -3,6 +3,8 @@
 // a conflict with the official value taken, a type with no official entry keeps Vantage
 // pricing and is reported UNVERIFIED, and pricing-only providers (Azure/GCP) leave specs
 // untouched. Inputs are the internal monolith-record / official-fetch shapes, built inline.
+const fs = require("fs");
+const path = require("path");
 const { makeChecker } = require("../harness");
 const {
   reconcileProvider,
@@ -195,6 +197,33 @@ const { check, state } = makeChecker();
     "sentinel: CLEAN with no conflicts, CONFLICTS when a spec disagreed",
     clean.startsWith("<!-- reconcile: CLEAN -->") &&
       conflicted.startsWith("<!-- reconcile: CONFLICTS -->"),
+  );
+}
+
+// ── Reconcile never touches the shipped js/ tree ─────────────────────────────
+// It reads the scratch monolith and rewrites it in place. Structural, because the
+// consequence of regressing it is invisible at this tool: writing the reconciled data
+// over js/{p}/{p}-data.js would destroy the OLD specs blob that BOTH diffs, which run
+// after this step, still need — and they would then report no spec change for any type
+// rather than fail. Only split-data may write the shipped tree.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "reconcile-data.js"),
+    "utf8",
+  );
+  // Strip line comments — the header above says "-data.js" in prose.
+  const code = src
+    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  check(
+    "reconcile-data addresses the monolith through the shared monolithPath",
+    code.includes("monolithPath("),
+    "no monolithPath call",
+  );
+  check(
+    "and names no shipped {p}-data.js path of its own",
+    !code.includes("-data.js"),
+    code.includes("-data.js") ? "still references a -data.js path" : "clean",
   );
 }
 

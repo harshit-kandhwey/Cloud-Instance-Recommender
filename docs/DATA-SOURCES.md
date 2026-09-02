@@ -57,13 +57,16 @@ Two paths, same pipeline (the "CI + local runbook" model):
   the diff and reconcile reports under the gitignored `.refresh-cache/`, and prints the
   diff — it does **not** touch git. You then review, re-baseline any shifted goldens (bump
   `sw.js` `CACHE` if a region was pruned), commit `js/` **with** a CHANGELOG version-map
-  row + annotated tag, and open the PR. A no-op diff leaves the regenerated monolith in the
-  tree; discard it with `git checkout -- js/`.
+  row + annotated tag, and open the PR. A no-op diff never reaches `split-data`, so the
+  shipped tree is untouched and there is nothing to discard.
 
-**Pipeline order is load-bearing** (both paths): the official fetchers read the shipped
-manifest (`js/{p}/regions/` + the `{P}_REGION_KEYS` keys) that `fetch-vantage` overwrites
-with a monolith, so they run first —
+**Each step consumes what the one before it produced** (both paths):
 `official fetch → fetch-vantage → reconcile-data → data-diff → recommendation-diff → split-data`.
+Only `split-data` writes into the shipped `js/` tree; everything upstream reads it and
+writes to the gitignored `.refresh-cache/`, where the fresh data waits as
+`{p}-monolith.js`. That is what lets both diffs read the old data — including each type's
+specs, which live in the shipped manifest — while the new data sits beside it, and what
+stops a run that dies part-way from leaving a new manifest against old region files.
 The recommendation-diff step runs the engine over the old and new data for the sample
 inputs and flags any refresh that flips a recommended instance, loudly, in the PR body.
 

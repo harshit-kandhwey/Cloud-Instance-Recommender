@@ -107,16 +107,16 @@ npm run typecheck
 
 ## Updating Instance Data
 
-Instance data is auto-generated from provider APIs — do not edit it manually. Each provider has a small manifest (`js/{p}/{p}-data.js` with the data date and region key list) plus one file per region under `js/{p}/regions/`.
+Instance data is auto-generated from provider APIs — do not edit it manually. Each provider has a small manifest (`js/{p}/{p}-data.js` with the data date, each type's specifications, and the region key list) plus one file per region under `js/{p}/regions/` carrying that region's prices. A type's specs are stored once, in the manifest; the loaders merge the two halves back together at read time, so nothing above a loader sees that the data is stored in two pieces.
 
 To refresh the data, run the pipeline — never hand-edit a region file:
 
 1. Put `VANTAGE_API_KEY` and `GCP_BILLING_API_KEY` in a gitignored `.env` at the repo root (the run fails early, naming any key it is missing)
-2. Run `npm run refresh` — add `-- --specs-only` to skip the official pricing fetch and reconcile, or `-- --date YYYY-MM-DD` to stamp a specific snapshot date. The order is **load-bearing**: `fetch-official-{aws,azure,gcp}` → `fetch-vantage` → `reconcile-data` → `data-diff` → `recommendation-diff` → `split-data`. The official fetchers run first because they read the manifest that `fetch-vantage` overwrites, and `split-data` runs last because it rewrites `js/{provider}/regions/`, which both diffs read as the old side. Reports land in the gitignored `.refresh-cache/`
+2. Run `npm run refresh` — add `-- --specs-only` to skip the official pricing fetch and reconcile, or `-- --date YYYY-MM-DD` to stamp a specific snapshot date. Each step consumes what the one before it produced: `fetch-official-{aws,azure,gcp}` → `fetch-vantage` → `reconcile-data` → `data-diff` → `recommendation-diff` → `split-data`. Only `split-data` writes into the shipped `js/` tree; everything upstream reads it and writes to the gitignored `.refresh-cache/`, where the fresh data waits as `{provider}-monolith.js`. That is what lets both diffs read the old data — specs included — while the new data sits beside it. Reports land in `.refresh-cache/` too
 3. Review `.refresh-cache/diff-report.md` and `rec-flips-report.md` (plus `reconcile-report.md` on a pricing run), spot-check known instance types, then commit the manifest **and** the regenerated `regions/` files together, with a CHANGELOG row. Re-baseline any golden a price move shifted
 4. **Open a pull request** — refreshed data reaches `main` through review, never a direct push. The scheduled `.github/workflows/data-refresh.yml` runs this same pipeline and opens the same kind of PR
 
-On a no-op diff nothing downstream runs and the tool tells you to `git checkout -- js/`, discarding the regenerated monolith. `tools/split-data.js` can also be run alone against a hand-dropped monolith: it is idempotent (skips a provider already in manifest form) and hard-fails rather than writing a partial result.
+On a no-op diff nothing downstream runs, so `split-data` never fires and the shipped `js/` tree is left untouched — there is nothing to discard. `tools/split-data.js` can also be run alone against a monolith dropped by hand at `.refresh-cache/{provider}-monolith.js`: it reads that file and writes the manifest and region files, is idempotent (input and output are different files, so a re-run rebuilds the same manifest), and hard-fails rather than writing a partial result.
 
 Where each field comes from, why the official provider APIs outrank the specs source, and which GCP series stay unverified are documented in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md).
 

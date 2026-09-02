@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 "use strict";
 /*
- * fetch-vantage.js — regenerate js/{provider}/{provider}-data.js monoliths from the
- * Vantage bulk instance data, in the format tools/split-data.js consumes.
+ * fetch-vantage.js — rebuild each provider's fat monolith from the Vantage bulk
+ * instance data, in the format tools/split-data.js consumes.
  *
  *   node tools/fetch-vantage.js [--provider aws|azure|gcp] [--date YYYY-MM-DD]
+ *
+ * Writes to the gitignored .refresh-cache/{provider}-monolith.js, NOT over the
+ * shipped js/{provider}/{provider}-data.js: the shipped tree stays untouched until
+ * split-data runs, so the diffs can still read the old data out of it and a run that
+ * dies part-way cannot leave a new manifest beside old region files.
  *
  * Node/CI build tool only; not shipped to the page. Requires VANTAGE_API_KEY (sent
  * as a Bearer token, never printed). Emits only region keys the shipped manifests
@@ -21,7 +26,9 @@ const {
   resolveDataDate,
   writeFileAtomic,
   loadGlobals,
+  loadCommittedRegions,
   readShippedRegionKeys,
+  monolithPath,
   FIELD_ORDER,
   emitRecordBody,
 } = require("./lib/util");
@@ -483,17 +490,19 @@ function serializeMonolith({ name, prefix, source, dataDate, byRegion }) {
 
 // ── Shipped-artifact reads ───────────────────────────────────────────────────
 
-// { byType, byFamily } generations from the shipped Azure region files. byType is
-// exact per instance; byFamily is the family's most common generation, for new sizes.
+// { byType, byFamily } generations from the shipped Azure data. byType is exact per
+// instance; byFamily is the family's most common generation, for new sizes.
+//
+// MUST go through loadCommittedRegions, never a private readdirSync over regions/.
+// `generation` and `family` are SPECS: they live in the manifest's AZURE_SPECS, not in
+// the region files. A private walk would see only the price half, find no numeric
+// `generation` on any record, skip every one of them silently, and carry forward
+// nothing — losing the one field the Vantage feed cannot reproduce, with no error and
+// no empty-result symptom, because {} is a legitimate first-run value.
 function collectAzureGeneration() {
-  const dir = path.join(ROOT, "js", "azure", "regions");
   const byType = {};
   const familyCounts = {};
-  for (const file of fs.readdirSync(dir)) {
-    if (!file.endsWith(".js")) continue;
-    const g = loadGlobals(`js/azure/regions/${file}`);
-    const region = g[file.replace(/\.js$/, "")];
-    if (!region || typeof region !== "object") continue;
+  for (const region of Object.values(loadCommittedRegions("azure"))) {
     for (const [type, rec] of Object.entries(region)) {
       if (!rec || typeof rec.generation !== "number") continue;
       byType[type] = rec.generation;
@@ -576,11 +585,13 @@ async function main() {
     regionKeys,
     instanceCount,
   } of built) {
-    writeFileAtomic(path.join(ROOT, "js", name, `${name}-data.js`), monolith);
+    const out = monolithPath(name);
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    writeFileAtomic(out, monolith);
     const dropped = shippedKeys.length - regionKeys.length;
     console.log(
-      `[${name}] wrote monolith: ${regionKeys.length}/${shippedKeys.length} shipped regions, ` +
-        `${instanceCount} records${dropped ? `, ${dropped} region(s) got no data` : ""}`,
+      `[${name}] wrote ${path.relative(ROOT, out)}: ${regionKeys.length}/${shippedKeys.length} ` +
+        `shipped regions, ${instanceCount} records${dropped ? `, ${dropped} region(s) got no data` : ""}`,
     );
     console.log(`[${name}] next: node tools/split-data.js`);
   }

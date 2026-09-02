@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /*
- * split-data.js — splits each monolithic js/{provider}/{provider}-data.js into a
- * manifest (the same path, rewritten) plus per-region files
- * (js/{provider}/regions/<regionKey>.js).
+ * split-data.js — splits each scratch monolith (.refresh-cache/{provider}-monolith.js,
+ * written by fetch-vantage) into the shipped manifest js/{provider}/{provider}-data.js
+ * plus per-region files (js/{provider}/regions/<regionKey>.js). This is the ONLY step
+ * of the refresh that writes into the shipped js/ tree.
  *
  * THE TWO-PART FORMAT. A type's SPECS are written once, into the manifest as
  * window.{P}_SPECS.compute[type]; a region file carries that region's PRICES and
@@ -16,14 +17,14 @@
  * migrating the format a second time. It is the only key today.
  *
  * Data-update workflow:
- *   1. Drop the freshly generated monolithic {provider}-data.js in place
- *      (same format as produced from instances.vantage.sh).
+ *   1. Run tools/fetch-vantage.js — it writes .refresh-cache/{provider}-monolith.js
+ *      (or drop an equivalent monolith there by hand).
  *   2. Run: node tools/split-data.js
  *   3. Commit the regenerated regions/ files and the manifest.
  *
- * Idempotent: a file that is already a manifest (contains _REGION_KEYS) is
- * skipped, so running the tool twice is safe. The new manifest still declares
- * _REGION_KEYS, so the guard keeps recognising its own output.
+ * Idempotent by construction: input and output are different files, so running the
+ * tool twice rebuilds the same manifest from the same monolith. With no monolith
+ * present it skips.
  *
  * Hard-fails, all before any disk write, if: the region set in the
  * makeXRegionsGlobal({...}) call does not match the globals the monolith actually
@@ -37,6 +38,8 @@ const vm = require("vm");
 const {
   ROOT,
   writeFileAtomic,
+  monolithPath,
+  SERVICE,
   specFields,
   priceFields,
   emitRecordBody,
@@ -48,10 +51,6 @@ const PROVIDERS = [
   { name: "gcp", prefix: "GCP" },
 ];
 
-// The service level inside {P}_SPECS. Compute is the only one; the level is here
-// so adding storage or database later is a new key, not a second migration.
-const SERVICE = "compute";
-
 // Run one artifact's source in a fresh window-like sandbox and return the globals.
 function evaluate(source, filename) {
   const sandbox = {};
@@ -62,19 +61,30 @@ function evaluate(source, filename) {
 }
 
 function splitProvider({ name, prefix }, root = ROOT) {
+  const monoPath = monolithPath(name, root);
   const dataPath = path.join(root, "js", name, `${name}-data.js`);
-  if (!fs.existsSync(dataPath)) {
-    console.log(`[${name}] ${dataPath} not found — skipping`);
+  // No scratch monolith means there is nothing to split — fetch-vantage did not run
+  // this cycle. This IS the idempotency guard now: the input and the output are two
+  // different files, so re-running only ever rewrites the same manifest from the same
+  // monolith, and the old "is my own output already a manifest?" check is moot.
+  if (!fs.existsSync(monoPath)) {
+    console.log(
+      `[${name}] no ${path.relative(root, monoPath)} — run fetch-vantage first; skipping`,
+    );
     return { name, skipped: true };
   }
 
   // Normalize CRLF so the exact-line matching below works regardless of
   // how git checked the file out
-  const content = fs.readFileSync(dataPath, "utf8").replace(/\r\n/g, "\n");
+  const content = fs.readFileSync(monoPath, "utf8").replace(/\r\n/g, "\n");
 
+  // A manifest at the scratch path is a pipeline mix-up, not a second split: refuse
+  // rather than emit a manifest whose specs blob came from another manifest.
   if (content.includes("_REGION_KEYS")) {
-    console.log(`[${name}] already a manifest — skipping (idempotency guard)`);
-    return { name, skipped: true };
+    throw new Error(
+      `[${name}] ${path.relative(root, monoPath)} is a manifest, not a monolith — ` +
+        `re-run fetch-vantage`,
+    );
   }
 
   // Header comments (first lines starting with //) — preserved in manifest
@@ -136,7 +146,7 @@ function splitProvider({ name, prefix }, root = ROOT) {
   // twice. The monolith is self-contained — it assigns every region onto window —
   // so running it yields the real records, and a block that no longer parses
   // throws here instead of being silently mis-sliced.
-  const sandbox = evaluate(content, `js/${name}/${name}-data.js`);
+  const sandbox = evaluate(content, `${name}-monolith.js`);
 
   const unassigned = declaredKeys.filter(
     (k) => !sandbox[k] || typeof sandbox[k] !== "object",

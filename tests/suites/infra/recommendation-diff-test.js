@@ -199,10 +199,13 @@ const { check, state } = makeChecker();
     path.join(__dirname, "..", "..", "..", "tools", "recommendation-diff.js"),
     "utf8",
   );
+  // Strip line comments first: a check that matches prose reports on documentation,
+  // not on code. Match the CALL.
+  const code = src.replace(/^\s*\/\/.*$/gm, "");
   check(
     "recommendation-diff reads the old side through the shared loader",
-    src.includes("loadCommittedRegions") && !src.includes("readdirSync"),
-    src.includes("readdirSync") ? "has its own readdirSync" : "shared",
+    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
+    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
   );
 }
 

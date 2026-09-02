@@ -35,7 +35,14 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, round8, argValue, writeFileAtomic } = require("./lib/util");
+const {
+  ROOT,
+  round8,
+  argValue,
+  writeFileAtomic,
+  loadCommittedRegions,
+  readShippedRegionKeys,
+} = require("./lib/util");
 
 const CATALOG_HOST = "https://cloudbilling.googleapis.com";
 // Compute Engine's well-known billing service id (stable; confirmed 2026-08-17).
@@ -196,7 +203,14 @@ function composePricing(rates, winHr, shipped) {
       const series = rec && rec.series;
       const r = series && rates[series] && rates[series][rk];
       if (!r || !Number.isFinite(r.coreHr) || !Number.isFinite(r.ramHr)) {
-        if (series) unmatched.add(series);
+        // Report the MISSING-series case too. This guard used to read
+        // `if (series) unmatched.add(series)`, which meant a record carrying no
+        // series at all skipped silently AND suppressed the one log that would
+        // have said so — every record taking this branch produced an empty
+        // report and exit 0. One sentinel rather than one entry per type: if the
+        // field is gone it is gone for all of them, and the log should say that
+        // once instead of reprinting the catalogue.
+        unmatched.add(series || "(records carried no series field)");
         continue;
       }
       const vcpu = Number(rec.vCpus);
@@ -214,6 +228,40 @@ function composePricing(rates, winHr, shipped) {
     }
   }
   return { byRegion, unmatched: [...unmatched].sort() };
+}
+
+/**
+ * The floor on a composition run: composing nothing is never a legitimate result.
+ * Returns the type×region count so the caller can report it.
+ *
+ * Without this the tool wrote {}, logged "0 regions, 0 type×region prices", sent
+ * nothing to stderr and exited 0 — and reconcile-data then read that empty dump as
+ * the authoritative official side. Every route here is silent: a catalogue that
+ * stops matching the shipped series, an empty shipped region set, or shipped
+ * records that lost the fields the composition reads (which is exactly what the
+ * specs/prices split does to them). The sibling fetchers throw on a short
+ * catalogue for the same reason — this is that guard on the other end of the run.
+ *
+ * Separate and exported so it can be driven directly: main() cannot run without
+ * the network, and a guard that only exists inside it is a guard nothing tests.
+ * @param {object} byRegion  composePricing output
+ * @param {object} shipped   the shipped records it was composed from
+ * @param {string[]} unmatched  series with no usable rate, for the message
+ * @returns {number} total type×region prices composed
+ */
+function assertComposedSomething(byRegion, shipped, unmatched = []) {
+  const total = Object.values(byRegion || {}).reduce(
+    (n, r) => n + Object.keys(r || {}).length,
+    0,
+  );
+  if (total === 0) {
+    throw new Error(
+      `[gcp] composed 0 prices from ${Object.keys(shipped || {}).length} shipped region(s) — ` +
+        `refusing to write an empty dump that reconcile would read as authoritative` +
+        (unmatched.length ? ` (unmatched: ${unmatched.join(", ")})` : ""),
+    );
+  }
+  return total;
 }
 
 // ── Network ────────────────────────────────────────────────────────────────────
@@ -277,31 +325,18 @@ async function fetchAllSkus() {
 // { regionKey: { type: { series, vCpus, memoryGiB } } } from the shipped region files.
 // Each file is `window.<regionKey> = { <type>: {...} }`; run them in a sandbox and read
 // the keys the manifest lists.
+// MUST go through loadCommittedRegions, never a private walk over regions/.
+// composePricing below reads `series`, `vCpus` and `memoryGiB` off these records, and
+// all three are SPECS — they live in the manifest's GCP_SPECS, not in the region files.
+// A private walk would hand composePricing price-only records, every one of which it
+// would skip for want of a series, and it would write an empty pricing dump that
+// reconcile then reads as authoritative. assertComposedSomething is the floor under
+// that; using the shared loader is what stops it being reached.
 function readShippedRecords() {
-  const vm = require("vm");
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(
-    fs.readFileSync(path.join(ROOT, "js", "gcp", "gcp-data.js"), "utf8"),
-    sandbox,
-    { filename: "js/gcp/gcp-data.js" },
-  );
-  const keys = sandbox.GCP_REGION_KEYS;
-  if (!Array.isArray(keys) || !keys.length) {
-    throw new Error("[gcp] no GCP_REGION_KEYS in shipped manifest");
-  }
-  const dir = path.join(ROOT, "js", "gcp", "regions");
+  const shipped = loadCommittedRegions("gcp");
+  const keys = readShippedRegionKeys("gcp", "GCP");
   const out = {};
-  for (const rk of keys) {
-    const file = path.join(dir, `${rk}.js`);
-    if (!fs.existsSync(file)) continue;
-    vm.runInContext(fs.readFileSync(file, "utf8"), sandbox, {
-      filename: `${rk}.js`,
-    });
-    const region = sandbox[rk];
-    if (region && typeof region === "object") out[rk] = region;
-  }
+  for (const rk of keys) if (shipped[rk]) out[rk] = shipped[rk];
   return out;
 }
 
@@ -322,14 +357,11 @@ async function main() {
   const winHr = windowsPerVCpuHr(skus);
   const { byRegion, unmatched } = composePricing(rates, winHr, shipped);
 
+  const total = assertComposedSomething(byRegion, shipped, unmatched);
+
   const outPath = path.isAbsolute(out) ? out : path.join(ROOT, out);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   writeFileAtomic(outPath, JSON.stringify(byRegion, null, 2));
-
-  const total = Object.values(byRegion).reduce(
-    (n, r) => n + Object.keys(r).length,
-    0,
-  );
   console.log(
     `[gcp] wrote ${out}: ${Object.keys(byRegion).length} regions, ${total} type×region prices ` +
       `(Windows +$${winHr}/vCPU·h)`,
@@ -348,6 +380,7 @@ module.exports = {
   MAX_PAGES,
   windowsPerVCpuHr,
   composePricing,
+  assertComposedSomething,
   classifyCoreRam,
   skuUsd,
   SERIES_SKU_NAME,

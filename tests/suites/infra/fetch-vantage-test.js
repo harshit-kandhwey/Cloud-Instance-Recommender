@@ -16,6 +16,7 @@ const {
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
 } = require("../../../tools/fetch-vantage");
+const { loadCommittedRegions } = require("../../../tools/lib/util");
 
 const { check, state } = makeChecker();
 
@@ -396,16 +397,12 @@ function splitDataParity(monolith) {
   // The shipped data is the list the mapping has to cover: any series already on
   // disk that the tables don't know would be riding the Intel fallback right now.
   {
+    // Through the shared loader, not a private walk: `series` is a SPEC and lives in
+    // the manifest, so reading the region files alone would collect nothing but
+    // undefined and turn this check into noise about a field that was never there.
     const shipped = new Set();
-    for (const f of fs.readdirSync(path.join(REPO, "js", "gcp", "regions"))) {
-      const sb = { window: {} };
-      vm.runInNewContext(
-        fs.readFileSync(path.join(REPO, "js", "gcp", "regions", f), "utf8"),
-        sb,
-      );
-      for (const region of Object.values(sb.window))
-        for (const rec of Object.values(region)) shipped.add(rec.series);
-    }
+    for (const region of Object.values(loadCommittedRegions("gcp")))
+      for (const rec of Object.values(region)) shipped.add(rec.series);
     const unmapped = [...shipped].filter((s) => !isMappedGcpSeries(s)).sort();
     check(
       "every series in the shipped GCP data has a platform mapping",
@@ -492,6 +489,29 @@ function splitDataParity(monolith) {
   check(
     "[gcp] missing Windows rate falls back to 0",
     gcp.us_central1["n2-standard-2"].windowsHourlyPrice === 0,
+  );
+}
+
+// ── Shipped region data comes from the shared loader, never a private walk ────
+// Structural, because the failure is structural AND silent. Specs live in the
+// manifest now; a private readdirSync over regions/ returns the PRICE half only, so
+// collectAzureGeneration would find no numeric `generation` on any record and
+// silently carry forward nothing — losing the one field the feed cannot reproduce. Nothing throws, nothing is
+// empty, and the loss reads as a data change rather than as a bug. recommendation-diff
+// already carries this pin — it is here because the twin is what went missing last time.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "fetch-vantage.js"),
+    "utf8",
+  );
+  // Strip line comments before looking: the prose above collectAzureGeneration says
+  // the word readdirSync, and a check that reads comments is a check that reports on
+  // documentation. Match the CALL.
+  const code = src.replace(/^\s*\/\/.*$/gm, "");
+  check(
+    "fetch-vantage reads shipped region data through loadCommittedRegions",
+    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
+    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
   );
 }
 

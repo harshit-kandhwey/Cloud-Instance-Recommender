@@ -6,9 +6,9 @@
  *
  *   node tools/data-diff.js [--provider aws|azure|gcp]
  *
- * Run AFTER tools/fetch-vantage.js writes js/{provider}/{provider}-data.js and
- * BEFORE tools/split-data.js: the region files still hold the old data, the
- * monolith holds the new. Node/CI build tool only; never shipped to the page.
+ * Run AFTER tools/fetch-vantage.js writes .refresh-cache/{provider}-monolith.js
+ * and BEFORE tools/split-data.js: the shipped js/ tree still holds the old data,
+ * the scratch monolith holds the new. Node/CI build tool only; never shipped.
  *
  * The first output line is a machine-readable sentinel the workflow greps to
  * decide whether to open a PR:
@@ -20,9 +20,13 @@
  */
 
 const fs = require("fs");
-const path = require("path");
 const vm = require("vm");
-const { ROOT, round8, argValue, loadCommittedRegions } = require("./lib/util");
+const {
+  round8,
+  argValue,
+  loadCommittedRegions,
+  monolithPath,
+} = require("./lib/util");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },
@@ -336,14 +340,16 @@ function regionsFromMonolith(source) {
   return regions;
 }
 
-// New data: the not-yet-split monolith fetch-vantage just wrote. If it has already
-// been split (manifest), there is nothing new to diff against — signal that.
+// New data: the scratch monolith fetch-vantage just wrote. Absent means there is
+// nothing new to diff against — signal that. The path holds a monolith or nothing,
+// so absence is the whole test; the old "does it say _REGION_KEYS?" sniff existed
+// only because this file and the shipped manifest shared one path.
 function loadNewRegions(name) {
-  const source = fs
-    .readFileSync(path.join(ROOT, "js", name, `${name}-data.js`), "utf8")
-    .replace(/\r\n/g, "\n");
-  if (source.includes("_REGION_KEYS")) return null; // already a manifest
-  return regionsFromMonolith(source);
+  const file = monolithPath(name);
+  if (!fs.existsSync(file)) return null;
+  return regionsFromMonolith(
+    fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n"),
+  );
 }
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
@@ -360,19 +366,19 @@ function main() {
     if (newRegions === null) {
       skipped++;
       process.stderr.write(
-        `[${name}] ${name}-data.js is a manifest (already split) — run fetch-vantage first; skipping\n`,
+        `[${name}] no .refresh-cache/${name}-monolith.js — run fetch-vantage first; skipping\n`,
       );
       continue;
     }
     const oldRegions = loadCommittedRegions(name);
     diffs.push(diffProvider(name, oldRegions, newRegions));
   }
-  // No provider could be diffed (every target was already split) — never print a
+  // No provider could be diffed (no target had a fresh monolith) — never print a
   // NO-CHANGES sentinel here: that is a false negative that makes the workflow skip
   // the PR after a real refresh. Fail loudly instead.
   if (!diffs.length) {
     throw new Error(
-      `no provider could be diffed (${skipped}/${targets.length} already split as manifests) — run fetch-vantage before data-diff`,
+      `no provider could be diffed (${skipped}/${targets.length} had no scratch monolith) — run fetch-vantage before data-diff`,
     );
   }
   process.stdout.write(renderReport(diffs));

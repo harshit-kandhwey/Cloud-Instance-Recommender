@@ -9,8 +9,8 @@
  *
  * Run AFTER tools/fetch-vantage.js (+ reconcile) writes the new monolith and BEFORE
  * tools/split-data.js — same window as data-diff: js/{p}/regions/ still holds the old
- * data (the "before" engine input) while js/{p}/{p}-data.js is the fresh monolith (the
- * "after" input). Node/CI build tool only; never shipped.
+ * data (the "before" engine input) while .refresh-cache/{p}-monolith.js is the fresh
+ * monolith (the "after" input). Node/CI build tool only; never shipped.
  *
  * Why this exists (Phase C2.4): the goldens already fail when a pick moves, forcing a
  * re-baseline, but a byte diff of a wide CSV does not tell a reviewer WHICH pick flipped
@@ -28,7 +28,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
-const { ROOT, argValue, loadCommittedRegions } = require("./lib/util");
+const {
+  ROOT,
+  argValue,
+  loadCommittedRegions,
+  monolithPath,
+} = require("./lib/util");
 const {
   SAMPLE_CSV,
   parseSample,
@@ -127,14 +132,15 @@ function renderReport(perScenario) {
 // literally the same loader data-diff uses, so the two diffs can never disagree on
 // what the old side is or on which malformed region files they reject.
 
-// Fresh monolith — the "new" engine input. Null when the file is a manifest (already
-// split, or fetch-vantage did not run), so the caller skips rather than comparing stale.
+// Fresh scratch monolith — the "new" engine input. Null when it is absent
+// (fetch-vantage did not run this cycle), so the caller skips rather than comparing
+// stale. Same signal, and the same loader path, as data-diff's.
 function loadNewRegions(name) {
-  const source = fs
-    .readFileSync(path.join(ROOT, "js", name, `${name}-data.js`), "utf8")
-    .replace(/\r\n/g, "\n");
-  if (source.includes("_REGION_KEYS")) return null;
-  return regionsFromMonolith(source);
+  const file = monolithPath(name);
+  if (!fs.existsSync(file)) return null;
+  return regionsFromMonolith(
+    fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n"),
+  );
 }
 
 // Build a DOM-free engine context with the given per-provider region maps injected as
@@ -214,7 +220,7 @@ async function main() {
     const fresh = loadNewRegions(p);
     if (fresh === null) {
       process.stderr.write(
-        `[${p}] ${p}-data.js is a manifest (already split) — run fetch-vantage first; skipping recommendation diff\n`,
+        `[${p}] no .refresh-cache/${p}-monolith.js — run fetch-vantage first; skipping recommendation diff\n`,
       );
       process.stdout.write(
         "<!-- rec-flips: NONE -->\n## Recommendation flips\n\nSkipped: no fresh monolith to compare.\n",

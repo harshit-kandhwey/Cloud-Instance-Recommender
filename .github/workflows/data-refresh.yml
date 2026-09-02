@@ -18,10 +18,10 @@ name: Data refresh
 #     intact shipped manifest and uploads a tiny {p}-pricing.json artifact.
 #   assemble (one job) — fetch-vantage → reconcile-data → data-diff →
 #     recommendation-diff → split-data → PR.
-# ORDER IS LOAD-BEARING: the official fetchers read the shipped manifest
-# (js/{p}/regions/ + the {P}_REGION_KEYS keys) that fetch-vantage overwrites with a
-# monolith, so they MUST run before it — hence a separate fetch stage on the intact
-# checkout, feeding the assemble stage through artifacts.
+# Each step consumes what the one before it produced. Only split-data writes into the
+# shipped js/ tree; everything upstream reads it and writes to .refresh-cache/, so both
+# diffs can read the old data — specs included — while the new data waits beside it.
+# The fetch stage is separate because it fans out per provider, not because of ordering.
 
 on:
   schedule:
@@ -113,7 +113,7 @@ jobs:
 
   # Assemble stage — single job (the diff → PR flow is inherently serial). Runs on
   # every refresh; on a specs-only run the fetch matrix is skipped and reconcile is
-  # skipped with it. The load-bearing order is enforced by step order here.
+  # skipped with it. The data-flow order is enforced by step order here.
   assemble:
     needs: [scope, fetch]
     # fetch is skipped on a specs-only run — still assemble. But if fetch RAN and
@@ -145,9 +145,9 @@ jobs:
           path: .refresh-cache
           merge-multiple: true
 
-      # Specs: rewrite each js/{p}/{p}-data.js monolith from the Vantage bulk data.
-      # This OVERWRITES the shipped manifest the fetch stage read, so it MUST come
-      # after that stage. The Bearer key is a secret and is never printed by the tool.
+      # Specs: build each provider's fresh monolith from the Vantage bulk data into
+      # .refresh-cache/{p}-monolith.js. The shipped js/ tree is NOT touched here — only
+      # split-data writes it. The Bearer key is a secret and is never printed by the tool.
       - name: Refresh specs (Vantage)
         env:
           VANTAGE_API_KEY: ${{ secrets.VANTAGE_API_KEY }}
@@ -163,10 +163,10 @@ jobs:
           node tools/reconcile-data.js > reconcile-report.md
           cat reconcile-report.md
 
-      # Diff the committed region data (js/{p}/regions/) against the freshly written
-      # (and, on a pricing run, reconciled) monolith. MUST run before split-data,
-      # which overwrites regions/. Line 1 is the <!-- data-diff: CHANGES|NO-CHANGES -->
-      # sentinel the no-op guard reads.
+      # Diff the committed data (js/{p}/ — region prices plus the manifest's specs)
+      # against the freshly written (and, on a pricing run, reconciled) scratch monolith.
+      # MUST run before split-data, which rewrites both halves. Line 1 is the
+      # <!-- data-diff: CHANGES|NO-CHANGES --> sentinel the no-op guard reads.
       - name: Generate diff report
         id: diff
         run: |
@@ -188,8 +188,9 @@ jobs:
         run: echo "No data changes detected; skipping PR."
 
       # Recommendation flips (Phase C2.4): run the engine over the committed data and the
-      # fresh monolith for the sample inputs and report any pick that moved. Reads
-      # regions/ as the OLD side, so BEFORE split-data. Line 1 is the FLIPS/NONE sentinel.
+      # fresh monolith for the sample inputs and report any pick that moved. Reads the
+      # shipped js/ tree as the OLD side, so BEFORE split-data. Line 1 is the
+      # FLIPS/NONE sentinel.
       - name: Recommendation flip check
         id: flips
         if: ${{ steps.diff.outputs.changed == 'true' }}

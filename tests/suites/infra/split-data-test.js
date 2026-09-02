@@ -1,11 +1,11 @@
 // tools/split-data.js — the writer for the two-part shipped format.
 //
 // Nothing exercised this tool before: the committed repo holds only its OUTPUT
-// (a manifest plus regions/), the monolithic input is a transient file dropped in
-// during a data refresh and never committed, and the tool skips anything already
-// in manifest form — so data-integrity-test pins the artifacts and had no way to
-// pin the thing that writes them. This suite builds a real monolith in a temp
-// root and runs the actual splitProvider over it.
+// (a manifest plus regions/) and the monolithic input is a transient file that
+// lives in the gitignored .refresh-cache/ and is never committed — so
+// data-integrity-test pins the artifacts and had no way to pin the thing that
+// writes them. This suite builds a real monolith in a temp root and runs the
+// actual splitProvider over it.
 //
 // What matters most here is that the split is LOSSLESS. The old format could only
 // lose a whole region block, which left unbalanced braces and failed to compile.
@@ -22,7 +22,11 @@ const {
   verifyRoundTrip,
   SERVICE,
 } = require("../../../tools/split-data");
-const { specFields, priceFields } = require("../../../tools/lib/util");
+const {
+  specFields,
+  priceFields,
+  monolithPath,
+} = require("../../../tools/lib/util");
 
 const { check, state } = makeChecker();
 
@@ -129,14 +133,20 @@ const AWS = { name: "aws", prefix: "AWS" };
 const AZURE = { name: "azure", prefix: "AZURE" };
 const GCP = { name: "gcp", prefix: "GCP" };
 
+// Drop a monolith at the scratch path the tool reads — .refresh-cache/{name}-monolith.js,
+// NOT the shipped manifest. The two are different files now, which is what lets the
+// diffs read the old shipped data while the new data waits beside it.
+function writeMonolith(root, source, name = "aws") {
+  const p = monolithPath(name, root);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, source, "utf8");
+  return p;
+}
+
 function tempRoot(source, name = "aws") {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
   fs.mkdirSync(path.join(root, "js", name), { recursive: true });
-  fs.writeFileSync(
-    path.join(root, "js", name, `${name}-data.js`),
-    source,
-    "utf8",
-  );
+  writeMonolith(root, source, name);
   return root;
 }
 
@@ -181,6 +191,31 @@ const threw = (fn) => {
     return String(err.message || err);
   }
 };
+
+// ── The shipped tree is untouched until this tool runs ─────────────────────────
+// The whole point of Option D: fetch-vantage, reconcile and both diffs leave
+// js/{p}/ alone, so the diffs can still read the OLD data — the specs included,
+// which live in the shipped manifest — while the NEW data waits in .refresh-cache/.
+// Splitting must therefore consume the scratch file and leave it in place, never
+// write back over its own input.
+console.log("[the scratch monolith is input only]");
+{
+  const source = monolith({ us_east_1: { "m5.large": rec() } });
+  const root = tempRoot(source);
+  const scratch = monolithPath("aws", root);
+  splitProvider(AWS, root);
+  check(
+    "the scratch monolith is left exactly as it was found",
+    fs.readFileSync(scratch, "utf8") === source,
+  );
+  check(
+    "and the manifest was written to the shipped path, not the scratch one",
+    fs
+      .readFileSync(path.join(root, "js", "aws", "aws-data.js"), "utf8")
+      .includes("window.AWS_REGION_KEYS"),
+  );
+  fs.rmSync(root, { recursive: true, force: true });
+}
 
 // ── The happy path: two regions, one shared type, one region-only type ─────────
 console.log("[split: the two-part format]");
@@ -299,35 +334,43 @@ console.log("[split: the two-part format]");
     JSON.stringify(rehydrated),
   );
 
-  // ── Idempotency, both directions ────────────────────────────────────────────
-  console.log("[idempotency guard]");
+  // ── Idempotency ─────────────────────────────────────────────────────────────
+  // Input and output are separate files now, so a re-run is not a skip: it splits
+  // the same monolith again and must land on the same manifest byte for byte. That
+  // is the stronger property — the old guard proved only that the tool declined to
+  // re-read its own output, which a tool that skipped EVERYTHING would also pass.
+  console.log("[idempotency]");
   const second = splitProvider(AWS, root);
   check(
-    "a file already in manifest form is skipped",
-    second.skipped === true,
+    "a second run re-splits rather than skipping",
+    second.skipped !== true && second.count === 2,
     JSON.stringify(second),
   );
   const afterSecond = fs.readFileSync(
     path.join(root, "js", "aws", "aws-data.js"),
     "utf8",
   );
-  check("the skip left the manifest byte-identical", afterSecond === src);
+  check("and lands on a byte-identical manifest", afterSecond === src);
 
   fs.rmSync(root, { recursive: true, force: true });
 }
 
-// The other direction of the guard, which is the one that actually breaks a
-// refresh if it regresses: the new manifest declares _REGION_KEYS, so the tool
-// recognises its own output — but it must still CONVERT a fat monolith rather
-// than mistake it for one. A guard that skipped everything would look identical
-// in CI to a guard that worked.
+// A manifest sitting at the scratch path is a pipeline mix-up — fetch-vantage did
+// not run and something else put it there. Splitting it would emit a manifest whose
+// specs blob came from a manifest, so the tool must refuse by name rather than
+// produce a plausible-looking half-empty artifact.
 {
   const root = tempRoot(monolith({ us_east_1: { "m5.large": rec() } }));
-  const first = splitProvider(AWS, root);
+  splitProvider(AWS, root);
+  writeMonolith(
+    root,
+    fs.readFileSync(path.join(root, "js", "aws", "aws-data.js"), "utf8"),
+  );
+  const msg = threw(() => splitProvider(AWS, root));
   check(
-    "a fat monolith is converted, not skipped",
-    first.skipped !== true && first.count === 1,
-    JSON.stringify(first),
+    "a manifest at the scratch path is refused, not split",
+    msg !== null && /is a manifest, not a monolith/.test(msg),
+    msg || "did not throw",
   );
   fs.rmSync(root, { recursive: true, force: true });
 }
@@ -592,15 +635,19 @@ console.log("[upstream drift]");
   }
 }
 
-// A provider whose data file is simply absent is skipped, not an error: the tool
-// runs over all three every refresh and a missing one is a normal partial state.
+// A provider with no scratch monolith is skipped, not an error: the tool runs over
+// all three every refresh, and --provider-scoped or partial runs are normal.
 {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
   const msg = threw(() => {
     const r = splitProvider(AWS, root);
-    check("an absent data file is skipped, not thrown on", r.skipped === true);
+    check("an absent monolith is skipped, not thrown on", r.skipped === true);
   });
   check("skipping an absent provider raises nothing", msg === null, msg || "");
+  check(
+    "and the skip names the scratch path the operator must produce",
+    !fs.existsSync(path.join(root, "js")),
+  );
   fs.rmSync(root, { recursive: true, force: true });
 }
 
@@ -626,11 +673,7 @@ console.log("[pruning a dropped region]");
   );
 
   // Upstream drops a region: rewrite the monolith with only one and re-split.
-  fs.writeFileSync(
-    path.join(root, "js", "aws", "aws-data.js"),
-    monolith({ us_east_1: { "m5.large": rec() } }),
-    "utf8",
-  );
+  writeMonolith(root, monolith({ us_east_1: { "m5.large": rec() } }));
   const { result, lines } = capturingLog(() => splitProvider(AWS, root));
   check(
     "the dropped region's file is removed",

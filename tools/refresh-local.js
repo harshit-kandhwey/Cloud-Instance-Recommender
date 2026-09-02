@@ -10,19 +10,21 @@
  *   npm run refresh -- --specs-only  # specs only (skip the official fetch + reconcile)
  *   npm run refresh -- --date 2026-08-26
  *
- * ORDER IS LOAD-BEARING (see the workflow header): the official fetchers read the
- * shipped manifest — js/{p}/regions/ + the {P}_REGION_KEYS keys — that fetch-vantage
- * overwrites with a monolith, so they MUST run first:
+ * The order is a DATA-FLOW order, not a workaround:
  *
  *   official fetch (aws,azure,gcp) -> fetch-vantage -> reconcile-data -> data-diff
  *     -> recommendation-diff -> split-data
+ *
+ * Each step consumes what the one before it produced. Only split-data writes into the
+ * shipped js/ tree; everything upstream reads it and writes to .refresh-cache/. That
+ * is what lets both diffs read the OLD data — including the specs, which live in the
+ * shipped manifest — while the NEW data sits in the scratch monolith beside it.
  *
  * Keys come from the environment; a gitignored .env is loaded first if present
  * (values never printed). This script does NOT touch git: it leaves the regenerated
  * js/ tree, writes the diff + reconcile reports under the gitignored .refresh-cache/,
  * echoes the diff, and then tells you to review, commit with a CHANGELOG row + tag,
- * and open the PR. On a no-op diff it advises `git checkout -- js/` to discard the
- * regenerated monolith. Build tool only; never shipped.
+ * and open the PR. Build tool only; never shipped.
  */
 
 const fs = require("fs");
@@ -39,10 +41,10 @@ const CACHE = path.join(ROOT, ".refresh-cache");
 
 // ── Pure plan ────────────────────────────────────────────────────────────────
 
-// The ordered pipeline for a run. Split is last (it overwrites js/{p}/regions/,
-// which data-diff reads as the OLD side, so the diff must precede it); reconcile
-// and the official fetch only exist on a pricing run. Pure so the order — the whole
-// point of this tool — is unit-testable without spawning anything.
+// The ordered pipeline for a run. Split is last: it is the only step that writes the
+// shipped js/ tree, which both diffs read as the OLD side, so the diffs must precede
+// it. Reconcile and the official fetch only exist on a pricing run. Pure so the order
+// — the whole point of this tool — is unit-testable without spawning anything.
 function planSteps({ pricing, date }) {
   const steps = [];
   if (pricing) {
@@ -198,9 +200,8 @@ function main() {
   process.stderr.write("\n" + "─".repeat(60) + "\n");
   if (!changed) {
     process.stderr.write(
-      "No data changes vs the committed region files. The working tree still\n" +
-        "carries the regenerated monolith form — discard it with:\n\n" +
-        "    git checkout -- js/\n\n",
+      "No data changes vs the committed region files. split-data was skipped, so\n" +
+        "the shipped js/ tree is untouched and there is nothing to discard.\n\n",
     );
     return;
   }

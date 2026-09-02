@@ -7,9 +7,10 @@
  *
  *   node tools/reconcile-data.js [--provider aws|azure|gcp]
  *
- * Run AFTER tools/fetch-vantage.js writes js/{p}/{p}-data.js and the official fetchers
- * write .refresh-cache/{p}-pricing.json, and BEFORE tools/split-data.js. Node/CI build
- * tool only; never shipped.
+ * Run AFTER tools/fetch-vantage.js writes .refresh-cache/{p}-monolith.js and the
+ * official fetchers write .refresh-cache/{p}-pricing.json, and BEFORE
+ * tools/split-data.js. Reads and rewrites the scratch monolith in place; the shipped
+ * js/ tree is not touched here at all. Node/CI build tool only; never shipped.
  *
  * Precedence (design B0): the official API wins field by field.
  *   - Pricing — always the official value where the official fetch carries it. A type
@@ -32,7 +33,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { serializeMonolith } = require("./fetch-vantage");
-const { ROOT, argValue, writeFileAtomic } = require("./lib/util");
+const { ROOT, argValue, writeFileAtomic, monolithPath } = require("./lib/util");
 
 const PROVIDERS = [
   {
@@ -206,19 +207,21 @@ function renderReport(reports) {
 
 // ── Disk loaders ────────────────────────────────────────────────────────────────
 
-// Run the monolith fetch-vantage just wrote and read back { byRegion, dataDate }. Null
-// when the file is already a manifest (split ran, or fetch-vantage did not) — the caller
-// skips it rather than reconciling stale region files.
+// Run the scratch monolith fetch-vantage just wrote and read back { byRegion,
+// dataDate }. Null when it is absent — fetch-vantage did not run this cycle — and the
+// caller skips rather than reconciling
+// data that is not there. Absence is the whole signal now: this path holds a monolith
+// or nothing, so the old "does the source say _REGION_KEYS?" sniff, which existed only
+// to tell a monolith from a manifest at one shared path, is gone.
 function loadMonolith(name, prefix) {
-  const source = fs
-    .readFileSync(path.join(ROOT, "js", name, `${name}-data.js`), "utf8")
-    .replace(/\r\n/g, "\n");
-  if (source.includes("_REGION_KEYS")) return null; // a manifest, not a monolith
+  const file = monolithPath(name);
+  if (!fs.existsSync(file)) return null;
+  const source = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
 
   const sandbox = {};
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(source, sandbox, { filename: `${name}-data.js` });
+  vm.runInContext(source, sandbox, { filename: `${name}-monolith.js` });
 
   const call = source.match(/make\w*RegionsGlobal\(\{([\s\S]*?)\}\)/);
   const keys = call
@@ -258,7 +261,7 @@ function main() {
     const mono = loadMonolith(name, prefix);
     if (!mono) {
       process.stderr.write(
-        `[${name}] ${name}-data.js is a manifest (already split) — run fetch-vantage first; skipping\n`,
+        `[${name}] no .refresh-cache/${name}-monolith.js — run fetch-vantage first; skipping\n`,
       );
       continue;
     }
@@ -281,7 +284,7 @@ function main() {
       dataDate: mono.dataDate,
       byRegion,
     });
-    writeFileAtomic(path.join(ROOT, "js", name, `${name}-data.js`), monolith);
+    writeFileAtomic(monolithPath(name), monolith);
     reports.push(report);
     process.stderr.write(
       `[${name}] reconciled: ${report.typesVerified} verified, ` +

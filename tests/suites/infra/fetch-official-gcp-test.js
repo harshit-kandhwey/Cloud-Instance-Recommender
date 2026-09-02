@@ -10,6 +10,7 @@ const {
   parseCoreRamSkus,
   windowsPerVCpuHr,
   composePricing,
+  assertComposedSomething,
   classifyCoreRam,
   skuUsd,
   fetchAllSkus,
@@ -150,6 +151,132 @@ const { byRegion, unmatched } = composePricing(
     byRegion.us_east1["n1-standard-1"] === undefined &&
       unmatched.includes("n1"),
     JSON.stringify(unmatched),
+  );
+}
+
+// ── A spec-less shipped record must be LOUD, never a quiet empty result ─────────
+// composePricing reads series, vCpus and memoryGiB straight off the shipped region
+// records. The specs/prices split moves all three out of those records, so this is
+// the exact shape this tool will be handed if it is ever pointed at split region
+// files without rehydration — and the old guard read `if (series) unmatched.add`,
+// which meant the missing-series case skipped every record AND suppressed the one
+// log that would have reported it. Empty in, empty out, exit 0, and reconcile
+// reads the empty dump as authoritative.
+{
+  const specLess = {
+    us_east1: {
+      "n2-standard-4": { hourlyPrice: 0.194236, windowsHourlyPrice: 0.378236 },
+      "c2-standard-8": { hourlyPrice: 0.41752, windowsHourlyPrice: 0.78552 },
+    },
+  };
+  const out = composePricing(rates, windowsPerVCpuHr(page.skus), specLess);
+  check(
+    "records with no series compose nothing",
+    Object.keys(out.byRegion).length === 0,
+    JSON.stringify(out.byRegion),
+  );
+  check(
+    "and say so, once, instead of returning an empty unmatched list",
+    out.unmatched.length === 1 && /no series field/.test(out.unmatched[0]),
+    JSON.stringify(out.unmatched),
+  );
+
+  // The other half of the same failure: series present, specs gone. Different
+  // branch, same silence if it is not reported.
+  const noSizes = {
+    us_east1: { "n2-standard-4": { series: "n2" } },
+  };
+  const out2 = composePricing(rates, windowsPerVCpuHr(page.skus), noSizes);
+  check(
+    "a record with a series but no vCPU/memory composes nothing and is named",
+    Object.keys(out2.byRegion).length === 0 && out2.unmatched.includes("n2"),
+    JSON.stringify(out2),
+  );
+
+  // The floor: an empty composition must never reach disk. Driven directly rather
+  // than through main(), which cannot run without the network — and pinned to be
+  // CALLED from main() below, because a tested guard nothing invokes is the exact
+  // shape of defect this repo shipped in v3.14.32.
+  const floorMsg = (byRegion, shippedIn, um) => {
+    try {
+      assertComposedSomething(byRegion, shippedIn, um);
+      return null;
+    } catch (e) {
+      return String(e.message || e);
+    }
+  };
+  check(
+    "an empty composition throws rather than returning a count",
+    (floorMsg({}, specLess, out.unmatched) || "").includes("composed 0 prices"),
+    floorMsg({}, specLess, out.unmatched) || "did not throw",
+  );
+  check(
+    "the refusal explains what would have consumed the empty dump",
+    (floorMsg({}, specLess, out.unmatched) || "").includes("reconcile"),
+    floorMsg({}, specLess, out.unmatched) || "",
+  );
+  check(
+    "the refusal carries the unmatched series so the cause is in the message",
+    (floorMsg({}, specLess, ["n2", "c2"]) || "").includes("n2, c2"),
+    floorMsg({}, specLess, ["n2", "c2"]) || "",
+  );
+  check(
+    "regions present but all empty is still zero, not a pass",
+    (floorMsg({ us_east1: {}, eu_west1: {} }, specLess, []) || "").includes(
+      "composed 0 prices",
+    ),
+    floorMsg({ us_east1: {}, eu_west1: {} }, specLess, []) || "did not throw",
+  );
+  check(
+    "a real composition passes the floor and returns its count",
+    assertComposedSomething(byRegion, shipped, unmatched) === 4,
+    String(assertComposedSomething(byRegion, shipped, unmatched)),
+  );
+}
+
+// ── main() actually applies the floor ──────────────────────────────────────────
+// Scoped to main()'s body, not the file: the definition and the export both
+// mention the name, and a whole-file check would pass on either while main()
+// wrote the empty dump anyway.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "fetch-official-gcp.js"),
+    "utf8",
+  );
+  const body = (src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/) || [
+    "",
+  ])[0];
+  check(
+    "main() was found to inspect",
+    body.length > 100 && body.includes("writeFileAtomic"),
+    `${body.length} chars`,
+  );
+  check(
+    "main() runs the floor before it writes",
+    body.indexOf("assertComposedSomething") > 0 &&
+      body.indexOf("assertComposedSomething") < body.indexOf("writeFileAtomic"),
+    `floor at ${body.indexOf("assertComposedSomething")}, write at ${body.indexOf("writeFileAtomic")}`,
+  );
+}
+
+// ── The shipped records come from the shared loader, never a private walk ─────
+// composePricing reads `series`, `vCpus` and `memoryGiB` off these records, and all
+// three are SPECS — they live in the manifest, not in the region files. A private walk
+// would hand it price-only records, it would skip every one of them for want of a
+// series, and the tool would write an empty pricing dump that reconcile reads as
+// authoritative. assertComposedSomething is the floor under that; this is what keeps
+// the floor from being reached.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "fetch-official-gcp.js"),
+    "utf8",
+  );
+  // Strip line comments first: a check that matches prose reports on documentation.
+  const code = src.replace(/^\s*\/\/.*$/gm, "");
+  check(
+    "fetch-official-gcp reads the shipped records through loadCommittedRegions",
+    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
+    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
   );
 }
 

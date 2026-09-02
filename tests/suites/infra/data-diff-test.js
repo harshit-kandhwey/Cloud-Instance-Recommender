@@ -1,6 +1,8 @@
 // data-diff suite: pins tools/data-diff.js's pure diff + report against synthetic
 // old/new region snapshots — region/family/type deltas, spec and price moves, the
 // no-op guard, the CHANGES/NO-CHANGES sentinel, and monolith parsing. No network.
+const fs = require("fs");
+const path = require("path");
 const { makeChecker } = require("../harness");
 const {
   diffProvider,
@@ -325,6 +327,29 @@ const aws = (o) => ({
     report.startsWith("<!-- data-diff: NO-CHANGES -->") &&
       !report.includes("### Azure"),
     report,
+  );
+}
+
+// ── Shipped region data comes from the shared loader, never a private walk ────
+// Structural, because the failure is structural AND silent. Specs live in the
+// manifest now; a private readdirSync over regions/ returns the PRICE half only, so
+// every spec field would read undefined and the diff would report a spec change
+// for every type in the catalogue, or none at all. Nothing throws, nothing is
+// empty, and the loss reads as a data change rather than as a bug. recommendation-diff
+// already carries this pin — it is here because the twin is what went missing last time.
+{
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "..", "..", "tools", "data-diff.js"),
+    "utf8",
+  );
+  // Strip line comments before looking: the prose above collectAzureGeneration says
+  // the word readdirSync, and a check that reads comments is a check that reports on
+  // documentation. Match the CALL.
+  const code = src.replace(/^\s*\/\/.*$/gm, "");
+  check(
+    "data-diff reads shipped region data through loadCommittedRegions",
+    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
+    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
   );
 }
 

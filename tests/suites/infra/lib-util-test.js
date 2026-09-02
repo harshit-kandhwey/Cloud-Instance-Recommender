@@ -12,6 +12,8 @@ const {
   writeFileAtomic,
   loadCommittedRegions,
   readShippedRegionKeys,
+  monolithPath,
+  SERVICE,
   FIELD_ORDER,
   PRICE_FIELDS,
   specFields,
@@ -114,6 +116,149 @@ const { check, state } = makeChecker();
   );
 
   fs.rmSync(root, { recursive: true, force: true });
+}
+
+// ── monolithPath: one definition of where the refresh's scratch monolith lives ───
+// Five tools agree on this path by importing it. The directory matters as much as the
+// name: .refresh-cache/ is gitignored, so the scratch artifact can never ride along in
+// a refresh PR, and it is NOT under js/, so the shipped tree survives every step of
+// the pipeline except split-data.
+{
+  const p = monolithPath("aws", "/root");
+  check(
+    "monolithPath puts the scratch monolith in .refresh-cache/, outside js/",
+    p.replace(/\\/g, "/") === "/root/.refresh-cache/aws-monolith.js",
+    p,
+  );
+  const ignored = fs
+    .readFileSync(path.join(__dirname, "..", "..", "..", ".gitignore"), "utf8")
+    .split(/\r?\n/)
+    .some((l) => l.trim() === ".refresh-cache/");
+  check("and .refresh-cache/ is gitignored, so it cannot reach a PR", ignored);
+}
+
+// ── loadCommittedRegions rehydrates the specs half ──────────────────────────────
+// The tools' twin of the browser's loadRegionData. A region file carries prices only;
+// the specs come back from the manifest's {P}_SPECS.compute. Every provider, because
+// GCP's two price fields sit at positions 6-7 of 9 — in the MIDDLE of the field order,
+// not at the end — so an AWS-only check would pass on a partition that slices
+// positionally and silently mangles GCP.
+{
+  const SPECS = {
+    aws: { instanceFamily: "m5", vCpus: 2, memorySizeInGiB: 8 },
+    azure: { family: "dv3", vCpus: 2, memoryGiB: 8 },
+    gcp: { series: "n2", vCpus: 2, memoryGiB: 8 },
+  };
+  const PRICES = {
+    aws: { onDemandLinuxHr: 0.096, onDemandWindowsHr: 0.188 },
+    azure: { linuxPrice: 0.096, windowsPrice: 0.188 },
+    gcp: { hourlyPrice: 0.096, windowsHourlyPrice: 0.188 },
+  };
+  const TYPE = { aws: "m5.large", azure: "d2v3", gcp: "n2-standard-2" };
+
+  // A tree in the shipped two-part shape: manifest with a specs blob, price-only region.
+  function splitRoot(
+    name,
+    { specs = SPECS[name], prices = PRICES[name] } = {},
+  ) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-rehydrate-"));
+    const dir = path.join(root, "js", name, "regions");
+    fs.mkdirSync(dir, { recursive: true });
+    const P = name.toUpperCase();
+    fs.writeFileSync(
+      path.join(root, "js", name, `${name}-data.js`),
+      `window.${P}_SPECS = { ${SERVICE}: ` +
+        `${specs ? JSON.stringify({ [TYPE[name]]: specs }) : "{}"} };\n`,
+    );
+    fs.writeFileSync(
+      path.join(dir, "r1.js"),
+      `window.r1 = ${JSON.stringify({ [TYPE[name]]: prices })};\n`,
+    );
+    return root;
+  }
+
+  for (const name of ["aws", "azure", "gcp"]) {
+    const root = splitRoot(name);
+    // Guarded: a loader that stopped merging trips its OWN price-but-no-specs guard,
+    // and an unhandled throw here would unwind the file into a single stack trace
+    // instead of three per-provider results — which is how a GCP-only regression
+    // would hide behind an AWS one.
+    let rec = null;
+    let msg = "";
+    try {
+      rec = loadCommittedRegions(name, root).r1[TYPE[name]];
+    } catch (e) {
+      msg = e.message;
+    }
+    const want = { ...SPECS[name], ...PRICES[name] };
+    check(
+      `[${name}] loadCommittedRegions merges the specs blob back onto the price record`,
+      rec !== null && Object.keys(want).every((f) => rec[f] === want[f]),
+      msg || JSON.stringify(rec),
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+
+  // The option-independent guard. A price-only record with NO specs merged is the
+  // split's silent failure: every consumer would read undefined vCPUs and quietly drop
+  // the type, which reads as a data change rather than as a bug. It must fail by name.
+  {
+    const root = splitRoot("aws", { specs: null });
+    let msg = "";
+    try {
+      loadCommittedRegions("aws", root);
+    } catch (e) {
+      msg = e.message;
+    }
+    check(
+      "a record with prices and no specs fails, naming the file, the type and the manifest",
+      msg.includes("js/aws/regions/r1.js") &&
+        msg.includes("m5.large") &&
+        msg.includes("AWS_SPECS.compute"),
+      msg || "(did not throw)",
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+
+  // ...and it must NOT fire on the pre-split format, which is what the tree still
+  // holds until the conversion lands: fat records, no specs blob to merge. A guard
+  // that rejected those would fail every tool on today's committed data.
+  {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-rehydrate-"));
+    const dir = path.join(root, "js", "aws", "regions");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, "r1.js"),
+      `window.r1 = ${JSON.stringify({ "m5.large": { ...SPECS.aws, ...PRICES.aws } })};\n`,
+    );
+    let msg = "";
+    let rec = null;
+    try {
+      rec = loadCommittedRegions("aws", root).r1["m5.large"];
+    } catch (e) {
+      msg = e.message;
+    }
+    check(
+      "a fat pre-split record passes through untouched, specs blob or not",
+      msg === "" && rec.vCpus === 2 && rec.onDemandLinuxHr === 0.096,
+      msg || JSON.stringify(rec),
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+
+  // Merge order: the region file wins. A fat record therefore overrides the specs it
+  // already agrees with rather than being rewritten by them, which is what makes the
+  // merge a no-op on unsplit data instead of a second source of truth.
+  {
+    const root = splitRoot("aws", {
+      prices: { ...PRICES.aws, vCpus: 64 },
+    });
+    check(
+      "a field present in both halves takes the region file's value",
+      loadCommittedRegions("aws", root).r1["m5.large"].vCpus === 64,
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 }
 
 // ── resolveDataDate: the value that reaches the user-visible freshness badge ─────

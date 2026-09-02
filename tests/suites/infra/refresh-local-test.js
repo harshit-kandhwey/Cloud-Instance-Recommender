@@ -1,8 +1,8 @@
-// refresh-local suite: pins tools/refresh-local.js's pure plan — the LOAD-BEARING
-// pipeline order (official fetchers before fetch-vantage, which overwrites the manifest
-// they read; data-diff before split-data, which overwrites the regions/ it reads as the
-// OLD side), that --specs-only drops the official fetch + reconcile, the .env parser, and
-// the required-key gate. The order IS the reason this tool exists, so it is guarded RED.
+// refresh-local suite: pins tools/refresh-local.js's pure plan — the pipeline order
+// (each step consumes what the one before it produced, and split-data runs LAST because
+// it is the only step that writes the shipped js/ tree both diffs read as the OLD side),
+// that --specs-only drops the official fetch + reconcile, the .env parser, and the
+// required-key gate. The order IS the reason this tool exists, so it is guarded RED.
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
@@ -28,21 +28,27 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
     order.join(" -> "),
   );
 
-  // Guard A (plant-RED: move any official fetcher after fetch-vantage): every official
-  // fetch must precede fetch-vantage, which destroys the manifest they read.
+  // Guard A (plant-RED: move any official fetcher after reconcile-data): each official
+  // fetch writes the .refresh-cache/{p}-pricing.json that reconcile consumes, so all
+  // three must precede it. They also precede fetch-vantage, which they no longer need
+  // to — fetch-vantage stopped overwriting the manifest they read — but the declared
+  // order is what CI mirrors step for step, so it is pinned as declared.
   const vantage = order.indexOf("fetch-vantage");
   check(
-    "all official fetchers run BEFORE fetch-vantage",
+    "all official fetchers run BEFORE fetch-vantage and reconcile-data",
     ["fetch-official-aws", "fetch-official-azure", "fetch-official-gcp"].every(
-      (n) => order.indexOf(n) !== -1 && order.indexOf(n) < vantage,
+      (n) =>
+        order.indexOf(n) !== -1 &&
+        order.indexOf(n) < vantage &&
+        order.indexOf(n) < order.indexOf("reconcile-data"),
     ),
     order.join(" -> "),
   );
 
   // Guard B (plant-RED: put split-data before data-diff): the diff and the flip check both
-  // read regions/ as the OLD side, split overwrites it, so both must come first — reconcile
-  // between vantage and diff so the diff sees reconciled prices; recommendation-diff after
-  // data-diff and before split.
+  // read the shipped js/ tree as the OLD side, and split-data is the one step that rewrites
+  // it, so both must come first — reconcile between vantage and diff so the diff sees
+  // reconciled prices; recommendation-diff after data-diff and before split.
   check(
     "reconcile after fetch-vantage, data-diff after reconcile, recommendation-diff before split-data LAST",
     vantage < order.indexOf("reconcile-data") &&
