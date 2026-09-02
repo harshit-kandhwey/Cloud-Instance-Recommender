@@ -176,10 +176,14 @@ class BaseInstanceSelector {
       // nothing merged, so vCPUs and memory read undefined and isValidInstance drops
       // the type exactly as if it were unpriced. Say so instead — one type missing
       // from the specs blob is a broken manifest, not a catalogue change.
+      // EITHER spec missing, not both: parseData coerces an absent field to 0 and
+      // isValidInstance then drops the type for failing `> 0` — so a half-merged
+      // record disappears just as silently as a wholly unmerged one, and `&&` would
+      // wave it through.
       if (
         record[mapping.price] !== undefined &&
-        record[mapping.vCpus] === undefined &&
-        record[mapping.memory] === undefined
+        (record[mapping.vCpus] === undefined ||
+          record[mapping.memory] === undefined)
       ) {
         throw new Error(
           `${this.getProviderName()} ${region}: ${type} has a price but no specifications — ` +

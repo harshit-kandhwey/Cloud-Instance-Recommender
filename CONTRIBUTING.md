@@ -116,7 +116,7 @@ To refresh the data, run the pipeline — never hand-edit a region file:
 3. Review `.refresh-cache/diff-report.md` and `rec-flips-report.md` (plus `reconcile-report.md` on a pricing run), spot-check known instance types, then commit the manifest **and** the regenerated `regions/` files together, with a CHANGELOG row. Re-baseline any golden a price move shifted
 4. **Open a pull request** — refreshed data reaches `main` through review, never a direct push. The scheduled `.github/workflows/data-refresh.yml` runs this same pipeline and opens the same kind of PR
 
-On a no-op diff nothing downstream runs, so `split-data` never fires and the shipped `js/` tree is left untouched — there is nothing to discard. `tools/split-data.js` can also be run alone against a monolith dropped by hand at `.refresh-cache/{provider}-monolith.js`: it reads that file and writes the manifest and region files, is idempotent (input and output are different files, so a re-run rebuilds the same manifest), and hard-fails rather than writing a partial result.
+On a no-op diff nothing downstream runs, so `split-data` never fires and the shipped `js/` tree is left untouched — there is nothing to discard. `tools/split-data.js` can also be run alone against a monolith dropped by hand at `.refresh-cache/{provider}-monolith.js`: it reads that file and writes the manifest and region files, and is idempotent (input and output are different files, so a re-run rebuilds the same manifest). Every validation it performs — the region-set cross-check, the region-invariant specs check, and the full round-trip — runs **before any file is written**, so a rejected monolith changes nothing on disk. That is not the same as a transaction: each file is replaced atomically, but they are replaced one at a time, so an interruption partway (disk full, kill) can still leave some region files new and some old. Re-run it; the result is deterministic.
 
 Where each field comes from, why the official provider APIs outrank the specs source, and which GCP series stay unverified are documented in [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md).
 
@@ -151,7 +151,7 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 
 1. **Fork** the repository and create a branch from `main`
 2. **Describe** what you changed and why in the PR description
-3. **Test** your changes against every gate in [tests/README.md](tests/README.md#the-gates) — CI runs all of them on every PR — and check the full flow in a browser with a sample CSV. If you added a guard, plant the bug it exists to catch and watch it go red before trusting it
+3. **Test** your changes against every gate in [tests/README.md](tests/README.md#the-gates) — CI runs the tabled gates on every PR; `npm run test:mutation` is the one gate outside CI, run periodically by hand — and check the full flow in a browser with a sample CSV. If you added a guard, plant the bug it exists to catch and watch it go red before trusting it
 4. **Keep PRs focused** — one logical change per PR
 5. **Do not** commit generated data files unless you are refreshing instance data
 

@@ -220,6 +220,30 @@ const { check, state } = makeChecker();
     fs.rmSync(root, { recursive: true, force: true });
   }
 
+  // The twin of the browser loader's half-merge case: a blob entry that lost vCpus
+  // merges to a record every consumer drops for failing `vCpus > 0`, which reads as
+  // a catalogue change rather than a broken manifest. Keyed on vCpus rather than on
+  // "every spec" deliberately — a field newly added to FIELD_ORDER is legitimately
+  // absent until the next refresh writes it, and an all-fields guard would break the
+  // shipped tree in that window.
+  {
+    const root = splitRoot("aws", {
+      specs: { instanceFamily: "m5", memorySizeInGiB: 8 },
+    });
+    let msg = "";
+    try {
+      loadCommittedRegions("aws", root);
+    } catch (e) {
+      msg = e.message;
+    }
+    check(
+      "a priced record whose specs blob entry lost vCpus fails by name",
+      msg.includes("m5.large") && msg.includes("vCpus"),
+      msg || "(did not throw)",
+    );
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+
   // ...and it must NOT fire on the pre-split format, which is what the tree still
   // holds until the conversion lands: fat records, no specs blob to merge. A guard
   // that rejected those would fail every tool on today's committed data.

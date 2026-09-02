@@ -81,7 +81,6 @@ function loadCommittedRegions(name, root = ROOT) {
     root,
   );
   const specs = readShippedSpecs(name, root);
-  const specNames = specFields(name);
   const priceNames = priceFields(name);
   const regions = {};
   for (const f of files) {
@@ -92,17 +91,26 @@ function loadCommittedRegions(name, root = ROOT) {
     const merged = {};
     for (const [type, priceRec] of Object.entries(g[key])) {
       const rec = { ...specs[type], ...priceRec };
-      // A record that carries prices but no specs at all is the split's silent
-      // failure mode: the region file is price-only and nothing merged its specs
-      // back — a wrong manifest, a missing {P}_SPECS, or a type the specs blob does
-      // not name. Every downstream consumer would then read undefined vCPUs and
-      // quietly drop the type, so fail here, once, by name.
+      // A priced record whose specs did not come back is the split's silent failure
+      // mode — a wrong manifest, a missing {P}_SPECS, or a type the blob does not
+      // name. Every consumer would read undefined vCPUs and quietly drop the type,
+      // so fail here, once, by name.
+      //
+      // Keyed on vCpus, not on "some spec" and not on "every spec". Every provider
+      // declares it and every consumer reads it, so its absence is exactly the
+      // failure this guards; "some spec" would wave through a half-merged record,
+      // which is dropped downstream just as silently as an unmerged one.
+      //
+      // NOT "every spec": that conflates a failed merge with a schema addition. A
+      // field newly added to FIELD_ORDER is legitimately absent from the shipped
+      // manifest until the next refresh writes it, and a guard demanding all of them
+      // would break the whole tree in the window between the two.
       const hasPrice = priceNames.some((p) => rec[p] !== undefined);
-      const hasSpec = specNames.some((s) => rec[s] !== undefined);
-      if (hasPrice && !hasSpec) {
+      if (hasPrice && rec.vCpus === undefined) {
         throw new Error(
-          `js/${name}/regions/${f}: ${type} has prices but no specs — ` +
-            `js/${name}/${name}-data.js carries no ${name.toUpperCase()}_SPECS.${SERVICE}[${type}] to merge`,
+          `js/${name}/regions/${f}: ${type} has prices but no vCpus — ` +
+            `js/${name}/${name}-data.js carries no usable ` +
+            `${name.toUpperCase()}_SPECS.${SERVICE}[${type}] to merge`,
         );
       }
       merged[type] = rec;

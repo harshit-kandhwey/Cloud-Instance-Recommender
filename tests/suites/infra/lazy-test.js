@@ -258,6 +258,29 @@ process.exitCode = 1;
       guardMsg || "(did not throw)",
     );
 
+    // HALF-merged is as fatal as unmerged, and looks healthier — which is why it
+    // shipped. parseData coerces the absent field to 0 and isValidInstance drops the
+    // type for failing `> 0`, so a record with vCPUs but no memory vanishes just as
+    // quietly as one with neither. The guard must be OR across the two fields; the
+    // AND it was written with passes a blob entry that lost one of them.
+    const map = selector.getFieldMappings();
+    for (const half of [map.vCpus, map.memory]) {
+      const partial = { [specField]: 99, memoryGiB: 42, memorySizeInGiB: 42 };
+      delete partial[half];
+      ctx.window[`${prefix}_SPECS`] = { compute: { [type]: partial } };
+      let halfMsg = "";
+      try {
+        selector._mergeSpecs({ [type]: { [priceField]: 1.5 } }, "r1");
+      } catch (e) {
+        halfMsg = e.message;
+      }
+      check(
+        `${name}: a priced record whose specs lost ${half} still fails`,
+        halfMsg.includes(type),
+        halfMsg || "(did not throw)",
+      );
+    }
+
     // No specs blob at all is the pre-split manifest, and a monolith dropped in place
     // of one. Both must pass through untouched, or every page breaks the moment the
     // blob is missing rather than degrading to the format that is actually there.
