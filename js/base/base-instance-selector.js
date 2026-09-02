@@ -1,6 +1,11 @@
 // Base Instance Selector - Common functionality for all cloud providers
 // Provides shared methods and the foundation for provider-specific implementations
 
+// The service level inside {P}_SPECS. Compute is the only one; the level exists so a
+// later non-compute service is a new key rather than a second format migration. Must
+// match SERVICE in tools/lib/util.js, which is what writes the blob this reads.
+const SPECS_SERVICE = "compute";
+
 class BaseInstanceSelector {
   constructor() {
     this.instanceData = {};
@@ -118,7 +123,16 @@ class BaseInstanceSelector {
         }
       }
 
-      const instances = this.parseData(regionData, region);
+      // Rehydrate HERE, at the join — not inside _injectRegionScript. regionData
+      // arrives by three routes (an already-present global, the lazily injected
+      // script, and the fallback) and only this point covers all three. The goldens
+      // preload every region file straight into the context, so they take the
+      // already-present-global route and never touch the injector at all: a merge
+      // there would leave every golden running on spec-less records.
+      const instances = this.parseData(
+        usedFallback ? regionData : this._mergeSpecs(regionData, region),
+        region,
+      );
       this.instanceData[region] = instances;
       if (!usedFallback) {
         this.loadedRegions.add(
@@ -133,6 +147,48 @@ class BaseInstanceSelector {
       );
       this.instanceData[region] = this.getFallbackInstances(region);
     }
+  }
+
+  // Merge each type's specifications back under its price record — the browser twin
+  // of loadCommittedRegions in the build tools. A region file carries prices only;
+  // {P}_SPECS.compute holds the specs once, because they are identical in every
+  // region that offers the type.
+  //
+  // Spread order is specs-then-record, so a record that still carries every field
+  // (the pre-split format, and a monolith dropped in place of the manifest)
+  // overrides the specs it already agrees with and passes through unchanged. That
+  // is also what makes a stale cached region file harmless: the fat copy a client
+  // already has merges to itself.
+  //
+  // No specs blob at all means the manifest predates the split — return the data
+  // untouched. The guard below is what makes that tolerance safe.
+  _mergeSpecs(regionData, region) {
+    if (!regionData || typeof regionData !== "object") return regionData;
+    const blob = window[`${this.getProviderName().toUpperCase()}_SPECS`];
+    const specs = blob && blob[SPECS_SERVICE];
+    if (!specs) return regionData;
+
+    const mapping = this.getFieldMappings();
+    const merged = {};
+    for (const [type, priceRecord] of Object.entries(regionData)) {
+      const record = { ...specs[type], ...priceRecord };
+      // A record with a price and no specifications is the split's silent failure:
+      // nothing merged, so vCPUs and memory read undefined and isValidInstance drops
+      // the type exactly as if it were unpriced. Say so instead — one type missing
+      // from the specs blob is a broken manifest, not a catalogue change.
+      if (
+        record[mapping.price] !== undefined &&
+        record[mapping.vCpus] === undefined &&
+        record[mapping.memory] === undefined
+      ) {
+        throw new Error(
+          `${this.getProviderName()} ${region}: ${type} has a price but no specifications — ` +
+            `the manifest carries no ${this.getProviderName().toUpperCase()}_SPECS.${SPECS_SERVICE}[${type}]`,
+        );
+      }
+      merged[type] = record;
+    }
+    return merged;
   }
 
   // Resolves a normalized region against the manifest key list. Exact hit wins; else

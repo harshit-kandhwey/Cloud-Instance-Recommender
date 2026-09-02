@@ -8,8 +8,13 @@
 // without a build step.
 //
 // Bump CACHE to force a clean re-precache on the next visit. A data refresh
-// normally does NOT need one — but if it DELETES region files, it does:
-// revalidating a deleted file 404s, so the cached copy would be served forever.
+// normally does NOT need one — two things do:
+//   - it DELETES region files: revalidating a deleted file 404s, so the cached
+//     copy would be served forever;
+//   - the SHAPE of the data changes: stale-while-revalidate can hand a client
+//     that already has the new loader a region file in the old format. Today the
+//     loader merges such a file to itself and nothing breaks, but that is
+//     accidental resilience, not a property anyone is maintaining.
 // See "Service Worker" in CONTRIBUTING.md.
 //
 // CSP note: the page's `connect-src 'none'` restricts fetch/XHR from the page,
@@ -17,7 +22,7 @@
 // (GitHub Pages sends no CSP header for sw.js), so caching works. Lazy region
 // loading via <script> injection is intercepted here and served from cache.
 
-const CACHE = "cir-cache-v1";
+const CACHE = "cir-cache-v2";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.

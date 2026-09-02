@@ -153,9 +153,21 @@ const sandbox = {
 };
 sandbox.self = sandbox;
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync(path.join(REPO, "sw.js"), "utf8"), sandbox, {
+const swSource = fs.readFileSync(path.join(REPO, "sw.js"), "utf8");
+vm.runInContext(swSource, sandbox, {
   filename: "sw.js",
 });
+
+// The cache name comes FROM sw.js, never a literal here. Bumping CACHE is a routine
+// act — a data refresh that prunes a region requires it — and a suite that hardcoded
+// the version would fail on every correct bump, which teaches the next person to edit
+// the test rather than think about whether the bump was right.
+const CACHE_NAME = (swSource.match(/const CACHE = "([^"]+)"/) || [])[1];
+check(
+  "sw.js declares a cache name this suite can read",
+  Boolean(CACHE_NAME),
+  CACHE_NAME || "no const CACHE found",
+);
 
 function makeEvent(request) {
   const waits = [];
@@ -183,7 +195,7 @@ process.exitCode = 1;
   const e1 = makeEvent();
   handlers.install(e1);
   await Promise.all(e1.waits);
-  const v1 = cachesStore.get("cir-cache-v1");
+  const v1 = cachesStore.get(CACHE_NAME);
   check(
     "install precaches the app shell",
     v1 &&
@@ -200,7 +212,7 @@ process.exitCode = 1;
   await Promise.all(e2.waits);
   check(
     "activate deletes old caches, keeps current",
-    cachesStore.has("cir-cache-v1") && !cachesStore.has("cir-cache-old"),
+    cachesStore.has(CACHE_NAME) && !cachesStore.has("cir-cache-old"),
     [...cachesStore.keys()].join(","),
   );
 
@@ -230,7 +242,7 @@ process.exitCode = 1;
   check(
     "runtime-caches the fetched region file",
     cachesStore
-      .get("cir-cache-v1")
+      .get(CACHE_NAME)
       .has("https://x.test/js/aws/regions/us_east_1.js"),
   );
 

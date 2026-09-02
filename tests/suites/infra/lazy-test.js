@@ -198,6 +198,117 @@ process.exitCode = 1;
     `got ${newReqs.length}`,
   );
 
+  // ── The specs half is merged back at read time ──────────────────────────────
+  // The browser twin of loadCommittedRegions. A region file carries prices only and
+  // {P}_SPECS.compute holds each type's specifications once; the loader rejoins them
+  // so nothing above it sees the split. All three providers, because GCP's two price
+  // fields sit in the MIDDLE of its field order while AWS and Azure end on theirs.
+  console.log("[specs rehydration]");
+  for (const [name, selector, prefix, type, priceField, specField] of [
+    ["aws", aws, "AWS", "m5.large", "onDemandLinuxHr", "vCpus"],
+    ["azure", azure, "AZURE", "d2sv5", "linuxPrice", "vCpus"],
+    ["gcp", gcp, "GCP", "n2-standard-2", "hourlyPrice", "vCpus"],
+  ]) {
+    const saved = ctx.window[`${prefix}_SPECS`];
+    ctx.window[`${prefix}_SPECS`] = {
+      compute: {
+        [type]: { [specField]: 99, memoryGiB: 42, memorySizeInGiB: 42 },
+      },
+    };
+    let merged = null;
+    let msg = "";
+    try {
+      merged = selector._mergeSpecs({ [type]: { [priceField]: 1.5 } }, "r1");
+    } catch (e) {
+      msg = e.message;
+    }
+    check(
+      `${name}: the price record gains its specifications`,
+      merged !== null &&
+        merged[type][specField] === 99 &&
+        merged[type][priceField] === 1.5,
+      msg || JSON.stringify(merged),
+    );
+
+    // Spread order: the region file wins. That is what makes the merge a no-op on a
+    // fat record — the pre-split format, and a stale cached region file served to a
+    // client that already has the new loader.
+    const fat = selector._mergeSpecs(
+      { [type]: { [specField]: 7, [priceField]: 1.5 } },
+      "r1",
+    );
+    check(
+      `${name}: a fat record overrides the specs blob rather than being rewritten`,
+      fat[type][specField] === 7,
+      JSON.stringify(fat[type]),
+    );
+
+    // The guard. A price with no specifications means nothing merged; isValidInstance
+    // would drop the type exactly as if it were unpriced, so the loss would read as a
+    // catalogue change. It must say so instead.
+    let guardMsg = "";
+    try {
+      selector._mergeSpecs({ "zz.unknown": { [priceField]: 1.5 } }, "r1");
+    } catch (e) {
+      guardMsg = e.message;
+    }
+    check(
+      `${name}: a priced type absent from the specs blob fails by name`,
+      guardMsg.includes("zz.unknown") && guardMsg.includes("no specifications"),
+      guardMsg || "(did not throw)",
+    );
+
+    // No specs blob at all is the pre-split manifest, and a monolith dropped in place
+    // of one. Both must pass through untouched, or every page breaks the moment the
+    // blob is missing rather than degrading to the format that is actually there.
+    delete ctx.window[`${prefix}_SPECS`];
+    const passthrough = selector._mergeSpecs(
+      { [type]: { [priceField]: 1.5, [specField]: 2 } },
+      "r1",
+    );
+    check(
+      `${name}: with no specs blob the data passes through unchanged`,
+      passthrough[type][priceField] === 1.5 &&
+        passthrough[type][specField] === 2,
+      JSON.stringify(passthrough),
+    );
+    if (saved === undefined) delete ctx.window[`${prefix}_SPECS`];
+    else ctx.window[`${prefix}_SPECS`] = saved;
+  }
+
+  // The fallback is synthetic and already fat, with no entry in any specs blob to
+  // find. loadRegionData must therefore NOT route it through the merge — doing so
+  // would trip the guard on every one of its types and take the page down on the
+  // exact path that exists to keep it up.
+  {
+    const src = fs.readFileSync(
+      path.join(REPO, "js", "base", "base-instance-selector.js"),
+      "utf8",
+    );
+    check(
+      "loadRegionData exempts the fallback data from the merge",
+      /usedFallback \? regionData : this\._mergeSpecs\(/.test(src),
+      "the merge is not guarded by usedFallback",
+    );
+    // Structural, and scoped: the merge must sit at the join in loadRegionData, not
+    // in _injectRegionScript. The goldens preload region files straight into the
+    // context and never touch the injector, so a merge there would leave every
+    // golden running on spec-less records — the one path that looks inert.
+    const injector = (src.match(
+      /async _injectRegionScript\([\s\S]*?\n {2}\}/,
+    ) || [""])[0];
+    check(
+      "_injectRegionScript was found to inspect",
+      injector.length > 100,
+      `${injector.length} chars`,
+    );
+    check(
+      "and the merge is NOT inside it",
+      !injector.includes("_mergeSpecs"),
+      "the injector merges, so the already-present-global route is missed",
+    );
+  }
+
   console.log("[requested srcs] " + requestedSrcs.join(", "));
   console.log("[freshness] AWS_DATA_DATE=" + ctx.AWS_DATA_DATE);
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
