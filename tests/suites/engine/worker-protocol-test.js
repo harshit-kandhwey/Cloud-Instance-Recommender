@@ -102,6 +102,11 @@ for (const p of PROVIDERS) {
   flags[`${prefix}_DATA_READY`] = true;
   flags[`${prefix}_REGION_KEYS`] = dataCtx[`${prefix}_REGION_KEYS`];
   flags[`${prefix}_DATA_DATE`] = dataCtx[`${prefix}_DATA_DATE`];
+  // The specs half. regionData below is the region globals verbatim, which carry
+  // prices only — so without this the worker's loader has nothing to merge and
+  // drops every instance. Mirrors collectRegionDataForWorker in generate.js; the
+  // structural check at the end of this file is what keeps the two in step.
+  flags[`${prefix}_SPECS`] = dataCtx[`${prefix}_SPECS`];
   for (const key of REGION_FILES[p]) {
     vm.runInContext(
       fs.readFileSync(path.join(REPO, `js/${p}/regions/${key}.js`), "utf8"),
@@ -419,6 +424,35 @@ vm.runInContext(
     !!c2cRow && c2cRow["Sized From"] === "m5.xlarge",
     c2cRow && c2cRow["Sized From"],
   );
+
+  // ── The payload the real page builds carries the specs half ────────────────
+  // This suite hand-assembles the flags object because it has no DOM to run
+  // collectRegionDataForWorker in — which makes it a COPY of production code, and a
+  // copy that drifts proves only that the copy is self-consistent. The failure it
+  // would hide is total and silent: the worker installs the region globals, finds no
+  // specs blob to merge, reads undefined vCPUs, and every row comes back
+  // "No data available" while the main-thread fallback answers them correctly.
+  {
+    const genSrc = fs.readFileSync(
+      path.join(REPO, "js", "base", "generate.js"),
+      "utf8",
+    );
+    const fn = (genSrc.match(
+      /async function collectRegionDataForWorker\([\s\S]*?\n\}/,
+    ) || [""])[0];
+    check(
+      "collectRegionDataForWorker was found to inspect",
+      fn.length > 200,
+      `${fn.length} chars`,
+    );
+    check(
+      "collectRegionDataForWorker forwards {P}_SPECS to the worker",
+      /flags\[`\$\{prefix\}_SPECS`\]\s*=/.test(fn),
+      fn.includes("_SPECS")
+        ? "mentions _SPECS but does not assign it"
+        : "no _SPECS",
+    );
+  }
 
   process.exitCode = failures ? 1 : 0;
 })().catch((e) => {

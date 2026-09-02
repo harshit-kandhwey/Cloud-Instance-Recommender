@@ -140,7 +140,15 @@ const OPTIONS = {
   console.log("[every Family cell is the region data's own answer]");
   {
     // The invariant, checked against the data for every row and every provider:
-    // look the recommended instance back up in the region file and compare.
+    // look the recommended instance back up in the shipped data and compare.
+    //
+    // The lookup must merge the two halves exactly as the loader does. The family
+    // name is a SPEC and lives in the manifest, so reading the region global alone
+    // would compare the engine's correct answer against undefined and report every
+    // cell as wrong — the test breaking, not the product.
+    const specsOf = (provider) =>
+      (vm.runInContext(`${provider.toUpperCase()}_SPECS`, ctx) || {}).compute ||
+      {};
     let checked = 0;
     const mismatches = [];
     const seenCategories = new Set();
@@ -153,11 +161,14 @@ const OPTIONS = {
           if (ctx.isNoMatchValue(instance)) continue;
 
           const regionData = vm.runInContext(REGION_GLOBAL[provider], ctx);
-          const details = regionData[instance];
-          if (!details) {
+          if (!regionData[instance]) {
             mismatches.push(`${instance} is not in the region data at all`);
             continue;
           }
+          const details = {
+            ...specsOf(provider)[instance],
+            ...regionData[instance],
+          };
           const truth = details[FAMILY_NAME_FIELD[provider]];
           checked++;
           seenCategories.add(family);

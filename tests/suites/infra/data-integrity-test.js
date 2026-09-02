@@ -20,6 +20,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { REPO, buildEngineContext, makeChecker } = require("../harness");
+const {
+  loadCommittedRegions,
+  loadGlobals,
+  specFields,
+  SERVICE,
+} = require("../../../tools/lib/util");
 
 const { check, state } = makeChecker();
 
@@ -89,15 +95,29 @@ for (const { name, prefix } of PROVIDERS) {
       keys.every((k) => typeof k === "string" && k.length > 0),
     Array.isArray(keys) ? `length ${keys.length}` : typeof keys,
   );
-  // The manifest should define ONLY its three declared globals — an extra
+  // The manifest should define ONLY its four declared globals — an extra
   // `window.X =` here would be an accidental leak from a bad edit.
   check(
-    `[${label}] manifest defines exactly its three globals (no stray leak)`,
-    manGlobals.length === 3 &&
+    `[${label}] manifest defines exactly its four globals (no stray leak)`,
+    manGlobals.length === 4 &&
       manGlobals.includes(`${prefix}_DATA_DATE`) &&
+      manGlobals.includes(`${prefix}_SPECS`) &&
       manGlobals.includes(`${prefix}_REGION_KEYS`) &&
       manGlobals.includes(`${prefix}_DATA_READY`),
     manGlobals.join(", "),
+  );
+  // DATA_READY must be assigned LAST. A consumer that polls it and then reads
+  // {P}_SPECS must never observe the flag true while the specs half is missing —
+  // which is the whole window in which a half-loaded manifest looks loaded.
+  const manSrc = fs.readFileSync(
+    path.join(REPO, "js", name, `${name}-data.js`),
+    "utf8",
+  );
+  check(
+    `[${label}] ${prefix}_DATA_READY is assigned after ${prefix}_SPECS`,
+    manSrc.indexOf(`window.${prefix}_DATA_READY = `) >
+      manSrc.indexOf(`window.${prefix}_SPECS = `),
+    `SPECS@${manSrc.indexOf(`window.${prefix}_SPECS = `)}, READY@${manSrc.indexOf(`window.${prefix}_DATA_READY = `)}`,
   );
 
   if (!Array.isArray(keys)) continue; // nothing more to check without the list
@@ -138,6 +158,11 @@ for (const { name, prefix } of PROVIDERS) {
   // Iterate DISK files (not just manifest keys) so a rogue extra file is loaded
   // and validated too, not silently ignored.
   const map = fieldMappings[name];
+  // Structure is checked per FILE (one global, named for the file, non-empty);
+  // record SHAPE is checked on the merged view, because a region file carries
+  // prices only and its specs live in the manifest. Reading the raw file for both
+  // is the private-walk trap: every vCpus would read undefined.
+  const mergedRegions = loadCommittedRegions(name, REPO);
   let badGlobal = null; // { file, defined }
   let notLoadable = null; // { file, err }
   let emptyRegion = null; // file with an empty/absent object
@@ -159,12 +184,11 @@ for (const { name, prefix } of PROVIDERS) {
       continue;
     }
     const region = sandbox[file];
-    const entries =
-      region && typeof region === "object" ? Object.entries(region) : [];
-    if (!entries.length) {
+    if (!region || typeof region !== "object" || !Object.keys(region).length) {
       if (!emptyRegion) emptyRegion = file;
       continue;
     }
+    const entries = Object.entries(mergedRegions[file] || {});
     // Every instance is a non-null object carrying the vCpus + memory + price
     // fields the engine reads (finite positive numbers), and a family string.
     for (const [instanceType, rec] of entries) {
@@ -293,19 +317,16 @@ for (const { name, prefix } of PROVIDERS) {
 // any future refresh that lands data the current table disagrees with fails here.
 {
   const { azureProcessor } = require("../../../tools/fetch-vantage.js");
-  const dir = path.join(REPO, "js", "azure", "regions");
+  // Through the shared loader: `family`, `isARM` and `processorArchitecture` are
+  // all SPECS and live in the manifest, so a private walk would compare undefined
+  // against undefined and pass while proving nothing.
   let mismatch = null;
   let checked = 0;
 
-  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
-    const key = file.replace(/\.js$/, "");
-    const sandbox = {};
-    sandbox.window = sandbox;
-    vm.createContext(sandbox);
-    vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
-      filename: file,
-    });
-    for (const [type, rec] of Object.entries(sandbox[key] || {})) {
+  for (const [key, region] of Object.entries(
+    loadCommittedRegions("azure", REPO),
+  )) {
+    for (const [type, rec] of Object.entries(region)) {
       checked++;
       const want = azureProcessor(rec.family, rec.isARM);
       if (rec.processorArchitecture !== want && !mismatch) {
@@ -321,75 +342,79 @@ for (const { name, prefix } of PROVIDERS) {
   );
 }
 
-// ── A type's specs must be identical in every region that offers it ──────────
-// The region files repeat each type's specs in every region carrying it, so the
-// same value is stored tens of times (16.9x on AWS, 41x on Azure, 38.2x on GCP).
-// 3.15 removes that duplication by storing specs once per type and leaving the
-// regions to carry price only — which is lossless if and ONLY if the duplicated
-// copies actually agree. They do today: 0 disagreements across all shipped
-// records. Nothing else would notice the day a provider ships a genuinely
-// region-varying spec (a family whose vCPU count differs by region, say), and
-// the split would then silently publish one region's value as every region's.
-//
-// Price is the one thing that legitimately varies, so it is excluded — the
-// primary price field is read LIVE from the selector's mapping so it cannot
-// drift, and the Windows counterpart is named here because NO product code
-// reads it (it is written by the pipeline and consumed only by tools/ and
-// tests/), so there is no mapping to read it from. A provider renaming its
-// Windows field needs no edit here: the new name simply shows up as a varying
-// non-price field and fails this check, which is the correct outcome.
+// The region files read RAW — deliberately NOT through loadCommittedRegions. Every
+// other consumer must use the loader; this block is the one place whose subject IS
+// the unmerged half, because it asks what the region files do and do not carry.
+const rawRegions = {};
+for (const { name } of PROVIDERS) {
+  const dir = path.join(REPO, "js", name, "regions");
+  const out = (rawRegions[name] = {});
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
+    const key = file.replace(/\.js$/, "");
+    const sandbox = {};
+    sandbox.window = sandbox;
+    vm.createContext(sandbox);
+    vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
+      filename: file,
+    });
+    if (sandbox[key] && typeof sandbox[key] === "object")
+      out[key] = sandbox[key];
+  }
+}
+
+// ── The two halves are actually split, and nothing fell between them ─────────
+// This block replaces the pre-3.15 "a type's specs are identical in every region"
+// check, which the split made VACUOUS: specs are now stored once, so the merged
+// view repeats the same object into every region and the comparison cannot fail.
+// A check that cannot fail is worse than no check — it reads as coverage. The
+// writer-side guard in split-data.js is what now enforces region-invariance, at
+// the moment the duplication is collapsed, where a genuine disagreement can still
+// be seen. What remains falsifiable HERE is that the split is clean in both
+// directions, which is what these two pin.
 {
-  const WINDOWS_PRICE_FIELD = {
-    aws: "onDemandWindowsHr",
-    azure: "windowsPrice",
-    gcp: "windowsHourlyPrice",
-  };
+  for (const { name, prefix } of PROVIDERS) {
+    const specNames = new Set(specFields(name));
+    const blob =
+      (loadGlobals(`js/${name}/${name}-data.js`, REPO)[`${prefix}_SPECS`] ||
+        {})[SERVICE] || {};
 
-  for (const { name } of PROVIDERS) {
-    const priceFields = new Set([
-      fieldMappings[name].price,
-      WINDOWS_PRICE_FIELD[name],
-    ]);
-    const dir = path.join(REPO, "js", name, "regions");
-    const firstSeen = new Map(); // type -> { region, rec }
-    let disagreement = null;
-    let records = 0;
-
-    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
-      const key = file.replace(/\.js$/, "");
-      const sandbox = {};
-      sandbox.window = sandbox;
-      vm.createContext(sandbox);
-      vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
-        filename: file,
-      });
-
-      for (const [type, rec] of Object.entries(sandbox[key] || {})) {
-        records++;
-        const prior = firstSeen.get(type);
-        if (!prior) {
-          firstSeen.set(type, { region: key, rec });
-          continue;
-        }
-        if (disagreement) continue;
-        for (const field of new Set([
-          ...Object.keys(prior.rec),
-          ...Object.keys(rec),
-        ])) {
-          if (priceFields.has(field)) continue;
-          if (prior.rec[field] !== rec[field]) {
-            disagreement = `${type}.${field}: ${prior.region} has ${JSON.stringify(prior.rec[field])}, ${key} has ${JSON.stringify(rec[field])}`;
-            break;
-          }
+    // Direction 1: no region file may carry a spec field. One leaking through
+    // would be stored per region again — the duplication 3.15 exists to remove,
+    // returning silently and only for the field that leaked.
+    let leaked = null;
+    let priceRecords = 0;
+    for (const key of Object.keys(rawRegions[name])) {
+      for (const [type, rec] of Object.entries(rawRegions[name][key])) {
+        priceRecords++;
+        for (const f of Object.keys(rec)) {
+          if (specNames.has(f) && !leaked) leaked = `${key}/${type}.${f}`;
         }
       }
     }
-
     check(
-      `[${name.toUpperCase()}] every type's specs are identical in all regions offering it`,
-      disagreement === null,
-      disagreement ||
-        `${firstSeen.size} types across ${records} records agree on every non-price field`,
+      `[${prefix}] no region file carries a spec field`,
+      leaked === null,
+      leaked
+        ? `${leaked} belongs in ${prefix}_SPECS`
+        : `${priceRecords} price-only records`,
+    );
+
+    // Direction 2: every type any region prices must have specs to merge. A gap
+    // here is the loader's price-but-no-specs failure waiting to happen — the
+    // difference being that it fails at BUILD time, for every user at once,
+    // rather than in one visitor's browser.
+    const orphans = new Set();
+    for (const key of Object.keys(rawRegions[name])) {
+      for (const type of Object.keys(rawRegions[name][key])) {
+        if (!blob[type]) orphans.add(type);
+      }
+    }
+    check(
+      `[${prefix}] every priced type has specs in ${prefix}_SPECS.${SERVICE}`,
+      orphans.size === 0,
+      orphans.size
+        ? `${orphans.size} orphaned: ${[...orphans].slice(0, 5).join(", ")}`
+        : `${Object.keys(blob).length} types carry specs`,
     );
   }
 }

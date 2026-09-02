@@ -462,6 +462,14 @@ async function collectRegionDataForWorker(providers) {
     if (window[`${prefix}_DATA_DATE`]) {
       flags[`${prefix}_DATA_DATE`] = window[`${prefix}_DATA_DATE`];
     }
+    // The specs half MUST ride along. regionData below carries the region globals
+    // verbatim, and those hold prices only — the specs live once in the manifest.
+    // Without this the worker's loader finds no blob to merge, every record reads
+    // undefined vCPUs, isValidInstance drops all of them, and the run returns
+    // "No data available" for rows the main thread would have answered.
+    if (window[`${prefix}_SPECS`]) {
+      flags[`${prefix}_SPECS`] = window[`${prefix}_SPECS`];
+    }
 
     // Resolved regions for this provider: validation map when present,
     // otherwise resolve on the fly from the CSV
