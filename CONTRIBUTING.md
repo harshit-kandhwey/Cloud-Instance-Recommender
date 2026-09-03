@@ -93,8 +93,11 @@ npm run typecheck
     │   ├── preview.js
     │   ├── downloads.js                    # + App Portfolio handoff
     │   ├── presets.js                      # Filter presets (save/apply, localStorage)
+    │   ├── user-rules.js                   # User-defined conditional rules — model, evaluator, storage
+    │   ├── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │   ├── xlsx-export.js                  # Styled results .xlsx export
     │   ├── scenario-compare.js             # Pin + diff two generation runs
+    │   ├── charts.js                       # Inline-SVG result charts, no library
     │   └── portfolio.js                    # App Portfolio (loaded only on app-portfolio.html)
     ├── vendor/             # Vendored libs + licenses. TWO SheetJS builds, and the
     │                       #   split matters: xlsx.full (patched) PARSES uploads,
@@ -145,15 +148,16 @@ That is the quick loop, **not** the full bar. Eight commands across six CI jobs 
 
 ## Versioning and Releases
 
-Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the pages, the README, or `package.json`. Every commit on `main` gets a version, a changelog row, and an annotated tag; releases are published per minor line. [RELEASING.md](RELEASING.md) is the full process, including the pre-publish checklist.
+Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the pages, the README, or `package.json`. Every commit gets a version, a changelog row, and an annotated tag; releases are published per minor line, from a dedicated `release/<minor>` branch. [RELEASING.md](RELEASING.md) is the full process, opening a minor through publishing it.
 
 ## Pull Request Guidelines
 
 1. **Fork** the repository and create a branch from `main`
 2. **Describe** what you changed and why in the PR description
 3. **Test** your changes against every gate in [tests/README.md](tests/README.md#the-gates) — CI runs the tabled gates on every PR; `npm run test:mutation` is the one gate outside CI, run periodically by hand — and check the full flow in a browser with a sample CSV. If you added a guard, plant the bug it exists to catch and watch it go red before trusting it
-4. **Keep PRs focused** — one logical change per PR
-5. **Do not** commit generated data files unless you are refreshing instance data
+4. **If an automated review tool comments on the PR, answer every finding it raises individually** — fixed, confirmed stale, rejected with a stated reason, or knowingly deferred. Triaging by which _file_ a finding sits in is not the same as triaging the finding: a file already addressed for one comment can still carry others that were never read.
+5. **Keep PRs focused** — one logical change per PR
+6. **Do not** commit generated data files unless you are refreshing instance data
 
 ## Code Style
 
@@ -163,6 +167,21 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 - Prefer `const` over `let`; avoid `var`
 - Use descriptive variable names
 - No comments explaining _what_ the code does — only add a comment when the _why_ is non-obvious
+
+**Before hand-listing a fact that names real fields, values, or files, check
+whether it already has a canonical source — and if it does, derive from that
+source instead of retyping it.** Two 3.15 bugs shared one root cause: a second,
+independent copy of a list that already existed elsewhere (`FIELD_ORDER` in
+`tools/lib/util.js`) silently fell behind the original when a field was added
+to one and not the other, and nothing caught it because nothing checked the
+two against each other. Prefer `specFields(name)` / `priceFields(name)` (or
+the equivalent for whatever list you're touching) over writing the field names
+out again. If no canonical source exists yet and you're about to create a
+second copy of one, that's the signal to introduce one instead.
+
+**[CANONICAL-SOURCES.md](CANONICAL-SOURCES.md) is the registry** — check it
+before adding a new consumer of a shared fact, or before deciding a fact needs
+a canonical source it doesn't have yet.
 
 **Only one engine may parse a file.** Two SheetJS builds are vendored and both
 define `window.XLSX` and both expose `read()`, but `xlsx-js-style` is a fork of

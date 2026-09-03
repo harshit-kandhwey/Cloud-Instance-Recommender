@@ -4,26 +4,18 @@
 // only r5"); the rules are stored per page and picked up on the next Generate.
 //
 // Page-only: this file touches the DOM and is NOT loaded in the worker. It leans
-// on user-rules.js (normalizeUserRule / userRuleLabel / load- / saveUserRules)
-// and on escapeHtml (app-core.js).
+// on user-rules.js (normalizeUserRule / userRuleLabel / load- / saveUserRules /
+// userRuleDimensionOptions / userRuleActionOptions) and on escapeHtml (app-core.js).
 
 function renderUserRulesPanel() {
   const host = document.getElementById("userRulesPanel");
   if (!host) return;
   const rules = typeof loadUserRules === "function" ? loadUserRules() : [];
 
-  const dimOptions = [
-    ["workload", "Workload"],
-    ["env", "ENV"],
-    ["os", "OS"],
-    ["compliance", "Compliance"],
-  ]
+  const dimOptions = userRuleDimensionOptions()
     .map(([v, l]) => `<option value="${v}">${l}</option>`)
     .join("");
-  const actionOptions = [
-    ["exclude", "Exclude"],
-    ["includeOnly", "Include only"],
-  ]
+  const actionOptions = userRuleActionOptions()
     .map(([v, l]) => `<option value="${v}">${l}</option>`)
     .join("");
 

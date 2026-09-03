@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 260 | 322 |
+| Covered | 62 | 262 | 324 |
 | Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 375 | 461 |
+| **Total** | 86 | 377 | 463 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -470,6 +470,8 @@ waiver still records the reason.
 | `updateStaleResultsNotice` | js/base/preview.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `updateUsageCounters` | js/base/downloads.js | function | internal | uncovered | — |
 | `updateUsageStatistics` | js/base/downloads.js | function | internal | uncovered | — |
+| `userRuleActionOptions` | js/base/user-rules.js | function | internal | covered | ui/user-rules-ui-test.js |
+| `userRuleDimensionOptions` | js/base/user-rules.js | function | internal | covered | ui/user-rules-ui-test.js |
 | `userRuleLabel` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
 | `userRulesPageKey` | js/base/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
 | `validateAzureRegion` | js/azure/azure-specific.js | function | internal | uncovered | — |

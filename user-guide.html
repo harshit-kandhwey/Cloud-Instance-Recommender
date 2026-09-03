@@ -865,6 +865,7 @@
             <a href="#rule-engine-ui">Rule Engine UI Controls</a>
             <a href="#conflict-detect">Conflict Detection</a>
             <a href="#filter-presets">Filter Presets</a>
+            <a href="#user-rules">User-Defined Rules</a>
           </div>
         </div>
         <div class="toc-section">
@@ -2842,6 +2843,55 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           storage — they never leave your machine unless you export them, and
           they survive reloads. Nothing is applied automatically: a preset takes
           effect only when you click Apply.
+        </p>
+      </div>
+
+      <div id="user-rules">
+        <h3>🧩 User-Defined Rules</h3>
+        <p>
+          A small panel in the Generate section lets you author your own
+          conditional filters without touching the CSV. Each rule has four
+          parts:
+        </p>
+        <ul class="check">
+          <li>
+            <strong>Dimension</strong> — the row value the rule keys on: ENV,
+            OS, Workload, or Compliance.
+          </li>
+          <li>
+            <strong>Value to match</strong> — text compared case-insensitively
+            against the row's value for that dimension (e.g.
+            <code>database</code>).
+          </li>
+          <li>
+            <strong>Action</strong> — <strong>Exclude</strong> or
+            <strong>Include Only</strong> (an allow-list).
+          </li>
+          <li>
+            <strong>Families or types</strong> — a comma-separated token list
+            the action applies to (e.g. <code>r5, r6</code> or
+            <code>burstable</code>).
+          </li>
+        </ul>
+        <p>
+          A rule fires on every row whose value on that dimension matches, and
+          folds its tokens into that row's Exclude / Include Only set — the
+          <strong
+            >same per-row mechanism the CSV's own <code>Exclude</code> column
+            feeds</strong
+          >, so a custom rule and a CSV cell can never disagree about how a
+          token is interpreted (a family prefix, a category like
+          <code>GPU</code>, or a specific type name all work the same way in
+          both places).
+        </p>
+        <p>
+          Rules are listed below the entry form with a delete button, stored per
+          page (like presets, never leaving your machine), and applied
+          automatically on the next Generate — no re-upload needed. Use this for
+          a standing preference the Rule Engine dropdowns don't express —
+          "always exclude burstable for Database regardless of ENV," or "for
+          HIPAA rows, include only Nitro-supported families" — without
+          hand-editing every row.
         </p>
       </div>
 

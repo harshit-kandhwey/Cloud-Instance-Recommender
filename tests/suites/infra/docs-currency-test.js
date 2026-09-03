@@ -40,6 +40,29 @@ const toolsBlock = (rel) => {
   );
 };
 
+// The js/base/ block of a doc's project tree — mirrors toolsBlock, for the same
+// reason: `tools/` has always had this pin, and `js/base/` never did, which is
+// exactly how charts.js, user-rules.js and user-rules-ui.js went undocumented in
+// BOTH trees (README's and CONTRIBUTING's) with nothing to catch it. Ends at the
+// next SAME-INDENT tree entry (vendor/), not at the first line starting with the
+// indent prefix at all — a child line (`│   ├── charts.js`) starts one level
+// deeper (`│   `, not the bare indent `base/` itself sits at), so it does not end
+// the block early. The `base/` line itself may carry a trailing comment
+// (CONTRIBUTING's does; README's doesn't), so the match stops at the entry name,
+// not end-of-line.
+const baseBlock = (rel) => {
+  const lines = read(rel).split("\n");
+  const start = lines.findIndex((l) => /^(\s*)[├└]── base\/(\s|$)/.test(l));
+  if (start === -1) return "";
+  const indent = lines[start].match(/^(\s*)/)[1];
+  const end = lines.findIndex(
+    (l, i) =>
+      i > start &&
+      (l.startsWith(`${indent}├── `) || l.startsWith(`${indent}└── `)),
+  );
+  return lines.slice(start, end === -1 ? lines.length : end).join("\n");
+};
+
 // A doc section, heading to next heading of the same level.
 const section = (rel, heading) => {
   const text = read(rel);
@@ -88,6 +111,48 @@ const shipped = [
     );
     check(
       `${rel} names no tool that no longer exists`,
+      ghosts.length === 0,
+      ghosts.join(",") || "none",
+    );
+  }
+}
+
+// ── README's project tree lists every js/base/ module, and only ones that exist ─
+// js/base/ has no test suite folder of its own to piggyback coverage claims on
+// (unlike tools/, which coverage:check walks separately) — nothing else in this
+// repo would notice a module added here and never named in the tree. That is
+// exactly what happened: charts.js, user-rules.js and user-rules-ui.js shipped,
+// were tested, were wired into every page, and were absent from the tree with no
+// check anywhere to say so.
+{
+  const shippedBase = fs
+    .readdirSync(path.join(REPO, "js", "base"))
+    .filter((f) => f.endsWith(".js"));
+  check(
+    "js/base/ holds more than the tree's first few entries",
+    shippedBase.length > 5,
+    shippedBase.join(","),
+  );
+
+  for (const rel of ["README.md", "CONTRIBUTING.md"]) {
+    const block = baseBlock(rel);
+    const missing = shippedBase.filter((f) => !block.includes(f));
+    check(
+      `${rel} lists every file in js/base/`,
+      block !== "" && missing.length === 0,
+      block === ""
+        ? "no js/base/ block found"
+        : missing.join(",") || "complete",
+    );
+
+    // The other direction: a module the tree still names after it was deleted or
+    // renamed sends a contributor looking for a file that is not there.
+    const named = block.match(/[\w./-]+\.js/g) || [];
+    const ghosts = named.filter(
+      (n) => !fs.existsSync(path.join(REPO, "js", "base", n)),
+    );
+    check(
+      `${rel} names no js/base/ module that no longer exists`,
       ghosts.length === 0,
       ghosts.join(",") || "none",
     );

@@ -33,7 +33,13 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { serializeMonolith } = require("./fetch-vantage");
-const { ROOT, argValue, writeFileAtomic, monolithPath } = require("./lib/util");
+const {
+  ROOT,
+  argValue,
+  writeFileAtomic,
+  monolithPath,
+  priceFields,
+} = require("./lib/util");
 
 const PROVIDERS = [
   {
@@ -57,13 +63,22 @@ const PROVIDERS = [
 // from official when present; specs only where the official API carries them (AWS Price
 // List has vCPU/memory/family; Azure Retail and GCP Catalog are pricing-only). Field
 // names already match the monolith's, so a match is a direct overwrite.
+//
+// `price` is DERIVED from tools/lib/util.js's priceFields(), not hand-listed — every
+// price field is officially-sourced (the official fetch IS the pricing API), so the two
+// lists have always agreed by coincidence, not by construction. data-diff.js hand-listed
+// this same fact independently and silently dropped GCP's localSsdGiB-adjacent field
+// additions in 3.15.7; the fix there was to stop hand-copying, and the same fix applies
+// here before a genuine drift has the chance to happen. `spec` stays hand-maintained: it
+// is not a copy of anything — the set of spec fields an official source ACTUALLY
+// publishes is a fact with no other canonical home in this codebase.
 const OFFICIAL_FIELDS = {
   aws: {
-    price: ["onDemandLinuxHr", "onDemandWindowsHr"],
+    price: priceFields("aws"),
     spec: ["instanceFamily", "instanceFamilyName", "vCpus", "memorySizeInGiB"],
   },
-  azure: { price: ["linuxPrice", "windowsPrice"], spec: [] },
-  gcp: { price: ["hourlyPrice", "windowsHourlyPrice"], spec: [] },
+  azure: { price: priceFields("azure"), spec: [] },
+  gcp: { price: priceFields("gcp"), spec: [] },
 };
 
 // Memory can differ in the last digit across GiB/GB rounding conventions; 1% is noise,

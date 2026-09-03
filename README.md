@@ -124,7 +124,13 @@ Everything runs client-side, and no pricing appears in any view or sheet.
 
 ### ⭐ Filter Presets
 
-Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. Nothing is applied automatically — a preset takes effect only when you click Apply.
+Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. **Export / Import** moves a page's presets to another browser or machine as a JSON file; importing never overwrites — a colliding name comes in with an "(imported)" suffix. Nothing is applied automatically — a preset takes effect only when you click Apply.
+
+### 🧩 User-Defined Rules
+
+A small panel in the Generate section lets you author your own conditional filters without touching the CSV: pick a dimension (**ENV / OS / Workload / Compliance**), a value to match (e.g. `database`), an action (**Exclude** or **Include Only**), and the families or types it applies (e.g. `r5, r6` or `burstable`). Every row whose value on that dimension matches gets the rule's tokens folded into its Exclude / Include Only — the same per-row mechanism the CSV's own `Exclude` column feeds, so a custom rule and a CSV cell can never disagree about how a token is interpreted. Rules are listed with a delete button, stored per page (like presets), and picked up automatically on the next Generate — no re-upload needed.
+
+Use this for a standing preference the built-in Rule Engine doesn't express — "always exclude burstable for Database regardless of ENV," or "for HIPAA rows, include only Nitro-supported families" — without hand-editing every row.
 
 ### 🎛️ Alternative recommendations (per row)
 
@@ -244,8 +250,11 @@ Cloud-Instance-Recommender/
     │   ├── preview.js                      # Stats bar + results preview table
     │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
     │   ├── presets.js                      # Filter presets (save/apply, localStorage)
+    │   ├── user-rules.js                   # User-defined conditional rules — model, evaluator, storage
+    │   ├── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │   ├── xlsx-export.js                  # Styled results .xlsx export
     │   ├── scenario-compare.js             # Pin + diff two generation runs
+    │   ├── charts.js                       # Inline-SVG result charts (match rate, family mix, before→after)
     │   └── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
     │
     ├── vendor/
@@ -446,7 +455,7 @@ The application uses a modular, class-based architecture:
 - **`AWSInstanceSelector` / `AzureInstanceSelector` / `GCPInstanceSelector`** — Provider-specific field mappings, region normalization, and generation detection
 - **`RuleEngine`** — Pure function that applies ENV/OS/Workload/Compliance/MinGen rules to the filtered candidate list
 - **`InstanceSelectorFactory`** — Creates the right selector per provider and orchestrates per-row processing
-- **`main-script.js`** — Application controller: file handling, UI events, download generation
+- **`js/base/*.js`** — The page controller, split by concern rather than one file: `app-core.js` (shared state, loads first), `ingest.js` (upload/mapping), `generate.js` (option gathering + worker runs), `preview.js` / `downloads.js` (results + exports), `ui-shell.js` (page chrome, accessibility)
 
 ---
 

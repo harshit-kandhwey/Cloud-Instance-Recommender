@@ -12,7 +12,9 @@
 
 // The dimensions a rule can key on — exactly the closed-enum rule inputs the
 // engine already reads per row (rowEnv / rowOS / rowWorkload / rowCompliance).
-const USER_RULE_DIMENSIONS = ["env", "os", "workload", "compliance"];
+// Order is the authoring UI's dropdown order (workload first, the most
+// commonly filtered dimension) — nothing else in this file depends on it.
+const USER_RULE_DIMENSIONS = ["workload", "env", "os", "compliance"];
 // exclude → drop the tokens; includeOnly → keep only the tokens (allow-list).
 const USER_RULE_ACTIONS = ["exclude", "includeOnly"];
 const USER_RULES_KEY = "cloudInstanceRecommenderUserRules";
@@ -23,6 +25,24 @@ const _USER_RULE_DIM_LABELS = {
   workload: "Workload",
   compliance: "Compliance",
 };
+const _USER_RULE_ACTION_LABELS = {
+  exclude: "Exclude",
+  includeOnly: "Include only",
+};
+
+// The [value, label] pairs the authoring UI's two dropdowns render, in
+// canonical order. Exposed as functions rather than the raw label maps above
+// (which stay private, hence the underscore) so the UI never hand-lists the
+// dimension/action set itself — a set it used to keep as its own literal
+// array, independently of USER_RULE_DIMENSIONS/USER_RULE_ACTIONS, with
+// nothing to notice if the two drifted apart the moment either list gained
+// a new member.
+function userRuleDimensionOptions() {
+  return USER_RULE_DIMENSIONS.map((d) => [d, _USER_RULE_DIM_LABELS[d] || d]);
+}
+function userRuleActionOptions() {
+  return USER_RULE_ACTIONS.map((a) => [a, _USER_RULE_ACTION_LABELS[a] || a]);
+}
 
 // A pipe is the Rules Applied column's separator; stripping it keeps a rule's
 // text from mis-splitting that column downstream. Commas are the token-list
