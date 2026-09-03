@@ -26,16 +26,59 @@ entering the region files unchallenged.
 **Cadence:** specs monthly; pricing on a longer (~quarterly) cadence, since provider
 list prices change rarely. An empty diff opens no pull request.
 
-**GCP series coverage (known limitation).** GCP pricing is composed per machine type as
-vCPU × core-hour + memory-GiB × RAM-hour from the catalogue's series Core/Ram SKUs
-(`tools/fetch-official-gcp.js` `SERIES_SKU_NAME`). This does **not** account for local-SSD
-or storage-optimized cost, so machine types that bundle local SSD — the `-lssd` variants of
-`c4a`/`c4d`/`h4d` and storage/compute-optimized `z3`/`c4` — compose 6–33% below the Vantage
-price. Those families are therefore left **unmapped/UNVERIFIED** (Vantage price kept) rather
-than reconciled to a wrong composed value, and `m1`/`m2` (indistinguishable "Memory-optimized"
-templates) and `n1` (no catalogue SKU) are UNVERIFIED too. A refresh that adds such a family
-surfaces it as UNVERIFIED in the reconcile report for review; composing local-SSD cost is a
-possible future improvement.
+**GCP series coverage.** GCP pricing is composed per machine type from the catalogue's
+series SKUs (`tools/fetch-official-gcp.js`): vCPU × core-hour + memory-GiB × RAM-hour
+(`SERIES_SKU_NAME`), plus, since 3.15.7, attached local SSD × GiB-month ÷ 730
+(`LOCAL_SSD_SKU_NAME`). Local SSD is quoted per gibibyte-**month** while cores and RAM
+are per hour, which is why the conversion is explicit.
+
+Which SKU a series uses is a **table, not a rule**. Some series have a per-series local-SSD
+SKU (`c4`, `c4a`, `h4d`); others have none and are priced from the generic
+"SSD backed Local Storage" SKU (`a2`, `a3`, `c3`, `c3d`). `z3` is the reason the distinction
+is a table: it _has_ a per-series SKU that does **not** reproduce its published price, so it
+is deliberately mapped to the generic one. A new series must be verified against published
+prices before it is added, never inferred from the naming pattern.
+
+Anything that does not reproduce the published price is left **unmapped/UNVERIFIED** — the
+Vantage price is kept — rather than reconciled to a wrong composed value, because reconcile
+prefers the official value and would otherwise overwrite a correct price with a confidently
+wrong one. Currently UNVERIFIED: `m1`/`m2` (indistinguishable "Memory-optimized" templates),
+`n1` and `c4d` (no usable catalogue SKU), and the single type `m4-ultramem-224` (composes
+24.5% low in all 46 regions, with an unexplained 6.008% gap even against its own
+per-type SKUs). A refresh that adds such a family surfaces it as UNVERIFIED in the reconcile
+report for review.
+
+## Windows pricing
+
+Every record carries a Windows price beside the Linux one, and the recommender ranks a
+Windows row on the Windows price (3.15.x). The three providers supply it differently, and
+the differences matter when reading a refresh diff:
+
+- **AWS** — vendor-published, `pricing[slug].mswin.ondemand` from Vantage. A **zero** means
+  the machine is not sold with Windows (all Graviton, plus the Inferentia, GPU and FPGA
+  families), and the recommender treats it that way.
+- **Azure** — vendor-published, `pricing[slug].windows.ondemand`. Zero carries the same
+  meaning as on AWS.
+- **GCP** — **composed by us**, not published per type: `hourly + vCPUs × licensing`
+  (`tools/fetch-official-gcp.js`). It is therefore **never zero**, and carries no
+  information about whether a machine can run Windows. GCP's Arm types (`c4a`, `t2a`) get a
+  synthetic Windows price like every other type despite not being able to run Windows at
+  all, which is why the rule engine's Arm exclusion has to stay: for GCP it is the only
+  real signal.
+
+**Known limitation — AWS Windows prices that equal the Linux price.** 29.2% of AWS records
+(6,840 of 23,429, across 821 types including much of `c5`/`c5a`/`c5ad`, `r6a` and the
+`-flex` families) report a Windows price _exactly_ equal to the Linux price. That cannot be
+right: AWS charges Windows licensing per vCPU, and the neighbouring types show it — in
+`us-west-2` the 8-vCPU `r5a.2xlarge` prices Windows **81% above** its Linux rate, the
+per-vCPU licence arithmetic accounting for the difference exactly, while the comparable
+`r6a.2xlarge` reports a **0%** premium. The value comes through the vendor feed unmodified —
+`fetch-vantage.js` reads `mswin.ondemand` directly and falls back to 0, never to the Linux
+price — so this is an upstream gap, not a transformation of ours. The effect is that those
+types are understated on Windows and win Windows rows more often than they should; Azure
+(3.2% equal) and GCP (0%) are not materially affected. Not yet corrected, because the only
+fixes available are to invent the licensing arithmetic ourselves or to distrust a price the
+vendor states plainly.
 
 ## Key handling
 

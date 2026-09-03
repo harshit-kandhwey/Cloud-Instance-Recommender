@@ -85,6 +85,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       vCpus: "vCpus",
       memory: "memoryGiB",
       price: "linuxPrice",
+      priceWindows: "windowsPrice",
       family: "family",
       familyName: "familyName",
       processor: "processorArchitecture",

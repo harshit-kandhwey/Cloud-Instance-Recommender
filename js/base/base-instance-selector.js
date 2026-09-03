@@ -320,6 +320,17 @@ class BaseInstanceSelector {
       vCpus: parseInt(instanceDetails[mapping.vCpus]) || 0,
       memory: parseFloat(instanceDetails[mapping.memory]) || 0,
       price: parseFloat(instanceDetails[mapping.price]) || 0,
+      // The OS's own price, kept beside the Linux one so a row can be ranked on
+      // the price it will actually pay. `undefined` and 0 mean DIFFERENT things
+      // and must not be collapsed: every shipped record carries the field (all
+      // 96,395 of them), so 0 there is the provider saying "no Windows on this
+      // machine". The synthetic sample data has no such field at all, and that
+      // absence must read as "unknown", or the fallback pool would be empty for
+      // every Windows row.
+      windowsPrice:
+        instanceDetails[mapping.priceWindows] === undefined
+          ? undefined
+          : parseFloat(instanceDetails[mapping.priceWindows]) || 0,
       family: instanceDetails[mapping.family] || "",
       familyName: instanceDetails[mapping.familyName] || "",
       location: region,
@@ -331,12 +342,57 @@ class BaseInstanceSelector {
   }
 
   // Validate instance data
+  // Priced for at LEAST ONE operating system. It used to demand a Linux price,
+  // which silently deleted every machine sold only with Windows — u-6tb1.metal has
+  // no published Linux rate in any region, so the tool could never recommend a 6 TiB
+  // machine to anyone. Which of the two prices a given row is judged on is decided
+  // later, by _poolForOS, once the row's OS is known.
   isValidInstance(instance) {
     return (
       instance.instanceType &&
       instance.vCpus > 0 &&
       instance.memory > 0 &&
-      instance.price > 0
+      (instance.price > 0 || instance.windowsPrice > 0)
+    );
+  }
+
+  // The candidate pool for one row, priced for that row's OS.
+  //
+  // A price is not a property of a machine, it is a property of a machine AND an
+  // operating system, and treating it as the former was one defect wearing two
+  // faces: a Windows row was ranked on the Linux price (so Windows licensing, which
+  // GCP and AWS charge PER vCPU, never influenced the choice), and a machine that
+  // offers no Windows at all stayed in the running for Windows rows. 443 records
+  // across AWS and Azure were in that second group — the Inferentia, GPU and FPGA
+  // families, none of which sell Windows.
+  //
+  // Excluding on a zero price is right once the price is the right one. The zero is
+  // the provider's own statement, not an absence of data: every shipped record
+  // carries the field. `undefined` is the different case — synthetic sample data —
+  // and passes through, because "unknown" must not empty the fallback pool.
+  //
+  // NOTE for GCP: its Windows price is COMPOSED by us (hourly + vCPUs × licensing),
+  // not published per type, so it is never 0 and excludes nothing there. That is
+  // why the rule engine's ARM exclusion has to stay — for GCP it is the only real
+  // signal that a machine cannot run Windows. Ranking on the composed value is
+  // still the better of the two, since it carries the per-vCPU licensing cost.
+  // Re-sorted, not merely filtered. `parseData` price-sorts ONCE, on the Linux
+  // price, and everything downstream reads `[0]` as "cheapest" — so remapping the
+  // price without re-sorting would leave the Windows pick ranked on the Linux price,
+  // which is the very defect this method exists to remove. The Linux branch is
+  // already in order; sorting it too costs nothing and makes the postcondition a
+  // property of this method rather than one inherited from a distant caller.
+  _poolForOS(pool, os) {
+    const byPrice = (list) => list.sort((a, b) => a.price - b.price);
+    if (!/^windows/.test(String(os || "").toLowerCase())) {
+      return byPrice(pool.filter((i) => i.price > 0));
+    }
+    return byPrice(
+      pool
+        .filter((i) => i.windowsPrice === undefined || i.windowsPrice > 0)
+        .map((i) =>
+          i.windowsPrice === undefined ? i : { ...i, price: i.windowsPrice },
+        ),
     );
   }
 
@@ -458,8 +514,21 @@ class BaseInstanceSelector {
       );
     }
 
+    // Price the pool for this row's OS BEFORE any filtering, so every downstream
+    // comparison — the like-to-like sort, the rule engine, and all three
+    // alternative columns — reads a price the row would actually pay.
+    const osPool = this._poolForOS(regionData, options.rowOS);
+    if (!osPool.length) {
+      console.warn(
+        `No ${options.rowOS || "linux"} instances for ${this.getProviderName()} ${region}`,
+      );
+      return this.createEmptyResult(
+        `No instance in region '${region}' is offered with ${options.rowOS || "Linux"}`,
+      );
+    }
+
     const filteredInstances = this.applyFilters(
-      regionData,
+      osPool,
       currentCpu,
       currentMemory,
       options,
@@ -472,8 +541,11 @@ class BaseInstanceSelector {
       const empty = this.createEmptyResult(
         "No instances meet filtering requirements",
       );
+      // osPool, not regionData: a nearest miss is advice to relax a filter, so it
+      // must name something the row could actually deploy. Off the raw pool it can
+      // point at a machine this OS is not sold on, which no filter change reaches.
       const nearestMiss = this.computeNearestMiss(
-        regionData,
+        osPool,
         currentCpu,
         currentMemory,
         options,

@@ -55,6 +55,7 @@ class AWSInstanceSelector extends BaseInstanceSelector {
       vCpus: "vCpus",
       memory: "memorySizeInGiB",
       price: "onDemandLinuxHr",
+      priceWindows: "onDemandWindowsHr",
       family: "instanceFamily",
       familyName: "instanceFamilyName",
       processor: "processorManufacturer",

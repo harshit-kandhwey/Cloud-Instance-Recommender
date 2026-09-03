@@ -823,34 +823,46 @@ says the new path was reached for instead of the old one being finished.
   carry only `Intel`, `AMD` or `ARM`, so nothing a user ticks can ever match a
   record. Either populate the list from the values the data actually uses, or drop
   it. _Scheduled in 3.17 alongside the filter above._
-- **Zero-priced instances are dropped from every run.** `isValidInstance` requires
-  `price > 0`, so any record the feeds price at zero is discarded before ranking.
-  Measured 2026-09-01: **thirteen types across thirty-seven records**. On AWS the
-  top GPU instances — `p5.4xlarge`, `p5.48xlarge`, `p5en.48xlarge`,
-  `p6-b200.48xlarge`, `p6-b300.48xlarge`, `p4d.24xlarge` — vanish from every GPU
-  workload, and `u-6tb1.metal` from every Linux run. On Azure, six storage-optimized
-  sizes `l8asv3` through `l80asv3` go the same way, one region each. All of it
-  happens with no warning. Not to be confused with a zero **Windows** price, which
-  is carried by thousands of records and almost always means the type does not offer
-  Windows at all. **Decided (2026-09-01): keep excluding them, but say so** — the
-  defect is the silence, not the exclusion.
-  _Scheduled in [3.15](#315--data-model--catalogue-fidelity), which re-baselines the
-  goldens once._
-- **Windows support is decided by a proxy that misses dozens of types.** The OS
-  rule treats "not ARM" as "runs Windows", so a Windows row can be recommended a
-  type the provider never offers for Windows. Measured 2026-09-01: **28 AWS and 15
-  Azure non-ARM types** are priced for Linux and never for Windows — the AWS
-  inference and FPGA families (`inf1`, `inf2`, `f2`), `p4d`, and Azure's `nc`, `nv`
-  and `nd` GPU sizes and `m96`. Every record already carries a Windows rate, and
-  **no product code reads it** — it is written by the refresh pipeline and consumed
-  only by build tooling and tests, which is how the proxy survived. Two constraints
-  on the fix: Windows availability is **not region-invariant** (74 Azure types offer
-  it in some regions and not others), so it has to be read per region rather than
-  treated as a property of the type; and a missing rate must be confirmed against
-  provider documentation before it is allowed to filter, because an absent price
-  can be a gap in the feed rather than a statement about the product.
-  _Found while planning [3.15](#315--data-model--catalogue-fidelity); scheduled in
-  3.16 as the fourth proxy._
+- **Zero-priced instances are dropped from every run, silently.** `isValidInstance`
+  required `price > 0` — a **Linux** price — so any record the feeds priced at zero
+  was discarded before ranking. Measured 2026-09-01: thirteen types across
+  thirty-seven records.
+
+  **Half of this is fixed in [3.15](#315--data-model--catalogue-fidelity).** The rule
+  now keeps a machine priced for **at least one** OS, and the row is ranked on its own
+  OS's price, which recovers the types that were only ever dropped for lacking a
+  _Linux_ price: `u-6tb1.metal` (13 records — no published Linux rate in any region,
+  so a 6 TiB machine could not be recommended to anyone) and `p5.4xlarge` (5).
+
+  **What remains is the silence, and eleven types that carry no price for either OS**
+  (measured 2026-09-03): on AWS `p4d.24xlarge`, `p5.48xlarge`, `p5en.48xlarge`,
+  `p6-b200.48xlarge` and `p6-b300.48xlarge` (13 records) still vanish from every GPU
+  workload; on Azure the six storage-optimized sizes `l8asv3` through `l80asv3` (one
+  region each) go the same way. **Decided (2026-09-01): keep excluding them, but say
+  so** — the defect is the silence, not the exclusion. That half is still owed.
+  Not to be confused with a zero **Windows** price, which is carried by thousands of
+  records and states that the type does not offer Windows; that is now read as such.
+  _Exclusion half resolved in 3.15; the "say so" half is unscheduled._
+
+- **~~Windows support is decided by a proxy that misses dozens of types.~~**
+  **Resolved in [3.15](#315--data-model--catalogue-fidelity)** (was scheduled for
+  3.16). The OS rule treated "not ARM" as "runs Windows", so a Windows row could be
+  recommended a type the provider never offers for Windows: **28 AWS and 15 Azure
+  non-ARM types**, 443 records, covering the AWS inference and FPGA families
+  (`inf1`, `inf2`, `f2`), `p4d`, and Azure's `nc`/`nv`/`nd` GPU sizes and `m96`. The
+  root cause was larger than the proxy — `mapping.price` named the **Linux** field on
+  all three providers, so a Windows row was both filtered and ranked on a price it
+  would never pay. The price is now selected per row from the row's own OS, which
+  removes the need for a proxy on the two providers that publish a Windows rate.
+  Both constraints recorded here were honoured: the rate is read **per region**
+  (the pool is built from the region's own records, not from a per-type property),
+  and the zero was corroborated before it was allowed to filter — every shipped
+  record carries the field, so a zero is distinguishable from an absence, and on
+  AWS the signal independently reproduces a documented fact, marking **381 of 381**
+  Arm types in `us-west-2` and **304 of 304** in `eu-west-1` as Windows-less.
+  **The Arm rule stays**, because on GCP it is still the only real signal — see the
+  Windows-pricing note in `docs/DATA-SOURCES.md` for why GCP's Windows price cannot
+  be used this way.
 - **The background region pre-warm is unreachable.** `preloadAllRegions` would load
   every region of a provider in the background, and nothing in the product or the
   tests ever calls it. So the only region data ever fetched is what an upload names,

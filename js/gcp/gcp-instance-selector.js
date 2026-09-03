@@ -165,6 +165,7 @@ class GCPInstanceSelector extends BaseInstanceSelector {
       vCpus: "vCpus",
       memory: "memoryGiB",
       price: "hourlyPrice",
+      priceWindows: "windowsHourlyPrice",
       family: "series",
       familyName: "seriesName",
       processor: "cpuPlatform",
