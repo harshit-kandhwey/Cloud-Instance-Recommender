@@ -162,9 +162,9 @@ Stated plainly, because a gate's silence reads as approval:
   only by the `e2e` (Chromium + WebKit) and `visual` (Chromium) jobs.
 - **The visual gate is neutral until its baselines are committed** — it skips
   rather than fails, so an empty `__screenshots__/` looks exactly like a pass.
-- **Generated data is excluded from every gate.** The region files and the
-  manifests are pinned by `suites/infra/data-integrity-test.js` for consistency,
-  not by coverage.
+- **Generated data is excluded from the coverage ledger**, not from every gate —
+  the region files and the manifests are pinned for consistency by
+  `suites/infra/data-integrity-test.js`, which `npm test` runs like any other suite.
 
 ## Layout
 

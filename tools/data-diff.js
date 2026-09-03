@@ -39,7 +39,7 @@ const PROVIDERS = [
 // below, never as a per-type spec move — a family value changing on the SAME type
 // key would be a data anomaly, not the kind of drift this diff tracks), carries a
 // price (compared per region), or is a region-independent spec (compared once per
-// type). specFields/priceFields are DERIVED from tools/lib/util.js's FIELD_ORDER,
+// type). specFields/priceFields are DERIVED from tools/lib/record-schema.js's FIELD_ORDER,
 // never hand-listed here: that module exists precisely because a field named in
 // only one of two partitions gets written by one tool and dropped by the other, and
 // hand-listing a second copy in THIS file reproduced exactly that failure — GCP's
@@ -374,7 +374,7 @@ function renderReport(diffs) {
 // ── Disk loaders ────────────────────────────────────────────────────────────────
 
 // The "old" side — js/{name}/regions/ — is loaded by the shared
-// loadCommittedRegions in tools/lib/util.js, which recommendation-diff reads too.
+// loadCommittedRegions in tools/lib/record-schema.js, which recommendation-diff reads too.
 
 // Extract { regionKey: {type:record} } from a freshly generated monolith by
 // running it and reading the keys the make{PREFIX}RegionsGlobal({...}) call lists.

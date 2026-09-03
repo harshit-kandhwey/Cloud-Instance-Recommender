@@ -350,9 +350,17 @@ const ssdRates = parseLocalSsdSkus(page.skus);
 {
   check(
     "a type with no local SSD contributes 0, not null",
-    localSsdHr("c4", "us_east1", 0, ssdRates) === 0 &&
-      localSsdHr("c4", "us_east1", undefined, ssdRates) === 0,
+    localSsdHr("c4", "us_east1", 0, ssdRates) === 0,
     String(localSsdHr("c4", "us_east1", 0, ssdRates)),
+  );
+  // The OTHER half of the same distinction: absent is not zero either. A record
+  // whose localSsdGiB is missing entirely (Number(undefined) === NaN) must be
+  // treated as unknown, exactly like a real size with no rate — composing it as
+  // free is the same 6-33%-low mistake through a different door.
+  check(
+    "an absent size (not a declared 0) returns null, never 0",
+    localSsdHr("c4", "us_east1", NaN, ssdRates) === null,
+    String(localSsdHr("c4", "us_east1", NaN, ssdRates)),
   );
   check(
     "a named series uses its own rate (750 GiB × $0.10/GiB-mo ÷ 730)",
@@ -395,6 +403,17 @@ const ssdRates = parseLocalSsdSkus(page.skus);
         vCpus: 8,
         memoryGiB: 32,
         localSsdGiB: 0,
+      },
+      // localSsdGiB OMITTED entirely, in the SAME region as siblings that declare
+      // it — the real shape of a half-merged record, not a manifest that predates
+      // the field everywhere. Must be skipped as unknown, never composed as if it
+      // had no local SSD; that is the anomaly the whole-dataset check below it
+      // (a manifest with NO record carrying the field yet) must NOT be confused
+      // with.
+      "c4-standard-16": {
+        series: "c4",
+        vCpus: 16,
+        memoryGiB: 64,
       },
       "z3-highmem-16-lssd": {
         series: "z3",
@@ -473,9 +492,39 @@ const ssdRates = parseLocalSsdSkus(page.skus);
   check(
     "a type with local SSD but no rate is skipped, not priced as though it were free",
     ssdOut.byRegion.asia_south1 === undefined &&
-      ssdOut.unmatched.includes("c4 (local SSD rate missing)"),
+      ssdOut.unmatched.includes("c4 (local SSD size or rate unavailable)"),
     JSON.stringify(ssdOut.unmatched),
   );
+  // The regression this phase's own review round found: Number(undefined) is NaN,
+  // and a guard written as `!(ssdGiB > 0)` treats NaN the same as a real 0 — so a
+  // record with no localSsdGiB AT ALL (not just 0), sitting beside siblings that DO
+  // declare it, would compose as though it had no local SSD instead of being
+  // flagged as the anomaly it is.
+  check(
+    "a record with NO localSsdGiB field, beside siblings that declare it, is skipped as unknown",
+    use1["c4-standard-16"] === undefined &&
+      ssdOut.unmatched.includes("c4 (local SSD size or rate unavailable)"),
+    JSON.stringify(ssdOut.unmatched),
+  );
+  // The OTHER half: when NOTHING in the run declares localSsdGiB yet (a manifest
+  // that predates the field everywhere, not one record dropping out of a populated
+  // set), absence must still price as 0 — the current, correct, in-production
+  // state for every GCP type until the first refresh that writes the field.
+  // Reuses the pre-SSD `shipped` fixture from the block above, which carries no
+  // localSsdGiB anywhere.
+  {
+    const noSsdOut = composePricing(
+      rates,
+      windowsPerVCpuHr(page.skus),
+      shipped,
+    );
+    check(
+      "when NO record anywhere declares localSsdGiB, absence composes as 0, not unknown",
+      noSsdOut.byRegion.us_east1["n2-standard-4"] !== undefined &&
+        [...noSsdOut.unmatched].every((u) => !u.includes("local SSD")),
+      JSON.stringify([...noSsdOut.unmatched]),
+    );
+  }
 
   // UNVERIFIED_TYPES: m4 IS mapped and prices every other m4 type exactly, so this
   // one type is excluded by name. It composes 24.5% low in all 46 regions, and

@@ -266,13 +266,20 @@ function parseLocalSsdSkus(skus) {
 }
 
 /**
- * The local-SSD rate for one type × region, or 0 when the type has no local SSD.
- * Null means "this type has local SSD but no rate is available here" — the caller
- * must then skip the type rather than price it as though the SSD were free, which
- * is precisely the 6–33%-low composition this phase exists to end.
+ * The local-SSD rate for one type × region, or 0 when the type declares no local
+ * SSD. Null means the type's SSD requirement can't be priced here — either no rate
+ * is available for a real size, or the SIZE itself is unknown rather than zero (a
+ * manifest written before localSsdGiB joined FIELD_ORDER carries no value for it,
+ * which loadCommittedRegions' vCpus-only merge guard tolerates during schema
+ * evolution — see tools/lib/record-schema.js). Either way the caller must skip the
+ * type rather than price it as though the SSD were free, which is precisely the
+ * 6–33%-low composition this phase exists to end. An absent size is NOT a declared
+ * zero: composing it as free silently under-prices every SSD-bearing type by that
+ * whole component the moment the field starts appearing mid-refresh.
  */
 function localSsdHr(series, regionKey, ssdGiB, ssdRates) {
-  if (!(ssdGiB > 0)) return 0;
+  if (!Number.isFinite(ssdGiB)) return null;
+  if (ssdGiB === 0) return 0;
   const named = LOCAL_SSD_SKU_NAME[series];
   const rate =
     (named && (ssdRates[named] || {})[regionKey]) ??
@@ -318,6 +325,20 @@ function windowsPerVCpuHr(skus) {
 function composePricing(rates, winHr, shipped, ssdRates = {}) {
   const byRegion = {};
   const unmatched = new Set();
+  // Whether ANY record in this run declares a real localSsdGiB. Until a refresh has
+  // actually written the field, the WHOLE shipped catalogue lacks it — that is a
+  // schema-evolution absence, not a per-record failure, and treating it as unknown
+  // would skip every GCP type outright (composePricing's real "shipped" argument is
+  // read from loadCommittedRegions, i.e. the manifest as it stood BEFORE this
+  // refresh — see tools/lib/record-schema.js). Once at least one record HAS the
+  // field, an absent one beside it is the genuine anomaly (a half-merged record, a
+  // dropped field) and must be skipped rather than priced as SSD-free. Same
+  // reasoning as loadCommittedRegions' own vCpus-only merge guard.
+  const anyDeclaresSsd = Object.values(shipped || {}).some((regionTypes) =>
+    Object.values(regionTypes || {}).some((r) =>
+      Number.isFinite(r && r.localSsdGiB),
+    ),
+  );
   for (const [rk, types] of Object.entries(shipped || {})) {
     for (const [type, rec] of Object.entries(types || {})) {
       // Deliberately not composed — see UNVERIFIED_TYPES. Reported so the run says
@@ -349,9 +370,15 @@ function composePricing(rates, winHr, shipped, ssdRates = {}) {
       // third of the price. A type that has one but no rate here is SKIPPED, not
       // priced without it — an under-composed price is worse than none, because
       // reconcile prefers the official value and would overwrite a correct one.
-      const ssd = localSsdHr(series, rk, Number(rec.localSsdGiB), ssdRates);
+      // Absent-but-nobody-has-it-yet (anyDeclaresSsd false) prices as 0, same as
+      // today; absent-while-peers-declare-it is the real anomaly and is left as
+      // NaN so localSsdHr rejects it, rather than silently priced SSD-free.
+      const rawSsd = rec.localSsdGiB;
+      const ssdGiB =
+        rawSsd === undefined && !anyDeclaresSsd ? 0 : Number(rawSsd);
+      const ssd = localSsdHr(series, rk, ssdGiB, ssdRates);
       if (ssd === null) {
-        unmatched.add(`${series} (local SSD rate missing)`);
+        unmatched.add(`${series} (local SSD size or rate unavailable)`);
         continue;
       }
       const hourly = round8(vcpu * r.coreHr + mem * r.ramHr + ssd);

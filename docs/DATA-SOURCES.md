@@ -28,8 +28,11 @@ list prices change rarely. An empty diff opens no pull request.
 
 **GCP series coverage.** GCP pricing is composed per machine type from the catalogue's
 series SKUs (`tools/fetch-official-gcp.js`): vCPU × core-hour + memory-GiB × RAM-hour
-(`SERIES_SKU_NAME`), plus, since 3.15.7, attached local SSD × GiB-month ÷ 730
-(`LOCAL_SSD_SKU_NAME`). Local SSD is quoted per gibibyte-**month** while cores and RAM
+(`SERIES_SKU_NAME`), plus attached local SSD × GiB-month ÷ 730 (`LOCAL_SSD_SKU_NAME`),
+supported since 3.15.7. **Currently dormant**, not active: the shipped manifest carries
+no `localSsdGiB` for any type until a refresh actually writes it, so every type composes
+with a 0 SSD contribution today, same as before 3.15.7 — first real exercise is the next
+scheduled data refresh. Local SSD is quoted per gibibyte-**month** while cores and RAM
 are per hour, which is why the conversion is explicit.
 
 Which SKU a series uses is a **table, not a rule**. Some series have a per-series local-SSD

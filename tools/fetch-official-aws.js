@@ -20,7 +20,7 @@ const path = require("path");
 const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
 const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
 const price = round8;
 
 // Public Bulk API. The region index lists each region's current per-region offer

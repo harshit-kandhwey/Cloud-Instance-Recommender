@@ -291,7 +291,7 @@ const shipped = [
   // contributor to a broken shell line. Resolve `npm run X` against package.json
   // and `node path/to.js` against the filesystem.
   const scripts = JSON.parse(read("package.json")).scripts || {};
-  const npmRuns = [...gates.matchAll(/`npm run ([\w:]+)`/g)].map((m) => m[1]);
+  const npmRuns = [...gates.matchAll(/`npm run ([\w:-]+)`/g)].map((m) => m[1]);
   const nodeRuns = [...gates.matchAll(/`node ([\w./-]+\.js)/g)].map(
     (m) => m[1],
   );
@@ -332,7 +332,7 @@ const shipped = [
   const isDocumented = (cmd) =>
     documented.has(cmd) || [...documented].some((d) => d.includes(cmd));
 
-  const ciNpmRuns = [...ci.matchAll(/npm run ([\w:]+)/g)].map((m) => m[1]);
+  const ciNpmRuns = [...ci.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]);
   const ciNodeRuns = [...ci.matchAll(/node ([\w./-]+\.js)/g)].map((m) => m[1]);
   // test:visual:update is the one npm-run step CI executes that is deliberately
   // NOT a gate: it runs only on a manual workflow_dispatch with update_baselines

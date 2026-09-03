@@ -21,7 +21,7 @@ const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
 const price = round8;
 
 // armSkuName ("Standard_D4s_v5", "Basic_A0") → shipped type key ("d4sv5", "a0"):

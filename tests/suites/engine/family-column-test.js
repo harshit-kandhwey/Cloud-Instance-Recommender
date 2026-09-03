@@ -146,9 +146,13 @@ const OPTIONS = {
     // name is a SPEC and lives in the manifest, so reading the region global alone
     // would compare the engine's correct answer against undefined and report every
     // cell as wrong — the test breaking, not the product.
+    // Read off `window` as a property, not a bare identifier: a bare name that
+    // isn't assigned in the context throws ReferenceError and unwinds this whole
+    // block with a stack trace instead of a named check failure — the "test
+    // breaking, not the product" comment above applies here too, one level deeper.
     const specsOf = (provider) =>
-      (vm.runInContext(`${provider.toUpperCase()}_SPECS`, ctx) || {}).compute ||
-      {};
+      (vm.runInContext(`window["${provider.toUpperCase()}_SPECS"]`, ctx) || {})
+        .compute || {};
     let checked = 0;
     const mismatches = [];
     const seenCategories = new Set();

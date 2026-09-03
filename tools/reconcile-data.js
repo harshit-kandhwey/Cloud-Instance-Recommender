@@ -64,7 +64,7 @@ const PROVIDERS = [
 // List has vCPU/memory/family; Azure Retail and GCP Catalog are pricing-only). Field
 // names already match the monolith's, so a match is a direct overwrite.
 //
-// `price` is DERIVED from tools/lib/util.js's priceFields(), not hand-listed — every
+// `price` is DERIVED from tools/lib/record-schema.js's priceFields(), not hand-listed — every
 // price field is officially-sourced (the official fetch IS the pricing API), so the two
 // lists have always agreed by coincidence, not by construction. data-diff.js hand-listed
 // this same fact independently and silently dropped GCP's localSsdGiB-adjacent field

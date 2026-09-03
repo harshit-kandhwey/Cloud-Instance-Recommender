@@ -35,7 +35,7 @@ const {
   emitRecordBody,
 } = require("./lib/record-schema");
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
+// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
 const price = round8;
 
 // Bulk static JSON endpoints (ec2 at the root, azure/gcp under their path).
@@ -352,7 +352,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 
 // ── Serialisation ────────────────────────────────────────────────────────────
 //
-// FIELD_ORDER and emitRecordBody live in tools/lib/util.js: split-data writes the
+// FIELD_ORDER and emitRecordBody live in tools/lib/record-schema.js: split-data writes the
 // same fields, partitioned into specs and prices, and the two writers must not
 // keep separate ideas of what a record contains. emitValue's throw on a
 // non-serializable value is the tripwire behind the missing-spec skip in

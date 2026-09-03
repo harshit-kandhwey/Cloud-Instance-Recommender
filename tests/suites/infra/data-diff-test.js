@@ -465,15 +465,20 @@ const gcp = (o) => ({
     d.unpriced.length === 1 && d.unpriced[0].type === "p4d.24xlarge",
     JSON.stringify(d.unpriced.map((u) => u.type)),
   );
+  // Guarded: an empty d.unpriced here means the FIRST check above already failed
+  // by name. Without the fallback, d.unpriced[0] throws TypeError and unwinds the
+  // rest of the file — the exact regression these three checks exist to catch
+  // would report one stack trace instead of three named failures.
+  const first = d.unpriced[0] || {};
   check(
     "[unpriced] it names the regions that carry no price",
-    JSON.stringify(d.unpriced[0].regions) === JSON.stringify(["us_east_1"]),
-    JSON.stringify(d.unpriced[0].regions),
+    JSON.stringify(first.regions) === JSON.stringify(["us_east_1"]),
+    JSON.stringify(first.regions),
   );
   check(
     "[unpriced] and counts the regions that DO price it (gap vs withdrawal)",
-    d.unpriced[0].pricedIn === 1,
-    String(d.unpriced[0].pricedIn),
+    first.pricedIn === 1,
+    String(first.pricedIn),
   );
   check(
     "[unpriced] a record priced for only ONE OS is not reported",
