@@ -30,6 +30,20 @@ const aws = (o) => ({
   onDemandWindowsHr: o.win ?? 0,
 });
 
+// Minimal GCP record — only the fields data-diff reads.
+const gcp = (o) => ({
+  series: o.family,
+  seriesName: "General purpose",
+  generation: o.generation ?? 1,
+  vCpus: o.vCpus,
+  memoryGiB: o.mem,
+  localSsdGiB: o.ssd ?? 0,
+  cpuPlatform: "Intel",
+  isARM: o.isARM ?? 0,
+  hourlyPrice: o.price,
+  windowsHourlyPrice: o.win ?? 0,
+});
+
 // ── AWS delta scenario ──────────────────────────────────────────────────────────
 {
   const old = {
@@ -215,6 +229,50 @@ const aws = (o) => ({
     report.startsWith("<!-- data-diff: CHANGES -->") &&
       report.includes("unparseable"),
     report.split("\n")[0],
+  );
+}
+
+// ── GCP spec fields are DERIVED from FIELD_ORDER, not hand-listed ───────────────
+// PROVIDER_CFG.gcp.specFields used to be a second, separately maintained copy of
+// the spec/price split tools/lib/util.js's specFields()/priceFields() already
+// compute canonically — and it drifted: localSsdGiB, added to FIELD_ORDER in
+// 3.15.7, was never added here. A refresh that changed ONLY a type's attached
+// local-SSD size (its price unchanged) would report NO-CHANGES, so split-data
+// would never run and the shipped manifest would go stale on that field with no
+// signal at all. Pin the specific field, not just "some spec field or other" —
+// this is the exact regression a generic spec-diff test would not catch.
+{
+  const old = {
+    us_central1: {
+      "c4a-standard-4": gcp({
+        family: "c4a",
+        vCpus: 4,
+        mem: 16,
+        price: 0.2,
+        ssd: 0,
+      }),
+    },
+  };
+  const nw = {
+    us_central1: {
+      "c4a-standard-4": gcp({
+        family: "c4a",
+        vCpus: 4,
+        mem: 16,
+        price: 0.2,
+        ssd: 375,
+      }),
+    },
+  };
+  const d = diffProvider("gcp", old, nw);
+  check(
+    "a local-SSD-only change on GCP is a reported spec change, not silence",
+    hasChanges(d) === true &&
+      d.specChanges.length === 1 &&
+      d.specChanges[0].field === "localSsdGiB" &&
+      d.specChanges[0].old === 0 &&
+      d.specChanges[0].new === 375,
+    JSON.stringify(d.specChanges),
   );
 }
 
@@ -461,6 +519,51 @@ const aws = (o) => ({
     "[unpriced] a record with NO price field is not reported as unpriced",
     malformed.unpriced.length === 0 && renderUnpriced([malformed]) === null,
     JSON.stringify(malformed.unpriced),
+  );
+
+  // The identical-snapshot check above cannot tell whether `unpriced` is computed
+  // from the NEW side or the OLD one — both give the same answer when nothing
+  // differs between them. Two asymmetric transitions close that gap: a type that
+  // just LOST its price (must appear — reading the old side would miss it, since
+  // the old record was still priced) and one that just GAINED it back (must
+  // disappear — reading the old side would keep reporting a type already fixed).
+  const wasPriced = diffProvider(
+    "aws",
+    {
+      us_east_1: {
+        "p6-x.metal": aws({ family: "p6-x", vCpus: 8, mem: 32, linux: 5 }),
+      },
+    },
+    {
+      us_east_1: {
+        "p6-x.metal": aws({ family: "p6-x", vCpus: 8, mem: 32, linux: 0 }),
+      },
+    },
+  );
+  check(
+    "[unpriced] a type that just LOST its price is reported (reads the NEW side)",
+    wasPriced.unpriced.length === 1 &&
+      wasPriced.unpriced[0].type === "p6-x.metal",
+    JSON.stringify(wasPriced.unpriced),
+  );
+
+  const gotFixed = diffProvider(
+    "aws",
+    {
+      us_east_1: {
+        "p6-x.metal": aws({ family: "p6-x", vCpus: 8, mem: 32, linux: 0 }),
+      },
+    },
+    {
+      us_east_1: {
+        "p6-x.metal": aws({ family: "p6-x", vCpus: 8, mem: 32, linux: 5 }),
+      },
+    },
+  );
+  check(
+    "[unpriced] a type that just GOT its price back is not reported (not stuck on the OLD side)",
+    gotFixed.unpriced.length === 0,
+    JSON.stringify(gotFixed.unpriced),
   );
 
   const clean = diffProvider(

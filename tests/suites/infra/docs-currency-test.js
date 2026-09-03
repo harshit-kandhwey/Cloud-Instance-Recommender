@@ -13,6 +13,10 @@ const { check, state } = makeChecker();
 
 const read = (rel) => fs.readFileSync(path.join(REPO, rel), "utf8");
 
+// An npm script name's underlying command text, so an `npm run X` reference and the
+// `node ...` line it ultimately runs can be recognised as the SAME gate.
+const scriptText = (scripts, name) => (scripts[name] || "").trim();
+
 // `fetch-official-{aws,azure,gcp}.js` in a doc stands for three real files; expand the
 // shorthand so the docs are compared against actual file names, not against prose.
 const expandBraces = (text) =>
@@ -238,6 +242,48 @@ const shipped = [
     deadScripts.length === 0 && deadPaths.length === 0,
     [...deadScripts.map((s) => `npm run ${s}`), ...deadPaths].join(",") ||
       `${npmRuns.length + nodeRuns.length} commands resolve`,
+  );
+
+  // The reverse of the two checks above: every command the table NAMES resolves,
+  // but nothing yet asks whether every command CI actually RUNS is named. A row
+  // silently dropped while its job keeps a different step (say, coverage:check cut
+  // from the `test` job while syntax-check and run-all stay) would pass both prior
+  // checks and every check above — CI would still enforce a gate this file no
+  // longer documents.
+  //
+  // A command can appear on each side in either form — `npm run X` or the `node
+  // path.js` the script ultimately runs — and the two sides don't always agree on
+  // which: CI runs coverage:check as `node tools/build-coverage-inventory.js
+  // --check` while the table names it `npm run coverage:check`. So compare by
+  // RESOLVED IDENTITY: an npm-run name resolves to package.json's script text; a
+  // node path resolves to itself. A CI command is documented if either its own
+  // form or its resolved form appears, in either form, on the table's side.
+  const resolve = (npmName) => scriptText(scripts, npmName);
+  const documented = new Set([
+    ...npmRuns,
+    ...npmRuns.map(resolve).filter(Boolean),
+    ...nodeRuns,
+  ]);
+  const isDocumented = (cmd) =>
+    documented.has(cmd) || [...documented].some((d) => d.includes(cmd));
+
+  const ciNpmRuns = [...ci.matchAll(/npm run ([\w:]+)/g)].map((m) => m[1]);
+  const ciNodeRuns = [...ci.matchAll(/node ([\w./-]+\.js)/g)].map((m) => m[1]);
+  // test:visual:update is the one npm-run step CI executes that is deliberately
+  // NOT a gate: it runs only on a manual workflow_dispatch with update_baselines
+  // set, to regenerate the committed -linux screenshots a human then commits, and
+  // it never blocks a PR. It is documented in prose (see "Visual" below), not the
+  // gate table, so it is excluded here rather than misread as an undocumented gate.
+  const undocumentedInCI = [
+    ...ciNpmRuns.filter((s) => s !== "test:visual:update" && !isDocumented(s)),
+    ...ciNodeRuns.filter((p) => !isDocumented(p)),
+  ];
+  check(
+    "CI runs no gate command the table fails to document",
+    undocumentedInCI.length === 0,
+    undocumentedInCI.length
+      ? `${undocumentedInCI.join(",")} — add a row to tests/README.md`
+      : `${ciNpmRuns.length + ciNodeRuns.length} CI commands documented`,
   );
 }
 

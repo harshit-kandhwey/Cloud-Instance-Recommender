@@ -132,6 +132,23 @@ function splitProvider({ name, prefix }, root = ROOT) {
         `makeRegionsGlobal declares ${declaredKeys.length} keys — aborting`,
     );
   }
+  // A DUPLICATE declared key defeats the count check above without tripping it: a
+  // call declaring {a, a} against real blocks {a, b} matches on length, and "a"
+  // being in both sets satisfies the "missing" check below too, even though block
+  // "b" is never named by the call at all. The write loop further down iterates
+  // declaredKeys, so "a" would be written twice and "b" — a real region with real
+  // records — silently never written at all. Reject the duplicate before that
+  // point. (The symmetric case — a block the call never names — cannot occur once
+  // this and the two checks below both hold: equal lengths plus a duplicate-free
+  // declared set plus every declared key found among the blocks pins the block set
+  // to be exactly the declared set, by pigeonhole. A third check for it would never
+  // fire — verified by exhaustive search, not just asserted.)
+  const declaredSet = new Set(declaredKeys);
+  if (declaredSet.size !== declaredKeys.length) {
+    throw new Error(
+      `[${name}] makeRegionsGlobal declares a duplicate region key`,
+    );
+  }
   const blockSet = new Set(blockKeys);
   const missing = declaredKeys.filter((k) => !blockSet.has(k));
   if (missing.length) {

@@ -185,16 +185,26 @@ class BaseInstanceSelector {
       // type through the guard and straight into the silent drop it exists to report.
       // The two must widen together — this half was written when validity meant a
       // Linux price, and OS-aware pricing moved that line without moving this one.
+      // Skip the ONE broken type rather than throwing — a throw here is caught by
+      // loadRegionData's try/catch, which replaces the ENTIRE region with sample
+      // data, so one bad manifest entry used to take a whole region — thousands of
+      // real, correctly-specified types — down to 8 rows of synthetic data for
+      // every user, with only a console line as the trace. Naming the type and
+      // excluding IT is strictly louder (visible in devtools, same as before) and
+      // strictly narrower (the rest of the region keeps serving real data) than
+      // the throw ever was — there is no case the throw covered that this doesn't.
       if (
         (record[mapping.price] !== undefined ||
           record[mapping.priceWindows] !== undefined) &&
         (record[mapping.vCpus] === undefined ||
           record[mapping.memory] === undefined)
       ) {
-        throw new Error(
+        console.error(
           `${this.getProviderName()} ${region}: ${type} has a price but no specifications — ` +
-            `the manifest carries no ${this.getProviderName().toUpperCase()}_SPECS.${SPECS_SERVICE}[${type}]`,
+            `the manifest carries no ${this.getProviderName().toUpperCase()}_SPECS.${SPECS_SERVICE}[${type}]. ` +
+            `Excluding it from this region rather than discarding the region's real data.`,
         );
+        continue;
       }
       merged[type] = record;
     }

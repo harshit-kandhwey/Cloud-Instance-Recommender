@@ -198,6 +198,20 @@ process.exitCode = 1;
     `got ${newReqs.length}`,
   );
 
+  // Swap the sandbox's console.error for the duration of fn, capturing what it was
+  // called with. _mergeSpecs reports a broken manifest entry this way now (not by
+  // throwing — see the merge-guard block below), so this is how the report is read.
+  function capturingConsoleError(fn) {
+    const original = sandbox.console.error;
+    const lines = [];
+    sandbox.console.error = (...args) => lines.push(args.join(" "));
+    try {
+      return { result: fn(), lines };
+    } finally {
+      sandbox.console.error = original;
+    }
+  }
+
   // ── The specs half is merged back at read time ──────────────────────────────
   // The browser twin of loadCommittedRegions. A region file carries prices only and
   // {P}_SPECS.compute holds each type's specifications once; the loader rejoins them
@@ -245,17 +259,31 @@ process.exitCode = 1;
 
     // The guard. A price with no specifications means nothing merged; isValidInstance
     // would drop the type exactly as if it were unpriced, so the loss would read as a
-    // catalogue change. It must say so instead.
-    let guardMsg = "";
-    try {
-      selector._mergeSpecs({ "zz.unknown": { [priceField]: 1.5 } }, "r1");
-    } catch (e) {
-      guardMsg = e.message;
-    }
+    // catalogue change. It must say so instead — by NAMING the broken type and
+    // excluding IT ALONE, not by taking the whole region down. A throw here is
+    // caught by loadRegionData's try/catch, which replaces the ENTIRE region with
+    // sample data — a review finding on this exact code (2026-09-03): one bad
+    // manifest entry used to disable a whole region's real data for every user.
+    // console.error is strictly louder (visible in devtools, same as a throw) and
+    // strictly narrower (only the one type is lost) than the throw it replaced.
+    const { result: guarded, lines: guardLines } = capturingConsoleError(() =>
+      selector._mergeSpecs(
+        { "zz.unknown": { [priceField]: 1.5 }, [type]: { [priceField]: 1.5 } },
+        "r1",
+      ),
+    );
     check(
-      `${name}: a priced type absent from the specs blob fails by name`,
-      guardMsg.includes("zz.unknown") && guardMsg.includes("no specifications"),
-      guardMsg || "(did not throw)",
+      `${name}: a priced type absent from the specs blob is excluded, by name`,
+      !("zz.unknown" in guarded) &&
+        guardLines.some(
+          (l) => l.includes("zz.unknown") && l.includes("no specifications"),
+        ),
+      JSON.stringify({ guarded, guardLines }),
+    );
+    check(
+      `${name}: and the REST of the region still merges normally`,
+      guarded[type] && guarded[type][priceField] === 1.5,
+      JSON.stringify(guarded),
     );
 
     // The same guard for a machine sold ONLY with Windows. isValidInstance accepts a
@@ -264,19 +292,21 @@ process.exitCode = 1;
     // must widen together — this guard was written when validity meant a Linux
     // price, and OS-aware pricing moved that line. u-6tb1.metal is the real machine:
     // no published Linux rate in any region, Windows priced everywhere.
-    let winMsg = "";
-    try {
+    const { result: winGuarded, lines: winLines } = capturingConsoleError(() =>
       selector._mergeSpecs(
-        { "zz.winonly": { [selector.getFieldMappings().priceWindows]: 20.6 } },
+        {
+          "zz.winonly": { [selector.getFieldMappings().priceWindows]: 20.6 },
+        },
         "r1",
-      );
-    } catch (e) {
-      winMsg = e.message;
-    }
+      ),
+    );
     check(
-      `${name}: a WINDOWS-only priced type absent from the specs blob also fails`,
-      winMsg.includes("zz.winonly") && winMsg.includes("no specifications"),
-      winMsg || "(did not throw)",
+      `${name}: a WINDOWS-only priced type absent from the specs blob is also excluded, by name`,
+      !("zz.winonly" in winGuarded) &&
+        winLines.some(
+          (l) => l.includes("zz.winonly") && l.includes("no specifications"),
+        ),
+      JSON.stringify({ winGuarded, winLines }),
     );
 
     // The guard's other side, which had no test until a plant walked straight
@@ -311,16 +341,13 @@ process.exitCode = 1;
       const partial = { [specField]: 99, memoryGiB: 42, memorySizeInGiB: 42 };
       delete partial[half];
       ctx.window[`${prefix}_SPECS`] = { compute: { [type]: partial } };
-      let halfMsg = "";
-      try {
-        selector._mergeSpecs({ [type]: { [priceField]: 1.5 } }, "r1");
-      } catch (e) {
-        halfMsg = e.message;
-      }
+      const { result: halfResult, lines: halfLines } = capturingConsoleError(
+        () => selector._mergeSpecs({ [type]: { [priceField]: 1.5 } }, "r1"),
+      );
       check(
-        `${name}: a priced record whose specs lost ${half} still fails`,
-        halfMsg.includes(type),
-        halfMsg || "(did not throw)",
+        `${name}: a priced record whose specs lost ${half} is excluded, by name`,
+        !(type in halfResult) && halfLines.some((l) => l.includes(type)),
+        JSON.stringify({ halfResult, halfLines }),
       );
     }
 

@@ -113,6 +113,19 @@ for (const { name, prefix } of PROVIDERS) {
     path.join(REPO, "js", name, `${name}-data.js`),
     "utf8",
   );
+  // indexOf returns -1 for a needle that isn't there, and -1 is not > -1 OR < -1 —
+  // so an ordering compare alone can't tell "READY comes after SPECS" apart from
+  // "SPECS was never assigned this exact way at all" (e.g. `window["X_SPECS"]=`).
+  // Pin the occurrence count first, the same way the sibling split-data-test.js
+  // does for this exact property, so a rewritten assignment fails LOUD here
+  // instead of passing the ordering check vacuously.
+  const countOf = (needle) => manSrc.split(needle).length - 1;
+  check(
+    `[${label}] manifest assigns ${prefix}_SPECS and ${prefix}_DATA_READY exactly once each`,
+    countOf(`window.${prefix}_SPECS = `) === 1 &&
+      countOf(`window.${prefix}_DATA_READY = `) === 1,
+    `SPECS x${countOf(`window.${prefix}_SPECS = `)}, READY x${countOf(`window.${prefix}_DATA_READY = `)}`,
+  );
   check(
     `[${label}] ${prefix}_DATA_READY is assigned after ${prefix}_SPECS`,
     manSrc.indexOf(`window.${prefix}_DATA_READY = `) >
@@ -166,6 +179,7 @@ for (const { name, prefix } of PROVIDERS) {
   let badGlobal = null; // { file, defined }
   let notLoadable = null; // { file, err }
   let emptyRegion = null; // file with an empty/absent object
+  let mergeGap = null; // file whose MERGED view is empty though the raw file is not
   let badShape = null; // { file, instanceType, why }
 
   for (const file of diskFiles) {
@@ -188,7 +202,16 @@ for (const { name, prefix } of PROVIDERS) {
       if (!emptyRegion) emptyRegion = file;
       continue;
     }
-    const entries = Object.entries(mergedRegions[file] || {});
+    // The raw region above just proved non-empty. If the MERGED view has no entry
+    // for this exact key, `Object.entries(... || {})` silently gives an empty
+    // array, every record-shape check below iterates zero times, and a loader-side
+    // key mismatch (loadCommittedRegions normalising `file` differently than the
+    // raw filename) reads as full coverage instead of the gap it is.
+    if (!mergedRegions[file] || !Object.keys(mergedRegions[file]).length) {
+      if (!mergeGap) mergeGap = file;
+      continue;
+    }
+    const entries = Object.entries(mergedRegions[file]);
     // Every instance is a non-null object carrying the vCpus + memory + price
     // fields the engine reads (finite positive numbers), and a family string.
     for (const [instanceType, rec] of entries) {
@@ -255,6 +278,13 @@ for (const { name, prefix } of PROVIDERS) {
     `[${label}] no region file is an empty object (would fall back to samples)`,
     emptyRegion === null,
     emptyRegion ? `${emptyRegion}.js` : "",
+  );
+  check(
+    `[${label}] every non-empty region file has a matching entry in the merged view`,
+    mergeGap === null,
+    mergeGap
+      ? `${mergeGap}.js has no entry under loadCommittedRegions's key`
+      : "",
   );
   check(
     `[${label}] every instance carries finite vCPU/memory/price + a family (per ${label} field map)`,
@@ -346,6 +376,12 @@ for (const { name, prefix } of PROVIDERS) {
 // other consumer must use the loader; this block is the one place whose subject IS
 // the unmerged half, because it asks what the region files do and do not carry.
 const rawRegions = {};
+// A file whose global doesn't match its name, or isn't an object, is dropped from
+// rawRegions with no signal — silently, and both split-integrity directions below
+// then skip it too, so a leaked spec field or an orphan type INSIDE that one file
+// stays undetected while the checks report green. Name what was dropped so the
+// checks below can fail loud instead of quietly checking less than they claim to.
+const skippedRawFiles = [];
 for (const { name } of PROVIDERS) {
   const dir = path.join(REPO, "js", name, "regions");
   const out = (rawRegions[name] = {});
@@ -357,10 +393,18 @@ for (const { name } of PROVIDERS) {
     vm.runInContext(fs.readFileSync(path.join(dir, file), "utf8"), sandbox, {
       filename: file,
     });
-    if (sandbox[key] && typeof sandbox[key] === "object")
+    if (sandbox[key] && typeof sandbox[key] === "object") {
       out[key] = sandbox[key];
+    } else {
+      skippedRawFiles.push(`js/${name}/regions/${file}`);
+    }
   }
 }
+check(
+  "every region file defines an object global named for itself (raw split-integrity walk)",
+  skippedRawFiles.length === 0,
+  skippedRawFiles.join(", "),
+);
 
 // ── The two halves are actually split, and nothing fell between them ─────────
 // This block replaces the pre-3.15 "a type's specs are identical in every region"

@@ -26,6 +26,8 @@ const {
   argValue,
   loadCommittedRegions,
   monolithPath,
+  specFields,
+  priceFields,
 } = require("./lib/util");
 
 const PROVIDERS = [
@@ -34,47 +36,27 @@ const PROVIDERS = [
   { name: "gcp", prefix: "GCP" },
 ];
 
-// Per-provider field roles: which record field names a family, carries a price
-// (compared per region), or is a region-independent spec (compared once per type).
-const PROVIDER_CFG = {
-  aws: {
-    familyField: "instanceFamily",
-    priceFields: ["onDemandLinuxHr", "onDemandWindowsHr"],
-    specFields: [
-      "instanceFamilyName",
-      "isGraviton",
-      "currentGeneration",
-      "processorManufacturer",
-      "vCpus",
-      "memorySizeInGiB",
-      "nitroEnclavesSupport",
-    ],
-  },
-  azure: {
-    familyField: "family",
-    priceFields: ["linuxPrice", "windowsPrice"],
-    specFields: [
-      "familyName",
-      "isARM",
-      "generation",
-      "processorArchitecture",
-      "vCpus",
-      "memoryGiB",
-    ],
-  },
-  gcp: {
-    familyField: "series",
-    priceFields: ["hourlyPrice", "windowsHourlyPrice"],
-    specFields: [
-      "seriesName",
-      "generation",
-      "vCpus",
-      "memoryGiB",
-      "cpuPlatform",
-      "isARM",
-    ],
-  },
-};
+// Which record field names a family (grouped via familiesAdded/familiesRemoved
+// below, never as a per-type spec move — a family value changing on the SAME type
+// key would be a data anomaly, not the kind of drift this diff tracks), carries a
+// price (compared per region), or is a region-independent spec (compared once per
+// type). specFields/priceFields are DERIVED from tools/lib/util.js's FIELD_ORDER,
+// never hand-listed here: that module exists precisely because a field named in
+// only one of two partitions gets written by one tool and dropped by the other, and
+// hand-listing a second copy in THIS file reproduced exactly that failure — GCP's
+// localSsdGiB (added in 3.15.7) was never added here, so a refresh that changed only
+// a type's local-SSD size would report NO-CHANGES and never reach split-data.
+const PROVIDER_CFG = {};
+for (const { name } of PROVIDERS) {
+  const familyField = { aws: "instanceFamily", azure: "family", gcp: "series" }[
+    name
+  ];
+  PROVIDER_CFG[name] = {
+    familyField,
+    priceFields: priceFields(name),
+    specFields: specFields(name).filter((f) => f !== familyField),
+  };
+}
 
 // ── Pure diff ──────────────────────────────────────────────────────────────────
 

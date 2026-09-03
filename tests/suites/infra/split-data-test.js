@@ -399,6 +399,36 @@ console.log("[hard-fails]");
   fs.rmSync(root, { recursive: true, force: true });
 }
 
+// A DUPLICATE declared key defeats the count-only check above without tripping
+// it: two real blocks {us_east_1, eu_west_1} but the call declares
+// {us_east_1, us_east_1} — same length, and "missing" is empty because every
+// declared name IS a real block. Before the fix, this passed straight through to
+// the write loop, which iterates the DECLARED list: us_east_1 would be written
+// twice and eu_west_1 — a real region with real records — silently never
+// written at all. This is the actual failure mode; the "call names a region the
+// monolith never assigns" case above (length mismatch) does not exercise it.
+{
+  const source = monolith(
+    {
+      us_east_1: { "m5.large": rec() },
+      eu_west_1: { "m5.large": rec() },
+    },
+    { declare: ["us_east_1", "us_east_1"] },
+  );
+  const root = tempRoot(source);
+  const msg = threw(() => splitProvider(AWS, root));
+  check(
+    "a duplicate declared key aborts, rather than silently dropping the other region",
+    msg !== null && /duplicate region key/.test(msg),
+    msg || "did not throw",
+  );
+  check(
+    "and nothing was written (not even the duplicated region)",
+    !fs.existsSync(path.join(root, "js", "aws", "regions")),
+  );
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
 // The writer-side twin of data-integrity-test's region-invariance guard. Specs
 // are stored once per type, so a type whose specs differ between two regions
 // cannot be split without losing one of them. The tool must refuse rather than
@@ -692,8 +722,24 @@ console.log("[pruning a dropped region]");
   );
 
   // Upstream drops a region: rewrite the monolith with only one and re-split.
+  // Guarded like the [upstream drift] scenarios above, not called bare: an
+  // uncaught throw here would unwind this whole suite and skip every check after
+  // it, including [CLI wiring] — the exact failure mode a suite crash produces,
+  // as opposed to a named FAIL. A result that came back without `pruned` would
+  // otherwise raise a raw TypeError instead of a named failure too.
   writeMonolith(root, monolith({ us_east_1: { "m5.large": rec() } }));
-  const { result, lines } = capturingLog(() => splitProvider(AWS, root));
+  let result = null;
+  let lines = [];
+  const reSplitErr = threw(() => {
+    const captured = capturingLog(() => splitProvider(AWS, root));
+    result = captured.result;
+    lines = captured.lines;
+  });
+  check(
+    "the re-split completes without throwing",
+    reSplitErr === null,
+    reSplitErr || "",
+  );
   check(
     "the dropped region's file is removed",
     fs.readdirSync(regionsDir).join(",") === "us_east_1.js",
@@ -701,8 +747,8 @@ console.log("[pruning a dropped region]");
   );
   check(
     "the prune is reported by name",
-    result.pruned.join(",") === "eu_west_1.js",
-    JSON.stringify(result.pruned),
+    Boolean(result) && (result.pruned || []).join(",") === "eu_west_1.js",
+    JSON.stringify(result && result.pruned),
   );
   check(
     "and the operator is told to bump the service-worker cache",
