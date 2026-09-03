@@ -498,6 +498,13 @@ per-region cost into a nearly free one. Until it lands, every field added to a
 record multiplies by the number of regions carrying it — which is why the
 catalogue work below waits on it rather than running first.
 
+**Shipped — all four items delivered.** The specs/prices split converted 96,395
+records with zero drift and cut the shipped catalogue from 23.9 MB to 8.1 MB; GCP
+composition now prices local SSD (dormant until the next scheduled refresh writes a
+storage size); the zero-priced-instance gap is now reported instead of silent; and
+an OS-aware pricing fix, found while closing this line, corrected every provider's
+Windows ranking to use its own rate rather than Linux's.
+
 The split was expected to force a full regenerate. It did not: it was performed as a
 pure re-serialisation of the data already committed, with every record proven
 unchanged and no provider called. The fields the format could not previously afford
