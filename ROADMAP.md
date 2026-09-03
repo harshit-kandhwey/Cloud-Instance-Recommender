@@ -497,8 +497,14 @@ per-region cost into a nearly free one. Until it lands, every field added to a
 record multiplies by the number of regions carrying it — which is why the
 catalogue work below waits on it rather than running first.
 
-The split forces a full regenerate, so the refresh that carries it also picks up
-the fields the format could not previously afford.
+The split was expected to force a full regenerate. It did not: it was performed as a
+pure re-serialisation of the data already committed, with every record proven
+unchanged and no provider called. The fields the format could not previously afford
+are therefore added to the pipeline here and **filled by the next scheduled refresh**
+rather than by a hand-run capture — the automated job opens a reviewed PR on its own
+cadence, so a manual one would only duplicate it. The practical consequence is that
+the local-SSD price component ships dormant: no shipped record carries a storage size
+until that run writes one, and until then every type composes exactly as before.
 
 - **Specs / prices split in the region format.** Move the per-type specs out of
   the per-region records, leaving regions to carry pricing and availability. Touches
@@ -536,13 +542,20 @@ the fields the format could not previously afford.
   a ranking error, not a labelling one — the highest-value accuracy item on the
   list. (M) _Documented as a known limitation in `docs/DATA-SOURCES.md`._
 - **Zero-priced instances are invisible** — see [Known issues](#known-issues-patch-level).
-  Scheduled here rather than in 3.17 because the fix changes recommendations and
-  this minor re-baselines the goldens once anyway; folding it into an unrelated
-  re-baseline would put two causes behind one baseline diff. (S)
   **Decided (2026-09-01): they stay excluded, but the exclusion becomes visible** —
-  a notice naming what was dropped and why. The harm today is not that an unpriced
-  instance loses, it is that it disappears without a word; ranking one that has no
-  price is the larger claim, and this makes the smaller one honestly.
+  the harm is not that an unpriced instance loses, it is that it disappears without
+  a word; ranking one that has no price is the larger claim. (S) **Done.**
+
+  It landed in two parts, and neither was quite what this item anticipated. The
+  exclusion itself turned out to be **asking the wrong question** — the rule demanded
+  a _Linux_ price, so it was deleting machines sold only with Windows; that is fixed
+  by the OS-aware pricing above, and it did change recommendations, which is why this
+  minor's single golden re-baseline covers it. What remains genuinely unpriceable is
+  reported in the **refresh diff**, not in the product: an end user meets one of these
+  only by asking for a 96-to-192-vCPU accelerator machine in one specific region,
+  whereas a gap in incoming data that nothing reports is precisely how this one
+  survived unnoticed — and long enough that the count recorded here was nearly half
+  short. The audience for the notice was the maintainer all along.
 
 ### 3.16 — Attribute filters & rule fidelity
 
@@ -823,26 +836,39 @@ says the new path was reached for instead of the old one being finished.
   carry only `Intel`, `AMD` or `ARM`, so nothing a user ticks can ever match a
   record. Either populate the list from the values the data actually uses, or drop
   it. _Scheduled in 3.17 alongside the filter above._
-- **Zero-priced instances are dropped from every run, silently.** `isValidInstance`
+- **~~Zero-priced instances are dropped from every run, silently.~~**
+  **Resolved in [3.15](#315--data-model--catalogue-fidelity).** `isValidInstance`
   required `price > 0` — a **Linux** price — so any record the feeds priced at zero
   was discarded before ranking. Measured 2026-09-01: thirteen types across
   thirty-seven records.
 
-  **Half of this is fixed in [3.15](#315--data-model--catalogue-fidelity).** The rule
+  **The wrong half of the exclusion went first.** The rule
   now keeps a machine priced for **at least one** OS, and the row is ranked on its own
   OS's price, which recovers the types that were only ever dropped for lacking a
   _Linux_ price: `u-6tb1.metal` (13 records — no published Linux rate in any region,
   so a 6 TiB machine could not be recommended to anyone) and `p5.4xlarge` (5).
 
-  **What remains is the silence, and eleven types that carry no price for either OS**
-  (measured 2026-09-03): on AWS `p4d.24xlarge`, `p5.48xlarge`, `p5en.48xlarge`,
-  `p6-b200.48xlarge` and `p6-b300.48xlarge` (13 records) still vanish from every GPU
-  workload; on Azure the six storage-optimized sizes `l8asv3` through `l80asv3` (one
-  region each) go the same way. **Decided (2026-09-01): keep excluding them, but say
-  so** — the defect is the silence, not the exclusion. That half is still owed.
-  Not to be confused with a zero **Windows** price, which is carried by thousands of
-  records and states that the type does not offer Windows; that is now read as such.
-  _Exclusion half resolved in 3.15; the "say so" half is unscheduled._
+  **The silence is closed too.** Eleven types carry no price for either OS (measured
+  2026-09-03): on AWS `p4d.24xlarge`, `p5.48xlarge`, `p5en.48xlarge`,
+  `p6-b200.48xlarge` and `p6-b300.48xlarge` (13 records); on Azure the six
+  storage-optimized sizes `l8asv3` through `l80asv3` (one region each, all
+  `spaincentral`). They are still excluded — nothing can be ranked without a price —
+  but the refresh diff now reports them every run, naming the regions that carry no
+  price and counting the regions that do.
+
+  That count is the point. A feed states "not offered here" by **omitting** the
+  record, so a record that is present with every price at zero is a different
+  statement: a gap, not a withdrawal. All eleven are priced in other regions
+  (`l8asv3` in 53 of 54), which identifies them as publication lag on new hardware
+  and one new region. The report is deliberately **not** a "change" — a standing gap
+  must not open a refresh PR every month for as long as it persists upstream.
+
+  It went to the maintainer report rather than the UI on purpose: an end user would
+  only meet one of these by asking for a 96-to-192-vCPU GPU machine in one specific
+  region, whereas a feed gap that nothing reports is how this one survived unnoticed
+  in the first place. Not to be confused with a zero **Windows** price, which is
+  carried by thousands of records and states that the type does not offer Windows;
+  that is now read as such. **Closed in 3.15.**
 
 - **~~Windows support is decided by a proxy that misses dozens of types.~~**
   **Resolved in [3.15](#315--data-model--catalogue-fidelity)** (was scheduled for

@@ -113,6 +113,16 @@ stops a run that dies part-way from leaving a new manifest against old region fi
 The recommendation-diff step runs the engine over the old and new data for the sample
 inputs and flags any refresh that flips a recommended instance, loudly, in the PR body.
 
+**Records priced for no operating system.** The diff report carries a standing section
+listing records the feed supplies with no price for any OS. The recommender drops these
+— it cannot rank what it cannot price — and this section is the only place that says so.
+It is **not** a change: it is rendered on every run, including a no-change one, and never
+on its own opens a PR, because the gaps outlive any single refresh. Each entry names the
+regions with no price and counts the regions that do have one; a type priced elsewhere is
+a publication lag rather than a withdrawal, since a feed says "not offered here" by
+omitting the record entirely. As of 2026-09-03 this is 19 records across 11 types — five
+AWS GPU sizes and the six Azure `l*asv3` sizes in `spaincentral`.
+
 ## Vetting log
 
 Each refresh is reviewed via pull request (never a bot push to `main`), and the

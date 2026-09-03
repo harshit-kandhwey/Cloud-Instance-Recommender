@@ -9,6 +9,7 @@ const {
   hasChanges,
   renderReport,
   renderProvider,
+  renderUnpriced,
   regionsFromMonolith,
 } = require("../../../tools/data-diff");
 const { buildMonolith } = require("../../../tools/fetch-vantage");
@@ -350,6 +351,128 @@ const aws = (o) => ({
     "data-diff reads shipped region data through loadCommittedRegions",
     code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
     /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
+  );
+}
+
+// ── Records priced for no OS: reported, but never a "change" ────────────────────
+// The recommender drops a record it cannot price. That exclusion is right; the
+// silence around it was the defect. This section is the only thing that says so,
+// so it must survive a no-change refresh — and must not, by existing, turn one
+// into a PR-opening change, or the gap would raise a PR every month forever.
+{
+  const snap = {
+    us_east_1: {
+      // Priced for Linux only — still priced, so not reported.
+      "inf1.xlarge": aws({ family: "inf1", vCpus: 4, mem: 8, linux: 0.228 }),
+      // Priced for Windows only — also still priced.
+      "u-6tb1.metal": aws({
+        family: "u-6tb1",
+        vCpus: 448,
+        mem: 6144,
+        linux: 0,
+        win: 20.608,
+      }),
+      // Priced for NEITHER: the case this section exists for.
+      "p4d.24xlarge": aws({
+        family: "p4d",
+        vCpus: 96,
+        mem: 1152,
+        linux: 0,
+        win: 0,
+      }),
+    },
+    eu_west_1: {
+      // The SAME type, priced here — which is what makes the us_east_1 record a
+      // feed gap rather than a withdrawal.
+      "p4d.24xlarge": aws({
+        family: "p4d",
+        vCpus: 96,
+        mem: 1152,
+        linux: 32.77,
+      }),
+    },
+  };
+  const d = diffProvider("aws", snap, JSON.parse(JSON.stringify(snap)));
+
+  check(
+    "[unpriced] a record priced for no OS is reported",
+    d.unpriced.length === 1 && d.unpriced[0].type === "p4d.24xlarge",
+    JSON.stringify(d.unpriced.map((u) => u.type)),
+  );
+  check(
+    "[unpriced] it names the regions that carry no price",
+    JSON.stringify(d.unpriced[0].regions) === JSON.stringify(["us_east_1"]),
+    JSON.stringify(d.unpriced[0].regions),
+  );
+  check(
+    "[unpriced] and counts the regions that DO price it (gap vs withdrawal)",
+    d.unpriced[0].pricedIn === 1,
+    String(d.unpriced[0].pricedIn),
+  );
+  check(
+    "[unpriced] a record priced for only ONE OS is not reported",
+    !d.unpriced.some((u) => /inf1|u-6tb1/.test(u.type)),
+    JSON.stringify(d.unpriced.map((u) => u.type)),
+  );
+
+  // The load-bearing one: identical old/new, so nothing changed.
+  check(
+    "[unpriced] does not count as a change (a standing gap must not open a PR)",
+    hasChanges(d) === false,
+    `hasChanges=${hasChanges(d)}`,
+  );
+  const report = renderReport([d]);
+  check(
+    "[unpriced] the report still carries the NO-CHANGES sentinel",
+    report.startsWith("<!-- data-diff: NO-CHANGES -->"),
+    report.split("\n")[0],
+  );
+  check(
+    "[unpriced] yet the section is rendered on that unchanged run",
+    report.includes("Records priced for no operating system (1)") &&
+      report.includes("p4d.24xlarge [p4d] — unpriced in us_east_1") &&
+      report.includes("priced in 1 other region"),
+    report,
+  );
+  check(
+    "[unpriced] no absolute price reaches the section (D8)",
+    !/32\.77|20\.608|0\.228/.test(renderUnpriced([d])),
+    renderUnpriced([d]),
+  );
+
+  // Absent is not zero — the same distinction the selector draws. A record that
+  // never carried the field is malformed, not a priced-at-zero product statement,
+  // and folding the two together would turn a broken refresh into a page of
+  // plausible-looking "price gaps".
+  const malformed = diffProvider(
+    "aws",
+    { us_east_1: { "ghost.large": {} } },
+    { us_east_1: { "ghost.large": {} } },
+  );
+  check(
+    "[unpriced] a record with NO price field is not reported as unpriced",
+    malformed.unpriced.length === 0 && renderUnpriced([malformed]) === null,
+    JSON.stringify(malformed.unpriced),
+  );
+
+  const clean = diffProvider(
+    "aws",
+    {
+      us_east_1: {
+        "m5.large": aws({ family: "m5", vCpus: 2, mem: 8, linux: 0.1 }),
+      },
+    },
+    {
+      us_east_1: {
+        "m5.large": aws({ family: "m5", vCpus: 2, mem: 8, linux: 0.1 }),
+      },
+    },
+  );
+  check(
+    "[unpriced] fully-priced data renders no section at all",
+    clean.unpriced.length === 0 &&
+      renderUnpriced([clean]) === null &&
+      !renderReport([clean]).includes("priced for no operating system"),
   );
 }
 

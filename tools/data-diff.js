@@ -187,6 +187,45 @@ function diffProvider(name, oldRegions, newRegions) {
     }
   }
 
+  // Records the NEW data carries with no price for ANY operating system. The
+  // recommender cannot rank what it cannot price, so it drops them — silently,
+  // which is the actual defect. A feed states "not offered here" by OMITTING the
+  // record, so a record that is PRESENT with every price at zero is a different
+  // statement: a gap in the feed rather than a product decision. `pricedIn` is
+  // what tells the two apart at review time — a type priced in other regions is
+  // a publication lag, not a withdrawal.
+  //
+  // Deliberately NOT part of hasChanges(): this is a standing property of the
+  // incoming data, not a delta. Counting it as a change would open a refresh PR
+  // every month for as long as the gap persists upstream, which is forever.
+  // A price field that is ABSENT is not a zero, and the two must not be folded
+  // together — the same distinction the selector draws. Absent means the record
+  // never carried the field (a malformed or half-built record, which the spec
+  // machinery surfaces on its own terms); a present zero is the provider stating
+  // it does not sell that combination. Only the latter belongs here, or a broken
+  // refresh would be misreported as a catalogue of price gaps.
+  const statedZero = (rec, f) => {
+    const v = Number(rec[f]);
+    return rec[f] !== undefined && Number.isFinite(v) && v <= 0;
+  };
+
+  const unpriced = [];
+  for (const [t, ninfo] of newTypes) {
+    const dead = [];
+    for (const rk of ninfo.regions) {
+      const rec = newRegions[rk][t];
+      if (cfg.priceFields.every((f) => statedZero(rec, f))) dead.push(rk);
+    }
+    if (dead.length)
+      unpriced.push({
+        type: t,
+        family: familyOf(ninfo),
+        regions: dead.sort(),
+        pricedIn: ninfo.regions.size - dead.length,
+      });
+  }
+
+  unpriced.sort(byType);
   typesAdded.sort(byType);
   typesRemoved.sort(byType);
   specChanges.sort((a, b) => byType(a, b) || (a.field < b.field ? -1 : 1));
@@ -203,6 +242,7 @@ function diffProvider(name, oldRegions, newRegions) {
     typesRemoved,
     specChanges,
     priceChanges,
+    unpriced,
   };
 }
 
@@ -296,6 +336,45 @@ function renderProvider(d) {
   return L.join("\n");
 }
 
+const unpricedCount = (d) =>
+  (d.unpriced || []).reduce((n, u) => n + u.regions.length, 0);
+
+// Standing data-quality section, rendered whether or not anything changed — the
+// gap it reports outlives any single refresh, and a reviewer who only ever sees it
+// on a changed run would never learn it was there. Returns null when clean.
+function renderUnpriced(diffs) {
+  const withAny = diffs.filter((d) => (d.unpriced || []).length);
+  if (!withAny.length) return null;
+  const total = withAny.reduce((n, d) => n + unpricedCount(d), 0);
+  const L = [
+    `## ⚠ Records priced for no operating system (${total})`,
+    "",
+    "Present in the feed but carrying no price for any OS. The recommender cannot rank",
+    "what it cannot price, so it drops these — this section is the only place that says",
+    "so. Not a diff: it is reported every run and is never on its own a reason to open",
+    "a PR.",
+    "",
+    'A feed states "not offered here" by OMITTING the record, so a record that is',
+    "present with every price at zero is a different statement — a gap in the feed, not",
+    'a product decision. Read the "priced in" count: a type priced in other regions is',
+    "almost certainly a publication lag rather than a withdrawal.",
+    "",
+  ];
+  for (const d of withAny) {
+    L.push(
+      `### ${LABEL[d.provider]} — ${unpricedCount(d)} record(s) across ` +
+        `${d.unpriced.length} type(s)`,
+    );
+    for (const u of d.unpriced)
+      L.push(
+        `- ${u.type} [${u.family}] — unpriced in ${u.regions.join(", ")} ` +
+          `(priced in ${u.pricedIn} other region${u.pricedIn === 1 ? "" : "s"})`,
+      );
+    L.push("");
+  }
+  return L.join("\n").trimEnd();
+}
+
 // Full report string. First line is the CHANGES/NO-CHANGES sentinel.
 function renderReport(diffs) {
   const changed = diffs.some(hasChanges);
@@ -306,6 +385,8 @@ function renderReport(diffs) {
   ];
   if (!changed) L.push("No data changes detected.");
   else for (const d of diffs) L.push(renderProvider(d), "");
+  const un = renderUnpriced(diffs);
+  if (un) L.push("", un);
   return L.join("\n").trimEnd() + "\n";
 }
 
@@ -389,6 +470,7 @@ module.exports = {
   hasChanges,
   renderReport,
   renderProvider,
+  renderUnpriced,
   regionsFromMonolith,
   PROVIDER_CFG,
 };
