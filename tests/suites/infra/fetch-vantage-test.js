@@ -511,7 +511,11 @@ function splitDataParity(monolith) {
   check(
     "fetch-vantage reads shipped region data through loadCommittedRegions",
     code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
-    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
+    // Detail prints only on failure, so the else-branch is not "all good" — it is
+    // the other way this check can fail: the shared loader is gone entirely.
+    /readdirSync\s*\(/.test(code)
+      ? "has its own readdirSync"
+      : "no loadCommittedRegions call",
   );
 }
 

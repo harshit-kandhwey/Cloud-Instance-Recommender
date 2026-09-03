@@ -258,6 +258,49 @@ process.exitCode = 1;
       guardMsg || "(did not throw)",
     );
 
+    // The same guard for a machine sold ONLY with Windows. isValidInstance accepts a
+    // type priced for either OS, so a Linux-only guard would wave a Windows-only
+    // record straight through into the silent drop it exists to prevent. The two
+    // must widen together — this guard was written when validity meant a Linux
+    // price, and OS-aware pricing moved that line. u-6tb1.metal is the real machine:
+    // no published Linux rate in any region, Windows priced everywhere.
+    let winMsg = "";
+    try {
+      selector._mergeSpecs(
+        { "zz.winonly": { [selector.getFieldMappings().priceWindows]: 20.6 } },
+        "r1",
+      );
+    } catch (e) {
+      winMsg = e.message;
+    }
+    check(
+      `${name}: a WINDOWS-only priced type absent from the specs blob also fails`,
+      winMsg.includes("zz.winonly") && winMsg.includes("no specifications"),
+      winMsg || "(did not throw)",
+    );
+
+    // The guard's other side, which had no test until a plant walked straight
+    // through an over-broad version of it. A record with NO price is not the split's
+    // failure mode — there is nothing to lose, because an unpriced type is dropped by
+    // design — so it must pass through quietly. Widening the price test is one edit
+    // away from `true &&`, and that version throws on data the loader must accept,
+    // breaking a whole region rather than one type.
+    let inertMsg = "";
+    let inert = null;
+    try {
+      inert = selector._mergeSpecs(
+        { "zz.nopriceatall": { someField: 1 } },
+        "r1",
+      );
+    } catch (e) {
+      inertMsg = e.message;
+    }
+    check(
+      `${name}: a record with NO price and no specs passes through, it does not throw`,
+      inert !== null && inert["zz.nopriceatall"].someField === 1,
+      inertMsg || JSON.stringify(inert),
+    );
+
     // HALF-merged is as fatal as unmerged, and looks healthier — which is why it
     // shipped. parseData coerces the absent field to 0 and isValidInstance drops the
     // type for failing `> 0`, so a record with vCPUs but no memory vanishes just as

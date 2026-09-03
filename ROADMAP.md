@@ -42,8 +42,9 @@ top of it.
   rather than one per type, and the same regenerate closes the local-SSD pricing
   gap and the catalogue defects filed against it.
 - **Next** — _3.16 Attribute filters & rule fidelity_ · _3.17 Closing out 3.x_.
-  Spend what the split makes affordable: turn four of the engine's admitted
-  proxies into the measurements the providers publish, offer the instance
+  Spend what the split makes affordable: turn three of the engine's admitted
+  proxies into the measurements the providers publish (a fourth, Windows support,
+  was done early in 3.15 alongside the same root cause), offer the instance
   attributes the data already carries, widen the workload vocabulary the
   recommendations key off, then empty the known-issues list.
 - **Later** — _4.0 Performance-based right-sizing_. The one platform-defining
@@ -563,18 +564,23 @@ Spend what 3.15 makes affordable: replace the engine's admitted proxies with the
 measurements the providers actually publish, and offer the attributes the data has
 always carried.
 
-- **Turn four proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
+- **Turn three proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
   explicit stand-in for a higher network tier — the feeds carry real bandwidth
   (AWS baseline/burst Gbps, GCP network performance, Azure accelerated networking).
   The SQL Server rule sets a vCPU floor while its own rationale is that SQL Server
   is **licensed per core** — AWS publishes `cores` and Azure `vcpus_percore`, which
   is the exact figure. Burstable detection is a hardcoded family list plus a
   shared-core name pattern — GCP publishes `shared_cpu`, and AWS's burst fields mark
-  exactly the burstable set, so a future `t5` would classify itself. The fourth is
-  **Windows support**, which the engine infers by excluding ARM while every record
-  already carries a Windows rate the product never reads — see the Known issue
-  below for what the proxy misses and for the constraint that the answer is
-  per-region, not per-type. (M)
+  exactly the burstable set, so a future `t5` would classify itself. (M)
+
+  _This item listed a fourth — **Windows support**, inferred by excluding Arm while
+  every record carried a Windows rate no product code read. It was **done early, in
+  [3.15](#315--data-model--catalogue-fidelity)**, because the same root cause was
+  already being fixed there: the price field named the Linux rate on all three
+  providers, so a Windows row was ranked on a price it would never pay. The Arm rule
+  remains for GCP alone, whose Windows price is composed rather than published and so
+  cannot say what runs Windows. See the resolved Known issue below._
+
 - **Instance attribute filters.** A numeric GPU count (all three clouds publish
   one) replaces the family-name regex the accelerator check uses today; bare metal
   becomes an exclude type rather than competing as an ordinary very large instance;

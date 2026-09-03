@@ -180,8 +180,14 @@ class BaseInstanceSelector {
       // isValidInstance then drops the type for failing `> 0` — so a half-merged
       // record disappears just as silently as a wholly unmerged one, and `&&` would
       // wave it through.
+      // EITHER price counts, for the same reason: isValidInstance accepts a machine
+      // priced for one OS, so testing the Linux field alone would let a Windows-only
+      // type through the guard and straight into the silent drop it exists to report.
+      // The two must widen together — this half was written when validity meant a
+      // Linux price, and OS-aware pricing moved that line without moving this one.
       if (
-        record[mapping.price] !== undefined &&
+        (record[mapping.price] !== undefined ||
+          record[mapping.priceWindows] !== undefined) &&
         (record[mapping.vCpus] === undefined ||
           record[mapping.memory] === undefined)
       ) {
