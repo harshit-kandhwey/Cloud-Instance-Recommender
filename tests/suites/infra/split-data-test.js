@@ -641,14 +641,20 @@ console.log("[upstream drift]");
 {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
   let lines = [];
+  let result = null;
   const msg = threw(() => {
     const captured = capturingLog(() => splitProvider(AWS, root));
     lines = captured.lines;
-    check(
-      "an absent monolith is skipped, not thrown on",
-      captured.result.skipped === true,
-    );
+    result = captured.result;
   });
+  // Assert OUTSIDE capturingLog. It replaces console.log for the whole callback, so
+  // a check run inside it has its own ok:/FAIL: line captured into `lines` instead
+  // of printed — the run would still exit non-zero, but name nothing.
+  check(
+    "an absent monolith is skipped, not thrown on",
+    result !== null && result.skipped === true,
+    msg || JSON.stringify(result),
+  );
   check("skipping an absent provider raises nothing", msg === null, msg || "");
   // Assert the MESSAGE, not just that nothing was written. The operator's only clue
   // is the path it names, and a skip that stopped naming it would leave this check
@@ -717,7 +723,11 @@ console.log("[CLI wiring]");
     path.join(__dirname, "..", "..", "..", "tools", "split-data.js"),
     "utf8",
   );
-  const body = (src.match(/function main\(\)\s*\{[\s\S]*?\n\}/) || [""])[0];
+  // Strip line comments first, then extract. main() documents why it must NOT call
+  // process.exit(), naming the call in prose — and a structural check that reads
+  // comments reports on documentation rather than on code.
+  const code = src.replace(/^\s*\/\/.*$/gm, "");
+  const body = (code.match(/function main\(\)\s*\{[\s\S]*?\n\}/) || [""])[0];
   check(
     "main() was found to inspect",
     body.includes("main") && body.length > 40,
@@ -730,7 +740,18 @@ console.log("[CLI wiring]");
   );
   check(
     "main() exits non-zero when a provider failed",
-    /process\.exit\(\s*failed\s*\?\s*1\s*:\s*0\s*\)/.test(body),
+    /process\.exitCode\s*=\s*failed\s*\?\s*1\s*:\s*0/.test(body),
+    body.replace(/\s+/g, " ").slice(0, 200),
+  );
+  // exitCode, never exit(): the workflow runs this tool as
+  // `node tools/split-data.js | tee split.log` and greps that log for the
+  // region-removal warning that says sw.js needs a CACHE bump. With stdout a pipe,
+  // exit() can kill the process before the warning flushes — losing the signal on
+  // the one run that had something to say. This suite's own footer carries the same
+  // rule; the tool is where it actually costs something.
+  check(
+    "main() does not call process.exit(), which can truncate the piped warning",
+    !/process\.exit\s*\(/.test(body),
     body.replace(/\s+/g, " ").slice(0, 200),
   );
   check(

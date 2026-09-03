@@ -204,8 +204,15 @@ const { check, state } = makeChecker();
   const code = src.replace(/^\s*\/\/.*$/gm, "");
   check(
     "recommendation-diff reads the old side through the shared loader",
-    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
-    /readdirSync\s*\(/.test(code) ? "has its own readdirSync" : "shared",
+    // Match the CALL, not the symbol: an `includes` passes on the leftover require
+    // line alone, so deleting the call while keeping the import — the exact shape a
+    // private-loader regression takes — would slip straight through this guard.
+    /loadCommittedRegions\s*\(/.test(code) && !/readdirSync\s*\(/.test(code),
+    // Detail prints only on failure, so the else-branch is not "all good" — it is
+    // the other way this check can fail: the shared loader is gone entirely.
+    /readdirSync\s*\(/.test(code)
+      ? "has its own readdirSync"
+      : "no loadCommittedRegions call",
   );
 }
 

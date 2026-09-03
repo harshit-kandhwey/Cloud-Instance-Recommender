@@ -140,6 +140,11 @@ const LOCAL_SSD_SKU_NAME = {
 // two cannot be added without converting. 730 is GCP's own monthly-hours constant.
 const HOURS_PER_MONTH = 730;
 
+// The unit that ÷HOURS_PER_MONTH assumes. Asserted against the SKU rather than
+// trusted, because the catalogue publishes all three of "GiBy.mo" (local SSD),
+// "GiBy.h" (RAM) and "h" (cores), and a name match cannot tell them apart.
+const LOCAL_SSD_USAGE_UNIT = "GiBy.mo";
+
 // Types whose composed price does not reproduce the published one, for reasons not
 // yet understood — so they are left out of the dump entirely and keep their Vantage
 // price, flagged UNVERIFIED by reconcile. This is the same conservatism that keeps
@@ -242,6 +247,16 @@ function parseLocalSsdSkus(skus) {
       .replace(/ in .*/i, "")
       .trim();
     if (!wanted.has(name)) continue;
+    // The ÷730 is only correct for a per-GiB-MONTH rate, and nothing else in this
+    // function establishes that the SKU is quoted that way — the name matched, and
+    // the name says nothing about units. A local-SSD SKU published per GiBy.h would
+    // divide to 1/730th of its real value and still look like a perfectly ordinary
+    // price, which is the failure this file's own rule forbids: reconcile PREFERS
+    // the official value, so a confidently wrong composition overwrites a correct
+    // one. Skip instead, exactly as an SSD with no rate at all is skipped — the type
+    // keeps its Vantage price and reconcile flags it UNVERIFIED for a human.
+    const unit = sku.pricingInfo?.[0]?.pricingExpression?.usageUnit;
+    if (unit !== LOCAL_SSD_USAGE_UNIT) continue;
     const usd = round8(skuUsd(sku) / HOURS_PER_MONTH);
     if (!Number.isFinite(usd)) continue;
     for (const sr of sku.serviceRegions || []) {

@@ -366,7 +366,15 @@ function main() {
       console.error(String(err.message || err));
     }
   }
-  process.exit(failed ? 1 : 0);
+  // process.exitCode, NOT process.exit(): when stdout is a pipe its writes are
+  // asynchronous, and exit() can kill the process before they flush. This run's
+  // stdout is always a pipe where it matters — the workflow does
+  // `node tools/split-data.js | tee split.log` and then greps that log for
+  // "regions were removed" to decide whether sw.js needs a CACHE bump. Losing that
+  // line loses the signal, on exactly the run that had something to say, and the PR
+  // body omits the warning with nothing to indicate it was dropped. The test suites
+  // already carry this rule in their footers; the tools had never been given it.
+  process.exitCode = failed ? 1 : 0;
 }
 
 module.exports = { splitProvider, verifyRoundTrip, PROVIDERS, SERVICE };

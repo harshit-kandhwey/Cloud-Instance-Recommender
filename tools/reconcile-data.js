@@ -314,6 +314,8 @@ if (require.main === module) {
     main();
   } catch (err) {
     console.error(String(err && err.message ? err.message : err));
-    process.exit(1);
+    // exitCode, not exit(): refresh-local captures this tool's stdout straight into
+    // the reconcile report, so its stdout is always a pipe and exit() can truncate it.
+    process.exitCode = 1;
   }
 }

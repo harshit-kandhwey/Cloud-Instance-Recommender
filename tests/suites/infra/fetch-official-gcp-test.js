@@ -266,6 +266,25 @@ const ssdRates = parseLocalSsdSkus(page.skus);
       if (v === 0.00123288) leaked.push(`${name}/${rk}`);
     }
   }
+  // The ÷730 assumes a per-GiB-MONTH rate and the SKU NAME cannot confirm it — the
+  // catalogue publishes GiBy.mo, GiBy.h and h side by side. The fixture carries a
+  // correctly named generic SSD SKU quoted per GiBy.h (me-west1, 0.73/GiB-hour): a
+  // parser that trusts the name divides it by 730 to 0.001 and hands back a number
+  // that looks like an ordinary rate. Reconcile PREFERS the official value, so that
+  // would overwrite a correct price with one 730× too low. Reject it instead.
+  check(
+    "a local-SSD SKU quoted per GiB-HOUR is rejected, not divided by 730",
+    !("me-west1" in (ssdRates[LOCAL_SSD_GENERIC] || {})),
+    JSON.stringify(ssdRates[LOCAL_SSD_GENERIC]),
+  );
+  check(
+    "and its would-be converted rate appears nowhere in the parsed table",
+    !Object.values(ssdRates).some((byRegion) =>
+      Object.values(byRegion).includes(0.001),
+    ),
+    JSON.stringify(ssdRates),
+  );
+
   check(
     "the sole-tenancy / DWS / spot / committed-use variants are all rejected",
     leaked.length === 0,
@@ -546,7 +565,10 @@ const ssdRates = parseLocalSsdSkus(page.skus);
   const code = src.replace(/^\s*\/\/.*$/gm, "");
   check(
     "fetch-official-gcp reads the shipped records through loadCommittedRegions",
-    code.includes("loadCommittedRegions") && !/readdirSync\s*\(/.test(code),
+    // Match the CALL, not the symbol: an `includes` passes on the leftover require
+    // line alone, so deleting the call while keeping the import — the exact shape a
+    // private-loader regression takes — would slip straight through this guard.
+    /loadCommittedRegions\s*\(/.test(code) && !/readdirSync\s*\(/.test(code),
     // Detail prints only on failure, so the else-branch is not "all good" — it is
     // the other way this check can fail: the shared loader is gone entirely.
     /readdirSync\s*\(/.test(code)

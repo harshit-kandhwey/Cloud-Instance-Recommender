@@ -701,6 +701,34 @@
       ]
     },
     {
+      "skuId": "SSD-GENERIC-HOURLY-TRAP",
+      "description": "SSD backed Local Storage in Tel Aviv",
+      "category": {
+        "serviceDisplayName": "Compute Engine",
+        "resourceFamily": "Storage",
+        "resourceGroup": "LocalSSD",
+        "usageType": "OnDemand"
+      },
+      "serviceRegions": ["me-west1"],
+      "pricingInfo": [
+        {
+          "pricingExpression": {
+            "usageUnit": "GiBy.h",
+            "tieredRates": [
+              {
+                "startUsageAmount": 0,
+                "unitPrice": {
+                  "currencyCode": "USD",
+                  "units": "0",
+                  "nanos": 730000000
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "skuId": "SSD-GENERIC-USE1",
       "description": "SSD backed Local Storage in South Carolina",
       "category": {

@@ -189,7 +189,27 @@ const shipped = [
     jobNames.length >= 5,
     jobNames.join(",") || "none parsed",
   );
-  const undocumented = jobNames.filter((j) => !gates.includes(`\`${j}\``));
+  // Compare against the gate table's JOB COLUMN, not the whole section. A bare
+  // `gates.includes` passes on any backticked mention anywhere in the prose, so a
+  // row deleted from the table while its name survives in a sentence would leave
+  // this check green while the table no longer documents the job.
+  // The job is the LAST column; the first backticked cell is the command, so a
+  // regex anchored to the row start reads the wrong one.
+  const gateJobs = new Set(
+    gates
+      .split("\n")
+      .filter((l) => /^\s*\|/.test(l))
+      .map((l) => {
+        const cells = l
+          .split("|")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        const m = (cells[cells.length - 1] || "").match(/^`([^`]+)`$/);
+        return m ? m[1] : null;
+      })
+      .filter(Boolean),
+  );
+  const undocumented = jobNames.filter((j) => !gateJobs.has(j));
   check(
     "every CI job appears in the gate table",
     undocumented.length === 0,
