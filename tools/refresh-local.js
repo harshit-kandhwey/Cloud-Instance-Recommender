@@ -35,7 +35,7 @@ const {
   argValue,
   resolveDataDate,
   writeFileAtomic,
-} = require("./lib/util");
+} = require("./lib/build-env");
 
 const CACHE = path.join(ROOT, ".refresh-cache");
 

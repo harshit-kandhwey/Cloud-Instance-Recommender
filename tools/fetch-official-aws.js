@@ -17,13 +17,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const {
-  ROOT,
-  round8,
-  argValue,
-  writeFileAtomic,
-  readShippedRegionKeys,
-} = require("./lib/util");
+const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
+const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
 // Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
 const price = round8;

@@ -35,15 +35,13 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { ROOT, writeFileAtomic, monolithPath } = require("./lib/build-env");
 const {
-  ROOT,
-  writeFileAtomic,
-  monolithPath,
   SERVICE,
   specFields,
   priceFields,
   emitRecordBody,
-} = require("./lib/util");
+} = require("./lib/record-schema");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },

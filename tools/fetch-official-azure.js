@@ -16,13 +16,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const {
-  ROOT,
-  round8,
-  argValue,
-  writeFileAtomic,
-  readShippedRegionKeys,
-} = require("./lib/util");
+const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
+const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
 

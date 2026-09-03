@@ -21,14 +21,13 @@
 
 const fs = require("fs");
 const vm = require("vm");
+const { argValue, monolithPath } = require("./lib/build-env");
 const {
   round8,
-  argValue,
   loadCommittedRegions,
-  monolithPath,
   specFields,
   priceFields,
-} = require("./lib/util");
+} = require("./lib/record-schema");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },

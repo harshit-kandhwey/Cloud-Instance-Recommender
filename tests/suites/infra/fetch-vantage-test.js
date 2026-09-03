@@ -16,7 +16,7 @@ const {
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
 } = require("../../../tools/fetch-vantage");
-const { loadCommittedRegions } = require("../../../tools/lib/util");
+const { loadCommittedRegions } = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 

@@ -3,7 +3,7 @@
 
 // The service level inside {P}_SPECS. Compute is the only one; the level exists so a
 // later non-compute service is a new key rather than a second format migration. Must
-// match SERVICE in tools/lib/util.js, which is what writes the blob this reads.
+// match SERVICE in tools/lib/record-schema.js, which is what writes the blob this reads.
 const SPECS_SERVICE = "compute";
 
 class BaseInstanceSelector {

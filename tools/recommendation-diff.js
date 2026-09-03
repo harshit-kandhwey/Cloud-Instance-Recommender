@@ -28,12 +28,8 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
-const {
-  ROOT,
-  argValue,
-  loadCommittedRegions,
-  monolithPath,
-} = require("./lib/util");
+const { ROOT, argValue, monolithPath } = require("./lib/build-env");
+const { loadCommittedRegions } = require("./lib/record-schema");
 const {
   SAMPLE_CSV,
   parseSample,

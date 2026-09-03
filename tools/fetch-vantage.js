@@ -21,17 +21,19 @@ const fs = require("fs");
 const path = require("path");
 const {
   ROOT,
-  round8,
   argValue,
   resolveDataDate,
   writeFileAtomic,
   loadGlobals,
+  monolithPath,
+} = require("./lib/build-env");
+const {
+  round8,
   loadCommittedRegions,
   readShippedRegionKeys,
-  monolithPath,
   FIELD_ORDER,
   emitRecordBody,
-} = require("./lib/util");
+} = require("./lib/record-schema");
 
 // Price normalizer (the cross-tool 8-decimal contract, see tools/lib/util.js).
 const price = round8;

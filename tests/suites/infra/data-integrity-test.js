@@ -20,12 +20,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { REPO, buildEngineContext, makeChecker } = require("../harness");
+const { loadGlobals } = require("../../../tools/lib/build-env");
 const {
   loadCommittedRegions,
-  loadGlobals,
   specFields,
   SERVICE,
-} = require("../../../tools/lib/util");
+} = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 

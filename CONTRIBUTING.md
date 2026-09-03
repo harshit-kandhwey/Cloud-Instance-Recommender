@@ -70,7 +70,8 @@ npm run typecheck
 │   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
 │   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
 │   ├── split-data.js                      # Monolith to manifest + per-region files
-│   ├── lib/util.js                        # Shared helpers (round8, atomic write, loaders)
+│   ├── lib/build-env.js                   # Generic Node/CI primitives (argv, atomic write, sandboxed loaders)
+│   ├── lib/record-schema.js               # Shipped record shape (FIELD_ORDER, round8, region loaders)
 │   ├── build-coverage-inventory.js        # npm run coverage:check gate
 │   └── static-server.js                   # Zero-dep static server for the Playwright rig
 │
@@ -172,7 +173,7 @@ Versions live only in [CHANGELOG.md](CHANGELOG.md) and git tags — never in the
 whether it already has a canonical source — and if it does, derive from that
 source instead of retyping it.** Two 3.15 bugs shared one root cause: a second,
 independent copy of a list that already existed elsewhere (`FIELD_ORDER` in
-`tools/lib/util.js`) silently fell behind the original when a field was added
+`tools/lib/record-schema.js`) silently fell behind the original when a field was added
 to one and not the other, and nothing caught it because nothing checked the
 two against each other. Prefer `specFields(name)` / `priceFields(name)` (or
 the equivalent for whatever list you're touching) over writing the field names

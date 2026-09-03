@@ -1,58 +1,24 @@
 "use strict";
 /*
- * tools/lib/util.js — shared build-tool helpers. Node/CI only; never shipped to the
- * page. The 8-decimal price normalizer is a cross-tool contract: fetch-vantage, the
- * official fetchers, data-diff and reconcile must all round identically, or a
- * re-quote of the same price reads as a spurious move in the diff.
+ * tools/lib/record-schema.js — the shipped record's field schema (which fields exist,
+ * which half of the split each belongs to, and their canonical order), plus reading
+ * that shape back out of committed data. The 8-decimal price normalizer is part of
+ * the same cross-tool contract: fetch-vantage, the official fetchers, data-diff and
+ * reconcile must all round identically, or a re-quote of the same price reads as a
+ * spurious move in the diff. See CANONICAL-SOURCES.md — this file is the registry's
+ * entry for per-provider price/spec field membership and order. Split out of the
+ * former tools/lib/util.js 2026-09-04, which mixed this with generic Node/CI
+ * primitives (now tools/lib/build-env.js) under one catch-all name. Node/CI only;
+ * never shipped to the page.
  */
 
 const fs = require("fs");
 const path = require("path");
-const vm = require("vm");
-
-// tools/lib/util.js → repo root.
-const ROOT = path.join(__dirname, "..", "..");
+const { ROOT, runFiles, loadGlobals } = require("./build-env");
 
 // Round to 8 decimals — the deepest precision the shipped data uses. Non-finite
 // values pass through unchanged (callers guard those separately).
 const round8 = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
-
-// Value following a CLI flag in argv, or undefined. argv is injectable for tests.
-function argValue(flag, argv = process.argv) {
-  const i = argv.indexOf(flag);
-  return i !== -1 ? argv[i + 1] : undefined;
-}
-
-// Run shipped JS artifacts in one shared window-like sandbox and return its globals.
-// Shared, not one context each: region files are read as a set and may reference
-// each other's globals exactly as the page would.
-function runFiles(relPaths, root = ROOT) {
-  const sandbox = {};
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  for (const rel of relPaths) {
-    vm.runInContext(fs.readFileSync(path.join(root, rel), "utf8"), sandbox, {
-      filename: rel,
-    });
-  }
-  return sandbox;
-}
-
-// Run a shipped JS artifact in a window-like sandbox and return its globals.
-function loadGlobals(relPath, root = ROOT) {
-  return runFiles([relPath], root);
-}
-
-// The refresh's scratch monolith. fetch-vantage writes the freshly built fat data
-// HERE rather than over js/{name}/{name}-data.js, and reconcile, both diffs and
-// split-data read it from here. The shipped tree therefore survives untouched until
-// split-data runs, which is what lets the diffs read the OLD specs out of the shipped
-// manifest, and what stops a refresh that dies mid-run from leaving a new manifest
-// beside old region files. One definition so no tool can invent a second path.
-// .refresh-cache/ is gitignored, so the scratch artifact can never reach a PR.
-function monolithPath(name, root = ROOT) {
-  return path.join(root, ".refresh-cache", `${name}-monolith.js`);
-}
 
 // The service level inside {P}_SPECS. Compute is the only one; the level exists so a
 // later non-compute service is a new key rather than a second format migration.
@@ -141,50 +107,6 @@ function readShippedRegionKeys(name, prefix, root = ROOT) {
     throw new Error(`[${name}] no ${prefix}_REGION_KEYS in shipped manifest`);
   }
   return keys;
-}
-
-// --date for a refresh: the value becomes {PREFIX}_DATA_DATE, which the page renders
-// verbatim in the "Instance data updated" badge, so whatever is passed here ships to
-// users as-is. Must be a real calendar day in YYYY-MM-DD: the round-trip is what
-// rejects 2026-02-30, which the pattern admits and Date silently rolls to 2026-03-02.
-function resolveDataDate(arg, today = new Date()) {
-  if (arg === undefined) return today.toISOString().slice(0, 10);
-  const d = new Date(`${arg}T00:00:00.000Z`);
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(arg) ||
-    Number.isNaN(d.getTime()) ||
-    d.toISOString().slice(0, 10) !== arg
-  ) {
-    throw new Error(
-      `invalid --date ${arg} — expected a real calendar date as YYYY-MM-DD`,
-    );
-  }
-  return arg;
-}
-
-// Write through a sibling .tmp and rename. The rename is atomic, so a reader never
-// sees a half-written artifact and a write that fails part-way cannot truncate the
-// file it was replacing — a clobbered manifest breaks readShippedRegionKeys on the
-// next run until git restore. .tmp is gitignored, so a hard kill leaves nothing the
-// refresh PR could pick up.
-//
-// Per FILE, not per run: the pipeline writes several artifacts and each rename is
-// its own operation, so a failure between two still leaves a mixed set. Making the
-// set all-or-nothing would need a journal this tooling does not have; what this
-// buys is that no single artifact is ever torn or truncated.
-function writeFileAtomic(target, contents) {
-  const tmp = `${target}.tmp`;
-  try {
-    fs.writeFileSync(tmp, contents, "utf8");
-    fs.renameSync(tmp, target);
-  } catch (err) {
-    try {
-      fs.unlinkSync(tmp);
-    } catch {
-      // Best effort — the write error is the one worth reporting.
-    }
-    throw err;
-  }
 }
 
 // ── The shipped record shape ─────────────────────────────────────────────────
@@ -290,16 +212,7 @@ const emitRecordBody = (fields, record, indent = "    ") =>
   fields.map((f) => `${indent}${f}: ${emitValue(record[f])},`).join("\n");
 
 module.exports = {
-  ROOT,
   round8,
-  argValue,
-  resolveDataDate,
-  writeFileAtomic,
-  loadGlobals,
-  loadCommittedRegions,
-  readShippedRegionKeys,
-  readShippedSpecs,
-  monolithPath,
   SERVICE,
   FIELD_ORDER,
   PRICE_FIELDS,
@@ -307,4 +220,7 @@ module.exports = {
   priceFields,
   emitValue,
   emitRecordBody,
+  loadCommittedRegions,
+  readShippedSpecs,
+  readShippedRegionKeys,
 };

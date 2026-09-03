@@ -227,7 +227,8 @@ Cloud-Instance-Recommender/
 │   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
 │   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
 │   ├── split-data.js                      # Monolith to manifest + per-region files
-│   ├── lib/util.js                        # Shared helpers (round8, atomic write, loaders)
+│   ├── lib/build-env.js                   # Generic Node/CI primitives (argv, atomic write, sandboxed loaders)
+│   ├── lib/record-schema.js               # Shipped record shape (FIELD_ORDER, round8, region loaders)
 │   ├── build-coverage-inventory.js        # npm run coverage:check gate
 │   └── static-server.js                   # Zero-dep static server for the Playwright rig
 │

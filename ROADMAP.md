@@ -529,7 +529,7 @@ until that run writes one, and until then every type composes exactly as before.
   split adds one, driving the real tool over a generated monolith across **all
   three providers** — necessary rather than tidy, since GCP is the only provider
   whose price fields sit mid-record and so the only one that would catch a
-  positional partition bug. The shared record contract in `tools/lib/util.js` gains
+  positional partition bug. The shared record contract in `tools/lib/record-schema.js` gains
   direct coverage of the specs/prices partition and of the serializer that refuses
   to emit a non-serializable value, and the splitter gains a round-trip
   self-check that runs before it writes anything — the old format could only lose a

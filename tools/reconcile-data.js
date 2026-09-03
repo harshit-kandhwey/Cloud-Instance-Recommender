@@ -38,8 +38,8 @@ const {
   argValue,
   writeFileAtomic,
   monolithPath,
-  priceFields,
-} = require("./lib/util");
+} = require("./lib/build-env");
+const { priceFields } = require("./lib/record-schema");
 
 const PROVIDERS = [
   {

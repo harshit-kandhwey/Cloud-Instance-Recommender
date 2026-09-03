@@ -35,14 +35,12 @@
 
 const fs = require("fs");
 const path = require("path");
+const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
 const {
-  ROOT,
   round8,
-  argValue,
-  writeFileAtomic,
   loadCommittedRegions,
   readShippedRegionKeys,
-} = require("./lib/util");
+} = require("./lib/record-schema");
 
 const CATALOG_HOST = "https://cloudbilling.googleapis.com";
 // Compute Engine's well-known billing service id (stable; confirmed 2026-08-17).

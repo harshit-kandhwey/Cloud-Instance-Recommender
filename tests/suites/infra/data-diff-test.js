@@ -234,7 +234,7 @@ const gcp = (o) => ({
 
 // ── GCP spec fields are DERIVED from FIELD_ORDER, not hand-listed ───────────────
 // PROVIDER_CFG.gcp.specFields used to be a second, separately maintained copy of
-// the spec/price split tools/lib/util.js's specFields()/priceFields() already
+// the spec/price split tools/lib/record-schema.js's specFields()/priceFields() already
 // compute canonically — and it drifted: localSsdGiB, added to FIELD_ORDER in
 // 3.15.7, was never added here. A refresh that changed ONLY a type's attached
 // local-SSD size (its price unchanged) would report NO-CHANGES, so split-data
