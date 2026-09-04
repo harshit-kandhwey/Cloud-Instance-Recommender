@@ -217,10 +217,13 @@ jobs:
             echo "pruned=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # Dry-run: keep the diff, the reconcile report (pricing run) and the flip report as
-      # artifacts and stop before touching git.
-      - name: Upload diff report (dry-run)
-        if: ${{ steps.diff.outputs.changed == 'true' && github.event.inputs.dry_run == 'true' }}
+      # Keep the diff, the reconcile report (pricing run) and the flip report as a
+      # downloadable artifact on every non-empty run, not just dry-run. The PR-open
+      # step below truncates these same reports to stay under GitHub's PR-body limit,
+      # so this artifact is where a reviewer reads the full report once truncated.
+      # Dry-run stops here, before touching git; a real run continues to open the PR.
+      - name: Upload diff report
+        if: ${{ steps.diff.outputs.changed == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: data-diff-report
@@ -241,6 +244,7 @@ jobs:
           FLIPPED: ${{ steps.flips.outputs.flipped }}
           REFRESH_PRICING: ${{ needs.scope.outputs.refresh_pricing }}
           DATE: ${{ needs.scope.outputs.date }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           branch="data-refresh/${DATE}-${{ github.run_number }}"
@@ -273,6 +277,9 @@ jobs:
               echo "> the new picks are correct before re-baselining the goldens — see below."
             fi
             echo
+          } > pr-header.md
+
+          {
             if [ "$REFRESH_PRICING" = "true" ] && [ -f reconcile-report.md ]; then
               cat reconcile-report.md
               echo
@@ -282,7 +289,36 @@ jobs:
               echo
             fi
             cat diff-report.md
-          } > pr-body.md
+          } > pr-reports.md
+
+          # GitHub's PR body is capped at 65,536 characters ("Body is too long"); a
+          # routine refresh's reports alone can run to 3x that (measured 2026-09-04:
+          # 202,933 bytes for the diff report alone). The header above is always small
+          # and always kept whole; the reports are truncated to whatever budget remains,
+          # with the full versions never lost — they're the "data-diff-report" artifact
+          # uploaded above, so nothing this truncates is unrecoverable.
+          body_cap=55000
+          header_size=$(wc -c < pr-header.md)
+          reports_budget=$((body_cap - header_size))
+          reports_size=$(wc -c < pr-reports.md)
+
+          if [ "$reports_size" -gt "$reports_budget" ]; then
+            head -c "$reports_budget" pr-reports.md > pr-reports.truncated.md
+            sed -i '$ d' pr-reports.truncated.md # drop the last, likely partial line
+            mv pr-reports.truncated.md pr-reports.md
+            {
+              echo
+              echo "---"
+              echo
+              echo "> [!NOTE]"
+              echo "> **Report truncated** — the full diff/reconcile/flip reports ran to"
+              echo "> ${reports_size} characters, over GitHub's PR-body limit. Read the"
+              echo "> complete reports in the \`data-diff-report\` artifact on"
+              echo "> [this run]($RUN_URL)."
+            } >> pr-reports.md
+          fi
+
+          cat pr-header.md pr-reports.md > pr-body.md
 
           gh pr create \
             --base main \
