@@ -55,6 +55,13 @@ const PROVIDERS = [
 
 const num = (v) => (v === undefined || v === null ? NaN : Number(v));
 
+// -1 sentinel for "Vantage reports no figure" (bare-metal .metal types, ~3% of
+// AWS records, probed live 2026-09-04) — never 0, a real published value for a
+// slow/burstable size that must stay distinguishable from "unknown". Kept as a
+// number because emitValue refuses undefined; rule-engine.js's fallback reads
+// this exact sentinel.
+const orUnreported = (v) => (Number.isFinite(v) ? v : -1);
+
 // physical_processor string → manufacturer bucket.
 function awsProcessor(physical) {
   const p = String(physical || "");
@@ -256,6 +263,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       vCpus: num(raw.vCPU),
       memorySizeInGiB: num(raw.memory),
       nitroEnclavesSupport: raw.nitro_enclave_support ? 1 : 0,
+      baselineBandwidthGbps: orUnreported(num(raw.baseline_bandwidth_gbps)),
+      burstBandwidthGbps: orUnreported(num(raw.burst_bandwidth_gbps)),
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memorySizeInGiB))
       return out; // missing spec → don't ship a NaN-spec record
@@ -327,6 +336,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     processorArchitecture: azureProcessor(family, isARM),
     vCpus: num(raw.vcpu),
     memoryGiB: num(raw.memory),
+    acceleratedNetworking: raw.accelerated_networking ? 1 : 0,
   };
   if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
     return out; // missing spec → don't ship a NaN-spec record

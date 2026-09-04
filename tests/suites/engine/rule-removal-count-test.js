@@ -70,7 +70,7 @@ console.log("[a rule that removes nothing keeps its plain label — no count]");
   check("1d fired exactly once", oneD.length === 1, JSON.stringify(rules(res)));
   check(
     "and it carries no removal count, because it removed nothing",
-    oneD[0] === "1d: Network-tier preference (≥4 vCPUs)",
+    oneD[0] === "1d: Network-tier preference",
     JSON.stringify(oneD),
   );
   check(

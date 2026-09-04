@@ -129,6 +129,13 @@ const FIELD_ORDER = {
     "vCpus",
     "memorySizeInGiB",
     "nitroEnclavesSupport",
+    // Real network-bandwidth signal for Rule 1d's network-tier preference (see
+    // rule-engine.js), replacing a vCpus>=4 proxy. -1 means "not reported" (the
+    // ~3% of records, mostly .metal bare-metal types, Vantage gives no figure
+    // for) — never 0, which is a real, if rare, published value and must not
+    // collapse into "unknown, fall back to the proxy".
+    "baselineBandwidthGbps",
+    "burstBandwidthGbps",
     "onDemandLinuxHr",
     "onDemandWindowsHr",
   ],
@@ -140,6 +147,11 @@ const FIELD_ORDER = {
     "processorArchitecture",
     "vCpus",
     "memoryGiB",
+    // 1/0, matching isARM/nitroEnclavesSupport's convention (emitValue accepts
+    // only strings and finite numbers, never a JS boolean). Real signal for
+    // Rule 1d's network-tier preference, replacing a vCpus>=4 proxy on this
+    // provider — see rule-engine.js.
+    "acceleratedNetworking",
     "linuxPrice",
     "windowsPrice",
   ],

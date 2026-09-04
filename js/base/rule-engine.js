@@ -11,7 +11,9 @@
 //   1a  Burstable exclusion  — Production/Staging block t-family (AWS), B-series (Azure), f1/g1/e2-shared (GCP)
 //   1b  Generation + Compliance — Production + Compliance: current-gen only; PCI/HIPAA (AWS): Nitro required
 //   1c  Size floor — Production/Staging: no nano/micro (AWS), ≥2 vCPUs (Azure/GCP)
-//   1d  Network preference — Production + DB/Web: prefer ≥4 vCPU instances (higher network bandwidth tier)
+//   1d  Network preference — Production + DB/Web: prefer instances with a higher
+//       network tier (AWS/Azure: real published fields; GCP: no better signal exists,
+//       kept as a ≥4 vCPU proxy — see hasNetworkTier)
 //   OS  Windows: exclude ARM/Graviton; macOS (AWS): mac1/mac2 families only
 //   MG  MinGen: exclude instances older than the specified generation (m5<m6<m7 / Dsv3<Dsv4<Dsv5 / N1<N2<N4)
 //   WL  Workload preference: sort results so workload-appropriate families appear first
@@ -34,7 +36,7 @@
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
- * @property {{ nitroEnclavesSupport?: number|string }} [originalData]
+ * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string }} [originalData]
  */
 
 /**
@@ -219,6 +221,57 @@ const RuleEngine = (() => {
     return (ACCELERATOR_FAMILY_PREFIXES[provider] || []).some((f) =>
       fam.startsWith(f),
     );
+  }
+
+  // Rule 1d's network-tier preference (Production + DB/Web) used to read
+  // `vCpus >= 4` as a stand-in for "gets a meaningfully higher network
+  // bandwidth tier" on all three providers alike. Probed live 2026-09-04:
+  // AWS and Azure each publish a real per-type signal; GCP's feed does not.
+  //
+  //   AWS   `baseline_bandwidth_gbps` — a real number, present on ~97% of
+  //         records (missing mainly on .metal bare-metal types). Floor
+  //         chosen to reproduce today's vCpus>=4 outcome closely on ordinary
+  //         sizes (m5.xlarge 1.25 Gbps passes, m5.large 0.75 and t3.medium
+  //         0.256 do not) while now catching what vCPU count gets wrong in
+  //         both directions.
+  //   Azure `accelerated_networking` — a boolean (stored 1/0, since
+  //         emitValue takes no JS boolean), not a bandwidth number, but the
+  //         closest real "gets the fast network path" signal Azure
+  //         publishes.
+  //   GCP   `network_performance` is the string "Variable" for every single
+  //         shipped record (checked against ALL of them, not a sample) — it
+  //         carries no per-type information at all. There is nothing better
+  //         to read, so GCP KEEPS the vCpus>=4 proxy. Not a placeholder for
+  //         a future fix — this was checked and is a genuine dead end for
+  //         this feed.
+  //
+  // Both real fields are read via `inst.originalData`, the same pattern
+  // `isNitroCapable` above already uses for an engine-only field the general
+  // selector does not promote to a named Instance property. Neither field
+  // exists yet on any SHIPPED record — both are new to FIELD_ORDER, filled
+  // only by the next scheduled refresh — so `undefined` here means "dataset-
+  // wide dormant," not "this one record is missing what its siblings have,"
+  // and falls back to the exact pre-fix behaviour rather than going inert.
+  const AWS_NETWORK_TIER_GBPS = 1;
+  /**
+   * @param {Instance} inst
+   * @param {Provider} provider
+   */
+  function hasNetworkTier(inst, provider) {
+    const raw = inst.originalData || {};
+    if (provider === "aws") {
+      const b = Number(raw.baselineBandwidthGbps);
+      // -1 is fetch-vantage's "not reported" sentinel (never a real value);
+      // undefined is the pre-refresh dormant case. Both fall back.
+      if (!Number.isFinite(b) || b < 0) return inst.vCpus >= 4;
+      return b >= AWS_NETWORK_TIER_GBPS;
+    }
+    if (provider === "azure") {
+      const v = raw.acceleratedNetworking;
+      if (v === undefined) return inst.vCpus >= 4;
+      return v === 1 || v === "1" || v === 1.0;
+    }
+    return inst.vCpus >= 4; // GCP: see note above — no better signal exists.
   }
 
   // SQL Server is licensed per core with a 4-core minimum per VM, so a 1-2 vCPU pick
@@ -558,10 +611,10 @@ const RuleEngine = (() => {
         workload === "web")
     ) {
       const before = filtered.length;
-      const net = filtered.filter((i) => i.vCpus >= 4);
+      const net = filtered.filter((i) => hasNetworkTier(i, provider));
       if (net.length > 0) {
         filtered = net;
-        rules.push(withCount("1d: Network-tier preference (≥4 vCPUs)", before));
+        rules.push(withCount("1d: Network-tier preference", before));
       }
     }
 
@@ -757,6 +810,7 @@ const RuleEngine = (() => {
     isCurrentGen,
     isARM,
     isWindowsOS,
+    hasNetworkTier,
     meetsMinGeneration,
     // Exposed for the alternative-strategy picks (base-instance-selector):
     isWorkloadFit,

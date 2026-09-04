@@ -6,6 +6,7 @@
     "vcpu": 4,
     "memory": 16,
     "arch": ["x64"],
+    "accelerated_networking": true,
     "regions": {
       "europe-west": "West Europe",
       "us-east": "East US",
@@ -45,6 +46,7 @@
     "vcpu": 8,
     "memory": 64,
     "arch": ["x64"],
+    "accelerated_networking": false,
     "regions": {
       "europe-west": "West Europe",
       "us-east": "East US",

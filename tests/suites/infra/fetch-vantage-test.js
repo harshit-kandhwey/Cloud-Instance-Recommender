@@ -109,6 +109,17 @@ function splitDataParity(monolith) {
     "[aws] previous-gen c1.medium → currentGeneration 0",
     g.us_east_1["c1.medium"].currentGeneration === 0,
   );
+  check(
+    "[aws] m5.large carries its real baseline/burst bandwidth",
+    m5.baselineBandwidthGbps === 0.75 && m5.burstBandwidthGbps === 10,
+    JSON.stringify(m5),
+  );
+  check(
+    "[aws] a type with no reported bandwidth gets the -1 sentinel, not 0",
+    g.us_east_1["c1.medium"].baselineBandwidthGbps === -1 &&
+      g.us_east_1["c1.medium"].burstBandwidthGbps === -1,
+    JSON.stringify(g.us_east_1["c1.medium"]),
+  );
   check("[aws] instanceCount = 4 types × 2 regions = 8", instanceCount === 8);
 
   const parity = splitDataParity(monolith);
@@ -194,6 +205,21 @@ function splitDataParity(monolith) {
   check(
     "[azure] legacy A-series a0 stays Intel",
     g.eastus.a0.processorArchitecture === "Intel",
+    JSON.stringify(g.eastus.a0),
+  );
+  check(
+    "[azure] accelerated_networking true → 1",
+    g.eastus.d4sv5.acceleratedNetworking === 1,
+    JSON.stringify(g.eastus.d4sv5),
+  );
+  check(
+    "[azure] accelerated_networking false → 0, not dropped",
+    g.eastus.e8asv5.acceleratedNetworking === 0,
+    JSON.stringify(g.eastus.e8asv5),
+  );
+  check(
+    "[azure] a type with no accelerated_networking field at all also reads 0",
+    g.eastus.a0.acceleratedNetworking === 0,
     JSON.stringify(g.eastus.a0),
   );
 }

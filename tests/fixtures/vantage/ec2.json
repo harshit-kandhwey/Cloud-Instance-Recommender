@@ -8,6 +8,8 @@
     "physical_processor": "Intel Xeon Platinum 8175",
     "nitro_enclave_support": false,
     "generation": "current",
+    "baseline_bandwidth_gbps": 0.75,
+    "burst_bandwidth_gbps": 10,
     "pricing": {
       "us-east-1": {
         "linux": {
