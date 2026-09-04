@@ -935,6 +935,22 @@ says the new path was reached for instead of the old one being finished.
   a deliberate trigger or remove it. _Found while planning
   [3.15](#315--data-model--catalogue-fidelity); scheduled in 3.17. The specs/prices
   split makes the version that does run far cheaper, so decide after it lands._
+- **ENV, OS, Workload, Compliance, Min Gen, Exclude and Include Only are invisible
+  to the column-mapping panel.** `COLUMN_MAPPINGS` — the list both auto-match and
+  the manual mapping dropdown draw from (`js/base/app-core.js`'s `pageCanonicals()`)
+  — does not include any of these seven columns; the code's own comment says so
+  plainly: "ENV/OS/Workload/Compliance/Min Gen/Exclude are read literally." A file
+  whose column is named "Operating System" instead of "OS", or "Environment"
+  instead of "ENV", is not offered a synonym match AND cannot be mapped by hand
+  either — the column is invisible to the tool with no recourse in the UI, only a
+  silent fall-through to that rule's default (Linux, General, no compliance, …).
+  This is upstream of and distinct from the already-shipped 3.12 check ("Unknown
+  rule values must be reported") — that one catches a wrong VALUE in a correctly
+  NAMED column; this is the column never being found at all, which produces no
+  warning of any kind because nothing today treats these seven as columns capable
+  of being "found" or "missing" in the first place. _Found 2026-09-04 while
+  scoping [3.16](#316--attribute-filters--rule-fidelity)'s network-tier work,
+  unrelated to it; not yet scheduled to a specific minor._
 
 ## Suggesting an item
 
