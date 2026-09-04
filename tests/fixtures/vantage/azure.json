@@ -7,6 +7,7 @@
     "memory": 16,
     "arch": ["x64"],
     "accelerated_networking": true,
+    "vcpus_percore": 2,
     "regions": {
       "europe-west": "West Europe",
       "us-east": "East US",

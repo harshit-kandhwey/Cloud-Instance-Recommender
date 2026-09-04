@@ -208,6 +208,12 @@ async function processRecommendations() {
     // Comprehensive AWS filtering options (only if AWS functions are available)
     currentGenerationOnly:
       document.getElementById("currentGenerationOnly")?.checked || false,
+    // SQL Server's licence floor (rule-engine.js Rule SQL) counts vCPUs unless
+    // this is on, in which case it counts physical cores (AWS/Azure only —
+    // GCP has no comparable field and is unaffected either way). Off by
+    // default: a licensing-model choice, not a data-accuracy fix.
+    sqlPhysicalCoreLicensing:
+      document.getElementById("sqlPhysicalCoreLicensing")?.checked || false,
     restrictInstanceFamilyNames:
       document.getElementById("restrictInstanceFamilyNames")?.checked || false,
     selectedInstanceFamilyNames:

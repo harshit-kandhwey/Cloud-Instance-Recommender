@@ -25,6 +25,7 @@ const PRESET_CHECKBOXES = [
   "cpuBased",
   "memoryBased",
   "currentGenerationOnly",
+  "sqlPhysicalCoreLicensing",
   "restrictInstanceFamilyNames",
   "restrictProcessorManufacturers",
   "restrictMainFamilies",

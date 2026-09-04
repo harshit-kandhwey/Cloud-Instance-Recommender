@@ -21,8 +21,11 @@
 //       workload excludes one, so a GPU box is never recommended by accident
 //   BP  Burstable preference — Dev/Test at low utilization prefers burstable
 //       families (the inverse of 1a's Production/Staging exclusion)
-//   SQL SQL Server: at least 4 vCPUs, because SQL Server is licensed per core
-//       with a 4-core minimum per VM — a smaller box is billed for 4 anyway
+//   SQL SQL Server: at least 4 vCPUs (virtual cores) by default, because SQL
+//       Server is licensed per core with a 4-core minimum per VM — a smaller
+//       box is billed for 4 anyway. options.sqlPhysicalCoreLicensing switches
+//       the floor to physical cores (AWS/Azure only; GCP has no such field
+//       and keeps the vCPU floor regardless), for License Mobility/BYOL.
 // @ts-check
 
 /**
@@ -36,7 +39,7 @@
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
- * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string }} [originalData]
+ * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number }} [originalData]
  */
 
 /**
@@ -53,6 +56,8 @@
  * @property {number} [rowMemoryUtil] resolved memory utilization % (0 = unknown)
  * @property {number} [cpuDownsizeMax] the run's "low utilization" threshold
  * @property {number} [memoryDownsizeMax] the same, for memory
+ * @property {boolean} [sqlPhysicalCoreLicensing] Rule SQL's floor counts
+ *   physical cores instead of vCPUs (AWS/Azure only) — see rule-engine.js
  */
 
 /** @typedef {"aws"|"azure"|"gcp"} Provider */
@@ -274,11 +279,51 @@ const RuleEngine = (() => {
     return inst.vCpus >= 4; // GCP: see note above — no better signal exists.
   }
 
+  // Physical core count for Rule SQL's optional physical-core licensing mode
+  // (options.sqlPhysicalCoreLicensing), read the same `inst.originalData` way
+  // as hasNetworkTier above. Returns null — never a guess — when no real
+  // count can be derived: GCP publishes no core-count field in this feed at
+  // all; AWS's `cores` carries the same -1 "not reported" sentinel and ~3%
+  // bare-metal gap as its bandwidth fields; Azure's `vcpusPerCore` uses 0 as
+  // ITS OWN "not reported" value (never a real ratio). `Number(undefined)` is
+  // `NaN`, so the pre-refresh dormant case (neither field exists on any
+  // shipped record yet) collapses into the same null path with no separate
+  // check needed.
+  /**
+   * @param {Instance} inst
+   * @param {Provider} provider
+   * @returns {number|null}
+   */
+  function physicalCores(inst, provider) {
+    const raw = inst.originalData || {};
+    if (provider === "aws") {
+      const c = Number(raw.cores);
+      return Number.isFinite(c) && c > 0 ? c : null;
+    }
+    if (provider === "azure") {
+      const perCore = Number(raw.vcpusPerCore);
+      if (!Number.isFinite(perCore) || perCore <= 0) return null;
+      return inst.vCpus / perCore;
+    }
+    return null; // GCP: no core-count field exists in this feed.
+  }
+
   // SQL Server is licensed per core with a 4-core minimum per VM, so a 1-2 vCPU pick
   // is billed as 4 anyway — the smaller box saves no licence money and only costs
   // performance. Raises the floor, not the pick (an 8 vCPU SQL box stays 8). Source:
   // Microsoft "Licensing SQL Server 2022" (four core licences minimum per VM). If
   // that floor or a customer agreement changes, this constant is the one place to edit.
+  //
+  // This counts VIRTUAL cores (vCPUs) by default — the licensing path for a VM
+  // licensed directly, with no Software Assurance / License Mobility host-based
+  // licensing involved, which Microsoft's own guidance also counts by vCPU with
+  // the same 4-per-VM minimum. `options.sqlPhysicalCoreLicensing` switches the
+  // floor to physical cores instead, for the License Mobility / BYOL path where
+  // Microsoft counts the host's physical cores — materially different on the
+  // ~2:1 hyperthreaded ratio most AWS/Azure instances carry (an 8-vCPU instance
+  // is often only 4 physical cores). Off by default: this is a licensing-model
+  // choice, not a data-accuracy fix, and must not silently change anyone's
+  // existing recommendations.
   const SQL_MIN_CORES = 4;
   const SQL_WORKLOADS = ["sql server", "sql", "sqlserver", "mssql"];
 
@@ -680,18 +725,32 @@ const RuleEngine = (() => {
     // so neither can reorder a candidate the floor should have removed. Degrades like
     // every filter — if nothing clears the floor, the pool stands and the row says so.
     if (SQL_WORKLOADS.includes(workload)) {
+      // GCP can never honour the toggle (physicalCores() always returns null
+      // for it — no comparable field exists in this feed), so its label says
+      // vCPU regardless of what the toggle requests; saying "physical-core"
+      // for a rule that structurally always falls back to vCPUs would
+      // describe a decision that never actually happens.
+      const physical = !!options.sqlPhysicalCoreLicensing && provider !== "gcp";
+      const unit = physical ? "physical-core" : "vCPU";
+      // physicalCores() returning null (GCP always; AWS/Azure with no real
+      // count yet) falls back to the vCPU floor — the exact pre-toggle
+      // behaviour — rather than guessing a ratio no field actually gives.
+      const meetsFloor = (i) => {
+        const cores = physical ? physicalCores(i, provider) : null;
+        return (cores ?? i.vCpus) >= SQL_MIN_CORES;
+      };
       const before = filtered.length;
-      const licensed = filtered.filter((i) => i.vCpus >= SQL_MIN_CORES);
+      const licensed = filtered.filter(meetsFloor);
       if (licensed.length > 0) {
         filtered = licensed;
         if (filtered.length < before) {
           rules.push(
-            withCount(`SQL: ${SQL_MIN_CORES}-vCPU licence floor`, before),
+            withCount(`SQL: ${SQL_MIN_CORES}-${unit} licence floor`, before),
           );
         }
       } else {
         rules.push(
-          `SQL: ${SQL_MIN_CORES}-vCPU licence floor not applied (no candidate that large)`,
+          `SQL: ${SQL_MIN_CORES}-${unit} licence floor not applied (no candidate that large)`,
         );
       }
     }
@@ -811,6 +870,7 @@ const RuleEngine = (() => {
     isARM,
     isWindowsOS,
     hasNetworkTier,
+    physicalCores,
     meetsMinGeneration,
     // Exposed for the alternative-strategy picks (base-instance-selector):
     isWorkloadFit,

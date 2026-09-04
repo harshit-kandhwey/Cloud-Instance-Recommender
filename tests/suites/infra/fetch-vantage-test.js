@@ -120,6 +120,16 @@ function splitDataParity(monolith) {
       g.us_east_1["c1.medium"].burstBandwidthGbps === -1,
     JSON.stringify(g.us_east_1["c1.medium"]),
   );
+  check(
+    "[aws] m5.large carries its real physical core count",
+    m5.cores === 1,
+    JSON.stringify(m5),
+  );
+  check(
+    "[aws] a type with no reported cores gets the -1 sentinel too",
+    g.us_east_1["c1.medium"].cores === -1,
+    JSON.stringify(g.us_east_1["c1.medium"]),
+  );
   check("[aws] instanceCount = 4 types × 2 regions = 8", instanceCount === 8);
 
   const parity = splitDataParity(monolith);
@@ -220,6 +230,16 @@ function splitDataParity(monolith) {
   check(
     "[azure] a type with no accelerated_networking field at all also reads 0",
     g.eastus.a0.acceleratedNetworking === 0,
+    JSON.stringify(g.eastus.a0),
+  );
+  check(
+    "[azure] d4sv5 carries its real vcpus_percore",
+    d4.vcpusPerCore === 2,
+    JSON.stringify(d4),
+  );
+  check(
+    "[azure] a type with no vcpus_percore field at all reads 0, Vantage's own 'not reported' value",
+    g.eastus.a0.vcpusPerCore === 0,
     JSON.stringify(g.eastus.a0),
   );
 }

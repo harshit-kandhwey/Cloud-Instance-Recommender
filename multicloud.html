@@ -589,6 +589,25 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
               </div>
             </div>
 
+            <!-- SQL Server Licensing Model -->
+            <div class="form-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="sqlPhysicalCoreLicensing" />
+                <label for="sqlPhysicalCoreLicensing">
+                  <strong
+                    >🗄️ Physical-Core Licensing (License Mobility /
+                    BYOL)</strong
+                  >
+                  <small style="display: block; color: var(--text-muted)">
+                    SQL Server's 4-core licence floor counts physical cores
+                    instead of vCPUs on AWS/Azure rows — off by default, which
+                    counts vCPUs. No effect on GCP rows; no comparable field
+                    exists for that provider
+                  </small>
+                </label>
+              </div>
+            </div>
+
             <!-- Processor Manufacturer Filter -->
             <div class="form-group">
               <div class="checkbox-item">

@@ -66,6 +66,10 @@ const INTENTIONAL = {
   ruleDefaultMinGenAws: ["multicloud.html"],
   ruleDefaultMinGenAzure: ["multicloud.html"],
   ruleDefaultMinGenGcp: ["multicloud.html"],
+  // GCP has no comparable physical-core-count field in this feed (checked
+  // live 2026-09-04 — no field of any kind), so the toggle would do nothing
+  // on a GCP-only page. Present everywhere a real effect is possible.
+  sqlPhysicalCoreLicensing: ["aws.html", "azure.html", "multicloud.html"],
 };
 
 // ─── Every js/base lookup is on every page, or deliberately not ──────────────

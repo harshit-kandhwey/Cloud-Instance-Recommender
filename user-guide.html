@@ -2715,6 +2715,18 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             </td>
           </tr>
           <tr>
+            <td>Physical-Core Licensing (License Mobility / BYOL)</td>
+            <td>
+              Present on the AWS, Azure and Multi-Cloud pages. Off by default,
+              which sizes SQL Server's 4-core licence floor by vCPU — correct
+              for a VM licensed directly. Turn it on only under License Mobility
+              / BYOL, where Microsoft counts physical cores instead; AWS and
+              Azure instances are typically hyperthreaded ~2:1, so an 8-vCPU
+              instance is often only 4 physical cores. Has no effect on GCP rows
+              — no comparable field exists for that provider.
+            </td>
+          </tr>
+          <tr>
             <td>Instance Family Names</td>
             <td>
               Restrict to specific family categories: General Purpose, Compute

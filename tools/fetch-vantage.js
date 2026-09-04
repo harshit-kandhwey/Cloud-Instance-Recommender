@@ -265,6 +265,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       nitroEnclavesSupport: raw.nitro_enclave_support ? 1 : 0,
       baselineBandwidthGbps: orUnreported(num(raw.baseline_bandwidth_gbps)),
       burstBandwidthGbps: orUnreported(num(raw.burst_bandwidth_gbps)),
+      cores: orUnreported(num(raw.cores)),
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memorySizeInGiB))
       return out; // missing spec → don't ship a NaN-spec record
@@ -337,6 +338,12 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     vCpus: num(raw.vcpu),
     memoryGiB: num(raw.memory),
     acceleratedNetworking: raw.accelerated_networking ? 1 : 0,
+    // 0 is Vantage's own "not reported" value for this field (never a real
+    // vCPUs-per-core ratio), so no extra sentinel is needed beyond what num()
+    // and the missing-field case both already collapse to.
+    vcpusPerCore: Number.isFinite(num(raw.vcpus_percore))
+      ? num(raw.vcpus_percore)
+      : 0,
   };
   if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
     return out; // missing spec → don't ship a NaN-spec record

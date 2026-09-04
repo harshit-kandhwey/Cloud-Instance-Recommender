@@ -136,6 +136,11 @@ const FIELD_ORDER = {
     // collapse into "unknown, fall back to the proxy".
     "baselineBandwidthGbps",
     "burstBandwidthGbps",
+    // Physical core count (Vantage's own field), for Rule SQL's optional
+    // physical-core licensing mode — see rule-engine.js. Same -1 "not
+    // reported" sentinel and same ~3% bare-metal gap as the bandwidth fields
+    // above (the two are missing on exactly the same records).
+    "cores",
     "onDemandLinuxHr",
     "onDemandWindowsHr",
   ],
@@ -152,6 +157,10 @@ const FIELD_ORDER = {
     // Rule 1d's network-tier preference, replacing a vCpus>=4 proxy on this
     // provider — see rule-engine.js.
     "acceleratedNetworking",
+    // vCPUs per physical core (1 = no hyperthreading, 2 = hyperthreaded).
+    // Vantage's own value; 0 means "not reported", the field's own convention
+    // (never a real ratio) — see Rule SQL's physical-core licensing mode.
+    "vcpusPerCore",
     "linuxPrice",
     "windowsPrice",
   ],

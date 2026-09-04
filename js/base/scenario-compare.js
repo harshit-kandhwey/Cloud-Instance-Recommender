@@ -225,6 +225,7 @@ const SCENARIO_CONFIG_LABELS = {
   cpuBased: "CPU-based sizing",
   memoryBased: "Memory-based sizing",
   currentGenerationOnly: "Current generation only",
+  sqlPhysicalCoreLicensing: "SQL Server physical-core licensing",
   restrictInstanceFamilyNames: "Instance family name filter",
   restrictProcessorManufacturers: "Processor manufacturer filter",
   restrictMainFamilies: "Instance family/series filter",
