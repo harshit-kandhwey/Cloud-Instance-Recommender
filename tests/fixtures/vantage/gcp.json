@@ -5,6 +5,7 @@
     "vCPU": 4,
     "memory": 16,
     "generation": "current",
+    "shared_cpu": false,
     "pricing": {
       "us-central1": {
         "linux": {
@@ -71,6 +72,7 @@
     "vCPU": 4,
     "memory": 16,
     "generation": "current",
+    "shared_cpu": true,
     "pricing": {
       "us-central1": {
         "linux": {

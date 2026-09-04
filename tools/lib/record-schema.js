@@ -141,6 +141,16 @@ const FIELD_ORDER = {
     // reported" sentinel and same ~3% bare-metal gap as the bandwidth fields
     // above (the two are missing on exactly the same records).
     "cores",
+    // Minutes a burstable instance can sustain full CPU before throttling —
+    // real signal for burstable-family detection (see rule-engine.js
+    // isBurstable), replacing a hardcoded family list. -1 means "not
+    // reported": true for every non-burstable type (the overwhelming
+    // majority) AND for the one demonstrated gap, t1 — an ancient family
+    // that IS burstable but that Vantage doesn't report this field for.
+    // isBurstable ORs the real signal with the family list rather than
+    // replacing it outright, so t1 and the pre-refresh dormant case both
+    // keep classifying correctly.
+    "burstMinutes",
     "onDemandLinuxHr",
     "onDemandWindowsHr",
   ],
@@ -170,6 +180,12 @@ const FIELD_ORDER = {
     "generation",
     "vCpus",
     "memoryGiB",
+    // Vantage's own shared-core classification (a real boolean, present on
+    // every GCP record with no gap) — real signal for burstable-family
+    // detection (see rule-engine.js isBurstable), replacing the hardcoded
+    // f1/g1/e2-shared-core list. 1/0, matching isARM's convention (emitValue
+    // never accepts a JS boolean).
+    "sharedCpu",
     // Attached local SSD in GiB, 0 when the type has none. A spec: it is a property
     // of the machine type, identical in every region. Needed because GCP prices
     // local SSD as a separate per-GiB SKU, so a type that bundles one cannot be

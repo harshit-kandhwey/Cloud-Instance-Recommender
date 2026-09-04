@@ -47,6 +47,7 @@
     "physical_processor": "AMD EPYC 7571",
     "nitro_enclave_support": false,
     "generation": "current",
+    "burst_minutes": 144,
     "pricing": {
       "us-east-1": {
         "linux": {

@@ -8,7 +8,8 @@
 //   Min Gen    : AWS gen number (5/6/7), Azure v-number (3/4/5), GCP family (n2/n4)
 //
 // Rule reference:
-//   1a  Burstable exclusion  — Production/Staging block t-family (AWS), B-series (Azure), f1/g1/e2-shared (GCP)
+//   1a  Burstable exclusion  — Production/Staging block burstable instances (see isBurstable:
+//       AWS/GCP real fields, Azure family-prefix proxy — no better signal exists)
 //   1b  Generation + Compliance — Production + Compliance: current-gen only; PCI/HIPAA (AWS): Nitro required
 //   1c  Size floor — Production/Staging: no nano/micro (AWS), ≥2 vCPUs (Azure/GCP)
 //   1d  Network preference — Production + DB/Web: prefer instances with a higher
@@ -39,7 +40,7 @@
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
- * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number }} [originalData]
+ * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number, burstMinutes?: number, sharedCpu?: number|string }} [originalData]
  */
 
 /**
@@ -344,15 +345,41 @@ const RuleEngine = (() => {
     return size in AWS_SIZE_RANK ? AWS_SIZE_RANK[size] : 99;
   }
 
+  // Probed live 2026-09-04: AWS publishes `burst_minutes` (how long a burstable
+  // type can sustain full CPU before throttling) but only on 28 of 1428 records —
+  // every t2/t3/t3a/t4g type, but NOT t1.micro, an ancient (2010-era) family that
+  // IS burstable but that Vantage simply doesn't report this field for. GCP
+  // publishes `shared_cpu`, a real boolean present on ALL 535 records with no gap
+  // at all. Azure publishes neither — no field of any kind distinguishes B-series
+  // from the rest, so it keeps the family-prefix proxy, a genuine dead end like
+  // GCP's network-tier and SQL-core fields elsewhere in this file.
+  //
+  // AWS ORs the real field with the family list rather than replacing it: the
+  // list alone is false for every non-burstable type regardless, so running it
+  // as a fallback is free, and it is what keeps t1.micro (and the pre-refresh
+  // dormant case, where the field doesn't exist on any shipped record yet)
+  // classifying exactly as before. A future burstable family Vantage flags with
+  // burst_minutes now self-classifies without a code change even before it's
+  // added to the list. GCP's field has no such gap once a refresh has run —
+  // dormant (undefined) is the only fallback case it needs.
   /**
    * @param {Instance} inst
    * @param {Provider} provider
    */
   function isBurstable(inst, provider) {
     const fam = (inst.family || "").toLowerCase();
-    if (provider === "aws") return AWS_BURSTABLE_FAMILIES.includes(fam);
-    if (provider === "azure") return fam.startsWith("b"); // B-series: bsv2, bsv3, bpsv2, …
+    const raw = inst.originalData || {};
+    if (provider === "aws") {
+      const bm = Number(raw.burstMinutes);
+      if (Number.isFinite(bm) && bm >= 0) return true;
+      return AWS_BURSTABLE_FAMILIES.includes(fam);
+    }
+    if (provider === "azure") return fam.startsWith("b"); // B-series: bsv2, bsv3, bpsv2, … — no real field exists
     if (provider === "gcp") {
+      if (raw.sharedCpu !== undefined)
+        return raw.sharedCpu === 1 || raw.sharedCpu === "1";
+      // Dormant fallback — the exact pre-fix behaviour, for records shipped
+      // before sharedCpu existed in FIELD_ORDER.
       if (GCP_BURSTABLE_SERIES.includes(fam)) return true;
       // e2 shared-core: only micro/small/medium (not full e2 standard/highmem/highcpu)
       if (fam === "e2") {

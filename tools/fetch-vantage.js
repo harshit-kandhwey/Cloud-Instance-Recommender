@@ -266,6 +266,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       baselineBandwidthGbps: orUnreported(num(raw.baseline_bandwidth_gbps)),
       burstBandwidthGbps: orUnreported(num(raw.burst_bandwidth_gbps)),
       cores: orUnreported(num(raw.cores)),
+      burstMinutes: orUnreported(num(raw.burst_minutes)),
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memorySizeInGiB))
       return out; // missing spec → don't ship a NaN-spec record
@@ -301,6 +302,11 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       // Absent or false reads as 0, never undefined: emitValue refuses undefined,
       // and "no local SSD" must be a value rather than a hole in the record.
       localSsdGiB: num(raw.local_ssd_size) || 0,
+      // 1/0, matching isARM's convention. Unlike the AWS/Azure network-tier and
+      // core-count fields, this one is a real boolean present on every GCP
+      // record Vantage publishes — no "not reported" case exists once a refresh
+      // has actually run this line.
+      sharedCpu: raw.shared_cpu === true ? 1 : 0,
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
       return out; // missing spec → don't ship a NaN-spec record

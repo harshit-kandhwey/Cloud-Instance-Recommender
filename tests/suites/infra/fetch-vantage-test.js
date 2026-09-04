@@ -130,6 +130,16 @@ function splitDataParity(monolith) {
     g.us_east_1["c1.medium"].cores === -1,
     JSON.stringify(g.us_east_1["c1.medium"]),
   );
+  check(
+    "[aws] m5a.large carries its real burst_minutes even though it isn't a T family",
+    g.us_east_1["m5a.large"].burstMinutes === 144,
+    JSON.stringify(g.us_east_1["m5a.large"]),
+  );
+  check(
+    "[aws] a type with no reported burst_minutes gets the -1 sentinel too",
+    m5.burstMinutes === -1,
+    JSON.stringify(m5),
+  );
   check("[aws] instanceCount = 4 types × 2 regions = 8", instanceCount === 8);
 
   const parity = splitDataParity(monolith);
@@ -346,6 +356,16 @@ function splitDataParity(monolith) {
     "[gcp] ARM t2a → cpuPlatform ARM, isARM 1",
     g.us_central1["t2a-standard-4"].cpuPlatform === "ARM" &&
       g.us_central1["t2a-standard-4"].isARM === 1,
+  );
+  check(
+    "[gcp] n2 (not shared-core) → sharedCpu 0",
+    n2.sharedCpu === 0,
+    JSON.stringify(n2),
+  );
+  check(
+    "[gcp] t2a (shared-core) → sharedCpu 1",
+    g.us_central1["t2a-standard-4"].sharedCpu === 1,
+    JSON.stringify(g.us_central1["t2a-standard-4"]),
   );
   // c4a is Axion Arm. It was absent from the series table, so it would have shipped
   // as Intel and read as x86 to every processor filter — the whole point of the fix.
