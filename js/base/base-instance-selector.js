@@ -398,9 +398,22 @@ class BaseInstanceSelector {
   // which is the very defect this method exists to remove. The Linux branch is
   // already in order; sorting it too costs nothing and makes the postcondition a
   // property of this method rather than one inherited from a distant caller.
+  // The Windows test itself is RuleEngine's `isWindowsOS` — the canonical,
+  // single-source predicate, after this method's own copy and the rule
+  // engine's ARM exclusion (an EXACT match against two bare tokens) disagreed
+  // on every real-world Windows string except those two. RuleEngine is loaded
+  // wherever this runs in the app (main thread and worker alike), but
+  // `os-aware-pricing-test.js` deliberately loads this file WITHOUT
+  // RuleEngine to test price/OS logic in isolation — the fallback below is
+  // the exact same prefix test, kept only for that context, never meant to
+  // drift from the canonical one.
   _poolForOS(pool, os) {
     const byPrice = (list) => list.sort((a, b) => a.price - b.price);
-    if (!/^windows/.test(String(os || "").toLowerCase())) {
+    const isWindows =
+      typeof RuleEngine !== "undefined"
+        ? RuleEngine.isWindowsOS(os)
+        : /^windows/i.test(String(os || "").trim());
+    if (!isWindows) {
       return byPrice(pool.filter((i) => i.price > 0));
     }
     return byPrice(

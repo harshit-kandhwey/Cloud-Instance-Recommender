@@ -132,6 +132,25 @@ const RuleEngine = (() => {
   const OS_MAC = ["macos", "mac"];
   const OS_VALUES = ["linux", ...OS_WINDOWS, ...OS_MAC];
 
+  // THE canonical "is this row Windows" test. OS_WINDOWS above is a fixed
+  // vocabulary for display (the template dropdown, RECOGNIZED.os) — this is
+  // the predicate every OS-branching DECISION reads. A real inventory export
+  // says "Windows Server 2022", not the bare "windows server" OS_WINDOWS
+  // lists, so this matches by PREFIX rather than exact string. Two call
+  // sites used to keep independent copies of this test — this one with an
+  // EXACT match against OS_WINDOWS, base-instance-selector.js's
+  // `_poolForOS` with this same prefix regex — and they disagreed on every
+  // string except the two bare tokens. On GCP that mattered: its Windows
+  // price is COMPOSED, never 0, so the ARM exclusion below is the ONLY
+  // "cannot run Windows" signal, and a real-world OS string could satisfy
+  // `_poolForOS`'s Windows pricing while skipping this exclusion entirely.
+  // `_poolForOS` keeps a same-shaped fallback for the RuleEngine-free test
+  // context; this is the one place either reads once RuleEngine is loaded.
+  /** @param {string} os */
+  function isWindowsOS(os) {
+    return /^windows/i.test(String(os || "").trim());
+  }
+
   // The recognised sets, exposed on the public API for the hygiene check. The
   // workload keys are identical across providers, so aws stands for all three.
   const RECOGNIZED = {
@@ -547,7 +566,7 @@ const RuleEngine = (() => {
     }
 
     // ── OS: Windows → exclude ARM/Graviton ─────────────────────────────────
-    if (OS_WINDOWS.includes(os)) {
+    if (isWindowsOS(os)) {
       const before = filtered.length;
       filtered = filtered.filter((i) => !isARM(i));
       if (filtered.length < before)
@@ -737,6 +756,7 @@ const RuleEngine = (() => {
     isBurstable,
     isCurrentGen,
     isARM,
+    isWindowsOS,
     meetsMinGeneration,
     // Exposed for the alternative-strategy picks (base-instance-selector):
     isWorkloadFit,
