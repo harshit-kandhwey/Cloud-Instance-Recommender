@@ -30,23 +30,23 @@ top of it.
 
 - **Shipped** — _3.10 Test foundation & CI gates_ · _3.11 Accessibility, hardening
   & docs_ · _3.12 Input authoring & rules_ · _3.13 Cross-provider sizing_ ·
-  _3.14 Data & pricing freshness_. The safety net first — real-browser end-to-end
-  coverage, an accessibility regression gate, property-based engine invariants and a
-  mutation-testing gate that proves the guards actually catch defects — then the
-  capability jumps that did not need the 4.0 engine: better inputs and rule
-  expression, cloud-to-cloud sizing and GCP custom shapes, and data the pipeline
-  keeps current on its own.
-- **Now** — _3.15 Data model & catalogue fidelity_. Split the region format so
-  specs stop repeating per region. It is sequenced first because it is what makes
-  everything after it cheap: today each added field costs one copy per region
-  rather than one per type, and the same regenerate closes the local-SSD pricing
-  gap and the catalogue defects filed against it.
-- **Next** — _3.16 Attribute filters & rule fidelity_ · _3.17 Closing out 3.x_.
-  Spend what the split makes affordable: turn three of the engine's admitted
-  proxies into the measurements the providers publish (a fourth, Windows support,
-  was done early in 3.15 alongside the same root cause), offer the instance
-  attributes the data already carries, widen the workload vocabulary the
-  recommendations key off, then empty the known-issues list.
+  _3.14 Data & pricing freshness_ · _3.15 Data model & catalogue fidelity_. The
+  safety net first — real-browser end-to-end coverage, an accessibility
+  regression gate, property-based engine invariants and a mutation-testing gate
+  that proves the guards actually catch defects — then the capability jumps that
+  did not need the 4.0 engine: better inputs and rule expression, cloud-to-cloud
+  sizing and GCP custom shapes, data the pipeline keeps current on its own, and
+  the specs/prices split that makes every field added since cheap rather than
+  per-region.
+- **Now** — _3.16 Attribute filters & rule fidelity_. Spend what the split
+  makes affordable: fix the scheduled refresh's silent PR failure first (it
+  blocks the next real refresh from landing safely), turn three of the
+  engine's admitted proxies into the measurements the providers publish plus
+  a fifth that surfaced closing 3.15 (Windows-row detection decided twice,
+  disagreeing), offer the instance attributes the data already carries, and
+  widen the workload vocabulary the recommendations key off.
+- **Next** — _3.17 Closing out 3.x_. Empty the known-issues list — the gate
+  4.0 does not ship past.
 - **Later** — _4.0 Performance-based right-sizing_. The one platform-defining
   major: a policy-driven, per-row sizing engine. Further out, and deliberately
   unscheduled: [beyond compute](#later--beyond-compute).
@@ -571,6 +571,20 @@ Spend what 3.15 makes affordable: replace the engine's admitted proxies with the
 measurements the providers actually publish, and offer the attributes the data has
 always carried.
 
+- **Fix the scheduled data-refresh workflow's silent PR failure.** It does all
+  its real work — fetch, reconcile, diff — pushes its branch, then dies on
+  `gh pr create`: `GraphQL: Body is too long (maximum is 65536 characters)`,
+  because the full diff report is concatenated straight into the PR body. A
+  typical report already exceeds it (190,610 chars measured 2026-09-04, ~3×
+  the limit), so this recurs on any non-trivial refresh, leaving an orphan
+  branch nobody reviews. **This is scoped first, ahead of A–D below**, because
+  it undermines the exact claim [3.15](#315--data-model--catalogue-fidelity)
+  made when Phase E was dropped — "the scheduled workflow opens a reviewed PR
+  on its own" — and because the next real refresh (22 new AWS types, 23
+  recommendation flips, queued and waiting) cannot land safely until it does.
+  Fix: truncate the inlined report and attach the full one (workflow artifact
+  or a linked gist), not cram it into the PR body. Pre-existing; not
+  introduced by 3.15. (S)
 - **Turn three proxies into measurements.** Rule 1d prefers `vCpus >= 4` as an
   explicit stand-in for a higher network tier — the feeds carry real bandwidth
   (AWS baseline/burst Gbps, GCP network performance, Azure accelerated networking).
@@ -587,6 +601,18 @@ always carried.
   providers, so a Windows row was ranked on a price it would never pay. The Arm rule
   remains for GCP alone, whose Windows price is composed rather than published and so
   cannot say what runs Windows. See the resolved Known issue below._
+
+  A fifth proxy surfaced during 3.15's own release review, the same species as
+  the other four: **what counts as a Windows row is decided twice, and the two
+  answers disagree.** `_poolForOS` (`base-instance-selector.js`) tests with a
+  `/^windows/` **prefix** regex; `rule-engine.js`'s Arm exclusion tests an
+  **exact** match against `["windows","windows server"]`. For an input like
+  `"Windows Server 2022"` the two disagree, so on GCP — the one provider where
+  the Arm rule is still the only real guard, since its Windows price is
+  composed rather than published — an ARM type can pass one check and fail the
+  other. Reproduces on `main` pre-3.15; not introduced there. Fix: one function
+  decides Windows-ness, both call sites use it — a `CANONICAL-SOURCES.md`
+  candidate. (S)
 
 - **Instance attribute filters.** A numeric GPU count (all three clouds publish
   one) replaces the family-name regex the accelerator check uses today; bare metal
