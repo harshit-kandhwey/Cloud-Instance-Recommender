@@ -3,15 +3,15 @@
 
 // Download sample CSV
 function downloadSampleCSV() {
-  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,AWS Min Gen,Azure Min Gen,GCP Min Gen,Exclude,Current Instance Type
-web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,,,m5.xlarge
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,,,"Burstable,GPU",m5.2xlarge
-app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,,,,,t3.large
-cache-server-04,Storefront,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,,,,Burstable,t3.medium
-api-server-05,Storefront,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6,4,n4,,c5.xlarge
-microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,,,,,t3.small
-worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7,5,n4,,c5.2xlarge
-frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,,,,,t3.medium`;
+  const csvContent = `VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,AWS Min Gen,Azure Min Gen,GCP Min Gen,Exclude,Include Only,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,,,"Burstable,GPU",,m5.2xlarge
+app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,General,,,,,,,t3.large
+cache-server-04,Storefront,2,4,25,30,us-east-1,East US,us-central1-a,Staging,Linux,Cache,,,,,Burstable,,t3.medium
+api-server-05,Storefront,4,8,65,55,us-west-1,West US,us-west1-b,Production,Linux,Web Server,,6,4,n4,,,c5.xlarge
+microservice-06,Analytics,1,2,15,20,us-east-1,East US,us-central1-a,Dev,Linux,General,,,,,,"m5,c5",t3.small
+worker-node-07,Analytics,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,HIPAA,7,5,n4,,,c5.2xlarge
+frontend-08,Storefront,2,4,40,50,eu-west-1,North Europe,europe-west1-c,Staging,Windows,Web Server,,,,,,,t3.medium`;
 
   downloadCsv(csvContent, "sample_instance_data.csv");
 }
@@ -449,8 +449,31 @@ function sampleRegionColumns() {
   }));
 }
 
+// MinGen is native to one cloud (see instance-selector-factory.js), so a
+// single-provider page gets the bare "Min Gen" column (the same fallback
+// meetsMinGeneration itself reads) and a multi-provider page gets one
+// column per provider — same split sampleRegionColumns and the hand-written
+// downloadSampleCSV/downloadAWSSampleCSV templates already use.
+function sampleMinGenColumns() {
+  const providers = getPageProviders();
+  if (providers.length <= 1) return [{ header: "Min Gen" }];
+  return providers.map((provider) => ({
+    header: InstanceSelectorFactory.getProviderMinGenColumn(provider),
+  }));
+}
+
+// Compliance/Exclude/Include Only all carry comma-separated token lists, so
+// a cell with more than one token must be quoted or the comma shifts every
+// later column right by one — the same quoting downloadSampleCSV's
+// hand-written template already relies on for its own "Burstable,GPU" cell.
+function csvField(v) {
+  const s = String(v ?? "");
+  return s.includes(",") ? `"${s}"` : s;
+}
+
 function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
   const regionCols = sampleRegionColumns();
+  const minGenCols = sampleMinGenColumns();
   const headers = [
     "VM Name",
     "App Name",
@@ -462,6 +485,11 @@ function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
     "ENV",
     "OS",
     "Workload",
+    "Compliance",
+    ...minGenCols.map((c) => c.header),
+    "Exclude",
+    "Include Only",
+    "Current Instance Type",
   ];
   const lines = rows.map((r) =>
     [
@@ -477,6 +505,11 @@ function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
       r.env,
       r.os,
       r.workload,
+      csvField(r.compliance || ""),
+      ...minGenCols.map(() => r.minGen || ""),
+      csvField(r.exclude || ""),
+      csvField(r.includeOnly || ""),
+      r.currentInstance || "",
     ].join(","),
   );
   return [headers.join(","), ...lines].join("\n");
@@ -714,6 +747,107 @@ const SAMPLE_DATASETS = [
       ];
       return buildSampleCsv(rows, { memoryHeader: "Memory" });
     },
+  },
+  {
+    id: "full",
+    label: "Full feature set",
+    blurb:
+      "7 VMs — cloud-to-cloud sizing, every Compliance option, Min Gen, " +
+      "Exclude, Include Only, and the newest Workload values, one per row.",
+    build: () =>
+      buildSampleCsv([
+        // Cloud-to-cloud: no CPU/Memory at all — the engine derives specs
+        // from Current Instance Type instead (3.13's cloud-to-cloud mode).
+        {
+          name: "legacy-01",
+          app: "Storefront",
+          regionIndex: 0,
+          env: "Production",
+          os: "Linux",
+          workload: "Application Server",
+          currentInstance: "m5.xlarge",
+        },
+        {
+          name: "dc-01",
+          app: "Identity",
+          cpu: 2,
+          memory: 4,
+          cpuUtil: 8,
+          memUtil: 15,
+          regionIndex: 0,
+          env: "Production",
+          os: "Windows",
+          workload: "Domain Controller",
+          compliance: "Current-Generation Hardware",
+        },
+        {
+          name: "nosql-01",
+          app: "Search",
+          cpu: 8,
+          memory: 32,
+          cpuUtil: 60,
+          memUtil: 70,
+          regionIndex: 1,
+          env: "Production",
+          os: "Linux",
+          workload: "NoSQL",
+          // Legacy alias (AWS Nitro Enclaves) alongside an atomic option,
+          // comma-separated — both still work together (COMPLIANCE_ALIASES).
+          compliance: "AWS Nitro Enclaves,Confidential Computing",
+        },
+        {
+          name: "file-01",
+          app: "Billing",
+          cpu: 4,
+          memory: 16,
+          cpuUtil: 30,
+          memUtil: 55,
+          regionIndex: 1,
+          env: "Production",
+          os: "Windows",
+          workload: "File Server",
+          compliance: "Azure Trusted Launch",
+        },
+        {
+          name: "analytics-01",
+          app: "Analytics",
+          cpu: 16,
+          memory: 64,
+          cpuUtil: 75,
+          memUtil: 80,
+          regionIndex: 2,
+          env: "Production",
+          os: "Linux",
+          workload: "Analytics",
+          minGen: "6",
+        },
+        {
+          name: "build-01",
+          app: "Analytics",
+          cpu: 8,
+          memory: 16,
+          cpuUtil: 50,
+          memUtil: 40,
+          regionIndex: 2,
+          env: "Dev",
+          os: "Linux",
+          workload: "Build Farm",
+          exclude: "Burstable,GPU",
+        },
+        {
+          name: "container-01",
+          app: "Storefront",
+          cpu: 4,
+          memory: 8,
+          cpuUtil: 45,
+          memUtil: 50,
+          regionIndex: 0,
+          env: "Staging",
+          os: "Linux",
+          workload: "Container Host",
+          includeOnly: "m5,m6",
+        },
+      ]),
   },
 ];
 

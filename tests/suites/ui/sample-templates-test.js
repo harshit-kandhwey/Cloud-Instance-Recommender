@@ -38,6 +38,7 @@ const COMMON_COLUMNS = [
   "Workload",
   "Compliance",
   "Exclude",
+  "Include Only",
   "Current Instance Type",
 ];
 
@@ -218,6 +219,25 @@ for (const sample of SAMPLES) {
       (excluding["Compliance"] || "").trim() !== "" &&
       /^[A-Za-z]/.test(excluding["Current Instance Type"] || ""),
     JSON.stringify(excluding),
+  );
+
+  // Same structural check, for Include Only — the symmetric allow-list
+  // column, added to every sample alongside Exclude.
+  const including = rows.find((r) => (r["Include Only"] || "").includes(","));
+  const includeTokens = (including?.["Include Only"] || "")
+    .split(",")
+    .map((t) => t.trim());
+  check(
+    "the quoted multi-value Include Only survives the round trip",
+    !!including &&
+      includeTokens.length >= 2 &&
+      includeTokens.every((t) => t !== ""),
+    JSON.stringify(including && including["Include Only"]),
+  );
+  check(
+    "and the row it is on is otherwise intact too",
+    !!including && /^[A-Za-z]/.test(including["Current Instance Type"] || ""),
+    JSON.stringify(including),
   );
 
   check(

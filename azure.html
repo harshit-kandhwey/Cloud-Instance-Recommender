@@ -152,10 +152,10 @@
 
             <div class="sample-csv">
               <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
-web-server-01,Storefront,4,16,45,60,East US,Production,Linux,Web Server,,,,Standard_D4s_v3
-db-server-02,Billing,8,32,70,80,West US 2,Production,Windows,Database,PCI,,"Burstable,GPU",Standard_D8s_v3
-app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v3</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,Azure Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Include Only,Current Instance Type
+web-server-01,Storefront,4,16,45,60,East US,Production,Linux,Web Server,,,,,Standard_D4s_v3
+db-server-02,Billing,8,32,70,80,West US 2,Production,Windows,Database,PCI,,"Burstable,GPU",,Standard_D8s_v3
+app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,,Standard_D2s_v3</pre>
             </div>
 
             <details style="margin-top: 10px">
