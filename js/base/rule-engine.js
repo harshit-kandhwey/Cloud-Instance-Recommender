@@ -3,7 +3,9 @@
 // CSV input columns (also settable via UI Rule Engine defaults):
 //   ENV        : Production | Staging | Dev | Test  (blank = no rules)
 //   OS         : Linux | Windows | macOS             (blank = Linux)
-//   Workload   : General | Database | SQL Server | Web Server | Cache | ML/AI | Batch | HPC  (blank = General)
+//   Workload   : General | Database | SQL Server | Web Server | Cache | ML/AI | Batch | HPC |
+//                SAP | Analytics | File Server | NoSQL | Application Server | Container Host |
+//                Build Farm | Domain Controller  (blank = General)
 //   Compliance : comma-separated, like Exclude/Include Only — Current-Generation Hardware |
 //                AWS Nitro Enclaves | Confidential Computing | Azure Trusted Launch
 //                (blank = none; legacy PCI/HIPAA/SOC2/FIPS still work — see COMPLIANCE_ALIASES)
@@ -93,6 +95,38 @@ const RuleEngine = (() => {
       batch: ["c", "m"],
       hpc: ["hpc", "c"],
       sap: ["x1", "x2", "r", "u-"],
+      // R-series is AWS's own documented recommendation for Spark/Hadoop
+      // (high memory-per-vCPU for in-memory processing); i3/i4i add NVMe
+      // for shuffle-heavy jobs.
+      analytics: ["r", "i"],
+      spark: ["r", "i"],
+      "big data": ["r", "i"],
+      // d2/d3 (dense HDD) + i3/i4i (NVMe): cheap high-capacity throughput,
+      // what a file/backup target actually needs over compute or memory.
+      "file server": ["d", "i"],
+      file: ["d", "i"],
+      backup: ["d", "i"],
+      // i3/i4i is AWS's own recommendation for MongoDB/Cassandra/
+      // Elasticsearch (high random IOPS); r as the memory-bound fallback.
+      nosql: ["i", "r"],
+      search: ["i", "r"],
+      "application server": ["m", "c"],
+      "app server": ["m", "c"],
+      middleware: ["m", "c"],
+      "container host": ["m", "c"],
+      container: ["m", "c"],
+      kubernetes: ["m", "c"],
+      "build farm": ["c"],
+      build: ["c"],
+      "ci/cd": ["c"],
+      // Low, steady utilization most of the time — t-family burstable is a
+      // genuine cost fit here, not just a Dev-box default. Rule 1a still
+      // excludes burstable outright for Production/Staging regardless of
+      // this preference, so listing it here is safe for Prod and useful
+      // for Dev/Test domain controllers.
+      "domain controller": ["t", "m"],
+      "jump box": ["t", "m"],
+      jumpbox: ["t", "m"],
     },
     azure: {
       general: ["d"],
@@ -111,6 +145,32 @@ const RuleEngine = (() => {
       batch: ["f", "d"],
       hpc: ["hb", "hc"],
       sap: ["mv2", "msv2", "m"],
+      // Lsv3 is Microsoft's own documented recommendation for "Big Data,
+      // SQL, NoSQL databases, data analytics, and data warehousing" — the
+      // same family covers analytics, file/backup, and NoSQL below.
+      analytics: ["l"],
+      spark: ["l"],
+      "big data": ["l"],
+      "file server": ["l"],
+      file: ["l"],
+      backup: ["l"],
+      nosql: ["l", "e"],
+      search: ["l", "e"],
+      "application server": ["d", "f"],
+      "app server": ["d", "f"],
+      middleware: ["d", "f"],
+      "container host": ["d", "f"],
+      container: ["d", "f"],
+      kubernetes: ["d", "f"],
+      "build farm": ["f"],
+      build: ["f"],
+      "ci/cd": ["f"],
+      // See the AWS block's note: burstable B-series is a genuine cost fit
+      // for a low-utilization role, not just excluded outright — 1a still
+      // excludes it for Production/Staging regardless of this preference.
+      "domain controller": ["b", "d"],
+      "jump box": ["b", "d"],
+      jumpbox: ["b", "d"],
     },
     gcp: {
       general: ["n2", "e2"],
@@ -129,6 +189,33 @@ const RuleEngine = (() => {
       batch: ["c2", "c2d", "c3", "c3d"],
       hpc: ["h3", "c2"],
       sap: ["m1", "m2", "m3", "m4"],
+      // Z3 is Google's own documented recommendation for "scale-out
+      // analytics workloads, flash-optimized databases" — covers analytics,
+      // file/backup, and NoSQL below the same way AWS/Azure's storage
+      // families do.
+      analytics: ["z3", "n2"],
+      spark: ["z3", "n2"],
+      "big data": ["z3", "n2"],
+      "file server": ["z3"],
+      file: ["z3"],
+      backup: ["z3"],
+      nosql: ["z3", "m1", "m2", "m3", "m4"],
+      search: ["z3", "m1", "m2", "m3", "m4"],
+      "application server": ["n2", "e2", "n4"],
+      "app server": ["n2", "e2", "n4"],
+      middleware: ["n2", "e2", "n4"],
+      "container host": ["n2", "e2"],
+      container: ["n2", "e2"],
+      kubernetes: ["n2", "e2"],
+      "build farm": ["c2", "c2d", "c3", "c3d"],
+      build: ["c2", "c2d", "c3", "c3d"],
+      "ci/cd": ["c2", "c2d", "c3", "c3d"],
+      // See the AWS block's note: e2's shared-core sizes are a genuine cost
+      // fit for a low-utilization role — 1a still excludes burstable for
+      // Production/Staging regardless of this preference.
+      "domain controller": ["e2", "n2"],
+      "jump box": ["e2", "n2"],
+      jumpbox: ["e2", "n2"],
     },
   };
 
@@ -1064,6 +1151,11 @@ const RuleEngine = (() => {
     generationRank,
     // Recognised rule-value vocabularies, for the upload-time hygiene check:
     RECOGNIZED,
+    // Exposed so a test can assert the three providers' workload vocabularies
+    // move together — a key added to one and not the others would make
+    // RECOGNIZED.workload (derived from aws alone) claim a value is
+    // recognised while azure/gcp silently fall back to "general".
+    WORKLOAD_FAMILIES,
   };
 })();
 
