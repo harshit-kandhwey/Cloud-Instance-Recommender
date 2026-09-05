@@ -217,6 +217,34 @@ console.log(
   );
 }
 
+console.log(
+  "[the full feature set sample splits Min Gen by provider on a multi-provider page]",
+);
+{
+  // The default buildContext() above is single-provider (aws.html), so the
+  // Min Gen check just run never exercises the multi-column split — a bare
+  // row-level value could pass there while still leaking into every
+  // provider's own column on a real multi-provider page. dataScripts here
+  // forces getPageProviders() to the 3-provider path that actually has that
+  // split to get wrong.
+  const { ctx } = buildContext({
+    dataScripts: [
+      "js/aws/aws-data.js",
+      "js/azure/azure-data.js",
+      "js/gcp/gcp-data.js",
+    ],
+  });
+  ctx.loadSampleDataset(3);
+  const byName = Object.fromEntries(rowsOf(ctx).map((r) => [r["VM Name"], r]));
+  check(
+    "the AWS-only Min Gen value lands under AWS Min Gen only, not Azure/GCP too",
+    byName["analytics-01"]?.["AWS Min Gen"] === "6" &&
+      (byName["analytics-01"]?.["Azure Min Gen"] || "") === "" &&
+      (byName["analytics-01"]?.["GCP Min Gen"] || "") === "",
+    JSON.stringify(byName["analytics-01"]),
+  );
+}
+
 console.log("[a sample replaces whatever was loaded before]");
 {
   const { ctx, elements } = buildContext();

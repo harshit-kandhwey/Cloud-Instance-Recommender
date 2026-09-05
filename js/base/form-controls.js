@@ -431,10 +431,18 @@ function checkRuleConflicts() {
     }
   }
 
-  // ── Conflict 2: ENV=Production/Compliance + burstable-only family filter ─
-  const isProdOrCompliance =
-    env === "production" || env === "prod" || rules.compliance;
-  if (isProdOrCompliance) {
+  // ── Conflict 2: ENV=Production/Staging + burstable-only family filter ───
+  // Mirrors Rule 1a exactly (rule-engine.js's own "Rule reference" comment):
+  // burstable exclusion is env-gated only. Compliance plays no part in it —
+  // this used to also fire for ANY non-empty Compliance selection, which
+  // produced a false conflict for options (Trusted Launch, Confidential
+  // Computing, ...) that have nothing to do with burstable exclusion.
+  const isProdOrStaging =
+    env === "production" ||
+    env === "prod" ||
+    env === "staging" ||
+    env === "stage";
+  if (isProdOrStaging) {
     const mainRestrict = document.getElementById(
       "restrictMainFamilies",
     )?.checked;
@@ -448,16 +456,10 @@ function checkRuleConflicts() {
         selected.length > 0 &&
         selected.every((f) => burstable.some((b) => f.startsWith(b)));
       if (onlyBurst) {
-        const conflictGroup = rules.compliance
-          ? "ruleGroupCompliance"
-          : "ruleGroupEnv";
-        const conflictMsg = rules.compliance
-          ? "conflictCompliance"
-          : "conflictEnv";
         flagConflict(
-          conflictGroup,
-          conflictMsg,
-          `${rules.compliance || rules.env} excludes burstable — contradicts restriction to burstable-only families`,
+          "ruleGroupEnv",
+          "conflictEnv",
+          `${rules.env} excludes burstable — contradicts restriction to burstable-only families`,
         );
       }
     }
