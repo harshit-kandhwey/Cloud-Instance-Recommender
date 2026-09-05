@@ -151,6 +151,17 @@ const FIELD_ORDER = {
     // replacing it outright, so t1 and the pre-refresh dormant case both
     // keep classifying correctly.
     "burstMinutes",
+    // Real GPU count (Vantage's own field, always a number — no gap seen on
+    // any record) — replaces the family-name fallback isAccelerator uses
+    // when familyName is blank (see rule-engine.js). Does not replace the
+    // primary familyName check: FPGA/ML-ASIC/media-accelerator instances
+    // report gpuCount 0 despite being accelerators, so isAccelerator still
+    // needs its own classification for those.
+    "gpuCount",
+    // Real bare-metal flag (Vantage's own field, always present — a
+    // structural property of the type, never "not reported"). New exclude-
+    // type option — see base-instance-selector.js's "bare metal" token.
+    "isBareMetal",
     "onDemandLinuxHr",
     "onDemandWindowsHr",
   ],
@@ -171,6 +182,18 @@ const FIELD_ORDER = {
     // Vantage's own value; 0 means "not reported", the field's own convention
     // (never a real ratio) — see Rule SQL's physical-core licensing mode.
     "vcpusPerCore",
+    // Vantage's own GPU field is a free-text string ("2X K80", "1/2X A10",
+    // "8x 80GB A100 (NVlink)", "0"), never a bare number — parsed to a
+    // number by fetch-vantage.js before it reaches here. No Azure equivalent
+    // of AWS's FPGA/ASIC exception: every Azure accelerator family reports a
+    // real GPU figure, so this alone is enough for isAccelerator's fallback.
+    "gpuCount",
+    // Secure Boot + vTPM (distinct from Confidential Computing's memory
+    // encryption). Vantage's own boolean, true on ~10% of records checked —
+    // a real, populated signal, unlike the `confidential` field this
+    // provider also publishes (see Rule 1b's Confidential Computing option).
+    // 1/0, matching isARM's convention. No AWS/GCP equivalent in this feed.
+    "trustedLaunch",
     "linuxPrice",
     "windowsPrice",
   ],
@@ -180,6 +203,9 @@ const FIELD_ORDER = {
     "generation",
     "vCpus",
     "memoryGiB",
+    // Real GPU count (Vantage's own field, always a number). Same role as
+    // AWS's gpuCount — see rule-engine.js isAccelerator.
+    "gpuCount",
     // Vantage's own shared-core classification (a real boolean, present on
     // every GCP record with no gap) — real signal for burstable-family
     // detection (see rule-engine.js isBurstable), replacing the hardcoded

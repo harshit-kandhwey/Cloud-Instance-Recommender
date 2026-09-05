@@ -329,8 +329,11 @@ console.log(
 {
   const { ctx, elements } = buildContext();
   // Row 2 is clean. Row 3 has a Workload typo, row 4 an ENV typo, row 5 an
-  // unknown Compliance. Row 6's OS is a real Linux distro string, which must NOT
-  // be flagged (non-Windows/Mac is the Linux default the engine expects).
+  // unknown Compliance, row 7 a multi-value Compliance cell (comma-separated,
+  // like Exclude/Include Only — see rule-engine.js) where only ONE of the two
+  // tokens is unrecognized. Row 6's OS is a real Linux distro string, which
+  // must NOT be flagged (non-Windows/Mac is the Linux default the engine
+  // expects).
   ingest(
     ctx,
     `VM Name,CPU Count,Memory (GB),AWS Region,ENV,OS,Workload,Compliance
@@ -338,7 +341,8 @@ ok,4,16,us-east-1,Production,Linux,Web Server,PCI
 wl,4,16,us-east-1,Production,Windows,WebServer,
 env,4,16,us-east-1,Prd,Linux,Database,
 comp,4,16,us-east-1,Dev,Linux,Cache,SOX
-distro,4,16,us-east-1,Test,Ubuntu Linux (64-bit),General,`,
+distro,4,16,us-east-1,Test,Ubuntu Linux (64-bit),General,
+multi,4,16,us-east-1,Dev,Linux,General,"Confidential Computing, Made-Up Framework"`,
   );
   const html = panel(elements).innerHTML;
   check(
@@ -357,10 +361,18 @@ distro,4,16,us-east-1,Test,Ubuntu Linux (64-bit),General,`,
     html,
   );
   check(
+    "a multi-value Compliance cell flags only its unrecognized token, by itself, not the whole cell",
+    /Compliance &quot;Made-Up Framework&quot; not recognized[^<]*1 row \(7\)/.test(
+      html,
+    ) && !/Confidential Computing, Made-Up Framework&quot;/.test(html),
+    html,
+  );
+  check(
     "a recognized value is never flagged",
     !/Web Server&quot; not recognized/.test(html) &&
       !/&quot;Production&quot; not recognized/.test(html) &&
-      !/&quot;PCI&quot; not recognized/.test(html),
+      !/&quot;PCI&quot; not recognized/.test(html) &&
+      !/&quot;Confidential Computing&quot; not recognized/.test(html),
     html,
   );
   check(
@@ -373,7 +385,7 @@ distro,4,16,us-east-1,Test,Ubuntu Linux (64-bit),General,`,
     !/OS &quot;/.test(html) && !/no OS rule/.test(html),
     html,
   );
-  check("the file still loads — a report, not a gate", rows(ctx).length === 5);
+  check("the file still loads — a report, not a gate", rows(ctx).length === 6);
 }
 
 console.log(

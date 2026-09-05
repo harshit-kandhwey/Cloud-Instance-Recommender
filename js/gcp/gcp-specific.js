@@ -59,6 +59,7 @@ const gcpExcludeTypesData = [
   "Shared-Core",
   "Previous Generation",
   "Custom",
+  "Bare Metal",
 ];
 
 // Enhanced GCP instance families data

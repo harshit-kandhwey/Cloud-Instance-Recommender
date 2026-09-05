@@ -1094,23 +1094,42 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,t3.large</pre>
                     "
                     >Compliance</label
                   >
-                  <select
-                    id="ruleDefaultCompliance"
-                    onchange="onRuleChange()"
+                  <div
                     style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 4px;
                       font-size: 0.83em;
-                      background: white;
                     "
                   >
-                    <option value="">— none —</option>
-                    <option value="HIPAA">HIPAA</option>
-                    <option value="PCI">PCI</option>
-                    <option value="SOC2">SOC2</option>
-                  </select>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceCurrentGen"
+                        value="Current-Generation Hardware"
+                        onchange="onRuleChange()"
+                      />
+                      Current-Generation Hardware
+                    </label>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceNitro"
+                        value="AWS Nitro Enclaves"
+                        onchange="onRuleChange()"
+                      />
+                      AWS Nitro Enclaves
+                    </label>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceConfidential"
+                        value="Confidential Computing"
+                        onchange="onRuleChange()"
+                      />
+                      Confidential Computing
+                    </label>
+                  </div>
                   <div
                     id="conflictCompliance"
                     style="

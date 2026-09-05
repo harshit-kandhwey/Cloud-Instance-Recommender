@@ -689,6 +689,45 @@ rule (D8), along with its AWS-only, migration-wave, and connectivity-navigator
 views. The delivered charts each gained a visual-regression baseline, since new
 charts want new snapshots.
 
+## Candidate — Visual & UI modernization
+
+**Not scheduled — a parallel, unscheduled track (decided 2026-09-04); see
+Sequencing below.** The engine-quality work in 3.x and the sizing-policy work
+in 4.0 are both invisible if the app still reads as a 2023 Bootstrap-era form;
+this is the counterpart track that makes the tool *look* as considered as the
+rules it runs.
+
+**Where the app stands today:** ~2,000 lines of hand-written CSS across four
+files (`style.css`, `theme.css`, `index_style.css`, `portfolio.css`), no
+utility framework or component library. `theme.css` already carries the
+light/dark token split the rest of the app's CSS reads from — the one piece of
+groundwork a redesign would build on rather than replace.
+
+Specific design references discussed for this stay in local maintainer notes,
+not in this committed file, the same way this roadmap keeps other local-only
+material out of what ships in the repo. The gist, kept here because it's the
+part that shapes scope rather than taste: the candidates span two different
+registers — clean, data-dense B2B/SaaS products on one side, and immersive
+marketing/agency-showcase sites on the other — and this app's own job (upload
+tables, filter panels, exports) means the former is the layout reference and
+the latter contributes at most a motion/interaction accent, not a literal
+structure to copy.
+
+**Open questions to resolve when this is actually scheduled:**
+
+- **Build system.** Keep the hand-written CSS (lowest risk, highest ongoing
+  cost) or adopt a utility framework / component system — a bigger upfront
+  rewrite but faster iteration afterward. Affects every other decision here.
+- **Scope.** A visual refresh (tokens, spacing, motion, type) on the existing
+  markup/structure, versus a structural rebuild of the page shell itself.
+- **Sequencing — decided 2026-09-04: parallel track, unscheduled for now.**
+  Recorded here as a candidate with no committed slot; revisit once 3.16/3.17
+  wrap and there's a clearer view of capacity. Not folded into 3.17 (scoped
+  differently — "empty the known-issues list") and not bundled into 4.0
+  (keeps that major's single sizing-engine theme intact, matching this
+  roadmap's existing discipline against bundling unrelated big changes into
+  one major).
+
 ## Blocked — awaiting external input
 
 Not scheduled to a release because they cannot proceed on anything in this repo.

@@ -4,13 +4,18 @@
 //   ENV        : Production | Staging | Dev | Test  (blank = no rules)
 //   OS         : Linux | Windows | macOS             (blank = Linux)
 //   Workload   : General | Database | SQL Server | Web Server | Cache | ML/AI | Batch | HPC  (blank = General)
-//   Compliance : PCI | HIPAA | SOC2 | FIPS           (blank = none)
+//   Compliance : comma-separated, like Exclude/Include Only — Current-Generation Hardware |
+//                AWS Nitro Enclaves | Confidential Computing | Azure Trusted Launch
+//                (blank = none; legacy PCI/HIPAA/SOC2/FIPS still work — see COMPLIANCE_ALIASES)
 //   Min Gen    : AWS gen number (5/6/7), Azure v-number (3/4/5), GCP family (n2/n4)
 //
 // Rule reference:
 //   1a  Burstable exclusion  — Production/Staging block burstable instances (see isBurstable:
 //       AWS/GCP real fields, Azure family-prefix proxy — no better signal exists)
-//   1b  Generation + Compliance — Production + Compliance: current-gen only; PCI/HIPAA (AWS): Nitro required
+//   1b  Generation + Compliance — Production, or Compliance names Current-Generation Hardware:
+//       current-gen only. AWS Nitro Enclaves (AWS): Nitro required. Confidential Computing:
+//       AWS Nitro reused, Azure dc*/ec* family match, GCP no signal (not applied). Azure Trusted
+//       Launch (Azure): the real trusted_launch field required.
 //   1c  Size floor — Production/Staging: no nano/micro (AWS), ≥2 vCPUs (Azure/GCP)
 //   1d  Network preference — Production + DB/Web: prefer instances with a higher
 //       network tier (AWS/Azure: real published fields; GCP: no better signal exists,
@@ -20,6 +25,8 @@
 //   WL  Workload preference: sort results so workload-appropriate families appear first
 //   GA  Accelerators: ML/AI requires a GPU/ASIC/FPGA instance; every other
 //       workload excludes one, so a GPU box is never recommended by accident
+//       (isAccelerator: familyName is primary; the real GPU-count field backs
+//       the blank-familyName fallback, ahead of the family-prefix list)
 //   BP  Burstable preference — Dev/Test at low utilization prefers burstable
 //       families (the inverse of 1a's Production/Staging exclusion)
 //   SQL SQL Server: at least 4 vCPUs (virtual cores) by default, because SQL
@@ -40,7 +47,7 @@
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
- * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number, burstMinutes?: number, sharedCpu?: number|string }} [originalData]
+ * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number, burstMinutes?: number, sharedCpu?: number|string, gpuCount?: number, isBareMetal?: number|string, trustedLaunch?: number|string }} [originalData]
  */
 
 /**
@@ -134,8 +141,58 @@ const RuleEngine = (() => {
   const ENV_PRODUCTION = ["production", "prod"];
   const ENV_STAGING = ["staging", "stage"];
   const ENV_DEV_TEST = ["dev", "development", "test", "testing", "qa"];
-  const COMPLIANCE_VALUES = ["pci", "hipaa", "soc2", "fips"];
-  const COMPLIANCE_AWS_NITRO = ["pci", "hipaa"];
+  // Compliance used to be four regulatory-sounding names (PCI/HIPAA/SOC2/FIPS)
+  // that, in the engine, collapsed to exactly two behaviours: "current-gen
+  // only" (all four) and, ONLY for PCI/HIPAA on AWS, "Nitro Enclaves
+  // required." None of the four are things this tool can certify — PCI-DSS,
+  // HIPAA and SOC 2 are account/program-level facts, not instance-type
+  // facts — and PCI/HIPAA were literally indistinguishable in code. Renamed
+  // 2026-09-05 to what they actually check, as atomic, independently
+  // selectable options a CSV cell (or the page) can combine (comma-separated,
+  // the same convention Exclude/Include Only already use):
+  //   "current-generation hardware"  — exclude previous-generation instances
+  //   "aws nitro enclaves"           — require Nitro-capable instances (AWS only)
+  //   "confidential computing"       — see isConfidentialCapable below
+  //   "azure trusted launch"         — see isTrustedLaunchCapable below
+  // The old names still work, expanded through COMPLIANCE_ALIASES below, so
+  // no existing CSV or preset breaks.
+  const COMPLIANCE_ATOMIC = [
+    "current-generation hardware",
+    "aws nitro enclaves",
+    "confidential computing",
+    "azure trusted launch",
+  ];
+  const COMPLIANCE_ALIASES = {
+    pci: ["current-generation hardware", "aws nitro enclaves"],
+    hipaa: ["current-generation hardware", "aws nitro enclaves"],
+    soc2: ["current-generation hardware"],
+    fips: ["current-generation hardware"],
+  };
+  // Every token a Compliance cell may legitimately carry — the atomic set for
+  // the hygiene check, PLUS the legacy names so an old CSV isn't flagged as
+  // unrecognised for using them.
+  const COMPLIANCE_VALUES = [
+    ...COMPLIANCE_ATOMIC,
+    ...Object.keys(COMPLIANCE_ALIASES),
+  ];
+
+  // A Compliance cell is a comma-separated list, like Exclude/Include Only —
+  // multiple real requirements can apply to one row at once. Each token
+  // expands through COMPLIANCE_ALIASES if it's a legacy name, or is used
+  // as-is if it's already one of the atomic names; unrecognised tokens are
+  // dropped silently here (the hygiene check is what names them to the user).
+  /** @param {string|undefined} raw */
+  function expandComplianceTokens(raw) {
+    const tokens = new Set();
+    String(raw || "")
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .forEach((t) => {
+        (COMPLIANCE_ALIASES[t] || [t]).forEach((a) => tokens.add(a));
+      });
+    return tokens;
+  }
   const OS_WINDOWS = ["windows", "windows server"];
   const OS_MAC = ["macos", "mac"];
   const OS_VALUES = ["linux", ...OS_WINDOWS, ...OS_MAC];
@@ -214,6 +271,15 @@ const RuleEngine = (() => {
     gcp: ["a2", "a3", "a4", "g2"],
   };
 
+  // familyName stays the PRIMARY check, not the real gpuCount field: FPGA
+  // (AWS f1/f2), ML ASIC (AWS inf/trn) and media-accelerator instances are
+  // accelerators this function must catch but report gpuCount 0 — they have
+  // no GPU at all. Probed live 2026-09-04: AWS and GCP's `GPU` field is
+  // always a real number; Azure's is free text ("2X K80", "1/2X A10"),
+  // parsed to a number by fetch-vantage.js before it reaches here. Used only
+  // in the blank-familyName fallback (sample/fallback data, no accelerator
+  // classification to read) — ahead of the family-prefix list, which still
+  // runs for FPGA/ASIC/media accelerators the count alone can't prove.
   /**
    * Is this an accelerator (GPU / ML ASIC / FPGA / media) instance?
    * @param {Instance} inst
@@ -222,6 +288,9 @@ const RuleEngine = (() => {
   function isAccelerator(inst, provider) {
     const familyName = inst.familyName || "";
     if (familyName) return ACCELERATOR_FAMILY_NAME.test(familyName);
+    const raw = inst.originalData || {};
+    const gpus = Number(raw.gpuCount);
+    if (Number.isFinite(gpus) && gpus > 0) return true;
     const fam = (inst.family || "").toLowerCase();
     if (!fam) return false;
     return (ACCELERATOR_FAMILY_PREFIXES[provider] || []).some((f) =>
@@ -417,6 +486,53 @@ const RuleEngine = (() => {
     const raw = inst.originalData || {};
     const v = raw.nitroEnclavesSupport;
     return v === 1 || v === 1.0 || v === "1" || v === "1.0";
+  }
+
+  // Rule 1b's Compliance="Confidential Computing" option. Cross-checked
+  // against each provider's own docs 2026-09-05, not just the Vantage feed:
+  //   AWS   reuses isNitroCapable — Nitro Enclaves is AWS's own confidential-
+  //         computing-adjacent primitive (isolated enclaves for PII/financial/
+  //         healthcare data), already the PCI/HIPAA signal above.
+  //   Azure genuinely has a `confidential` field in the Vantage feed, but it
+  //         reads FALSE on all 1,319 records checked — broken/unpopulated,
+  //         not a real signal. Azure's actual confidential-VM series (DCasv5,
+  //         DCesv5, ECasv5, DCadsv5, … — verified against Microsoft's own
+  //         docs) all share one naming convention regardless of version: the
+  //         family starts with "dc" or "ec". Used instead of the broken field.
+  //   GCP   confidential computing is a `--confidential-compute-type` flag
+  //         set at VM CREATION on an otherwise-ordinary machine type (N2D,
+  //         C3, C3D, …), never encoded in the type name — verified against
+  //         Google's own docs. No type-level signal exists at all, a genuine
+  //         dead end like GCP's network-performance and SQL-core gaps
+  //         elsewhere in this file. Always false; the rule below degrades
+  //         the same way any other compliance requirement no candidate can
+  //         meet does — pool stands, "not applied".
+  /**
+   * @param {Instance} inst
+   * @param {Provider} provider
+   */
+  function isConfidentialCapable(inst, provider) {
+    if (provider === "aws") return isNitroCapable(inst);
+    if (provider === "azure")
+      return /^(dc|ec)/i.test((inst.family || "").toLowerCase());
+    return false; // GCP: no signal exists, by design — see note above
+  }
+
+  // Rule 1b's Compliance="Azure Trusted Launch" option — Secure Boot + a
+  // virtual TPM, protecting boot integrity (distinct from Confidential
+  // Computing's memory encryption; a VM can have one, both, or neither).
+  // Azure-only: `trusted_launch` is a real boolean in the Vantage feed, true
+  // on 130 of 1,319 records checked 2026-09-05 — a genuine, populated
+  // signal, unlike the broken `confidential` field above. AWS and GCP
+  // publish no equivalent field for Nitro-Secure-Boot / Shielded VM in this
+  // feed (both are deployment-time options there too, same shape as GCP's
+  // Confidential VM), so this option is Azure-only and omitted from the
+  // other pages' Compliance controls.
+  /** @param {Instance} inst */
+  function isTrustedLaunchCapable(inst) {
+    const raw = inst.originalData || {};
+    const v = raw.trustedLaunch;
+    return v === 1 || v === "1" || v === 1.0;
   }
 
   // GCP generation order map (higher = newer)
@@ -615,7 +731,7 @@ const RuleEngine = (() => {
     const env = (options.rowEnv || "").toLowerCase().trim();
     const os = (options.rowOS || "linux").toLowerCase().trim();
     const workload = (options.rowWorkload || "general").toLowerCase().trim();
-    const compliance = (options.rowCompliance || "").toLowerCase().trim();
+    const complianceTokens = expandComplianceTokens(options.rowCompliance);
     const minGen = (options.rowMinGen || "").toLowerCase().trim();
 
     let filtered = [...instances];
@@ -634,8 +750,12 @@ const RuleEngine = (() => {
     const isProd = ENV_PRODUCTION.includes(env);
     const isStaging = ENV_STAGING.includes(env);
     const isDevTest = ENV_DEV_TEST.includes(env);
-    const isCompliance = COMPLIANCE_VALUES.includes(compliance);
-    const requiresAwsNitro = COMPLIANCE_AWS_NITRO.includes(compliance);
+    const requiresCurrentGen = complianceTokens.has(
+      "current-generation hardware",
+    );
+    const requiresAwsNitro = complianceTokens.has("aws nitro enclaves");
+    const requiresConfidential = complianceTokens.has("confidential computing");
+    const requiresTrustedLaunch = complianceTokens.has("azure trusted launch");
 
     // ── 1a: Burstable exclusion ─────────────────────────────────────────────
     if (isProd || isStaging) {
@@ -645,21 +765,61 @@ const RuleEngine = (() => {
         rules.push(withCount("1a: Burstable excluded", before));
     }
 
-    // ── 1b: Current generation (Production + Compliance) ────────────────────
-    if (isProd || isCompliance) {
+    // ── 1b: Current generation (Production, or Compliance asks for it) ──────
+    if (isProd || requiresCurrentGen) {
       const before = filtered.length;
       filtered = filtered.filter(isCurrentGen);
       if (filtered.length < before)
         rules.push(withCount("1b: Prev-gen excluded", before));
     }
 
-    // ── 1b: Nitro Enclaves required for AWS under PCI/HIPAA ────────────────
+    // ── 1b: AWS Nitro Enclaves required (Compliance) ────────────────────────
     if (requiresAwsNitro && provider === "aws") {
       const before = filtered.length;
       const nitro = filtered.filter(isNitroCapable);
       if (nitro.length > 0) {
         filtered = nitro;
         rules.push(withCount("1b: Nitro required (Compliance)", before));
+      }
+    }
+
+    // ── 1b: Confidential computing required (AWS/Azure) ─────────────────────
+    // Gated the same way the Nitro rule above is gated to AWS: GCP has no
+    // type-level signal at all (see isConfidentialCapable), so every GCP row
+    // would fail this identically, every time, forever — a permanent rule
+    // line, not information. Skipped there entirely, the same "no-op" shape
+    // sqlPhysicalCoreLicensing's GCP behaviour already established. AWS/Azure
+    // still run the real check and report "not applied" on the rows where it
+    // happens not to find a candidate — that IS information, since it varies
+    // row to row.
+    if (requiresConfidential && provider !== "gcp") {
+      const before = filtered.length;
+      const confidential = filtered.filter((i) =>
+        isConfidentialCapable(i, provider),
+      );
+      if (confidential.length > 0) {
+        filtered = confidential;
+        rules.push(withCount("1b: Confidential computing required", before));
+      } else {
+        rules.push(
+          "1b: Confidential computing required (not applied — no candidate)",
+        );
+      }
+    }
+
+    // ── 1b: Azure Trusted Launch required (Compliance) ──────────────────────
+    // Azure-only, same shape as the Nitro rule: skipped entirely for AWS/GCP,
+    // neither of which publishes an equivalent field in this feed.
+    if (requiresTrustedLaunch && provider === "azure") {
+      const before = filtered.length;
+      const trusted = filtered.filter(isTrustedLaunchCapable);
+      if (trusted.length > 0) {
+        filtered = trusted;
+        rules.push(
+          withCount("1b: Trusted Launch required (Compliance)", before),
+        );
+      } else {
+        rules.push("1b: Trusted Launch required (not applied — no candidate)");
       }
     }
 

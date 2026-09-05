@@ -198,7 +198,7 @@ set("cpuDownsizeMax", { value: "30" });
 set("cpuKeepMax", { value: "70" });
 set("memoryDownsizeMax", { value: "45" });
 set("ruleDefaultEnv", { value: "Production" });
-set("ruleDefaultCompliance", { value: "PCI" });
+set("ruleDefaultComplianceCurrentGen", { checked: true });
 set("aws", { checked: true });
 set("azure", { checked: true });
 set("processor_0", { checked: true });
@@ -218,15 +218,17 @@ check(
   "capture reads checkbox states",
   cfgA.checkboxes.cpuBased === true &&
     cfgA.checkboxes.memoryBased === false &&
-    cfgA.checkboxes.excludeTypes === true,
+    cfgA.checkboxes.excludeTypes === true &&
+    // Compliance is now several independent checkboxes, not one <select> —
+    // see rule-engine.js.
+    cfgA.checkboxes.ruleDefaultComplianceCurrentGen === true,
   JSON.stringify(cfgA.checkboxes),
 );
 check(
   "capture reads number + text inputs",
   cfgA.numbers.cpuDownsizeMax === "30" &&
     cfgA.numbers.cpuKeepMax === "70" &&
-    cfgA.texts.ruleDefaultEnv === "Production" &&
-    cfgA.texts.ruleDefaultCompliance === "PCI",
+    cfgA.texts.ruleDefaultEnv === "Production",
   JSON.stringify({ n: cfgA.numbers, t: cfgA.texts }),
 );
 check(

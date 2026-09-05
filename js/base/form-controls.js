@@ -262,9 +262,16 @@ function getRuleDefaults() {
     workload: (
       document.getElementById("ruleDefaultWorkload")?.value || ""
     ).trim(),
-    compliance: (
-      document.getElementById("ruleDefaultCompliance")?.value || ""
-    ).trim(),
+    // Compliance is now several independently-selectable checkboxes, not one
+    // <select> — each page has only the ones with a real effect there (see
+    // rule-engine.js). Joined comma-separated, the same convention Exclude/
+    // Include Only already use; a page missing all four reads back "".
+    compliance: Array.from(
+      document.querySelectorAll('input[id^="ruleDefaultCompliance"]'),
+    )
+      .filter((el) => el.checked)
+      .map((el) => el.value)
+      .join(", "),
     // A MinGen value is native to one cloud, so each page supplies its own: the
     // single-provider pages have one #ruleDefaultMinGen, and the multi-cloud
     // page has three (one per provider) rather than a cross-provider scale that

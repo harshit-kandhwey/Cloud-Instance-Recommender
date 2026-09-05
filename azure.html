@@ -1092,23 +1092,42 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,Standard_D2s_v
                     "
                     >Compliance</label
                   >
-                  <select
-                    id="ruleDefaultCompliance"
-                    onchange="onRuleChange()"
+                  <div
                     style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 4px;
                       font-size: 0.83em;
-                      background: white;
                     "
                   >
-                    <option value="">— none —</option>
-                    <option value="HIPAA">HIPAA</option>
-                    <option value="PCI">PCI</option>
-                    <option value="SOC2">SOC2</option>
-                  </select>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceCurrentGen"
+                        value="Current-Generation Hardware"
+                        onchange="onRuleChange()"
+                      />
+                      Current-Generation Hardware
+                    </label>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceConfidential"
+                        value="Confidential Computing"
+                        onchange="onRuleChange()"
+                      />
+                      Confidential Computing
+                    </label>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceTrustedLaunch"
+                        value="Azure Trusted Launch"
+                        onchange="onRuleChange()"
+                      />
+                      Azure Trusted Launch
+                    </label>
+                  </div>
                   <div
                     id="conflictCompliance"
                     style="

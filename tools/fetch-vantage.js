@@ -62,6 +62,25 @@ const num = (v) => (v === undefined || v === null ? NaN : Number(v));
 // this exact sentinel.
 const orUnreported = (v) => (Number.isFinite(v) ? v : -1);
 
+// Azure's GPU field is free text, never a bare number: plain counts ("0", "1",
+// "0.25" for a fractional vGPU share), "<N>X <model>" (any case, "2X K80",
+// "8x 80GB A100 (NVlink)"), and "<N>/<D>[th] <model>" fractional shares
+// ("1/2X A10", "1/8th MI25 (2GB VRAM)"). Every one of these leads with the
+// count; only the trailing model/VRAM text differs, so a fraction check
+// followed by a leading-number match covers every format seen live
+// 2026-09-04 across all ~50 distinct values in the feed. Falls back to 0
+// (no GPU) for anything unparseable rather than throwing — a future model
+// string this doesn't anticipate should still ship as "0 GPUs", not fail
+// the whole refresh.
+function parseAzureGpuCount(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return 0;
+  const frac = s.match(/^(\d+)\s*\/\s*(\d+)/);
+  if (frac) return Number(frac[1]) / Number(frac[2]);
+  const lead = s.match(/^(\d+(?:\.\d+)?)/);
+  return lead ? Number(lead[1]) : 0;
+}
+
 // physical_processor string → manufacturer bucket.
 function awsProcessor(physical) {
   const p = String(physical || "");
@@ -267,6 +286,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       burstBandwidthGbps: orUnreported(num(raw.burst_bandwidth_gbps)),
       cores: orUnreported(num(raw.cores)),
       burstMinutes: orUnreported(num(raw.burst_minutes)),
+      gpuCount: Number.isFinite(num(raw.GPU)) ? num(raw.GPU) : 0,
+      isBareMetal: raw.is_bare_metal === true ? 1 : 0,
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memorySizeInGiB))
       return out; // missing spec → don't ship a NaN-spec record
@@ -307,6 +328,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
       // record Vantage publishes — no "not reported" case exists once a refresh
       // has actually run this line.
       sharedCpu: raw.shared_cpu === true ? 1 : 0,
+      gpuCount: Number.isFinite(num(raw.GPU)) ? num(raw.GPU) : 0,
     };
     if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
       return out; // missing spec → don't ship a NaN-spec record
@@ -350,6 +372,8 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     vcpusPerCore: Number.isFinite(num(raw.vcpus_percore))
       ? num(raw.vcpus_percore)
       : 0,
+    gpuCount: parseAzureGpuCount(raw.GPU),
+    trustedLaunch: raw.trusted_launch === true ? 1 : 0,
   };
   if (!Number.isFinite(base.vCpus) || !Number.isFinite(base.memoryGiB))
     return out; // missing spec → don't ship a NaN-spec record

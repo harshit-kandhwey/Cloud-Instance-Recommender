@@ -30,6 +30,12 @@ const PRESET_CHECKBOXES = [
   "restrictProcessorManufacturers",
   "restrictMainFamilies",
   "excludeTypes",
+  // Compliance used to be one <select> (still in PRESET_TEXTS' history); now
+  // an independently-selectable checkbox per real signal — see rule-engine.js.
+  "ruleDefaultComplianceCurrentGen",
+  "ruleDefaultComplianceNitro",
+  "ruleDefaultComplianceConfidential",
+  "ruleDefaultComplianceTrustedLaunch",
 ];
 const PRESET_NUMBERS = [
   "cpuDownsizeMax",
@@ -46,7 +52,6 @@ const PRESET_TEXTS = [
   "ruleDefaultEnv",
   "ruleDefaultOS",
   "ruleDefaultWorkload",
-  "ruleDefaultCompliance",
   "ruleDefaultMinGen",
   "ruleDefaultMinGenAws",
   "ruleDefaultMinGenAzure",

@@ -1641,10 +1641,15 @@ function analyzeInputHygiene(rows) {
         allow: RECOGNIZED.env,
       },
       {
+        // Comma-separated, like Exclude/Include Only — a row can name more
+        // than one real requirement at once (see rule-engine.js). Each
+        // TOKEN is checked, not the whole cell, so "Confidential Computing,
+        // Made-Up Framework" flags only the second half.
         label: "Compliance",
         rule: "compliance",
         cols: ["Compliance"],
         allow: RECOGNIZED.compliance,
+        multiValue: true,
       },
     ];
     for (const dim of RULE_DIMENSIONS) {
@@ -1659,11 +1664,20 @@ function analyzeInputHygiene(rows) {
         // The same value in two synonym columns of one row names that row once.
         const seen = new Set();
         for (const col of presentCols) {
-          const raw = String(row[col] ?? "").trim();
-          if (!raw || allowed.has(raw.toLowerCase()) || seen.has(raw)) continue;
-          seen.add(raw);
-          if (!byValue.has(raw)) byValue.set(raw, []);
-          byValue.get(raw).push(dataRowNumber(i));
+          const cell = String(row[col] ?? "").trim();
+          if (!cell) continue;
+          const tokens = dim.multiValue
+            ? cell
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : [cell];
+          for (const raw of tokens) {
+            if (allowed.has(raw.toLowerCase()) || seen.has(raw)) continue;
+            seen.add(raw);
+            if (!byValue.has(raw)) byValue.set(raw, []);
+            byValue.get(raw).push(dataRowNumber(i));
+          }
         }
       });
       for (const [raw, rowNumbers] of byValue) {

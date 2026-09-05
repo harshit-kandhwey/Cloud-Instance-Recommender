@@ -65,6 +65,7 @@ const awsExcludeTypesData = [
   "GPU",
   "FPGA",
   "Burstable",
+  "Bare Metal",
 ];
 
 // Initialize AWS filter controls

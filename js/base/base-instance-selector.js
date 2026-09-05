@@ -734,6 +734,20 @@ class BaseInstanceSelector {
         return providerName === "aws" && familyName
           ? familyName.includes("fpga")
           : providerName === "aws" && fam.startsWith("f");
+      // AWS: a real is_bare_metal field, read via originalData (see
+      // rule-engine.js's Instance.originalData). GCP: no dedicated field, but
+      // every bare-metal type's own name ends in "-metal" — checked against
+      // every shipped GCP type, no exceptions. Azure publishes zero bare-metal
+      // instance types at all — checked live 2026-09-04 — so it always
+      // returns false there rather than guessing at a pattern.
+      case "bare metal": {
+        if (providerName === "aws") {
+          const v = instance.originalData?.isBareMetal;
+          return v === 1 || v === "1" || v === 1.0;
+        }
+        if (providerName === "gcp") return instType.endsWith("-metal");
+        return false;
+      }
       case "mac":
         return fam.startsWith("mac");
       case "previous generation":

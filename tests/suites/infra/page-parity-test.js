@@ -70,6 +70,11 @@ const INTENTIONAL = {
   // live 2026-09-04 — no field of any kind), so the toggle would do nothing
   // on a GCP-only page. Present everywhere a real effect is possible.
   sqlPhysicalCoreLicensing: ["aws.html", "azure.html", "multicloud.html"],
+  // Compliance's checkboxes (ruleDefaultCompliance*) are NOT listed here:
+  // form-controls.js reads them via a prefix querySelectorAll, not individual
+  // getElementById calls, so the automatic scan below never sees them at all
+  // — see the dedicated "Compliance offers only..." check further down for
+  // their real per-page enforcement.
 };
 
 // ─── Every js/base lookup is on every page, or deliberately not ──────────────
@@ -225,6 +230,45 @@ console.log("[MinGen is native per cloud on every page]");
     found.length === 3 && !found.includes("ruleDefaultMinGen"),
     `found: [${found.join(", ") || "none"}]`,
   );
+}
+
+// ─── Compliance: exactly the checkboxes each page has a real signal for ──────
+// These ids are read via a prefix querySelectorAll in form-controls.js, not
+// individual getElementById calls, so the automatic scan above never sees
+// them at all — this is the only check that verifies their per-page set.
+console.log("[Compliance offers only the options with a real per-page signal]");
+{
+  const COMPLIANCE_IDS = [
+    "ruleDefaultComplianceCurrentGen",
+    "ruleDefaultComplianceNitro",
+    "ruleDefaultComplianceConfidential",
+    "ruleDefaultComplianceTrustedLaunch",
+  ];
+  const complianceIdsOn = (p) =>
+    COMPLIANCE_IDS.filter((id) => hasElementId(p, id));
+  const EXPECTED = {
+    "aws.html": [
+      "ruleDefaultComplianceCurrentGen",
+      "ruleDefaultComplianceNitro",
+      "ruleDefaultComplianceConfidential",
+    ],
+    "azure.html": [
+      "ruleDefaultComplianceCurrentGen",
+      "ruleDefaultComplianceConfidential",
+      "ruleDefaultComplianceTrustedLaunch",
+    ],
+    "gcp.html": ["ruleDefaultComplianceCurrentGen"],
+    "multicloud.html": COMPLIANCE_IDS,
+  };
+  PAGES.forEach((p) => {
+    const found = complianceIdsOn(p).sort();
+    const expected = EXPECTED[p].slice().sort();
+    check(
+      `${short(p)} carries exactly its expected Compliance checkboxes`,
+      JSON.stringify(found) === JSON.stringify(expected),
+      `found: [${found.join(", ")}] expected: [${expected.join(", ")}]`,
+    );
+  });
 }
 
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout

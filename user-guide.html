@@ -1275,11 +1275,22 @@
             <tr>
               <td><span class="col-pill col-pill-new">Compliance</span></td>
               <td>
-                <code>PCI</code>, <code>HIPAA</code>, <code>SOC2</code>,
-                <code>FIPS</code>
+                Comma-separated, like Exclude:
+                <code>Current-Generation Hardware</code>,
+                <code>AWS Nitro Enclaves</code>,
+                <code>Confidential Computing</code>,
+                <code>Azure Trusted Launch</code>. Legacy
+                <code>PCI</code>/<code>HIPAA</code>/<code>SOC2</code>/<code
+                  >FIPS</code
+                >
+                still work (see below).
               </td>
               <td>None</td>
-              <td>Forces current-gen + Nitro Enclaves (AWS PCI/HIPAA)</td>
+              <td>
+                Tightens instance selection toward each requirement's real
+                signal — see "Security &amp; Compliance" below. Does not certify
+                PCI/HIPAA/SOC2/FIPS compliance itself.
+              </td>
             </tr>
             <tr>
               <td><span class="col-pill col-pill-new">Min Gen</span></td>
@@ -1437,12 +1448,22 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             🕐 Rule 1b — Generation &amp; Compliance
           </div>
           <div class="rule-card-body">
-            <strong>When:</strong> ENV = Production OR Compliance set<br />
+            <strong>When:</strong> ENV = Production OR Compliance names
+            "Current-Generation Hardware" (legacy PCI/HIPAA/SOC2/FIPS all expand
+            to this)<br />
             <strong>Effect:</strong> Current-generation instances only<br /><br />
-            Additionally for
-            <span class="chip chip-aws">AWS</span> PCI/HIPAA:<br />
-            Nitro Enclaves support required<br /><br />
-            Rationale: Prev-gen lacks modern security features
+            Independently, Compliance names "AWS Nitro Enclaves" (legacy
+            PCI/HIPAA also expand to this) on
+            <span class="chip chip-aws">AWS</span>:<br />
+            Nitro Enclaves support required. "Confidential Computing" reuses
+            this same check on AWS, plus a
+            <span class="chip chip-azure">Azure</span> dc*/ec* family match; no
+            signal exists on GCP. "Azure Trusted Launch" requires the real
+            trusted_launch field on
+            <span class="chip chip-azure">Azure</span> only.<br /><br />
+            Rationale: prev-gen lacks modern security features; the rest are
+            real per-instance signals, not certifications — see "Security &amp;
+            Compliance" below.
           </div>
         </div>
         <div class="rule-card rule-1c">
@@ -1624,15 +1645,39 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           </tr>
           <tr>
             <td>1b</td>
-            <td>ENV = Production or Compliance set</td>
+            <td>
+              ENV = Production, or Compliance names Current-Generation Hardware
+              (PCI/HIPAA/SOC2/FIPS all expand to this)
+            </td>
             <td>Current-gen only</td>
             <td><code>1b: Prev-gen excluded</code></td>
           </tr>
           <tr>
             <td>1b-Nitro</td>
-            <td>Compliance = PCI/HIPAA + AWS</td>
+            <td>
+              Compliance names AWS Nitro Enclaves (PCI/HIPAA expand to this too)
+              + AWS
+            </td>
             <td>Nitro Enclaves required</td>
             <td><code>1b: Nitro required (Compliance)</code></td>
+          </tr>
+          <tr>
+            <td>1b-Confidential</td>
+            <td>
+              Compliance = Confidential Computing + AWS/Azure (no signal on GCP)
+            </td>
+            <td>AWS: Nitro reused. Azure: dc*/ec* family match</td>
+            <td>
+              <code>1b: Confidential computing required (Compliance)</code>
+            </td>
+          </tr>
+          <tr>
+            <td>1b-TrustedLaunch</td>
+            <td>Compliance = Azure Trusted Launch + Azure</td>
+            <td>The real trusted_launch field required</td>
+            <td>
+              <code>1b: Trusted Launch required (Compliance)</code>
+            </td>
           </tr>
           <tr>
             <td>1c</td>
@@ -1955,8 +2000,12 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           </tr>
           <tr>
             <td>Default Compliance</td>
-            <td>— / PCI / HIPAA / FIPS / SOC2</td>
-            <td>Enforces compliance-grade filtering globally</td>
+            <td>
+              Checkboxes, any combination — Current-Generation Hardware / AWS
+              Nitro Enclaves / Confidential Computing / Azure Trusted Launch
+              (each page shows only the ones with a real effect there)
+            </td>
+            <td>Tightens instance selection toward each checked requirement</td>
           </tr>
           <tr>
             <td>Minimum Generation</td>
@@ -2636,7 +2685,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             </tr>
             <tr>
               <td>Default Compliance</td>
-              <td colspan="3">PCI / HIPAA / FIPS / SOC2</td>
+              <td colspan="3">
+                Current-Generation Hardware / AWS Nitro Enclaves / Confidential
+                Computing / Azure Trusted Launch (checkboxes, any combination)
+              </td>
             </tr>
             <tr>
               <td>Minimum Generation</td>
@@ -2750,7 +2802,8 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             <td>Exclude Types</td>
             <td>
               Exclude individual type classes: Graviton/ARM, GPU, Mac instances,
-              previous generation, Nitro-only
+              previous generation, Nitro-only, Bare Metal (backed by the real
+              <code>is_bare_metal</code> field)
             </td>
           </tr>
         </tbody>
@@ -2813,7 +2866,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           </tr>
           <tr>
             <td>Exclude Types</td>
-            <td>Exclude ARM (T2A), GPU, or shared-core families</td>
+            <td>
+              Exclude ARM (T2A), GPU, shared-core families, or Bare Metal
+              (backed by the machine type's own "-metal" name, no field needed)
+            </td>
           </tr>
         </tbody>
       </table>
@@ -3230,14 +3286,44 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       <h3>🔒 Security &amp; Compliance</h3>
       <ul class="check">
         <li>
-          Set <code>Compliance = PCI</code> or
-          <code>Compliance = HIPAA</code> in the CSV for regulated workloads to
-          ensure Nitro-capable (AWS) and current-gen-only instances are
-          recommended
+          <strong
+            >The Compliance column tightens instance selection toward real
+            hardware/software signals — it does not itself certify PCI-DSS,
+            HIPAA, SOC 2, or FIPS compliance.</strong
+          >
+          Those are account- and program-level facts (your BAA, your
+          AWS/Azure/GCP compliance program, your own controls), not properties
+          of an instance type.
         </li>
         <li>
-          For FIPS-boundary requirements, manually verify that recommended
-          regions are within your geographic compliance boundary
+          Set <code>Compliance = Current-Generation Hardware</code> to keep
+          recommendations on current-generation instances — a reasonable
+          baseline for any regulated workload, on any of the three clouds.
+        </li>
+        <li>
+          Add <code>AWS Nitro Enclaves</code> (comma-separated) to require
+          Nitro-capable AWS instances — the real primitive many organizations
+          use to isolate PCI/HIPAA-sensitive processing. Legacy
+          <code>PCI</code> and <code>HIPAA</code> values still work and expand
+          to both of the above automatically; legacy <code>SOC2</code> and
+          <code>FIPS</code> expand to Current-Generation Hardware alone.
+        </li>
+        <li>
+          Add <code>Confidential Computing</code> for memory-encrypted instances
+          — AWS reuses the Nitro Enclaves signal above; Azure requires its
+          dc*/ec* confidential-VM families; GCP has no per-instance-type signal
+          for this at all (a genuine gap in that feed, not an oversight), so the
+          option has no effect there.
+        </li>
+        <li>
+          Add <code>Azure Trusted Launch</code> for Secure Boot + vTPM instances
+          (Azure only, distinct from Confidential Computing's memory
+          encryption).
+        </li>
+        <li>
+          For FIPS-boundary or data-residency requirements, manually verify that
+          recommended regions are within your geographic compliance boundary —
+          this is a region choice, not an instance-type one.
         </li>
         <li>
           No inventory data ever leaves your browser — the tool is fully
