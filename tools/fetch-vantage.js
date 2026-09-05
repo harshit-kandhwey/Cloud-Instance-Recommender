@@ -26,6 +26,7 @@ const {
   writeFileAtomic,
   loadGlobals,
   monolithPath,
+  fetchJson,
 } = require("./lib/build-env");
 const {
   round8,
@@ -600,16 +601,14 @@ async function fetchBulk(name) {
       "VANTAGE_API_KEY is not set — see .env.example / docs/DATA-SOURCES.md",
     );
   }
-  const res = await fetch(BULK_URLS[name], {
+  return fetchJson(BULK_URLS[name], {
+    timeoutMs: 120000,
     headers: {
       Authorization: `Bearer ${key}`,
       "User-Agent": "cloud-instance-recommender-fetch-vantage",
-      Accept: "application/json",
     },
-    signal: AbortSignal.timeout(120000),
+    errorContext: `[${name}]`,
   });
-  if (!res.ok) throw new Error(`[${name}] fetch failed: HTTP ${res.status}`);
-  return res.json();
 }
 
 async function main() {

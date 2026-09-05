@@ -35,7 +35,12 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
+const {
+  ROOT,
+  argValue,
+  writeFileAtomic,
+  fetchJson,
+} = require("./lib/build-env");
 const {
   round8,
   loadCommittedRegions,
@@ -464,19 +469,13 @@ async function fetchAllSkus() {
     const url =
       `${CATALOG_HOST}/v1/${COMPUTE_SERVICE}/skus?key=${key}` +
       `&pageSize=${PAGE_SIZE}${token ? `&pageToken=${token}` : ""}`;
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    const j = await fetchJson(url, {
+      timeoutMs: REQUEST_TIMEOUT_MS,
       headers: {
         "User-Agent": "cloud-instance-recommender-fetch-official-gcp",
-        Accept: "application/json",
       },
+      errorContext: `(catalog page ${page + 1})`,
     });
-    if (!res.ok) {
-      throw new Error(
-        `fetch failed: HTTP ${res.status} (catalog page ${page + 1})`,
-      );
-    }
-    const j = await res.json();
     if (Array.isArray(j.skus)) skus.push(...j.skus);
     token = j.nextPageToken || "";
     if (!token) break;

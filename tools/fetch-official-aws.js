@@ -17,7 +17,12 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
+const {
+  ROOT,
+  argValue,
+  writeFileAtomic,
+  fetchJson,
+} = require("./lib/build-env");
 const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
 // Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
@@ -113,15 +118,11 @@ function parseAwsRegion(regionJson) {
 async function getJson(url) {
   // Generous upper bound: a per-region offer file is 116–480 MB, so this caps a
   // stalled download/parse without cutting off a legitimately slow one.
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "cloud-instance-recommender-fetch-official-aws",
-      Accept: "application/json",
-    },
-    signal: AbortSignal.timeout(300000),
+  return fetchJson(url, {
+    timeoutMs: 300000,
+    headers: { "User-Agent": "cloud-instance-recommender-fetch-official-aws" },
+    errorContext: `for ${url}`,
   });
-  if (!res.ok) throw new Error(`fetch failed: HTTP ${res.status} for ${url}`);
-  return res.json();
 }
 
 // Map each wanted region code to its current per-region offer URL.

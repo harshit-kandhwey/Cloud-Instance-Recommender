@@ -16,7 +16,12 @@
 
 const fs = require("fs");
 const path = require("path");
-const { ROOT, argValue, writeFileAtomic } = require("./lib/build-env");
+const {
+  ROOT,
+  argValue,
+  writeFileAtomic,
+  fetchJson,
+} = require("./lib/build-env");
 const { round8, readShippedRegionKeys } = require("./lib/record-schema");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
@@ -104,19 +109,13 @@ async function fetchRegionItems(regionKey) {
         `[azure] page cap (${MAX_PAGES}) exceeded for region ${regionKey}`,
       );
     }
-    const res = await fetch(url, {
+    const page = await fetchJson(url, {
+      timeoutMs: 60000,
       headers: {
         "User-Agent": "cloud-instance-recommender-fetch-official-azure",
-        Accept: "application/json",
       },
-      signal: AbortSignal.timeout(60000),
+      errorContext: `for region ${regionKey}`,
     });
-    if (!res.ok) {
-      throw new Error(
-        `fetch failed: HTTP ${res.status} for region ${regionKey}`,
-      );
-    }
-    const page = await res.json();
     if (Array.isArray(page.Items)) items.push(...page.Items);
     url = page.NextPageLink || null;
   }
