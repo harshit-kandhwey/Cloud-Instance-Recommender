@@ -743,7 +743,9 @@ class BaseInstanceSelector {
       case "bare metal": {
         if (providerName === "aws") {
           const v = instance.originalData?.isBareMetal;
-          return v === 1 || v === "1" || v === 1.0;
+          return typeof RuleEngine !== "undefined"
+            ? RuleEngine.isFlagTrue(v)
+            : v === 1 || v === "1" || v === "1.0";
         }
         if (providerName === "gcp") return instType.endsWith("-metal");
         return false;

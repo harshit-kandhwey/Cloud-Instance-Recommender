@@ -221,6 +221,21 @@ console.log("[Azure Trusted Launch: Azure-only real field]");
       !awsRes.rules.some((r) => r.includes("Trusted Launch")),
     JSON.stringify({ n: awsRes.instances.length, rules: awsRes.rules }),
   );
+  // isTrustedLaunchCapable used to hand-copy a check that never compared
+  // against the STRING "1.0" (only the number 1, the string "1", and the
+  // number 1.0 -- identical to 1 at the JS level). Now shares
+  // RuleEngine.isFlagTrue with every other 1/0-flag field in this file.
+  ctx.tlStringPool = [
+    inst({ instanceType: "tl", originalData: { trustedLaunch: "1.0" } }),
+    inst({ instanceType: "plain", originalData: { trustedLaunch: 0 } }),
+  ];
+  const tlStringRes = apply(ctx.tlStringPool, "Azure Trusted Launch", "azure");
+  check(
+    'the string "1.0" form is also honoured',
+    tlStringRes.instances.length === 1 &&
+      tlStringRes.instances[0].instanceType === "tl",
+    JSON.stringify(tlStringRes.instances.map((i) => i.instanceType)),
+  );
 }
 
 console.log("[Unrecognised tokens are silently ignored by apply() itself]");

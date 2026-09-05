@@ -468,15 +468,6 @@ function sampleMinGenColumns() {
   }));
 }
 
-// Compliance/Exclude/Include Only all carry comma-separated token lists, so
-// a cell with more than one token must be quoted or the comma shifts every
-// later column right by one — the same quoting downloadSampleCSV's
-// hand-written template already relies on for its own "Burstable,GPU" cell.
-function csvField(v) {
-  const s = String(v ?? "");
-  return s.includes(",") ? `"${s}"` : s;
-}
-
 function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
   const regionCols = sampleRegionColumns();
   const minGenCols = sampleMinGenColumns();
@@ -511,14 +502,14 @@ function buildSampleCsv(rows, { memoryHeader = "Memory (GB)" } = {}) {
       r.env,
       r.os,
       r.workload,
-      csvField(r.compliance || ""),
+      escapeCsvCell(r.compliance || ""),
       ...minGenCols.map((c) =>
         r.minGen && typeof r.minGen === "object"
           ? r.minGen[c.provider] || ""
           : r.minGen || "",
       ),
-      csvField(r.exclude || ""),
-      csvField(r.includeOnly || ""),
+      escapeCsvCell(r.exclude || ""),
+      escapeCsvCell(r.includeOnly || ""),
       r.currentInstance || "",
     ].join(","),
   );

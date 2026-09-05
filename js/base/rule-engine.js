@@ -537,8 +537,7 @@ const RuleEngine = (() => {
     }
     if (provider === "azure") return fam.startsWith("b"); // B-series: bsv2, bsv3, bpsv2, … — no real field exists
     if (provider === "gcp") {
-      if (raw.sharedCpu !== undefined)
-        return raw.sharedCpu === 1 || raw.sharedCpu === "1";
+      if (raw.sharedCpu !== undefined) return isFlagTrue(raw.sharedCpu);
       // Dormant fallback — the exact pre-fix behaviour, for records shipped
       // before sharedCpu existed in FIELD_ORDER.
       if (GCP_BURSTABLE_SERIES.includes(fam)) return true;
@@ -551,16 +550,27 @@ const RuleEngine = (() => {
     return false;
   }
 
+  // Whether a raw 1/0-encoded flag (an originalData field, or an Instance
+  // property fetch-vantage emits the same way) reads as true. Hand-copied
+  // per call site until now, with the accepted forms silently narrowing as
+  // newer checks were copied from older ones — the 3 oldest accepted all 4
+  // written forms, the 3 newest dropped "1.0", GCP's sharedCpu dropped both
+  // "1.0" and the bare number. One home for the decoding fixes all of them
+  // at once. Number(1.0) === Number(1) at the JS level — there is no
+  // separate "1.0 number" a raw field can carry — so the string "1.0" is
+  // the only extra form beyond the number 1 and the string "1".
+  function isFlagTrue(v) {
+    return v === 1 || v === "1" || v === "1.0";
+  }
+
   /** @param {Instance} inst */
   function isCurrentGen(inst) {
-    const g = inst.generation;
-    return g === 1 || g === 1.0 || g === "1" || g === "1.0";
+    return isFlagTrue(inst.generation);
   }
 
   /** @param {Instance} inst */
   function isARM(inst) {
-    const g = inst.isGraviton;
-    if (g === 1 || g === 1.0 || g === "1" || g === "1.0") return true;
+    if (isFlagTrue(inst.isGraviton)) return true;
     const processor = (inst.processor || "").toLowerCase();
     const family = (inst.family || "").toLowerCase();
     const type = (inst.instanceType || "").toLowerCase();
@@ -576,8 +586,7 @@ const RuleEngine = (() => {
   /** @param {Instance} inst */
   function isNitroCapable(inst) {
     const raw = inst.originalData || {};
-    const v = raw.nitroEnclavesSupport;
-    return v === 1 || v === 1.0 || v === "1" || v === "1.0";
+    return isFlagTrue(raw.nitroEnclavesSupport);
   }
 
   // Rule 1b's Compliance="Confidential Computing" option. Cross-checked
@@ -623,8 +632,7 @@ const RuleEngine = (() => {
   /** @param {Instance} inst */
   function isTrustedLaunchCapable(inst) {
     const raw = inst.originalData || {};
-    const v = raw.trustedLaunch;
-    return v === 1 || v === "1" || v === 1.0;
+    return isFlagTrue(raw.trustedLaunch);
   }
 
   // GCP generation order map (higher = newer)
@@ -1153,6 +1161,10 @@ const RuleEngine = (() => {
     isBurstable,
     isCurrentGen,
     isARM,
+    // Exposed so base-instance-selector's bare-metal check reads the same
+    // 1/0-flag decoding as everything in this file, instead of a 4th
+    // hand-copied version — see isFlagTrue's own comment above.
+    isFlagTrue,
     isWindowsOS,
     hasNetworkTier,
     physicalCores,

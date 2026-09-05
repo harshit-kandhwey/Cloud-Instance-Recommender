@@ -128,6 +128,15 @@ console.log("[GCP: the real shared_cpu boolean, once present]");
     "an e2 family flagged false by the real field does NOT count, even though e2 can be shared-core",
     run("RuleEngine.isBurstable(e2False, 'gcp')") === false,
   );
+  // This branch used to hand-copy a 2-form check (=== 1 || === "1"), the
+  // narrowest of all the flag-decoding call sites — a string "1.0" (e.g.
+  // round-tripped through CSV/JSON) silently fell through it. Now shares
+  // RuleEngine.isFlagTrue, same as every other 1/0-flag field.
+  ctx.n2StringTrue = inst({ family: "n2", originalData: { sharedCpu: "1.0" } });
+  check(
+    'the string "1.0" form is also honoured',
+    run("RuleEngine.isBurstable(n2StringTrue, 'gcp')") === true,
+  );
 }
 
 console.log(
