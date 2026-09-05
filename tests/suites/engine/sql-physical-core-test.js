@@ -146,6 +146,15 @@ console.log(
     on.instances.length === 1 && on.instances[0].instanceType === "big",
     JSON.stringify(on.instances.map((i) => i.instanceType)),
   );
+  // The bug this guards: the toggle being ON used to be enough to label the
+  // rule "physical-core", even though physicalCores() returned null for
+  // every candidate here and the floor actually ran on vCPUs the whole time.
+  check(
+    "the label honestly says vCPU here too, not physical-core it never used",
+    on.rules.some((r) => r.startsWith("SQL: 4-vCPU licence floor")) &&
+      !on.rules.some((r) => r.includes("physical-core")),
+    JSON.stringify(on.rules),
+  );
 }
 
 console.log(

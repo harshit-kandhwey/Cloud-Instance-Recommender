@@ -399,7 +399,9 @@ const RuleEngine = (() => {
   //   Azure `accelerated_networking` — a boolean (stored 1/0, since
   //         emitValue takes no JS boolean), not a bandwidth number, but the
   //         closest real "gets the fast network path" signal Azure
-  //         publishes.
+  //         publishes. -1 when Vantage doesn't report the field for that
+  //         record at all, distinct from an explicit false (0) — same
+  //         per-record "not reported" sentinel AWS's bandwidth field uses.
   //   GCP   `network_performance` is the string "Variable" for every single
   //         shipped record (checked against ALL of them, not a sample) — it
   //         carries no per-type information at all. There is nothing better
@@ -429,9 +431,12 @@ const RuleEngine = (() => {
       return b >= AWS_NETWORK_TIER_GBPS;
     }
     if (provider === "azure") {
-      const v = raw.acceleratedNetworking;
-      if (v === undefined) return inst.vCpus >= 4;
-      return v === 1 || v === "1" || v === 1.0;
+      const v = Number(raw.acceleratedNetworking);
+      // -1 is fetch-vantage's "not reported for this record" sentinel;
+      // undefined (Number(undefined) is NaN) is the pre-refresh dormant
+      // case. Both fall back, same convention as the AWS branch above.
+      if (!Number.isFinite(v) || v < 0) return inst.vCpus >= 4;
+      return v === 1;
     }
     return inst.vCpus >= 4; // GCP: see note above — no better signal exists.
   }
@@ -1000,21 +1005,27 @@ const RuleEngine = (() => {
     // every filter — if nothing clears the floor, the pool stands and the row says so.
     if (SQL_WORKLOADS.includes(workload)) {
       // GCP can never honour the toggle (physicalCores() always returns null
-      // for it — no comparable field exists in this feed), so its label says
-      // vCPU regardless of what the toggle requests; saying "physical-core"
-      // for a rule that structurally always falls back to vCPUs would
-      // describe a decision that never actually happens.
-      const physical = !!options.sqlPhysicalCoreLicensing && provider !== "gcp";
-      const unit = physical ? "physical-core" : "vCPU";
-      // physicalCores() returning null (GCP always; AWS/Azure with no real
-      // count yet) falls back to the vCPU floor — the exact pre-toggle
-      // behaviour — rather than guessing a ratio no field actually gives.
+      // for it — no comparable field exists in this feed); AWS/Azure CAN, but
+      // only once a refresh actually populates `cores`/`vcpusPerCore` — until
+      // then physicalCores() returns null for every one of their records too,
+      // the same dormant-field window every other new field in this minor
+      // falls back through. Reporting "physical-core" whenever the toggle is
+      // merely ON (not when it actually changed anything) would describe a
+      // decision that never happened for the whole pool. anyRealCores tracks
+      // whether physicalCores() found a real count for ANY candidate actually
+      // evaluated below, so the label reflects what this pool's evaluation
+      // actually used, not just what was requested.
+      const physicalRequested =
+        !!options.sqlPhysicalCoreLicensing && provider !== "gcp";
+      let anyRealCores = false;
       const meetsFloor = (i) => {
-        const cores = physical ? physicalCores(i, provider) : null;
+        const cores = physicalRequested ? physicalCores(i, provider) : null;
+        if (cores !== null) anyRealCores = true;
         return (cores ?? i.vCpus) >= SQL_MIN_CORES;
       };
       const before = filtered.length;
       const licensed = filtered.filter(meetsFloor);
+      const unit = physicalRequested && anyRealCores ? "physical-core" : "vCPU";
       if (licensed.length > 0) {
         filtered = licensed;
         if (filtered.length < before) {

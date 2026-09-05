@@ -365,7 +365,18 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
     processorArchitecture: azureProcessor(family, isARM),
     vCpus: num(raw.vcpu),
     memoryGiB: num(raw.memory),
-    acceleratedNetworking: raw.accelerated_networking ? 1 : 0,
+    // -1 (not the ternary's collapsed 0) when Vantage doesn't report this
+    // field for this record at all -- distinct from an explicit false, so
+    // hasNetworkTier's vCPU-proxy fallback can still fire once a real refresh
+    // runs this line, instead of every unreported row silently reading as
+    // "no accelerated networking." Same -1 sentinel convention as AWS's
+    // baselineBandwidthGbps/burstBandwidthGbps above.
+    acceleratedNetworking:
+      raw.accelerated_networking === undefined
+        ? -1
+        : raw.accelerated_networking
+          ? 1
+          : 0,
     // 0 is Vantage's own "not reported" value for this field (never a real
     // vCPUs-per-core ratio), so no extra sentinel is needed beyond what num()
     // and the missing-field case both already collapse to.

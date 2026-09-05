@@ -238,8 +238,8 @@ function splitDataParity(monolith) {
     JSON.stringify(g.eastus.e8asv5),
   );
   check(
-    "[azure] a type with no accelerated_networking field at all also reads 0",
-    g.eastus.a0.acceleratedNetworking === 0,
+    "[azure] a type with no accelerated_networking field at all reads -1, not 0 — hasNetworkTier's fallback depends on telling this apart from an explicit false",
+    g.eastus.a0.acceleratedNetworking === -1,
     JSON.stringify(g.eastus.a0),
   );
   check(

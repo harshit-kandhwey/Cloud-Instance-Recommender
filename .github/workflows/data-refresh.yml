@@ -312,7 +312,7 @@ jobs:
               echo
               echo "> [!NOTE]"
               echo "> **Report truncated** — the full diff/reconcile/flip reports ran to"
-              echo "> ${reports_size} characters, over GitHub's PR-body limit. Read the"
+              echo "> ${reports_size} bytes, over GitHub's PR-body limit. Read the"
               echo "> complete reports in the \`data-diff-report\` artifact on"
               echo "> [this run]($RUN_URL)."
             } >> pr-reports.md
