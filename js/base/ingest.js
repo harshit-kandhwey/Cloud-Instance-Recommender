@@ -453,11 +453,9 @@ function sampleRegionColumns() {
 // single-provider page gets the bare "Min Gen" column (the same fallback
 // meetsMinGeneration itself reads) and a multi-provider page gets one
 // column per provider — same split sampleRegionColumns and the hand-written
-// downloadSampleCSV/downloadAWSSampleCSV templates already use. Every column
-// still carries its `provider`, even the single bare one: a row's `minGen`
-// is a per-provider object ({ aws: "6" }), and looking it up by the page's
-// OWN provider is what keeps a value authored for one cloud from printing
-// under another's page too, single- or multi-provider alike.
+// downloadSampleCSV/downloadAWSSampleCSV templates already use. Every
+// column carries `provider` (even the bare one) so a row's per-provider
+// `minGen` value only ever prints under its own cloud's column.
 function sampleMinGenColumns() {
   const providers = getPageProviders();
   if (providers.length <= 1)
@@ -820,10 +818,7 @@ const SAMPLE_DATASETS = [
           env: "Production",
           os: "Linux",
           workload: "Analytics",
-          // AWS-only: a bare string would land in every provider's Min Gen
-          // column (see sampleMinGenColumns above) — Azure/GCP use different
-          // generation vocabularies, so "6" would be meaningless there.
-          minGen: { aws: "6" },
+          minGen: { aws: "6" }, // AWS-only; Azure/GCP use different generation vocabularies
         },
         {
           name: "build-01",

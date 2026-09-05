@@ -127,13 +127,8 @@ console.log(
   "[Bare metal: string-serialized forms of the flag are also honoured (RuleEngine.isFlagTrue)]",
 );
 {
-  // This check exists because the AWS branch used to hand-copy its own
-  // 3-form equality check (1 / "1" / the number 1.0 -- never the STRING
-  // "1.0") instead of sharing RuleEngine.isFlagTrue. A value round-tripped
-  // through CSV/JSON as the string "1.0" is exactly the shape that drift
-  // silently stopped matching, so each case here is priced to be the
-  // CHEAPEST candidate -- a wrong classification would win the pick,
-  // not just survive alongside the right answer.
+  // The AWS branch used to reject the string "1.0" (see RuleEngine.isFlagTrue).
+  // Each case is priced cheapest so a wrong classification would win the pick.
   ctx.pool = [
     box("c5.metal", "c5", 0.05, { isBareMetal: "1" }),
     box("m5.large", "m5", 0.1, { isBareMetal: 0 }),

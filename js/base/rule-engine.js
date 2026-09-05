@@ -399,9 +399,8 @@ const RuleEngine = (() => {
   //   Azure `accelerated_networking` — a boolean (stored 1/0, since
   //         emitValue takes no JS boolean), not a bandwidth number, but the
   //         closest real "gets the fast network path" signal Azure
-  //         publishes. -1 when Vantage doesn't report the field for that
-  //         record at all, distinct from an explicit false (0) — same
-  //         per-record "not reported" sentinel AWS's bandwidth field uses.
+  //         publishes. -1, not 0, when unreported — same convention as
+  //         AWS's bandwidth fields.
   //   GCP   `network_performance` is the string "Variable" for every single
   //         shipped record (checked against ALL of them, not a sample) — it
   //         carries no per-type information at all. There is nothing better
@@ -432,9 +431,7 @@ const RuleEngine = (() => {
     }
     if (provider === "azure") {
       const v = Number(raw.acceleratedNetworking);
-      // -1 is fetch-vantage's "not reported for this record" sentinel;
-      // undefined (Number(undefined) is NaN) is the pre-refresh dormant
-      // case. Both fall back, same convention as the AWS branch above.
+      // -1 (not reported) or NaN (dormant) both fall back, same as AWS above.
       if (!Number.isFinite(v) || v < 0) return inst.vCpus >= 4;
       return v === 1;
     }
@@ -550,15 +547,9 @@ const RuleEngine = (() => {
     return false;
   }
 
-  // Whether a raw 1/0-encoded flag (an originalData field, or an Instance
-  // property fetch-vantage emits the same way) reads as true. Hand-copied
-  // per call site until now, with the accepted forms silently narrowing as
-  // newer checks were copied from older ones — the 3 oldest accepted all 4
-  // written forms, the 3 newest dropped "1.0", GCP's sharedCpu dropped both
-  // "1.0" and the bare number. One home for the decoding fixes all of them
-  // at once. Number(1.0) === Number(1) at the JS level — there is no
-  // separate "1.0 number" a raw field can carry — so the string "1.0" is
-  // the only extra form beyond the number 1 and the string "1".
+  // One home for "does this raw 1/0-encoded flag read as true" — call sites
+  // below used to hand-copy this and had drifted on which forms they
+  // accepted. Number(1.0) === Number(1), so "1.0" is the only extra form.
   function isFlagTrue(v) {
     return v === 1 || v === "1" || v === "1.0";
   }
@@ -1012,17 +1003,10 @@ const RuleEngine = (() => {
     // so neither can reorder a candidate the floor should have removed. Degrades like
     // every filter — if nothing clears the floor, the pool stands and the row says so.
     if (SQL_WORKLOADS.includes(workload)) {
-      // GCP can never honour the toggle (physicalCores() always returns null
-      // for it — no comparable field exists in this feed); AWS/Azure CAN, but
-      // only once a refresh actually populates `cores`/`vcpusPerCore` — until
-      // then physicalCores() returns null for every one of their records too,
-      // the same dormant-field window every other new field in this minor
-      // falls back through. Reporting "physical-core" whenever the toggle is
-      // merely ON (not when it actually changed anything) would describe a
-      // decision that never happened for the whole pool. anyRealCores tracks
-      // whether physicalCores() found a real count for ANY candidate actually
-      // evaluated below, so the label reflects what this pool's evaluation
-      // actually used, not just what was requested.
+      // GCP never honours the toggle (no comparable field); AWS/Azure only do
+      // once physicalCores() finds a real count, which the dormant pre-refresh
+      // window means it may not. anyRealCores makes the label reflect what the
+      // pool's evaluation actually used, not just what the toggle requested.
       const physicalRequested =
         !!options.sqlPhysicalCoreLicensing && provider !== "gcp";
       let anyRealCores = false;
@@ -1161,9 +1145,7 @@ const RuleEngine = (() => {
     isBurstable,
     isCurrentGen,
     isARM,
-    // Exposed so base-instance-selector's bare-metal check reads the same
-    // 1/0-flag decoding as everything in this file, instead of a 4th
-    // hand-copied version — see isFlagTrue's own comment above.
+    // Exposed for base-instance-selector's bare-metal check, so it isn't a 4th hand-copy.
     isFlagTrue,
     isWindowsOS,
     hasNetworkTier,

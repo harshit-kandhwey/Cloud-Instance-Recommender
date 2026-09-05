@@ -432,11 +432,9 @@ function checkRuleConflicts() {
   }
 
   // ── Conflict 2: ENV=Production/Staging + burstable-only family filter ───
-  // Mirrors Rule 1a exactly (rule-engine.js's own "Rule reference" comment):
-  // burstable exclusion is env-gated only. Compliance plays no part in it —
-  // this used to also fire for ANY non-empty Compliance selection, which
-  // produced a false conflict for options (Trusted Launch, Confidential
-  // Computing, ...) that have nothing to do with burstable exclusion.
+  // Mirrors Rule 1a exactly (env-gated only) — used to also fire for any
+  // non-empty Compliance selection, a false conflict for options unrelated
+  // to burstable exclusion.
   const isProdOrStaging =
     env === "production" ||
     env === "prod" ||

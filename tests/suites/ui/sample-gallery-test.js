@@ -221,12 +221,8 @@ console.log(
   "[the full feature set sample splits Min Gen by provider on a multi-provider page]",
 );
 {
-  // The default buildContext() above is single-provider (aws.html), so the
-  // Min Gen check just run never exercises the multi-column split — a bare
-  // row-level value could pass there while still leaking into every
-  // provider's own column on a real multi-provider page. dataScripts here
-  // forces getPageProviders() to the 3-provider path that actually has that
-  // split to get wrong.
+  // The default buildContext() above is single-provider (aws.html) and never
+  // exercises the multi-column split; dataScripts forces the 3-provider path.
   const { ctx } = buildContext({
     dataScripts: [
       "js/aws/aws-data.js",

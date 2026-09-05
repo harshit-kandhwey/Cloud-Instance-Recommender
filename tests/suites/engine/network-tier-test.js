@@ -134,10 +134,7 @@ console.log(
   "[Azure: -1 'not reported for this record' sentinel falls back, distinct from an explicit false]",
 );
 {
-  // fetch-vantage emits -1 when Vantage's raw feed omits the field for this
-  // one record — distinct from 0 (explicit false). Before this fix, both
-  // collapsed to 0, so a genuinely-unreported record read as "no accelerated
-  // networking" instead of falling back to the vCPU proxy.
+  // -1 (unreported) used to collapse into 0 (explicit false) before this fix.
   ctx.azSentinelLow = inst({
     vCpus: 2,
     originalData: { acceleratedNetworking: -1 },

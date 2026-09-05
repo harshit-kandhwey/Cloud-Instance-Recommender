@@ -98,12 +98,8 @@ function writeFileAtomic(target, contents) {
   }
 }
 
-// A JSON GET with a timeout and a uniform "not ok" error. Every refresh/build
-// tool that hits a network API (fetch-vantage, the three fetch-official-*
-// tools) needs exactly this; only the URL, the timeout, any extra headers (an
-// API key, an Authorization bearer token), and what to name in the error when
-// it fails differ per caller. One copy so a timeout or an error-shape fix
-// lands everywhere at once, instead of the 4th independent hand-copy.
+// Shared JSON GET (timeout + "not ok" check) for the 4 refresh tools that
+// hit a network API — was independently hand-copied per tool before this.
 async function fetchJson(url, { timeoutMs, headers = {}, errorContext } = {}) {
   const res = await fetch(url, {
     headers: { Accept: "application/json", ...headers },
