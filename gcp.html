@@ -1092,12 +1092,23 @@ app-server-03,Billing,2,8,35,45,europe-west1,Dev,Linux,General,,,,,e2-standard-2
                       />
                       Current-Generation Hardware
                     </label>
+                    <label style="font-weight: 400">
+                      <input
+                        type="checkbox"
+                        id="ruleDefaultComplianceConfidential"
+                        value="Confidential Computing"
+                        onchange="onRuleChange()"
+                      />
+                      Confidential Computing
+                    </label>
                   </div>
-                  <!-- AWS Nitro Enclaves, Confidential Computing and Azure Trusted
-                       Launch are omitted here: none publish a type-level signal on
-                       GCP (checked live 2026-09-05; see rule-engine.js), so the
+                  <!-- AWS Nitro Enclaves and Azure Trusted Launch are omitted
+                       here: neither publishes a type-level signal on GCP
+                       (checked live 2026-09-05; see rule-engine.js), so the
                        controls would do nothing on this page — guarded by
-                       page-parity-test.js's deliberate-divergence registry. -->
+                       page-parity-test.js's deliberate-divergence registry.
+                       Confidential Computing DOES apply here since v3.16.15
+                       (a real per-series signal, checked live 2026-09-06). -->
                   <div
                     id="conflictCompliance"
                     style="

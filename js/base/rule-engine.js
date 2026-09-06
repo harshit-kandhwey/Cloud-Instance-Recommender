@@ -592,22 +592,27 @@ const RuleEngine = (() => {
   //         docs) all share one naming convention regardless of version: the
   //         family starts with "dc" or "ec". Used instead of the broken field.
   //   GCP   confidential computing is a `--confidential-compute-type` flag
-  //         set at VM CREATION on an otherwise-ordinary machine type (N2D,
-  //         C3, C3D, …), never encoded in the type name — verified against
-  //         Google's own docs. No type-level signal exists at all, a genuine
-  //         dead end like GCP's network-performance and SQL-core gaps
-  //         elsewhere in this file. Always false; the rule below degrades
-  //         the same way any other compliance requirement no candidate can
-  //         meet does — pool stands, "not applied".
+  //         set at VM CREATION, but eligibility still varies by machine
+  //         SERIES (re-verified against Google's own docs 2026-09-06, after
+  //         an earlier pass wrongly called this a total dead end): AMD SEV
+  //         on C2D/N2D/C3D/C4D, AMD SEV-SNP on N2D, Intel TDX (Preview) on
+  //         C3. `inst.family` is GCP's bare series token ("c2d", not
+  //         "c2d-standard"), so an exact match, same shape as Azure's dc*/
+  //         ec* prefix match above.
   /**
    * @param {Instance} inst
    * @param {Provider} provider
    */
+  const GCP_CONFIDENTIAL_SERIES = ["c2d", "n2d", "c3d", "c4d", "c3"];
   function isConfidentialCapable(inst, provider) {
     if (provider === "aws") return isNitroCapable(inst);
     if (provider === "azure")
       return /^(dc|ec)/i.test((inst.family || "").toLowerCase());
-    return false; // GCP: no signal exists, by design — see note above
+    if (provider === "gcp")
+      return GCP_CONFIDENTIAL_SERIES.includes(
+        (inst.family || "").toLowerCase(),
+      );
+    return false;
   }
 
   // Rule 1b's Compliance="Azure Trusted Launch" option — Secure Boot + a
@@ -617,9 +622,9 @@ const RuleEngine = (() => {
   // on 130 of 1,319 records checked 2026-09-05 — a genuine, populated
   // signal, unlike the broken `confidential` field above. AWS and GCP
   // publish no equivalent field for Nitro-Secure-Boot / Shielded VM in this
-  // feed (both are deployment-time options there too, same shape as GCP's
-  // Confidential VM), so this option is Azure-only and omitted from the
-  // other pages' Compliance controls.
+  // feed, and (unlike Confidential Computing above) neither is gated by
+  // machine series either, so this option is Azure-only and omitted from
+  // the other pages' Compliance controls.
   /** @param {Instance} inst */
   function isTrustedLaunchCapable(inst) {
     const raw = inst.originalData || {};
@@ -874,16 +879,14 @@ const RuleEngine = (() => {
       }
     }
 
-    // ── 1b: Confidential computing required (AWS/Azure) ─────────────────────
-    // Gated the same way the Nitro rule above is gated to AWS: GCP has no
-    // type-level signal at all (see isConfidentialCapable), so every GCP row
-    // would fail this identically, every time, forever — a permanent rule
-    // line, not information. Skipped there entirely, the same "no-op" shape
-    // sqlPhysicalCoreLicensing's GCP behaviour already established. AWS/Azure
-    // still run the real check and report "not applied" on the rows where it
-    // happens not to find a candidate — that IS information, since it varies
-    // row to row.
-    if (requiresConfidential && provider !== "gcp") {
+    // ── 1b: Confidential computing required (all 3 providers) ───────────────
+    // GCP used to be skipped here on the assumption its Confidential VM
+    // support was a deployment-time flag with no type-level signal — wrong,
+    // per a live GCP-docs check 2026-09-06 (see isConfidentialCapable): it
+    // varies by machine series, same shape as Azure's family match. All
+    // three providers now run the real check uniformly and report "not
+    // applied" on the rows where it happens not to find a candidate.
+    if (requiresConfidential) {
       const before = filtered.length;
       const confidential = filtered.filter((i) =>
         isConfidentialCapable(i, provider),

@@ -257,7 +257,10 @@ console.log("[Compliance offers only the options with a real per-page signal]");
       "ruleDefaultComplianceConfidential",
       "ruleDefaultComplianceTrustedLaunch",
     ],
-    "gcp.html": ["ruleDefaultComplianceCurrentGen"],
+    "gcp.html": [
+      "ruleDefaultComplianceCurrentGen",
+      "ruleDefaultComplianceConfidential",
+    ],
     "multicloud.html": COMPLIANCE_IDS,
   };
   PAGES.forEach((p) => {

@@ -175,27 +175,45 @@ console.log("[Confidential Computing: Azure's dc*/ec* family match]");
 }
 
 console.log(
-  "[Confidential Computing: GCP has no signal — skipped entirely, not a permanent 'not applied' note]",
+  "[Confidential Computing: GCP's per-series match (v3.16.15 — was a total no-op before)]",
 );
 {
-  ctx.pool = [inst({ instanceType: "n2", family: "n2" })];
+  ctx.pool = [
+    inst({ instanceType: "c2d-vm", family: "c2d" }),
+    inst({ instanceType: "n2d-vm", family: "n2d" }),
+    inst({ instanceType: "c3d-vm", family: "c3d" }),
+    inst({ instanceType: "c4d-vm", family: "c4d" }),
+    inst({ instanceType: "c3-vm", family: "c3" }),
+    inst({ instanceType: "n2-vm", family: "n2" }),
+  ];
   const res = apply(ctx.pool, "Confidential Computing", "gcp");
-  check("GCP: the pool is untouched", res.instances.length === 1);
+  const types = res.instances.map((i) => i.instanceType).sort();
   check(
-    "GCP: no rule line at all for Confidential Computing (a true no-op, not noise on every row)",
-    !res.rules.some((r) => r.includes("Confidential computing")),
-    JSON.stringify(res.rules),
+    "GCP Confidential Computing keeps only the confirmed-eligible series (C2D/N2D/C3D/C4D/C3), not n2",
+    JSON.stringify(types) ===
+      JSON.stringify(["c2d-vm", "n2d-vm", "c3d-vm", "c4d-vm", "c3-vm"].sort()),
+    JSON.stringify(types),
   );
 }
 
 console.log(
-  "[Confidential Computing: AWS/Azure report 'not applied' honestly]",
+  "[Confidential Computing: AWS/Azure/GCP all report 'not applied' honestly when no candidate qualifies]",
 );
 {
   ctx.pool = [inst({ instanceType: "plain", family: "m5" })];
   const res = apply(ctx.pool, "Confidential Computing", "aws");
   check(
     "no AWS candidate qualifies -> pool stands, 'not applied' reported",
+    res.instances.length === 1 &&
+      res.rules.some((r) => r.includes("not applied")),
+    JSON.stringify(res.rules),
+  );
+}
+{
+  ctx.pool = [inst({ instanceType: "n2-vm", family: "n2" })];
+  const res = apply(ctx.pool, "Confidential Computing", "gcp");
+  check(
+    "no GCP candidate qualifies -> pool stands, 'not applied' reported (no longer a silent no-op)",
     res.instances.length === 1 &&
       res.rules.some((r) => r.includes("not applied")),
     JSON.stringify(res.rules),
