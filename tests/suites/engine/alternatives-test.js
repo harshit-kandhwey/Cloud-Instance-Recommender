@@ -1,6 +1,7 @@
 // Alternative-strategy picks (Top-N alternatives): Most Cost Optimized,
-// Workload Based, Newest Generation — computed over the same valid candidate
-// pool as the primary recommendation. See the locked strategy spec.
+// Workload Based, Newest Generation, Best Network — computed over the same
+// valid candidate pool as the primary recommendation. See the locked
+// strategy spec.
 //
 // computeAlternatives lives on the base selector; RuleEngine.generationRank is
 // the per-provider newness ordinal; formatAlternative renders a compact cell.
@@ -123,6 +124,72 @@ check(
   run("JSON.stringify(altW.newestGen)"),
 );
 
+console.log(
+  "[Best Network — bounded like Newest Generation, cheapest with the real network-tier signal, v3.16.18]",
+);
+run("selAws = InstanceSelectorFactory.createSelector('aws');");
+ctx.awsNetPool = [
+  // Below the fit window's vCPU floor for a 2-vCPU request (>2x) AND below
+  // the network-tier fallback (vCpus>=4, no originalData) — excluded both ways.
+  { instanceType: "t3.small", family: "t3", vCpus: 2, memory: 2, price: 0.02 },
+  // In the fit window (≤2x vCPU) and clears the network-tier fallback.
+  { instanceType: "m5.large", family: "m5", vCpus: 4, memory: 8, price: 0.1 },
+  // Also network-capable but pricier — must lose to m5.large on cost.
+  {
+    instanceType: "c5.xlarge",
+    family: "c5",
+    vCpus: 4,
+    memory: 8,
+    price: 0.17,
+  },
+];
+run("altNet = selAws.computeAlternatives(awsNetPool, 2, 4, {});");
+const netPick = run("altNet.bestNetwork");
+check(
+  "picks the cheapest instance clearing the network-tier floor, within the fit window",
+  netPick?.instanceType === "m5.large",
+  JSON.stringify(netPick),
+);
+check(
+  "never the sub-floor instance, even though it's cheapest overall",
+  netPick?.instanceType !== "t3.small",
+);
+
+console.log(
+  "[Best Network, AWS: an exact price tie prefers more burst headroom, v3.16.18]",
+);
+ctx.awsBurstPool = [
+  {
+    instanceType: "tied-a",
+    family: "m5",
+    vCpus: 4,
+    memory: 8,
+    price: 0.1,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 2 },
+  },
+  {
+    instanceType: "tied-b",
+    family: "m5",
+    vCpus: 4,
+    memory: 8,
+    price: 0.1,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 10 },
+  },
+];
+run("altBurst = selAws.computeAlternatives(awsBurstPool, 2, 4, {});");
+const burstPick = run("altBurst.bestNetwork");
+check(
+  "the higher-burst instance wins the tie",
+  burstPick?.instanceType === "tied-b",
+  JSON.stringify(burstPick),
+);
+
+console.log("[Best Network is always null on GCP — no real signal, v3.16.18]");
+check(
+  "GCP's own pool (used for Cost/Workload/Newest Gen above) yields no Best Network pick",
+  run("alt.bestNetwork") === null,
+);
+
 console.log("[Workload Based is empty for a General workload]");
 run(
   "altGen = sel.computeAlternatives(pool, 2, 4, { rowWorkload: 'general' });",
@@ -139,7 +206,8 @@ check(
   "every strategy is null when nothing is adequate",
   run("altNone.cost") === null &&
     run("altNone.workload") === null &&
-    run("altNone.newestGen") === null,
+    run("altNone.newestGen") === null &&
+    run("altNone.bestNetwork") === null,
 );
 
 // ── formatAlternative: compact cell, never a price ─────────────────────────────
@@ -153,9 +221,9 @@ check(
 check("null renders as empty string", run("formatAlternative(null)") === "");
 
 // ── the columns reach the exported schema ──────────────────────────────────────
-// A real single-provider run: the three alternative columns exist on every row
+// A real single-provider run: the four alternative columns exist on every row
 // with the compact format, and a no-match row carries them empty (schema parity).
-console.log("[factory writes the three columns for every row]");
+console.log("[factory writes the four columns for every row]");
 ctx.rows = [
   {
     "VM Name": "ok",
@@ -180,15 +248,18 @@ ctx.rows = [
     );
     const keys = Object.keys(results[0]);
     check(
-      "the three alternative columns are present",
+      "the four alternative columns are present",
       [
         "AWS Most Cost Optimized",
         "AWS Workload Based",
         "AWS Newest Generation",
+        "AWS Best Network",
       ].every((c) => keys.includes(c)),
       keys
         .filter((k) =>
-          /Cost Optimized|Workload Based|Newest Generation/.test(k),
+          /Cost Optimized|Workload Based|Newest Generation|Best Network/.test(
+            k,
+          ),
         )
         .join(", "),
     );
@@ -201,11 +272,13 @@ ctx.rows = [
       "a no-match row carries the columns empty (schema parity)",
       results[1]["AWS Most Cost Optimized"] === "" &&
         results[1]["AWS Workload Based"] === "" &&
-        results[1]["AWS Newest Generation"] === "",
+        results[1]["AWS Newest Generation"] === "" &&
+        results[1]["AWS Best Network"] === "",
       JSON.stringify({
         cost: results[1]["AWS Most Cost Optimized"],
         workload: results[1]["AWS Workload Based"],
         gen: results[1]["AWS Newest Generation"],
+        net: results[1]["AWS Best Network"],
       }),
     );
   } catch (e) {

@@ -179,13 +179,20 @@ run(
       "AWS Like-to-Like Instance": "m6g.xlarge",
       "AWS Most Cost Optimized": "m6g.xlarge (4/16)",
       "AWS Workload Based": "r6g.xlarge (4/32)",
-      "AWS Newest Generation": "m8g.xlarge (4/16)" },
+      "AWS Newest Generation": "m8g.xlarge (4/16)",
+      "AWS Best Network": "m5.large (4/8)" },
     { "VM Name": "db-01", "CPU Count": "8", "Memory (GB)": "32",
       "AWS Like-to-Like Instance": "No Match",
       "AWS Most Cost Optimized": "",
       "AWS Workload Based": "",
-      "AWS Newest Generation": "" }
+      "AWS Newest Generation": "",
+      "AWS Best Network": "" }
   ];`,
+);
+check(
+  "STRATEGY_SHEET_NAMES (the real export list) includes Best Network",
+  run("STRATEGY_SHEET_NAMES.includes('Best Network')"),
+  run("JSON.stringify(STRATEGY_SHEET_NAMES)"),
 );
 check(
   "buildStrategySheetModel projects identity + the one strategy column",
@@ -207,16 +214,22 @@ check(
   ) === null,
 );
 run(
-  `__ex = ["Most Cost Optimized","Workload Based","Newest Generation"]
+  `__ex = STRATEGY_SHEET_NAMES
      .map((name) => ({ name, model: buildStrategySheetModel(__ra, name) }))
      .filter((s) => s.model);
    __wb2 = buildResultsWorkbook(buildResultsSheetModel(__ra), true, window.XLSX, __ex);`,
 );
 check(
-  "the workbook adds one sheet per strategy after Recommendations",
+  "the workbook adds one sheet per strategy after Recommendations, sourced from the real STRATEGY_SHEET_NAMES list",
   run('__wb2.SheetNames.join("|")') ===
-    "Recommendations|Most Cost Optimized|Workload Based|Newest Generation",
+    "Recommendations|Most Cost Optimized|Workload Based|Newest Generation|Best Network",
   run('__wb2.SheetNames.join("|")'),
+);
+check(
+  "the Best Network sheet holds its pick cell",
+  run('((__wb2.Sheets["Best Network"] || {})["D2"] || {}).v') ===
+    "m5.large (4/8)",
+  run('JSON.stringify(__wb2.Sheets["Best Network"])'),
 );
 check(
   "a strategy sheet holds its pick cell",

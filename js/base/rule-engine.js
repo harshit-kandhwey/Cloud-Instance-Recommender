@@ -942,6 +942,22 @@ const RuleEngine = (() => {
         filtered = net;
         rules.push(withCount("1d: Network-tier preference", before));
       }
+      // AWS only — burst bandwidth has no Azure/GCP equivalent. The eventual
+      // pick is always the cheapest survivor (base-instance-selector takes
+      // filtered[0], already price-sorted from parse time; every rule above
+      // only filters, never reorders), so this only ever breaks an EXACT
+      // price tie — checked live 2026-09-06: 97% of AWS types carry both
+      // fields, but 55% show zero burst headroom (burst == baseline), so a
+      // tie candidate with none loses nothing by this resort.
+      if (provider === "aws") {
+        const burstOf = (i) => {
+          const v = Number(i.originalData?.burstBandwidthGbps);
+          return Number.isFinite(v) && v > 0 ? v : 0;
+        };
+        filtered = [...filtered].sort(
+          (a, b) => a.price - b.price || burstOf(b) - burstOf(a),
+        );
+      }
     }
 
     // ── OS: Windows → exclude ARM/Graviton ─────────────────────────────────

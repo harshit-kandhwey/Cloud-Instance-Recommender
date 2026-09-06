@@ -47,6 +47,7 @@ const PICK_SUFFIXES = [
   "Most Cost Optimized",
   "Workload Based",
   "Newest Generation",
+  "Best Network",
   "Custom Fit",
 ];
 

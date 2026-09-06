@@ -134,11 +134,12 @@ Use this for a standing preference the built-in Rule Engine doesn't express — 
 
 ### 🎛️ Alternative recommendations (per row)
 
-Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries three labeled alternatives per provider — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
+Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries four labeled alternatives per provider — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
 
 - **Most Cost Optimized** — the cheapest instance that still meets the requirement, ignoring the workload family.
 - **Workload Based** — the cheapest instance in the workload-appropriate family (e.g. memory-optimized for Cache/Database), even if it over-provisions; blank when there's no workload or no member exists in the preferred family.
 - **Newest Generation** — the newest hardware that fits, kept close to the requested size.
+- **Best Network** — the cheapest instance that clears the real network-tier signal (AWS baseline bandwidth / Azure accelerated networking), kept close to the requested size; blank on GCP, where no such signal exists in the feed.
 
 They appear as separate columns in the results grid/CSV and preview (hideable like any column), and the **Excel export adds one sheet per strategy**. Pricing is only ever used to rank internally — never shown.
 
@@ -163,7 +164,7 @@ instead of letting the run look like something it isn't.
 
 ### 📗 Downloads — Excel first, CSVs on demand
 
-The results area leads with a single primary **📊 Download Results (Excel)** button: a styled `.xlsx` with a **Recommendations** sheet (formatted header row, autofilter, fitted column widths, numeric columns typed as real numbers so sorting/filtering behave with no import dialog) plus one sheet per alternative strategy (Most Cost Optimized / Workload Based / Newest Generation). The spreadsheet engine is lazy-loaded on first click.
+The results area leads with a single primary **📊 Download Results (Excel)** button: a styled `.xlsx` with a **Recommendations** sheet (formatted header row, autofilter, fitted column widths, numeric columns typed as real numbers so sorting/filtering behave with no import dialog) plus one sheet per alternative strategy (Most Cost Optimized / Workload Based / Newest Generation / Best Network). The spreadsheet engine is lazy-loaded on first click.
 
 The flat CSV exports live behind an inline **CSV ▾** checklist next to it: **Results** (always), plus **No-Match Rows** and **App Summary** when they have rows (each with its count). Tick the ones you want and click **Download selected** — each is the same file its single download would produce.
 

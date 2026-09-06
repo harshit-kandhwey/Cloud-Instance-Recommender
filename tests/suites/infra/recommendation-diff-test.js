@@ -30,12 +30,14 @@ const { check, state } = makeChecker();
     "AWS Most Cost Optimized",
     "AWS Workload Based",
     "AWS Newest Generation",
+    "AWS Best Network",
     "GCP Custom Fit",
   ]).sort();
   check(
     "pick columns are the instance/summary picks, not spec or input columns",
     cols.join("|") ===
       [
+        "AWS Best Network",
         "AWS Like-to-Like Instance",
         "AWS Most Cost Optimized",
         "AWS Newest Generation",

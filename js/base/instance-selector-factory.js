@@ -396,6 +396,7 @@ window.getInstanceRecommendationWithSelector = async function (
         result[`${providerUpper} Most Cost Optimized`] = "";
         result[`${providerUpper} Workload Based`] = "";
         result[`${providerUpper} Newest Generation`] = "";
+        result[`${providerUpper} Best Network`] = "";
         applyUserRuleLabels();
         return;
       }
@@ -504,7 +505,8 @@ window.getInstanceRecommendationWithSelector = async function (
         }
 
         // Alternative-strategy picks (Most Cost Optimized / Workload Based /
-        // Newest Generation), from the valid pool the primary pick came from.
+        // Newest Generation / Best Network), from the valid pool the primary
+        // pick came from.
         const alt = (altSource && altSource.alternatives) || {};
         result[`${providerUpper} Most Cost Optimized`] = formatAlternative(
           alt.cost,
@@ -514,6 +516,9 @@ window.getInstanceRecommendationWithSelector = async function (
         );
         result[`${providerUpper} Newest Generation`] = formatAlternative(
           alt.newestGen,
+        );
+        result[`${providerUpper} Best Network`] = formatAlternative(
+          alt.bestNetwork,
         );
       } catch (error) {
         console.error(
@@ -538,6 +543,7 @@ window.getInstanceRecommendationWithSelector = async function (
         result[`${providerUpper} Most Cost Optimized`] = "Error";
         result[`${providerUpper} Workload Based`] = "Error";
         result[`${providerUpper} Newest Generation`] = "Error";
+        result[`${providerUpper} Best Network`] = "Error";
         applyUserRuleLabels();
       }
     });

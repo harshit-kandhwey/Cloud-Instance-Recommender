@@ -616,13 +616,18 @@ class BaseInstanceSelector {
   //                         ("—" when no workload/General or none in the family).
   //   Newest Generation   — bounded workload preference first (3.8.12 rule), then
   //                         highest generation, then cheapest.
+  //   Best Network        — bounded like Newest Generation, then cheapest instance
+  //                         with the real per-provider network-tier signal
+  //                         (RuleEngine.hasNetworkTier, same one Rule 1d applies).
+  //                         AWS/Azure only — GCP has no real signal (see
+  //                         hasNetworkTier), so always "—" there.
   computeAlternatives(pool, reqCpu, reqMemory, options = {}) {
     const compact = (i) =>
       i
         ? { instanceType: i.instanceType, vCpus: i.vCpus, memory: i.memory }
         : null;
     if (!pool || !pool.length) {
-      return { cost: null, workload: null, newestGen: null };
+      return { cost: null, workload: null, newestGen: null, bestNetwork: null };
     }
 
     const provider = this.getProviderName().toLowerCase();
@@ -679,10 +684,34 @@ class BaseInstanceSelector {
       );
     })[0];
 
+    // Best Network: cheapest instance carrying the real network-tier signal
+    // (same check Rule 1d applies), bounded to the same fit window as Newest
+    // Generation — the dormant-data fallback is a bare vCPU floor (≥4), which
+    // would otherwise recommend a 4x-oversized instance to a 1-vCPU row just
+    // to clear that floor. AWS ties additionally prefer more burst headroom,
+    // the same tie-break Rule 1d's own filtering already uses.
+    let bestNetwork = null;
+    if (RE && (provider === "aws" || provider === "azure")) {
+      const networkPool = windowed.length ? windowed : pool;
+      const networkCapable = networkPool.filter((i) =>
+        RE.hasNetworkTier(i, provider),
+      );
+      if (networkCapable.length) {
+        const burstOf = (i) => {
+          const v = Number(i.originalData?.burstBandwidthGbps);
+          return Number.isFinite(v) && v > 0 ? v : 0;
+        };
+        bestNetwork = [...networkCapable].sort(
+          (a, b) => a.price - b.price || burstOf(b) - burstOf(a),
+        )[0];
+      }
+    }
+
     return {
       cost: compact(cost),
       workload: compact(workloadPick),
       newestGen: compact(newestGen),
+      bestNetwork: compact(bestNetwork),
     };
   }
 

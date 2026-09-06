@@ -256,6 +256,7 @@ function showResultsPreview(results) {
     "Most Cost Optimized",
     "Workload Based",
     "Newest Generation",
+    "Best Network",
   ];
   const altProviders = [];
   allKeys.forEach((k) => {

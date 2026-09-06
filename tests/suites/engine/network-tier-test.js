@@ -196,6 +196,86 @@ console.log("[Rule 1d end to end: fires and reports without a count]");
   );
 }
 
+console.log(
+  "[Rule 1d, AWS: an exact price tie prefers more burst headroom, v3.16.18]",
+);
+{
+  // Both pass the network-tier floor (real baseline ≥ 1 Gbps) and are priced
+  // identically — the only thing that should decide the winner.
+  ctx.tiedLowBurst = inst({
+    instanceType: "tied-low-burst",
+    price: 0.5,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 2 },
+  });
+  ctx.tiedHighBurst = inst({
+    instanceType: "tied-high-burst",
+    price: 0.5,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 10 },
+  });
+  ctx.tiePool = [ctx.tiedLowBurst, ctx.tiedHighBurst];
+  const res = run(
+    "RuleEngine.apply(tiePool, { rowEnv: 'production', rowWorkload: 'database' }, 'aws')",
+  );
+  check(
+    "the higher-burst instance wins an exact price tie",
+    res.instances[0].instanceType === "tied-high-burst",
+    JSON.stringify(res.instances.map((i) => i.instanceType)),
+  );
+}
+
+console.log(
+  "[Rule 1d, AWS: a real price difference is never overridden by burst, v3.16.18]",
+);
+{
+  ctx.cheapLowBurst = inst({
+    instanceType: "cheap-low-burst",
+    price: 0.4,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 2 },
+  });
+  ctx.pricierHighBurst = inst({
+    instanceType: "pricier-high-burst",
+    price: 0.5,
+    originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 10 },
+  });
+  ctx.pricedPool = [ctx.cheapLowBurst, ctx.pricierHighBurst];
+  const res = run(
+    "RuleEngine.apply(pricedPool, { rowEnv: 'production', rowWorkload: 'database' }, 'aws')",
+  );
+  check(
+    "price still decides first — burst never promotes a pricier instance",
+    res.instances[0].instanceType === "cheap-low-burst",
+    JSON.stringify(res.instances.map((i) => i.instanceType)),
+  );
+}
+
+console.log(
+  "[Rule 1d, Azure: no burst concept — an exact price tie stays in its original order, v3.16.18]",
+);
+{
+  // Azure has no burst_bandwidth_gbps equivalent; the tie-break must not
+  // apply there (or crash reading an AWS-only field off an Azure instance).
+  ctx.azTied1 = inst({
+    instanceType: "az-tied-1",
+    price: 0.5,
+    originalData: { acceleratedNetworking: 1 },
+  });
+  ctx.azTied2 = inst({
+    instanceType: "az-tied-2",
+    price: 0.5,
+    originalData: { acceleratedNetworking: 1 },
+  });
+  ctx.azTiePool = [ctx.azTied1, ctx.azTied2];
+  const res = run(
+    "RuleEngine.apply(azTiePool, { rowEnv: 'production', rowWorkload: 'database' }, 'azure')",
+  );
+  check(
+    "Azure's price-tied pool survives unresorted (stable order, first stays first)",
+    res.instances[0].instanceType === "az-tied-1" &&
+      res.instances[1].instanceType === "az-tied-2",
+    JSON.stringify(res.instances.map((i) => i.instanceType)),
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exitCode = 1;

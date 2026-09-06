@@ -63,6 +63,7 @@ const STRATEGY_SHEET_NAMES = [
   "Most Cost Optimized",
   "Workload Based",
   "Newest Generation",
+  "Best Network",
 ];
 
 // Identity/size columns to lead each strategy sheet (those actually present).
