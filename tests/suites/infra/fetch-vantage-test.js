@@ -252,6 +252,16 @@ function splitDataParity(monolith) {
     g.eastus.a0.vcpusPerCore === 0,
     JSON.stringify(g.eastus.a0),
   );
+  check(
+    "[azure] a fractional GPU share ('1/2X A10') parses to 0.5",
+    g.eastus.d4sv5.gpuCount === 0.5,
+    JSON.stringify(g.eastus.d4sv5),
+  );
+  check(
+    "[azure] a malformed zero-denominator GPU string ('1/0X A100') falls back to 0, not Infinity",
+    g.eastus.e8asv5.gpuCount === 0,
+    JSON.stringify(g.eastus.e8asv5),
+  );
 }
 
 // ── Azure vendor table: the pure classifier and its tripwire ────────────────────

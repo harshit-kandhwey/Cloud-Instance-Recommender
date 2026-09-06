@@ -208,7 +208,10 @@ console.log(
     "the input check names the cloud-to-cloud row's missing CPU/Memory, and nothing else",
     !elements.inputHygieneSection.classes.has("hidden") &&
       /CPU count is missing or zero[^<]*1 row \(2\)/.test(hygieneHtml) &&
-      /Memory is missing or zero[^<]*1 row \(2\)/.test(hygieneHtml),
+      /Memory is missing or zero[^<]*1 row \(2\)/.test(hygieneHtml) &&
+      // Exact count, not just presence — an unexpected third issue (e.g. an
+      // unrecognized Compliance value) would still pass the two regexes above.
+      ctx.window._inputHygiene.issues.length === 2,
     hygieneHtml,
   );
   check(

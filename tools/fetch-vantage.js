@@ -77,7 +77,13 @@ function parseAzureGpuCount(raw) {
   const s = String(raw ?? "").trim();
   if (!s) return 0;
   const frac = s.match(/^(\d+)\s*\/\s*(\d+)/);
-  if (frac) return Number(frac[1]) / Number(frac[2]);
+  if (frac) {
+    const denominator = Number(frac[2]);
+    // A "1/0X ..." malformed value would otherwise divide to Infinity, which
+    // record-schema.js's emitValue rejects — crashing the whole refresh over
+    // one bad upstream string instead of the documented "0 GPUs" fallback.
+    return denominator > 0 ? Number(frac[1]) / denominator : 0;
+  }
   const lead = s.match(/^(\d+(?:\.\d+)?)/);
   return lead ? Number(lead[1]) : 0;
 }

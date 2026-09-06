@@ -8,6 +8,7 @@
     "arch": ["x64"],
     "accelerated_networking": true,
     "vcpus_percore": 2,
+    "GPU": "1/2X A10",
     "regions": {
       "europe-west": "West Europe",
       "us-east": "East US",
@@ -48,6 +49,7 @@
     "memory": 64,
     "arch": ["x64"],
     "accelerated_networking": false,
+    "GPU": "1/0X A100",
     "regions": {
       "europe-west": "West Europe",
       "us-east": "East US",
