@@ -217,6 +217,132 @@ function getHeaders(ctx) {
     check("csvData deferred", getCsvData(ctx).length === 0);
   }
 
+  console.log(
+    "[8. ENV/OS/Workload/Compliance/Exclude/Include Only: exact literal headers still auto-match silently, v3.16.17]",
+  );
+  {
+    // These 7 fields used to be entirely outside COLUMN_MAPPINGS — a file
+    // using the exact literal names already worked (read directly, no
+    // rename), and must keep working identically now that they ARE
+    // canonicals: no panel, no rename note, for the common case.
+    const { ctx, elements } = buildContext();
+    parse(
+      ctx,
+      "VM Name,CPU Count,Memory (GB),ENV,OS,Workload,Compliance,Exclude,Include Only\n" +
+        "a,4,16,Production,Linux,Database,Current-Generation Hardware,Burstable,m5",
+    );
+    const data = getCsvData(ctx);
+    check(
+      "all 6 literal columns pass through under their own names, unrenamed",
+      data.length === 1 &&
+        data[0]["ENV"] === "Production" &&
+        data[0]["OS"] === "Linux" &&
+        data[0]["Workload"] === "Database" &&
+        data[0]["Compliance"] === "Current-Generation Hardware" &&
+        data[0]["Exclude"] === "Burstable" &&
+        data[0]["Include Only"] === "m5",
+      JSON.stringify(data[0]),
+    );
+    check(
+      "panel stays hidden — an exact match is not a rename",
+      elements.columnMappingSection.classes.has("hidden") &&
+        elements.columnMappingSection.innerHTML === "",
+    );
+    check(
+      "no 'Mapped columns' note for an identity match",
+      !elements.fileStatus.innerHTML.includes("Mapped columns"),
+    );
+  }
+
+  console.log(
+    "[9. a differently-named ENV column is now discoverable via Edit mapping, v3.16.17]",
+  );
+  {
+    // Before v3.16.17 this column was invisible to the mapping system
+    // entirely — not auto-matched (no synonym, by design — see
+    // COLUMN_SYNONYMS's comment on why ENV/OS stay exact-match-only) and not
+    // offered a manual row either, since ENV wasn't a canonical at all.
+    const { ctx, elements } = buildContext();
+    parse(ctx, "VM Name,CPU Count,Memory (GB),Env Type\na,4,16,Production");
+    check(
+      "optional/unrecognized column: no forced panel, file loads",
+      elements.columnMappingSection.classes.has("hidden") &&
+        getCsvData(ctx).length === 1,
+    );
+    vm.runInContext("editColumnMapping()", ctx);
+    const envIdx = ctx.pageCanonicals().indexOf("ENV");
+    check("ENV has its own row in Edit mapping", envIdx !== -1);
+    const panelHtml = elements.columnMappingSection.innerHTML;
+    const envRow = (panelHtml.match(
+      /data-canonical="ENV"[\s\S]*?<\/select>/,
+    ) || [""])[0];
+    check(
+      '"Env Type" is offered as a candidate in the ENV row specifically',
+      envRow.includes(">Env Type</option>"),
+      panelHtml,
+    );
+    ctx.pageCanonicals().forEach((c, idx) => {
+      const el = ctx.document.getElementById(`colmap_${idx}`);
+      if (c === "CPU Count") el.value = "1";
+      else if (c === "Memory (GB)") el.value = "2";
+      else if (c === "ENV") el.value = "3";
+      else el.value = "";
+    });
+    vm.runInContext("applyColumnMapping()", ctx);
+    const data = getCsvData(ctx);
+    check(
+      'confirmed: "Env Type" → ENV',
+      data.length === 1 && data[0]["ENV"] === "Production",
+      JSON.stringify(data[0]),
+    );
+  }
+
+  console.log(
+    "[10. Min Gen columns are per-provider mappable, filtered per page like Region, v3.16.17]",
+  );
+  {
+    const { ctx } = buildContext(); // single-provider page (aws)
+    const canonicals = ctx.pageCanonicals();
+    check(
+      "aws page offers only AWS Min Gen, not Azure/GCP Min Gen",
+      canonicals.includes("AWS Min Gen") &&
+        !canonicals.includes("Azure Min Gen") &&
+        !canonicals.includes("GCP Min Gen"),
+      JSON.stringify(canonicals),
+    );
+  }
+  {
+    const { ctx } = buildContext({
+      dataScripts: [
+        "js/aws/aws-data.js",
+        "js/azure/azure-data.js",
+        "js/gcp/gcp-data.js",
+      ],
+    });
+    const canonicals = ctx.pageCanonicals();
+    check(
+      "multicloud page offers all three Min Gen columns",
+      ["AWS Min Gen", "Azure Min Gen", "GCP Min Gen"].every((c) =>
+        canonicals.includes(c),
+      ),
+      JSON.stringify(canonicals),
+    );
+    parse(
+      ctx,
+      "VM Name,CPU Count,Memory (GB),AWS Min Gen,Azure Min Gen,GCP Min Gen\n" +
+        "a,4,16,6,v5,n4",
+    );
+    const data = getCsvData(ctx);
+    check(
+      "each provider's Min Gen column passes through under its own name",
+      data.length === 1 &&
+        data[0]["AWS Min Gen"] === "6" &&
+        data[0]["Azure Min Gen"] === "v5" &&
+        data[0]["GCP Min Gen"] === "n4",
+      JSON.stringify(data[0]),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
   // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = failures ? 1 : 0;

@@ -2162,7 +2162,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
       <p><strong>🔗 Map Your Columns</strong></p>
       <p style="font-size: 13px;">${intro}</p>
       ${selectRows}
-      <p style="font-size: 12px; margin-top: 8px;">Other columns (ENV, OS, Workload, Compliance, Min Gen, Exclude) are used as-is when present. On multi-cloud sheets, Min Gen is per provider: AWS Min Gen, Azure Min Gen, GCP Min Gen.</p>
+      <p style="font-size: 12px; margin-top: 8px;">Compliance, Exclude, and Include Only accept comma-separated values (e.g. "m5,m6"). Min Gen is native per provider: AWS Min Gen, Azure Min Gen, GCP Min Gen.</p>
       <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>${cancelBtn}
     </div>
   `;

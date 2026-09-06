@@ -46,12 +46,36 @@ const COLUMN_MAPPINGS = {
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",
   gcpRegion: "GCP Region",
+  // Added v3.16.17 — these 7 fields used to be entirely invisible to this
+  // table (read literally by rule-engine callers, no synonym match and no
+  // manual-mapping row), so a header named anything but the exact literal
+  // string silently fell through to that rule's default with no warning.
+  // ENV/OS keep the alt-name fallback callers already hardcoded
+  // (COLUMN_SYNONYMS below); Workload/Compliance/Exclude/Include Only never
+  // had one, so they're exact-match only, same as before, now just also
+  // manually mappable via "Edit mapping". Min Gen is per-provider like
+  // Region — pageCanonicals() filters it the same way.
+  env: "ENV",
+  os: "OS",
+  workload: "Workload",
+  compliance: "Compliance",
+  minGenAws: "AWS Min Gen",
+  minGenAzure: "Azure Min Gen",
+  minGenGcp: "GCP Min Gen",
+  exclude: "Exclude",
+  includeOnly: "Include Only",
 };
 
 // Header synonyms for auto-matching uploaded columns to the canonical names
 // above. Keys are canonical names; values are normalized candidates
-// (lowercased, non-alphanumerics stripped). Only these canonicals are
-// mapped — ENV/OS/Workload/Compliance/Min Gen/Exclude are read literally.
+// (lowercased, non-alphanumerics stripped). A canonical with no entry here
+// still auto-matches an EXACT (case-insensitive) header. ENV/OS deliberately
+// have NO synonym entry despite the runtime's own "Environment"/"Operating
+// System" fallback reads: adding one would make a file carrying BOTH names
+// (a real, tested case — see input-hygiene-test.js) ambiguous and force a
+// manual pick, losing the hygiene check's deliberate dual-column typo scan.
+// Workload/Compliance/Exclude/Include Only/Min Gen have no alt-name
+// convention at all, so exact match is all they ever needed.
 const COLUMN_SYNONYMS = {
   "CPU Count": [
     "vcpu",
@@ -256,24 +280,27 @@ const APP_WORKLOAD_OPTIONS = [
   "SAP",
 ];
 
+// A canonical-set filter shared by Region and Min Gen below: both are
+// per-provider columns (AWS Region / AWS Min Gen, etc.), so a page only
+// offers a mapping row for its OWN provider(s)' column — no Azure/GCP Region
+// row on the AWS page, etc. Columns of other providers pass through
+// untouched, just never shown here.
+function keepOnlyThisPagesProviderColumns(getColumnForProvider) {
+  const allCols = new Set(["aws", "azure", "gcp"].map(getColumnForProvider));
+  const pageCols = new Set(getPageProviders().map(getColumnForProvider));
+  return (c) => !allCols.has(c) || pageCols.has(c);
+}
+
 // The canonicals relevant on the current page: all provider-agnostic fields
-// plus only the region columns of providers this page loads (no Azure/GCP
-// Region rows in the mapping panel on the AWS page, etc.). Region columns of
-// other providers pass through untouched — they're unused here anyway.
+// plus only the Region/Min Gen columns of providers this page loads.
 function pageCanonicals() {
-  const allRegionCols = new Set(
-    ["aws", "azure", "gcp"].map((p) =>
-      InstanceSelectorFactory.getProviderRegionColumn(p),
-    ),
+  const keepRegion = keepOnlyThisPagesProviderColumns((p) =>
+    InstanceSelectorFactory.getProviderRegionColumn(p),
   );
-  const pageRegionCols = new Set(
-    getPageProviders().map((p) =>
-      InstanceSelectorFactory.getProviderRegionColumn(p),
-    ),
+  const keepMinGen = keepOnlyThisPagesProviderColumns((p) =>
+    InstanceSelectorFactory.getProviderMinGenColumn(p),
   );
-  return MAPPABLE_CANONICALS.filter(
-    (c) => !allRegionCols.has(c) || pageRegionCols.has(c),
-  );
+  return MAPPABLE_CANONICALS.filter((c) => keepRegion(c) && keepMinGen(c));
 }
 
 // ─── Data readiness + queue-and-auto-start ────────────────────────────────────

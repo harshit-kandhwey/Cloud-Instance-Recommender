@@ -974,22 +974,25 @@ says the new path was reached for instead of the old one being finished.
   a deliberate trigger or remove it. _Found while planning
   [3.15](#315--data-model--catalogue-fidelity); scheduled in 3.17. The specs/prices
   split makes the version that does run far cheaper, so decide after it lands._
-- **ENV, OS, Workload, Compliance, Min Gen, Exclude and Include Only are invisible
-  to the column-mapping panel.** `COLUMN_MAPPINGS` — the list both auto-match and
-  the manual mapping dropdown draw from (`js/base/app-core.js`'s `pageCanonicals()`)
-  — does not include any of these seven columns; the code's own comment says so
-  plainly: "ENV/OS/Workload/Compliance/Min Gen/Exclude are read literally." A file
-  whose column is named "Operating System" instead of "OS", or "Environment"
-  instead of "ENV", is not offered a synonym match AND cannot be mapped by hand
-  either — the column is invisible to the tool with no recourse in the UI, only a
-  silent fall-through to that rule's default (Linux, General, no compliance, …).
-  This is upstream of and distinct from the already-shipped 3.12 check ("Unknown
-  rule values must be reported") — that one catches a wrong VALUE in a correctly
-  NAMED column; this is the column never being found at all, which produces no
-  warning of any kind because nothing today treats these seven as columns capable
-  of being "found" or "missing" in the first place. _Found 2026-09-04 while
-  scoping [3.16](#316--attribute-filters--rule-fidelity)'s network-tier work,
-  unrelated to it; not yet scheduled to a specific minor._
+- **~~ENV, OS, Workload, Compliance, Min Gen, Exclude and Include Only are
+  invisible to the column-mapping panel.~~** **Resolved in
+  [3.16](#316--attribute-filters--rule-fidelity).** `COLUMN_MAPPINGS` — the
+  list both auto-match and the manual mapping dropdown draw from
+  (`js/base/app-core.js`'s `pageCanonicals()`) — didn't include any of these
+  seven columns, so a file whose column was named anything but the exact
+  literal string had no recourse in the UI, only a silent fall-through to
+  that rule's default. All seven are now real canonicals: `pageCanonicals()`
+  offers each its own manual-mapping row (Min Gen filtered per page's
+  provider(s), same as Region already was), closing "cannot be mapped by
+  hand" for good. ENV and OS deliberately did NOT also gain a synonym for
+  their existing "Environment"/"Operating System" alt-names — a file
+  carrying both columns is a real, tested case (a typo in either is a lost
+  constraint) whose dual-column hygiene scan a synonym would have collapsed
+  into a forced single-column pick, trading one fix for a regression. A
+  literal "ENV"/"OS"/etc. header, or an already-recognised alt-name, keeps
+  working exactly as before with zero prompting; only a genuinely
+  unrecognised header name needs Edit Mapping now, where previously it had
+  no path to recognition at all.
 
 ## Suggesting an item
 
