@@ -423,6 +423,10 @@ async function buildDerivedSpecs(csvData) {
     needed.get(provider).add(type);
   }
 
+  // Providers whose data failed to load — their rows still become "No-Match"
+  // downstream, but that must read as "couldn't check" (a toast fires below),
+  // not as "this type doesn't exist" (see coding.md #1, no plausible wrong answer).
+  const failedProviders = [];
   for (const [provider, types] of needed) {
     let selector;
     try {
@@ -443,6 +447,7 @@ async function buildDerivedSpecs(csvData) {
         `[CloudToCloud] could not load ${provider} data for spec lookup:`,
         e,
       );
+      failedProviders.push(provider);
       continue;
     }
     for (const type of types) {
@@ -452,10 +457,18 @@ async function buildDerivedSpecs(csvData) {
       }
     }
   }
+  if (failedProviders.length && typeof showToast === "function") {
+    showToast(
+      `Couldn't load ${failedProviders.join(", ")} data to resolve some ` +
+        `Current Instance Type rows — those rows may show No-Match even ` +
+        `though the type exists.`,
+      "warning",
+    );
+  }
   return specs;
 }
 
-async function collectRegionDataForWorker(providers) {
+async function collectRegionDataForWorker(providers, rows) {
   const regionData = {};
   const flags = {};
 
@@ -485,7 +498,7 @@ async function collectRegionDataForWorker(providers) {
       entries = {};
       const regionColumn =
         InstanceSelectorFactory.getProviderRegionColumn(provider);
-      csvData.forEach((row) => {
+      (rows || []).forEach((row) => {
         const raw = (row[regionColumn] || "").trim();
         if (raw && !entries[raw]) entries[raw] = resolveRegion(provider, raw);
       });
@@ -541,7 +554,7 @@ async function runRecommendationBatch(rows, providers, options) {
 
   if (worker) {
     try {
-      const payload = await collectRegionDataForWorker(providers);
+      const payload = await collectRegionDataForWorker(providers, rows);
       // Watchdog: any worker message counts as liveness (progress arrives at least
       // every yieldEvery rows). Prolonged silence → reject → the catch terminates the
       // worker and runs the main-thread fallback.

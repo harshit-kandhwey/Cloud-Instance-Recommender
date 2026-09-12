@@ -311,6 +311,77 @@ console.log("[an empty or unloaded selector answers null, never throws]");
     );
   }
 
+  // A provider's data failing to load must not read as "the type doesn't
+  // exist" — coding.md #1 (never a plausible wrong answer). The row still
+  // becomes No-Match downstream, but a toast has to say WHY.
+  console.log(
+    "[buildDerivedSpecs warns, by name, when a provider's data fails to load]",
+  );
+  {
+    const { ctx: c, toasts } = buildContext();
+    c.window._prewarmedSelectors = c.window._prewarmedSelectors || {};
+    const B = c.BaseInstanceSelector;
+    const failing = new B();
+    failing.getProviderName = () => "AWS";
+    failing.initialize = async () => {
+      throw new Error("network down");
+    };
+    c.window._prewarmedSelectors.aws = failing;
+
+    const map = await c.buildDerivedSpecs([
+      { "VM Name": "a", "Current Instance Type": "m5.xlarge" },
+    ]);
+    check(
+      "a failed provider's types are absent from the map, not a thrown error",
+      Object.keys(map).length === 0,
+      JSON.stringify(map),
+    );
+    check(
+      "a warning toast names the provider that failed to load",
+      toasts.some((t) => t.type === "warning" && /aws/i.test(t.message)),
+      JSON.stringify(toasts),
+    );
+  }
+
+  // collectRegionDataForWorker resolves regions from the per-run row snapshot
+  // (coding.md #3, "snapshot before await") — found by CodeRabbit reading the
+  // module-level `csvData` instead, which a concurrent upload could reassign
+  // while this worker batch is still in flight.
+  console.log(
+    "[collectRegionDataForWorker resolves regions from its rows param, not live csvData]",
+  );
+  {
+    const { ctx: c, run } = buildContext();
+    c.window._regionValidation = null; // force the per-row CSV scan path
+    c.window._prewarmedSelectors = c.window._prewarmedSelectors || {};
+    const seenRaws = [];
+    // Stub out real region resolution — this test only cares WHICH raw region
+    // string reached it, not whether a real region file loads.
+    c.resolveRegion = (provider, raw) => {
+      seenRaws.push(raw);
+      return { key: "nonexistent_region", status: "known" };
+    };
+    // csvData is a module-scoped `let` inside generate.js — `c.csvData = ...`
+    // would only set a stale, unrelated property on the sandbox object (see
+    // harness.js's own note on this); run() evaluates INSIDE the module scope,
+    // the only way to actually reach and mutate that binding.
+    run(
+      `csvData = ${JSON.stringify([{ "AWS Region": "stale-live-global" }])};`,
+    );
+    const rowsForRun = [{ "AWS Region": "fresh-snapshot-row" }];
+    await c.collectRegionDataForWorker(["aws"], rowsForRun);
+    check(
+      "the snapshot row's region was resolved",
+      seenRaws.includes("fresh-snapshot-row"),
+      JSON.stringify(seenRaws),
+    );
+    check(
+      "the stale module-level csvData's region was NOT resolved",
+      !seenRaws.includes("stale-live-global"),
+      JSON.stringify(seenRaws),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
   // pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = state.failures ? 1 : 0;
