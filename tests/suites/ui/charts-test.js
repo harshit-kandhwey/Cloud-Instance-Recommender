@@ -85,6 +85,19 @@ console.log("[a rounded rate never contradicts the counts]");
     lowHtml.match(/>(\d+)%</)?.[1] === "1",
     `shows ${lowHtml.match(/>(\d+)%</)?.[1]}%`,
   );
+
+  // Found by CodeRabbit: the meter clamped its rounding, but the executive
+  // report's headline used a separate, unclamped Math.round — the same
+  // dataset could show 0% in one place and 1% in the other. Both real entry
+  // points, same data, must agree.
+  const meterPct = lowHtml.match(/>(\d+)%</)?.[1];
+  const reportHtml = b.ctx.buildExecutiveReport(few);
+  const reportPct = reportHtml.match(/(\d+)%/)?.[1];
+  check(
+    "the executive report headline agrees with the meter's percentage",
+    reportPct === meterPct,
+    `meter ${meterPct}% vs report ${reportPct}%`,
+  );
 }
 
 console.log("[a clean sweep says 100%, with no phantom no-match]");

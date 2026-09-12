@@ -5,6 +5,18 @@
 // mark colours never double as label colours.
 
 // ─── Match rate ───────────────────────────────────────────────────────────────
+// Shared by the meter and the headline so the printed % never disagrees between
+// the two (CodeRabbit: 1/1000 matched showed 0% in one place, 1% in the other).
+// Clamped so the % never contradicts the counts: no 100% with an unmatched row,
+// no 0% with a matched one.
+function _matchRatePct(matched, total) {
+  if (!total) return 0;
+  let pct = Math.round((matched / total) * 100);
+  if (pct === 100 && matched < total) pct = 99;
+  if (pct === 0 && matched > 0) pct = 1;
+  return pct;
+}
+
 // One ratio of a whole → a meter, not a two-slice donut (a length reads a ratio
 // exactly; two pie angles do not). Number stated in text beside the bar.
 function _matchRateMeter(results) {
@@ -16,12 +28,7 @@ function _matchRateMeter(results) {
     rowIsAllNoMatch(row, instanceCols),
   ).length;
   const matched = total - unmatched;
-  // Clamp rounding so the % never contradicts the counts: no 100% with an
-  // unmatched row, no 0% with a matched one.
-  const raw = (matched / total) * 100;
-  let pct = Math.round(raw);
-  if (pct === 100 && unmatched > 0) pct = 99;
-  if (pct === 0 && matched > 0) pct = 1;
+  const pct = _matchRatePct(matched, total);
 
   return `
     <figure style="margin:0 0 14px 0;">
@@ -255,7 +262,7 @@ function _reportHeadline(results) {
     ? results.filter((row) => rowIsAllNoMatch(row, instanceCols)).length
     : 0;
   const matched = total - unmatched;
-  const pct = total ? Math.round((matched / total) * 100) : 0;
+  const pct = _matchRatePct(matched, total);
 
   const keys = Object.keys(results[0] || {});
   const appCount = keys.includes("App Name")

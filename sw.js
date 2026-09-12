@@ -31,6 +31,45 @@ const CACHE = "cir-cache-v3";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.
+//
+// PRECACHE_SCRIPTS is the union of every <script src="src/...">  multicloud.html
+// loads (every provider + every shared module) plus portfolio.js (only
+// app-portfolio.html loads it) — a superset of what ANY tool page needs, so a
+// genuinely first-ever offline navigation (before any online visit populated
+// the runtime cache) still has a full application runtime to run, not just a
+// cached page shell with nothing to execute. Confirmed a superset via a
+// one-off script-tag diff against aws/azure/gcp/app-portfolio/index/user-guide;
+// re-check if a new page or module is added.
+const PRECACHE_SCRIPTS = [
+  "src/core/rules/rule-engine.js",
+  "src/core/rules/user-rules.js",
+  "src/core/engine/base-instance-selector.js",
+  "src/providers/aws/aws-data.js",
+  "src/providers/azure/azure-data.js",
+  "src/providers/gcp/gcp-data.js",
+  "src/providers/aws/aws-instance-selector.js",
+  "src/providers/azure/azure-instance-selector.js",
+  "src/providers/gcp/gcp-instance-selector.js",
+  "src/providers/aws/aws-specific.js",
+  "src/providers/azure/azure-specific.js",
+  "src/providers/gcp/gcp-specific.js",
+  "src/core/engine/instance-selector-factory.js",
+  "src/shared/app-core.js",
+  "src/ui/ui-shell.js",
+  "src/features/ingest.js",
+  "src/features/manual-entry.js",
+  "src/ui/form-controls.js",
+  "src/core/engine/generate.js",
+  "src/features/preview.js",
+  "src/ui/charts.js",
+  "src/features/downloads.js",
+  "src/features/presets.js",
+  "src/ui/user-rules-ui.js",
+  "src/features/xlsx-export.js",
+  "src/features/scenario-compare.js",
+  "src/features/portfolio.js",
+];
+
 const PRECACHE = [
   "index.html",
   "aws.html",
@@ -46,6 +85,7 @@ const PRECACHE = [
   "js/pwa-register.js",
   "public/manifest.json",
   "public/icon.svg",
+  ...PRECACHE_SCRIPTS,
 ];
 
 self.addEventListener("install", (event) => {

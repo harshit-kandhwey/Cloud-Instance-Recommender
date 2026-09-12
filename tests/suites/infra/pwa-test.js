@@ -84,6 +84,12 @@ const serverFiles = new Set(
     "public/manifest.json",
     "public/icon.svg",
     "src/providers/aws/regions/us_east_1.js", // a lazily-loaded region file
+    // The application-shell scripts PRECACHE_SCRIPTS also lists (a subset is
+    // enough to prove the install handler actually reaches PRECACHE_SCRIPTS
+    // entries, not just the original 14-item shell list).
+    "src/core/engine/generate.js",
+    "src/providers/aws/aws-data.js",
+    "src/features/portfolio.js",
   ].map(absKey),
 );
 const makeRes = (url, ok) => ({
@@ -208,6 +214,18 @@ process.exitCode = 1;
       v1.has(absKey("aws.html")) &&
       v1.has(absKey("styles/style.css")) &&
       v1.has(absKey("public/icon.svg")),
+    v1 ? [...v1.keys()].join(",") : "no cache",
+  );
+  // A genuinely first-ever offline navigation (before any online visit
+  // populated the runtime cache) needs a full application runtime already
+  // precached, not just the page shell — CodeRabbit found PRECACHE carried
+  // zero src/**/*.js entries after the js/->src/ restructure.
+  check(
+    "install also precaches the application scripts, not just the shell",
+    v1 &&
+      v1.has(absKey("src/core/engine/generate.js")) &&
+      v1.has(absKey("src/providers/aws/aws-data.js")) &&
+      v1.has(absKey("src/features/portfolio.js")),
     v1 ? [...v1.keys()].join(",") : "no cache",
   );
 
