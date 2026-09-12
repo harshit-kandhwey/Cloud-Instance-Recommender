@@ -308,14 +308,26 @@ const AOA = [
       JSON.stringify(sheetsBefore),
     );
 
+    // `self.onerror &&` alone proves nothing: if ingestFile never wired up
+    // onerror at all, the expression is falsy, nothing fires, and the check
+    // below still trivially passes because nothing ran. errorFired makes the
+    // test assert the failure path was actually exercised, not just that its
+    // absence looked harmless.
+    let errorFired = false;
     ctx.FileReader = class {
       readAsText() {
         const self = this;
-        setTimeout(() => self.onerror && self.onerror(new Error("io")), 0);
+        setTimeout(() => {
+          if (self.onerror) {
+            errorFired = true;
+            self.onerror(new Error("io"));
+          }
+        }, 0);
       }
     };
     await ctx.ingestFile({ name: "broken2.csv", size: 10 });
     await new Promise((r) => setTimeout(r, 50));
+    check("the simulated reader failure actually fired", errorFired);
     check(
       "prior upload's sheets survive a failed second read",
       ctx._uploadedSheets === sheetsBefore,

@@ -1,5 +1,6 @@
-// End-to-end for the PRESET-interaction browser path — the residual the 3.10
-// coverage waiver marked "accepted-but-unverified" (src/features/presets.js):
+// End-to-end for the PRESET-interaction browser path — this suite is what
+// VERIFIES the residual the 3.10 coverage waiver once marked
+// "accepted-but-unverified" (src/features/presets.js):
 // onPresetNameKeydown, importPresets, handlePresetImportFile. Their computed
 // cores (validate/merge/apply) are pinned by ui/presets-test.js; what only a
 // real browser exercises is the keyboard wiring on the name field and the
