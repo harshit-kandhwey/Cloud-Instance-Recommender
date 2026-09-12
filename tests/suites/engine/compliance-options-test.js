@@ -159,18 +159,16 @@ console.log("[Confidential Computing: Azure's dc*/ec* family match]");
   ctx.pool = [
     inst({ instanceType: "dc-vm", family: "dcadsv5" }),
     inst({ instanceType: "ec-vm", family: "ecasv5" }),
-    inst({ instanceType: "d-vm", family: "dsv5" }),
+    // confidential: true on a non-dc*/ec* family — proves the field has no
+    // effect (family match is the only signal) instead of just asserting it.
+    inst({ instanceType: "d-vm", family: "dsv5", confidential: true }),
   ];
   const res = apply(ctx.pool, "Confidential Computing", "azure");
   const types = res.instances.map((i) => i.instanceType).sort();
   check(
-    "Azure Confidential Computing keeps dc*/ec* families only",
+    "Azure Confidential Computing keeps dc*/ec* families only, even when a non-capable family claims confidential:true",
     JSON.stringify(types) === JSON.stringify(["dc-vm", "ec-vm"]),
     JSON.stringify(types),
-  );
-  check(
-    "Azure's real 'confidential' field is never read (it is FALSE on every record) — family match is the only signal",
-    true, // documented by construction: isConfidentialCapable never reads inst.confidential at all
   );
 }
 

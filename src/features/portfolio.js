@@ -146,7 +146,7 @@ function normWorkload(v) {
 // Compliance cells may carry multiple tags ("PCI, HIPAA"); returns them upper-cased.
 function complianceTags(v) {
   return String(v || "")
-    .split(/[^a-zA-Z0-9]+/)
+    .split(",")
     .map((t) => t.trim().toUpperCase())
     .filter(Boolean);
 }

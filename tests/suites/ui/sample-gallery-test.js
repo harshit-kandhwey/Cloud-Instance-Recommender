@@ -150,7 +150,8 @@ console.log(
   check(
     "a cloud-to-cloud row carries Current Instance Type with no CPU/Memory",
     byName["legacy-01"]?.["Current Instance Type"] === "m5.xlarge" &&
-      (byName["legacy-01"]?.["CPU Count"] || "") === "",
+      (byName["legacy-01"]?.["CPU Count"] || "") === "" &&
+      (byName["legacy-01"]?.["Memory (GB)"] || "") === "",
     JSON.stringify(byName["legacy-01"]),
   );
   check(

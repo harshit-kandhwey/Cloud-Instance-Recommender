@@ -296,6 +296,21 @@ check(
   run("__b.regions.length") === 4 && run("__b.multiRegion") === true,
 );
 
+// Compliance is comma-separated, like Exclude/Include Only — a value like
+// "AWS Nitro Enclaves,Confidential Computing" must tally as its 2 real atomic
+// options, not shatter into 5 meaningless single-word fragments (found by
+// CodeRabbit: complianceTags split on every non-alphanumeric char).
+check(
+  "a multi-word, comma-separated Compliance value tallies as its 2 real tags",
+  run(
+    '__cm = buildPortfolioModel({ providers: ["aws"], results: [{ "App Name": "X", "CPU Count": "2", "Memory (GB)": "4", "Compliance": "AWS Nitro Enclaves,Confidential Computing", "AWS Like-to-Like Instance": "t3.small" }] }); ' +
+      '__cx = __cm.apps.find(a=>a.app==="X"); ' +
+      "JSON.stringify(__cx.compliance)",
+  ) ===
+    JSON.stringify({ "AWS NITRO ENCLAVES": 1, "CONFIDENTIAL COMPUTING": 1 }),
+  run("JSON.stringify(__cx.compliance)"),
+);
+
 console.log("[family extraction]");
 check(
   "Billing AWS families m5 + r5a",
