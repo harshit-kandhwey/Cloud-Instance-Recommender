@@ -4,7 +4,7 @@
  * fetch-official-gcp.js — GCP on-demand VM pricing from the Cloud Billing Catalog
  * API, composed for the machine types the app already ships.
  *
- *   node tools/fetch-official-gcp.js [--out .refresh-cache/gcp-pricing.json] [--region us_east1]
+ *   node scripts/data/fetch-official-gcp.js [--out .refresh-cache/gcp-pricing.json] [--region us_east1]
  *
  * Node/CI build tool only; never shipped, never called by the page. Needs
  * GCP_BILLING_API_KEY (Cloud Billing APIs are free of charge). Phase D2
@@ -40,12 +40,12 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
-} = require("./lib/build-env");
+} = require("../lib/build-env");
 const {
   round8,
   loadCommittedRegions,
   readShippedRegionKeys,
-} = require("./lib/record-schema");
+} = require("../lib/record-schema");
 
 const CATALOG_HOST = "https://cloudbilling.googleapis.com";
 // Compute Engine's well-known billing service id (stable; confirmed 2026-08-17).
@@ -276,7 +276,7 @@ function parseLocalSsdSkus(skus) {
  * is available for a real size, or the SIZE itself is unknown rather than zero (a
  * manifest written before localSsdGiB joined FIELD_ORDER carries no value for it,
  * which loadCommittedRegions' vCpus-only merge guard tolerates during schema
- * evolution — see tools/lib/record-schema.js). Either way the caller must skip the
+ * evolution — see scripts/lib/record-schema.js). Either way the caller must skip the
  * type rather than price it as though the SSD were free, which is precisely the
  * 6–33%-low composition this phase exists to end. An absent size is NOT a declared
  * zero: composing it as free silently under-prices every SSD-bearing type by that
@@ -335,7 +335,7 @@ function composePricing(rates, winHr, shipped, ssdRates = {}) {
   // schema-evolution absence, not a per-record failure, and treating it as unknown
   // would skip every GCP type outright (composePricing's real "shipped" argument is
   // read from loadCommittedRegions, i.e. the manifest as it stood BEFORE this
-  // refresh — see tools/lib/record-schema.js). Once at least one record HAS the
+  // refresh — see scripts/lib/record-schema.js). Once at least one record HAS the
   // field, an absent one beside it is the genuine anomaly (a half-merged record, a
   // dropped field) and must be skipped rather than priced as SSD-free. Same
   // reasoning as loadCommittedRegions' own vCpus-only merge guard.

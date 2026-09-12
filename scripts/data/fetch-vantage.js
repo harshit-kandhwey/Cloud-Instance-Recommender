@@ -2,12 +2,12 @@
 "use strict";
 /*
  * fetch-vantage.js — rebuild each provider's fat monolith from the Vantage bulk
- * instance data, in the format tools/split-data.js consumes.
+ * instance data, in the format scripts/data/split-data.js consumes.
  *
- *   node tools/fetch-vantage.js [--provider aws|azure|gcp] [--date YYYY-MM-DD]
+ *   node scripts/data/fetch-vantage.js [--provider aws|azure|gcp] [--date YYYY-MM-DD]
  *
  * Writes to the gitignored .refresh-cache/{provider}-monolith.js, NOT over the
- * shipped js/{provider}/{provider}-data.js: the shipped tree stays untouched until
+ * shipped src/providers/{provider}/{provider}-data.js: the shipped tree stays untouched until
  * split-data runs, so the diffs can still read the old data out of it and a run that
  * dies part-way cannot leave a new manifest beside old region files.
  *
@@ -27,16 +27,16 @@ const {
   loadGlobals,
   monolithPath,
   fetchJson,
-} = require("./lib/build-env");
+} = require("../lib/build-env");
 const {
   round8,
   loadCommittedRegions,
   readShippedRegionKeys,
   FIELD_ORDER,
   emitRecordBody,
-} = require("./lib/record-schema");
+} = require("../lib/record-schema");
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
+// Price normalizer (the cross-tool 8-decimal contract, see scripts/lib/record-schema.js).
 const price = round8;
 
 // Bulk static JSON endpoints (ec2 at the root, azure/gcp under their path).
@@ -417,7 +417,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 
 // ── Serialisation ────────────────────────────────────────────────────────────
 //
-// FIELD_ORDER and emitRecordBody live in tools/lib/record-schema.js: split-data writes the
+// FIELD_ORDER and emitRecordBody live in scripts/lib/record-schema.js: split-data writes the
 // same fields, partitioned into specs and prices, and the two writers must not
 // keep separate ideas of what a record contains. emitValue's throw on a
 // non-serializable value is the tripwire behind the missing-spec skip in
@@ -473,7 +473,7 @@ function buildMonolith({
       process.stderr.write(
         `WARNING: GCP series with no platform mapping, shipped as Intel: ` +
           `${[...unmapped].sort().join(", ")} — add each to GCP_ARM_SERIES / ` +
-          `GCP_AMD_SERIES / GCP_INTEL_SERIES in tools/fetch-vantage.js\n`,
+          `GCP_AMD_SERIES / GCP_INTEL_SERIES in scripts/data/fetch-vantage.js\n`,
       );
   }
 
@@ -491,7 +491,7 @@ function buildMonolith({
       process.stderr.write(
         `WARNING: Azure families named as AMD but absent from the vendor table, ` +
           `shipped as Intel: ${unclassified.join(", ")} — check each size doc and ` +
-          `add the AMD ones to AZURE_AMD_FAMILIES in tools/fetch-vantage.js\n`,
+          `add the AMD ones to AZURE_AMD_FAMILIES in scripts/data/fetch-vantage.js\n`,
       );
   }
 
@@ -507,7 +507,7 @@ function buildMonolith({
 
 /**
  * Emit the monolith string split-data.js consumes, from an already-built region map.
- * Shared by buildMonolith (Vantage generation) and tools/reconcile-data.js (official
+ * Shared by buildMonolith (Vantage generation) and scripts/data/reconcile-data.js (official
  * merge) so the on-disk format has exactly one definition. Region keys and instance
  * types are sorted so the output — and the split diff — stays stable.
  * @param {object} o
@@ -661,7 +661,7 @@ async function main() {
       `[${name}] wrote ${path.relative(ROOT, out)}: ${regionKeys.length}/${shippedKeys.length} ` +
         `shipped regions, ${instanceCount} records${dropped ? `, ${dropped} region(s) got no data` : ""}`,
     );
-    console.log(`[${name}] next: node tools/split-data.js`);
+    console.log(`[${name}] next: node scripts/data/split-data.js`);
   }
 }
 

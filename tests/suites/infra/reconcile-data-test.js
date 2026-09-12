@@ -10,7 +10,7 @@ const {
   reconcileProvider,
   isSpecConflict,
   renderReport,
-} = require("../../../tools/reconcile-data");
+} = require("../../../scripts/data/reconcile-data");
 
 const { check, state } = makeChecker();
 

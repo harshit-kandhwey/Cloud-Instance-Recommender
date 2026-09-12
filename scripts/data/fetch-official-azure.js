@@ -4,7 +4,7 @@
  * fetch-official-azure.js — Azure on-demand VM pricing from the Azure Retail Prices
  * API, for the regions the app already ships.
  *
- *   node tools/fetch-official-azure.js [--out .refresh-cache/azure-pricing.json] [--region eastus]
+ *   node scripts/data/fetch-official-azure.js [--out .refresh-cache/azure-pricing.json] [--region eastus]
  *
  * Node/CI build tool only; never shipped, never called by the page. NO credentials —
  * the Retail Prices API is unauthenticated. Phase D2 (reconcile-data.js) merges this
@@ -21,12 +21,12 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
-} = require("./lib/build-env");
-const { round8, readShippedRegionKeys } = require("./lib/record-schema");
+} = require("../lib/build-env");
+const { round8, readShippedRegionKeys } = require("../lib/record-schema");
 
 const RETAIL_PRICES_URL = "https://prices.azure.com/api/retail/prices";
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
+// Price normalizer (the cross-tool 8-decimal contract, see scripts/lib/record-schema.js).
 const price = round8;
 
 // armSkuName ("Standard_D4s_v5", "Basic_A0") → shipped type key ("d4sv5", "a0"):

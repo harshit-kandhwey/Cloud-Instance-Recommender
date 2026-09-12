@@ -6,7 +6,7 @@
 // (deliberately NOT *-test.js, so tests/run-all.js never tries to run them as
 // plain Node) and are kept OUT of `npm test` — run them with `npm run test:e2e`.
 //
-// The webServer is our own zero-dependency Node static server (tools/
+// The webServer is our own zero-dependency Node static server (scripts/testing/
 // static-server.js): CI has no Python, so `python -m http.server` is not an
 // option there.
 
@@ -43,7 +43,7 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: `node tools/static-server.js --port ${PORT}`,
+    command: `node scripts/testing/static-server.js --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 30 * 1000,

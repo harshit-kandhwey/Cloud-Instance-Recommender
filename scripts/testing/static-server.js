@@ -6,7 +6,7 @@
 // and it is a *test-time* tool: nothing here ships to the served page, so it
 // does not touch the no-build-step rule.
 //
-//   node tools/static-server.js [--port 8080] [--root .]
+//   node scripts/testing/static-server.js [--port 8080] [--root .]
 //
 // Playwright's `webServer` block launches and tears it down; run it by hand for
 // a manual smoke. Root is the repo root by default; paths are resolved inside
@@ -17,7 +17,7 @@ const fs = require("fs");
 const path = require("path");
 
 function parseArgs(argv) {
-  const out = { port: 8080, root: path.join(__dirname, "..") };
+  const out = { port: 8080, root: path.join(__dirname, "..", "..") };
   // Reject a non-integer port up front: Number(undefined)/Number("abc") is NaN,
   // and listen(NaN) silently binds an arbitrary free port — so Playwright's
   // webServer URL would point at a port nothing serves and fail as a timeout.

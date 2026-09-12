@@ -102,7 +102,7 @@ jobs:
       - name: Fetch ${{ matrix.provider }} official pricing
         env:
           GCP_BILLING_API_KEY: ${{ secrets.GCP_BILLING_API_KEY }}
-        run: node tools/fetch-official-${{ matrix.provider }}.js --out ".refresh-cache/${{ matrix.provider }}-pricing.json"
+        run: node scripts/data/fetch-official-${{ matrix.provider }}.js --out ".refresh-cache/${{ matrix.provider }}-pricing.json"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -151,7 +151,7 @@ jobs:
       - name: Refresh specs (Vantage)
         env:
           VANTAGE_API_KEY: ${{ secrets.VANTAGE_API_KEY }}
-        run: node tools/fetch-vantage.js --date "${{ needs.scope.outputs.date }}"
+        run: node scripts/data/fetch-vantage.js --date "${{ needs.scope.outputs.date }}"
 
       # Reconcile the official pricing into the fresh monolith, official taking
       # precedence (Phase D2). Pricing run only. Its report (a CLEAN/CONFLICTS
@@ -160,7 +160,7 @@ jobs:
       - name: Reconcile official pricing
         if: ${{ needs.scope.outputs.refresh_pricing == 'true' }}
         run: |
-          node tools/reconcile-data.js > reconcile-report.md
+          node scripts/data/reconcile-data.js > reconcile-report.md
           cat reconcile-report.md
 
       # Diff the committed data (js/{p}/ — region prices plus the manifest's specs)
@@ -170,7 +170,7 @@ jobs:
       - name: Generate diff report
         id: diff
         run: |
-          node tools/data-diff.js > diff-report.md
+          node scripts/data/data-diff.js > diff-report.md
           sentinel=$(head -n1 diff-report.md)
           echo "sentinel<<EOF" >> "$GITHUB_OUTPUT"
           echo "$sentinel" >> "$GITHUB_OUTPUT"
@@ -195,7 +195,7 @@ jobs:
         id: flips
         if: ${{ steps.diff.outputs.changed == 'true' }}
         run: |
-          node tools/recommendation-diff.js > rec-flips-report.md
+          node scripts/data/recommendation-diff.js > rec-flips-report.md
           if head -n1 rec-flips-report.md | grep -q 'rec-flips: FLIPS'; then
             echo "flipped=true" >> "$GITHUB_OUTPUT"
           else

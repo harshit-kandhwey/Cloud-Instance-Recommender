@@ -1,12 +1,12 @@
 "use strict";
 /*
- * tools/lib/build-env.js — generic Node/CI primitives the refresh/build tools share:
+ * scripts/lib/build-env.js — generic Node/CI primitives the refresh/build tools share:
  * locating the repo root, reading CLI flags, running a shipped browser script in a
  * sandboxed VM context, a validated --date, and an atomic file write. None of this
- * knows the shipped record's shape — that lives in tools/lib/record-schema.js, which
+ * knows the shipped record's shape — that lives in scripts/lib/record-schema.js, which
  * is built on top of runFiles/loadGlobals/ROOT from here. Split out of the former
  * tools/lib/util.js 2026-09-04: that file mixed these with the record schema under
- * one catch-all name, which CODING_STANDARDS.md's naming rule flags directly. Node/CI
+ * one catch-all name, which the coding-standards naming rule flags directly. Node/CI
  * only; never shipped to the page.
  */
 
@@ -14,7 +14,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-// tools/lib/build-env.js → repo root.
+// scripts/lib/build-env.js → repo root.
 const ROOT = path.join(__dirname, "..", "..");
 
 // Value following a CLI flag in argv, or undefined. argv is injectable for tests.
@@ -44,7 +44,7 @@ function loadGlobals(relPath, root = ROOT) {
 }
 
 // The refresh's scratch monolith. fetch-vantage writes the freshly built fat data
-// HERE rather than over js/{name}/{name}-data.js, and reconcile, both diffs and
+// HERE rather than over src/providers/{name}/{name}-data.js, and reconcile, both diffs and
 // split-data read it from here. The shipped tree therefore survives untouched until
 // split-data runs, which is what lets the diffs read the OLD specs out of the shipped
 // manifest, and what stops a refresh that dies mid-run from leaving a new manifest

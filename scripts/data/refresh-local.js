@@ -35,7 +35,7 @@ const {
   argValue,
   resolveDataDate,
   writeFileAtomic,
-} = require("./lib/build-env");
+} = require("../lib/build-env");
 
 const CACHE = path.join(ROOT, ".refresh-cache");
 
@@ -51,27 +51,27 @@ function planSteps({ pricing, date }) {
     for (const p of ["aws", "azure", "gcp"]) {
       steps.push({
         name: `fetch-official-${p}`,
-        script: `tools/fetch-official-${p}.js`,
+        script: `scripts/data/fetch-official-${p}.js`,
         args: ["--out", path.join(".refresh-cache", `${p}-pricing.json`)],
       });
     }
   }
   steps.push({
     name: "fetch-vantage",
-    script: "tools/fetch-vantage.js",
+    script: "scripts/data/fetch-vantage.js",
     args: ["--date", date],
   });
   if (pricing) {
     steps.push({
       name: "reconcile-data",
-      script: "tools/reconcile-data.js",
+      script: "scripts/data/reconcile-data.js",
       args: [],
       captureTo: path.join(".refresh-cache", "reconcile-report.md"),
     });
   }
   steps.push({
     name: "data-diff",
-    script: "tools/data-diff.js",
+    script: "scripts/data/data-diff.js",
     args: [],
     captureTo: path.join(".refresh-cache", "diff-report.md"),
     isDiff: true,
@@ -80,7 +80,7 @@ function planSteps({ pricing, date }) {
   // side, so BEFORE split-data). Only when the diff found changes; its output is echoed.
   steps.push({
     name: "recommendation-diff",
-    script: "tools/recommendation-diff.js",
+    script: "scripts/data/recommendation-diff.js",
     args: [],
     captureTo: path.join(".refresh-cache", "rec-flips-report.md"),
     onlyIfChanged: true,
@@ -88,7 +88,7 @@ function planSteps({ pricing, date }) {
   });
   steps.push({
     name: "split-data",
-    script: "tools/split-data.js",
+    script: "scripts/data/split-data.js",
     args: [],
     onlyIfChanged: true,
   });

@@ -3,14 +3,14 @@
 /*
  * reconcile-data.js — merge the official-API price/spec fetches (Phase D1) into the
  * Vantage-derived monolith (Phase B1), official taking precedence, and re-emit the
- * monolith for tools/split-data.js.
+ * monolith for scripts/data/split-data.js.
  *
- *   node tools/reconcile-data.js [--provider aws|azure|gcp]
+ *   node scripts/data/reconcile-data.js [--provider aws|azure|gcp]
  *
- * Run AFTER tools/fetch-vantage.js writes .refresh-cache/{p}-monolith.js and the
+ * Run AFTER scripts/data/fetch-vantage.js writes .refresh-cache/{p}-monolith.js and the
  * official fetchers write .refresh-cache/{p}-pricing.json, and BEFORE
- * tools/split-data.js. Reads and rewrites the scratch monolith in place; the shipped
- * js/ tree is not touched here at all. Node/CI build tool only; never shipped.
+ * scripts/data/split-data.js. Reads and rewrites the scratch monolith in place; the shipped
+ * src/providers/ tree is not touched here at all. Node/CI build tool only; never shipped.
  *
  * Precedence (design B0): the official API wins field by field.
  *   - Pricing — always the official value where the official fetch carries it. A type
@@ -38,8 +38,8 @@ const {
   argValue,
   writeFileAtomic,
   monolithPath,
-} = require("./lib/build-env");
-const { priceFields } = require("./lib/record-schema");
+} = require("../lib/build-env");
+const { priceFields } = require("../lib/record-schema");
 
 const PROVIDERS = [
   {
@@ -64,7 +64,7 @@ const PROVIDERS = [
 // List has vCPU/memory/family; Azure Retail and GCP Catalog are pricing-only). Field
 // names already match the monolith's, so a match is a direct overwrite.
 //
-// `price` is DERIVED from tools/lib/record-schema.js's priceFields(), not hand-listed — every
+// `price` is DERIVED from scripts/lib/record-schema.js's priceFields(), not hand-listed — every
 // price field is officially-sourced (the official fetch IS the pricing API), so the two
 // lists have always agreed by coincidence, not by construction. data-diff.js hand-listed
 // this same fact independently and silently dropped GCP's localSsdGiB-adjacent field
@@ -310,7 +310,7 @@ function main() {
 
   if (!reports.length) {
     throw new Error(
-      "no provider could be reconciled — run tools/fetch-vantage.js and the official fetchers first",
+      "no provider could be reconciled — run scripts/data/fetch-vantage.js and the official fetchers first",
     );
   }
   process.stdout.write(renderReport(reports));

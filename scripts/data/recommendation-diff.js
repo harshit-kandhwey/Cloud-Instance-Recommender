@@ -5,10 +5,10 @@
  * region data and over the freshly generated monolith, for the representative sample
  * inputs, and report every case where a refresh FLIPS a recommended instance.
  *
- *   node tools/recommendation-diff.js [--provider aws|azure|gcp]
+ *   node scripts/data/recommendation-diff.js [--provider aws|azure|gcp]
  *
- * Run AFTER tools/fetch-vantage.js (+ reconcile) writes the new monolith and BEFORE
- * tools/split-data.js — same window as data-diff: js/{p}/regions/ still holds the old
+ * Run AFTER scripts/data/fetch-vantage.js (+ reconcile) writes the new monolith and BEFORE
+ * scripts/data/split-data.js — same window as data-diff: src/providers/{p}/regions/ still holds the old
  * data (the "before" engine input) while .refresh-cache/{p}-monolith.js is the fresh
  * monolith (the "after" input). Node/CI build tool only; never shipped.
  *
@@ -28,14 +28,14 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
-const { ROOT, argValue, monolithPath } = require("./lib/build-env");
-const { loadCommittedRegions } = require("./lib/record-schema");
+const { ROOT, argValue, monolithPath } = require("../lib/build-env");
+const { loadCommittedRegions } = require("../lib/record-schema");
 const {
   SAMPLE_CSV,
   parseSample,
   SCENARIOS,
   CODE_FILES,
-} = require("../tests/golden/golden-run");
+} = require("../../tests/golden/golden-run");
 
 // A result column names a chosen instance when it ends in one of these — the
 // like-to-like / optimized "… Instance" picks and the four summary picks (cost,
@@ -125,7 +125,7 @@ function renderReport(perScenario) {
 
 // ── Data loading (impure) ─────────────────────────────────────────────────────────
 
-// The "old" engine input is js/{name}/regions/ via the shared loadCommittedRegions —
+// The "old" engine input is src/providers/{name}/regions/ via the shared loadCommittedRegions —
 // literally the same loader data-diff uses, so the two diffs can never disagree on
 // what the old side is or on which malformed region files they reject.
 

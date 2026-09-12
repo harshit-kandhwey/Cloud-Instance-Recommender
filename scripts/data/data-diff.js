@@ -4,10 +4,10 @@
  * data-diff.js — diff the committed region data against a freshly generated
  * monolith and render a review report for the data-refresh pull request.
  *
- *   node tools/data-diff.js [--provider aws|azure|gcp]
+ *   node scripts/data/data-diff.js [--provider aws|azure|gcp]
  *
- * Run AFTER tools/fetch-vantage.js writes .refresh-cache/{provider}-monolith.js
- * and BEFORE tools/split-data.js: the shipped js/ tree still holds the old data,
+ * Run AFTER scripts/data/fetch-vantage.js writes .refresh-cache/{provider}-monolith.js
+ * and BEFORE scripts/data/split-data.js: the shipped src/providers/ tree still holds the old data,
  * the scratch monolith holds the new. Node/CI build tool only; never shipped.
  *
  * The first output line is a machine-readable sentinel the workflow greps to
@@ -21,13 +21,13 @@
 
 const fs = require("fs");
 const vm = require("vm");
-const { argValue, monolithPath } = require("./lib/build-env");
+const { argValue, monolithPath } = require("../lib/build-env");
 const {
   round8,
   loadCommittedRegions,
   specFields,
   priceFields,
-} = require("./lib/record-schema");
+} = require("../lib/record-schema");
 
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },
@@ -39,7 +39,7 @@ const PROVIDERS = [
 // below, never as a per-type spec move — a family value changing on the SAME type
 // key would be a data anomaly, not the kind of drift this diff tracks), carries a
 // price (compared per region), or is a region-independent spec (compared once per
-// type). specFields/priceFields are DERIVED from tools/lib/record-schema.js's FIELD_ORDER,
+// type). specFields/priceFields are DERIVED from scripts/lib/record-schema.js's FIELD_ORDER,
 // never hand-listed here: that module exists precisely because a field named in
 // only one of two partitions gets written by one tool and dropped by the other, and
 // hand-listing a second copy in THIS file reproduced exactly that failure — GCP's
@@ -373,8 +373,8 @@ function renderReport(diffs) {
 
 // ── Disk loaders ────────────────────────────────────────────────────────────────
 
-// The "old" side — js/{name}/regions/ — is loaded by the shared
-// loadCommittedRegions in tools/lib/record-schema.js, which recommendation-diff reads too.
+// The "old" side — src/providers/{name}/regions/ — is loaded by the shared
+// loadCommittedRegions in scripts/lib/record-schema.js, which recommendation-diff reads too.
 
 // Extract { regionKey: {type:record} } from a freshly generated monolith by
 // running it and reading the keys the make{PREFIX}RegionsGlobal({...}) call lists.

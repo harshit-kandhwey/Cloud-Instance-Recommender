@@ -51,7 +51,7 @@ module.exports = defineConfig({
     },
   ],
   webServer: {
-    command: `node tools/static-server.js --port ${PORT}`,
+    command: `node scripts/testing/static-server.js --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 30 * 1000,

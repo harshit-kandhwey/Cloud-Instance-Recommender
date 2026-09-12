@@ -1,6 +1,6 @@
 "use strict";
 /*
- * tools/lib/record-schema.js — the shipped record's field schema (which fields exist,
+ * scripts/lib/record-schema.js — the shipped record's field schema (which fields exist,
  * which half of the split each belongs to, and their canonical order), plus reading
  * that shape back out of committed data. The 8-decimal price normalizer is part of
  * the same cross-tool contract: fetch-vantage, the official fetchers, data-diff and
@@ -8,7 +8,7 @@
  * spurious move in the diff. See CANONICAL-SOURCES.md — this file is the registry's
  * entry for per-provider price/spec field membership and order. Split out of the
  * former tools/lib/util.js 2026-09-04, which mixed this with generic Node/CI
- * primitives (now tools/lib/build-env.js) under one catch-all name. Node/CI only;
+ * primitives (now scripts/lib/build-env.js) under one catch-all name. Node/CI only;
  * never shipped to the page.
  */
 

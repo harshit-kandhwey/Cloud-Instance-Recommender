@@ -4,7 +4,7 @@
  * fetch-official-aws.js — AWS on-demand pricing (+ the specs the bulk records carry)
  * from the AWS Price List Bulk API, for the type × region pairs the app already ships.
  *
- *   node tools/fetch-official-aws.js [--out .refresh-cache/aws-pricing.json] [--region us-east-1]
+ *   node scripts/data/fetch-official-aws.js [--out .refresh-cache/aws-pricing.json] [--region us-east-1]
  *
  * Node/CI build tool only; never shipped, never called by the page. NO credentials —
  * the Bulk API is public HTTPS. Phase D2 (reconcile-data.js) merges this with the
@@ -22,10 +22,10 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
-} = require("./lib/build-env");
-const { round8, readShippedRegionKeys } = require("./lib/record-schema");
+} = require("../lib/build-env");
+const { round8, readShippedRegionKeys } = require("../lib/record-schema");
 
-// Price normalizer (the cross-tool 8-decimal contract, see tools/lib/record-schema.js).
+// Price normalizer (the cross-tool 8-decimal contract, see scripts/lib/record-schema.js).
 const price = round8;
 
 // Public Bulk API. The region index lists each region's current per-region offer
