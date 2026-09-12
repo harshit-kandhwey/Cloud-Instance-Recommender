@@ -1,4 +1,4 @@
-// Percentile / peak utilization (js/base/instance-selector-factory.js):
+// Percentile / peak utilization (src/core/engine/instance-selector-factory.js):
 // which statistic a run sizes against, and what happens to a row that does not
 // carry it.
 //

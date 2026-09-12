@@ -1,4 +1,4 @@
-// data-diff suite: pins tools/data-diff.js's pure diff + report against synthetic
+// data-diff suite: pins scripts/data/data-diff.js's pure diff + report against synthetic
 // old/new region snapshots — region/family/type deltas, spec and price moves, the
 // no-op guard, the CHANGES/NO-CHANGES sentinel, and monolith parsing. No network.
 const fs = require("fs");
@@ -11,8 +11,8 @@ const {
   renderProvider,
   renderUnpriced,
   regionsFromMonolith,
-} = require("../../../tools/data-diff");
-const { buildMonolith } = require("../../../tools/fetch-vantage");
+} = require("../../../scripts/data/data-diff");
+const { buildMonolith } = require("../../../scripts/data/fetch-vantage");
 
 const { check, state } = makeChecker();
 
@@ -234,7 +234,7 @@ const gcp = (o) => ({
 
 // ── GCP spec fields are DERIVED from FIELD_ORDER, not hand-listed ───────────────
 // PROVIDER_CFG.gcp.specFields used to be a second, separately maintained copy of
-// the spec/price split tools/lib/record-schema.js's specFields()/priceFields() already
+// the spec/price split scripts/lib/record-schema.js's specFields()/priceFields() already
 // compute canonically — and it drifted: localSsdGiB, added to FIELD_ORDER in
 // 3.15.7, was never added here. A refresh that changed ONLY a type's attached
 // local-SSD size (its price unchanged) would report NO-CHANGES, so split-data
@@ -398,7 +398,7 @@ const gcp = (o) => ({
 // already carries this pin — it is here because the twin is what went missing last time.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "data-diff.js"),
+    path.join(__dirname, "..", "..", "..", "scripts", "data", "data-diff.js"),
     "utf8",
   );
   // Strip line comments before looking, so the check matches the CALL and not prose

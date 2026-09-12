@@ -1,5 +1,5 @@
 // The four tool pages (aws/azure/gcp/multicloud) share one app shell and one set
-// of js/base modules. Those modules look elements up by id, so a page that
+// of provider-independent src/ modules. Those modules look elements up by id, so a page that
 // quietly loses a placeholder does not throw — every shared renderer is written
 // to survive its element being absent — it just silently stops offering that
 // feature on that page. gcp.html once sat a whole release showing a sample the
@@ -77,14 +77,24 @@ const INTENTIONAL = {
   // their real per-page enforcement.
 };
 
-// ─── Every js/base lookup is on every page, or deliberately not ──────────────
+// ─── Every shared-module lookup is on every page, or deliberately not ────────
+// js/base/ (pre-3.16-tail) split into these 5 directories under src/.
 console.log("[shared modules find their elements on every page]");
 {
-  const baseDir = path.join(REPO, "js", "base");
-  const js = fs
-    .readdirSync(baseDir)
-    .filter((f) => f.endsWith(".js"))
-    .map((f) => fs.readFileSync(path.join(baseDir, f), "utf8"))
+  const baseDirs = [
+    path.join(REPO, "src", "core", "engine"),
+    path.join(REPO, "src", "core", "rules"),
+    path.join(REPO, "src", "features"),
+    path.join(REPO, "src", "ui"),
+    path.join(REPO, "src", "shared"),
+  ];
+  const js = baseDirs
+    .flatMap((baseDir) =>
+      fs
+        .readdirSync(baseDir)
+        .filter((f) => f.endsWith(".js"))
+        .map((f) => fs.readFileSync(path.join(baseDir, f), "utf8")),
+    )
     .join("\n");
 
   const lookedUp = [
@@ -132,9 +142,15 @@ console.log("[shared modules find their elements on every page]");
 }
 
 // ─── The shared shell loads the same modules, in the same order ──────────────
-console.log("[every page loads the same js/base modules in the same order]");
+// js/base/ (pre-3.16-tail) was one directory; its replacement is provider-
+// INDEPENDENT src/ code spread across core/, features/, ui/ and shared/ — so
+// "shared shell module" is now "anything under src/ that isn't provider code",
+// not a single directory-name substring match.
+console.log(
+  "[every page loads the same provider-independent src/ modules in the same order]",
+);
 {
-  // Scan a comment-stripped copy: a commented-out <script src="js/base/…"> is not
+  // Scan a comment-stripped copy: a commented-out <script src="src/…"> is not
   // loaded, but the raw text still contains it, so scanning raw[p] would count it
   // as present and let the module-order check pass on a page that never loads it.
   const noComments = Object.fromEntries(
@@ -143,7 +159,7 @@ console.log("[every page loads the same js/base modules in the same order]");
   const baseScripts = (p) =>
     [...noComments[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
       .map((m) => m[1])
-      .filter((s) => s.includes("/base/"));
+      .filter((s) => s.startsWith("src/") && !s.includes("/providers/"));
   const ref = baseScripts(PAGES[0]);
   check(
     "the reference page loads a full module set",

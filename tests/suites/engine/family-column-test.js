@@ -33,13 +33,13 @@ const load = (ctx, rel) =>
   });
 
 const CODE_FILES = [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
+  "src/core/rules/rule-engine.js",
+  "src/core/engine/base-instance-selector.js",
+  "src/providers/aws/aws-instance-selector.js",
+  "src/providers/azure/azure-instance-selector.js",
+  "src/providers/gcp/gcp-instance-selector.js",
+  "src/core/engine/instance-selector-factory.js",
+  "src/shared/app-core.js",
 ];
 
 // Only the regions these rows name — loading all 141 would make the suite slow
@@ -52,8 +52,10 @@ const REGIONS = [
 
 function buildRun() {
   const ctx = makeContext();
-  for (const p of ["aws", "azure", "gcp"]) load(ctx, `js/${p}/${p}-data.js`);
-  for (const [p, key] of REGIONS) load(ctx, `js/${p}/regions/${key}.js`);
+  for (const p of ["aws", "azure", "gcp"])
+    load(ctx, `src/providers/${p}/${p}-data.js`);
+  for (const [p, key] of REGIONS)
+    load(ctx, `src/providers/${p}/regions/${key}.js`);
   for (const f of CODE_FILES) load(ctx, f);
   return ctx;
 }
@@ -315,10 +317,10 @@ const OPTIONS = {
     // every instance in the catalogue. Removed rather than left to be found and
     // trusted by the next reader.
     const files = [
-      "js/base/base-instance-selector.js",
-      "js/aws/aws-instance-selector.js",
-      "js/azure/azure-instance-selector.js",
-      "js/gcp/gcp-instance-selector.js",
+      "src/core/engine/base-instance-selector.js",
+      "src/providers/aws/aws-instance-selector.js",
+      "src/providers/azure/azure-instance-selector.js",
+      "src/providers/gcp/gcp-instance-selector.js",
     ];
     const survivors = files.filter((f) =>
       /getInstanceFamily/.test(fs.readFileSync(path.join(REPO, f), "utf8")),

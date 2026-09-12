@@ -1,5 +1,5 @@
 // End-to-end for the SCENARIO-comparison browser path — the residual the 3.10
-// coverage waiver marked "accepted-but-unverified" (js/base/scenario-compare.js):
+// coverage waiver marked "accepted-but-unverified" (src/features/scenario-compare.js):
 // compareScenarios and downloadScenarioComparison. The CSV builders they call
 // (buildScenarioComparisonCsv / …N) are pinned by export/scenario-compare-test.js;
 // what only a real browser exercises is the ≥2-pinned guard + DOM render behind

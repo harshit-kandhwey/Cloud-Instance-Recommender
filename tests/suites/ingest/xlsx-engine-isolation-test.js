@@ -67,7 +67,10 @@ console.log("[the two vendored bundles really do collide on window.XLSX]");
 
 console.log("[the read path is pinned to the patched full build]");
 {
-  const src = fs.readFileSync(path.join(REPO, "js/base/ingest.js"), "utf8");
+  const src = fs.readFileSync(
+    path.join(REPO, "src/features/ingest.js"),
+    "utf8",
+  );
   check(
     "ensureXlsxLoaded does not accept whatever window.XLSX happens to be",
     !/if\s*\(\s*window\.XLSX\s*\)\s*return\s+Promise\.resolve\(\)/.test(src),
@@ -109,7 +112,10 @@ console.log("[the write paths are pinned to their own engine]");
   // The mirror hazard: an .xlsx upload loads the full build and overwrites
   // window.XLSX, which cannot style — so an export reading the bare global
   // would silently lose its formatting.
-  for (const f of ["js/base/xlsx-export.js", "js/base/portfolio.js"]) {
+  for (const f of [
+    "src/features/xlsx-export.js",
+    "src/features/portfolio.js",
+  ]) {
     const src = fs.readFileSync(path.join(REPO, f), "utf8");
     const name = path.basename(f);
     check(

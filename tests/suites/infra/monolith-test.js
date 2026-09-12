@@ -38,27 +38,27 @@ function load(rel) {
 }
 
 // Simulate the monolith era: region globals present, NO manifest keys
-load("js/aws/regions/us_east_1.js");
-load("js/azure/regions/eastus.js");
+load("src/providers/aws/regions/us_east_1.js");
+load("src/providers/azure/regions/eastus.js");
 ctx.AWS_DATA_READY = true;
 ctx.AZURE_DATA_READY = true;
 // (AWS_REGION_KEYS / AZURE_REGION_KEYS intentionally absent)
 
 for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
-  "js/base/app-core.js",
-  "js/base/ui-shell.js",
-  "js/base/ingest.js",
-  "js/base/manual-entry.js",
-  "js/base/form-controls.js",
-  "js/base/generate.js",
-  "js/base/preview.js",
-  "js/base/downloads.js",
+  "src/core/rules/rule-engine.js",
+  "src/core/engine/base-instance-selector.js",
+  "src/providers/aws/aws-instance-selector.js",
+  "src/providers/azure/azure-instance-selector.js",
+  "src/providers/gcp/gcp-instance-selector.js",
+  "src/core/engine/instance-selector-factory.js",
+  "src/shared/app-core.js",
+  "src/ui/ui-shell.js",
+  "src/features/ingest.js",
+  "src/features/manual-entry.js",
+  "src/ui/form-controls.js",
+  "src/core/engine/generate.js",
+  "src/features/preview.js",
+  "src/features/downloads.js",
 ])
   load(f);
 

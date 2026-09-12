@@ -180,6 +180,8 @@ function ensureResultsXlsx() {
   // .xlsx UPLOAD loads the full build (the only one safe to parse with — see
   // ensureXlsxLoaded in ingest.js) and overwrites window.XLSX, which would
   // silently strip the styling from a later export.
+  // "js/vendor/..." is relative to the PAGE (repo root), not to this
+  // module's own location — track wherever the calling page actually sits.
   _resultsXlsxPromise = loadResultsXlsxScript("js/vendor/xlsx-js-style.min.js")
     .then(() => {
       window._xlsxWriter = window.XLSX;

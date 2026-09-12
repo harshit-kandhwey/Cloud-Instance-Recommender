@@ -19,7 +19,7 @@ name: Data refresh
 #   assemble (one job) — fetch-vantage → reconcile-data → data-diff →
 #     recommendation-diff → split-data → PR.
 # Each step consumes what the one before it produced. Only split-data writes into the
-# shipped js/ tree; everything upstream reads it and writes to .refresh-cache/, so both
+# shipped src/providers/ tree; everything upstream reads it and writes to .refresh-cache/, so both
 # diffs can read the old data — specs included — while the new data waits beside it.
 # The fetch stage is separate because it fans out per provider, not because of ordering.
 
@@ -146,7 +146,7 @@ jobs:
           merge-multiple: true
 
       # Specs: build each provider's fresh monolith from the Vantage bulk data into
-      # .refresh-cache/{p}-monolith.js. The shipped js/ tree is NOT touched here — only
+      # .refresh-cache/{p}-monolith.js. The shipped src/providers/ tree is NOT touched here — only
       # split-data writes it. The Bearer key is a secret and is never printed by the tool.
       - name: Refresh specs (Vantage)
         env:
@@ -163,7 +163,7 @@ jobs:
           node scripts/data/reconcile-data.js > reconcile-report.md
           cat reconcile-report.md
 
-      # Diff the committed data (js/{p}/ — region prices plus the manifest's specs)
+      # Diff the committed data (src/providers/{p}/ — region prices plus the manifest's specs)
       # against the freshly written (and, on a pricing run, reconciled) scratch monolith.
       # MUST run before split-data, which rewrites both halves. Line 1 is the
       # <!-- data-diff: CHANGES|NO-CHANGES --> sentinel the no-op guard reads.
@@ -189,7 +189,7 @@ jobs:
 
       # Recommendation flips (Phase C2.4): run the engine over the committed data and the
       # fresh monolith for the sample inputs and report any pick that moved. Reads the
-      # shipped js/ tree as the OLD side, so BEFORE split-data. Line 1 is the
+      # shipped src/providers/ tree as the OLD side, so BEFORE split-data. Line 1 is the
       # FLIPS/NONE sentinel.
       - name: Recommendation flip check
         id: flips
@@ -203,14 +203,14 @@ jobs:
           fi
           cat rec-flips-report.md
 
-      # Split the monolith back into js/{p}/regions/ + the manifest — the shape the
+      # Split the monolith back into src/providers/{p}/regions/ + the manifest — the shape the
       # page loads and the repo commits. Capture the pruned-region warning so the PR
       # can flag the required sw.js CACHE bump.
       - name: Split into region files
         id: split
         if: ${{ steps.diff.outputs.changed == 'true' }}
         run: |
-          node tools/split-data.js | tee split.log
+          node scripts/data/split-data.js | tee split.log
           if grep -q 'regions were removed' split.log; then
             echo "pruned=true" >> "$GITHUB_OUTPUT"
           else
@@ -251,7 +251,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add js/
+          git add src/providers/
           scope="specs"
           [ "$REFRESH_PRICING" = "true" ] && scope="specs + pricing"
           git commit -m "Data refresh ($scope) ${DATE}"

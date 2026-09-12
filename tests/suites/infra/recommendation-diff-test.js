@@ -1,4 +1,4 @@
-// recommendation-diff suite: pins tools/recommendation-diff.js's pure comparison —
+// recommendation-diff suite: pins scripts/data/recommendation-diff.js's pure comparison —
 // which result columns count as a "pick" (identity, not its spec consequences), that a
 // changed pick between old and new engine runs is reported as a flip while a changed
 // spec column is NOT, VM appear/disappear, and the FLIPS/NONE sentinel. The engine-run
@@ -14,7 +14,7 @@ const {
   renderReport,
   selectScenarios,
   SINGLE_PROVIDERS,
-} = require("../../../tools/recommendation-diff");
+} = require("../../../scripts/data/recommendation-diff");
 const { SCENARIOS } = require("../../golden/golden-run");
 
 const { check, state } = makeChecker();
@@ -198,7 +198,15 @@ const { check, state } = makeChecker();
 // is the fix; a second readdirSync here would be the drift coming back.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "recommendation-diff.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "recommendation-diff.js",
+    ),
     "utf8",
   );
   // Strip line comments first: a check that matches prose reports on documentation,

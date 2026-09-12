@@ -25,7 +25,7 @@ const round8 = (v) => (Number.isFinite(v) ? Math.round(v * 1e8) / 1e8 : v);
 const SERVICE = "compute";
 
 // Committed region data — the "old" side for BOTH refresh diffs, and the tools' twin of
-// the browser's loadRegionData. Reads js/{name}/regions/ and merges each type's specs
+// the browser's loadRegionData. Reads src/providers/{name}/regions/ and merges each type's specs
 // back in from the shipped manifest's {P}_SPECS, so a caller sees whole records and
 // never learns the data is stored in two pieces. The diffs run before split-data touches
 // either half, so both still hold the previous refresh's data.
@@ -40,10 +40,10 @@ const SERVICE = "compute";
 // that reads the shipped region files must come through here for the same reason — a
 // private readdirSync loop gets the price half and silently misses the specs.
 function loadCommittedRegions(name, root = ROOT) {
-  const dir = path.join(root, "js", name, "regions");
+  const dir = path.join(root, "src", "providers", name, "regions");
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".js"));
   const g = runFiles(
-    files.map((f) => `js/${name}/regions/${f}`),
+    files.map((f) => `src/providers/${name}/regions/${f}`),
     root,
   );
   const specs = readShippedSpecs(name, root);
@@ -52,7 +52,9 @@ function loadCommittedRegions(name, root = ROOT) {
   for (const f of files) {
     const key = f.replace(/\.js$/, "");
     if (!g[key] || typeof g[key] !== "object") {
-      throw new Error(`js/${name}/regions/${f} did not assign window.${key}`);
+      throw new Error(
+        `src/providers/${name}/regions/${f} did not assign window.${key}`,
+      );
     }
     const merged = {};
     for (const [type, priceRec] of Object.entries(g[key])) {
@@ -74,8 +76,8 @@ function loadCommittedRegions(name, root = ROOT) {
       const hasPrice = priceNames.some((p) => rec[p] !== undefined);
       if (hasPrice && rec.vCpus === undefined) {
         throw new Error(
-          `js/${name}/regions/${f}: ${type} has prices but no vCpus — ` +
-            `js/${name}/${name}-data.js carries no usable ` +
+          `src/providers/${name}/regions/${f}: ${type} has prices but no vCpus — ` +
+            `src/providers/${name}/${name}-data.js carries no usable ` +
             `${name.toUpperCase()}_SPECS.${SERVICE}[${type}] to merge`,
         );
       }
@@ -93,15 +95,15 @@ function loadCommittedRegions(name, root = ROOT) {
 // fires the moment a price-only record arrives with nothing to pair it with, and its
 // message names the manifest that should have carried the specs.
 function readShippedSpecs(name, root = ROOT) {
-  const rel = `js/${name}/${name}-data.js`;
+  const rel = `src/providers/${name}/${name}-data.js`;
   if (!fs.existsSync(path.join(root, rel))) return {};
   const blob = loadGlobals(rel, root)[`${name.toUpperCase()}_SPECS`];
   return (blob && blob[SERVICE]) || {};
 }
 
-// The {PREFIX}_REGION_KEYS manifest array from js/{name}/{name}-data.js.
+// The {PREFIX}_REGION_KEYS manifest array from src/providers/{name}/{name}-data.js.
 function readShippedRegionKeys(name, prefix, root = ROOT) {
-  const g = loadGlobals(`js/${name}/${name}-data.js`, root);
+  const g = loadGlobals(`src/providers/${name}/${name}-data.js`, root);
   const keys = g[`${prefix}_REGION_KEYS`];
   if (!Array.isArray(keys) || !keys.length) {
     throw new Error(`[${name}] no ${prefix}_REGION_KEYS in shipped manifest`);

@@ -23,7 +23,10 @@ function check(name, cond, detail) {
   }
 }
 
-const security = fs.readFileSync(path.join(REPO, "SECURITY.md"), "utf8");
+const security = fs.readFileSync(
+  path.join(REPO, ".github", "SECURITY.md"),
+  "utf8",
+);
 
 // Only the "Artifact integrity" table counts. Scanning the whole document would
 // let a stale table pass because some OTHER section happened to mention the same

@@ -12,13 +12,17 @@
 // The selector/factory files expect a `window` global
 self.window = self;
 
+// importScripts paths are relative to THIS file's own location (a worker
+// import, unlike a page <script> tag, resolves against the worker's URL, not
+// the page's) — kept in sync by hand with wherever core/rules and
+// providers/* actually live after the 3.16-tail js/ -> src/ move.
 importScripts(
-  "rule-engine.js",
-  "user-rules.js",
+  "../rules/rule-engine.js",
+  "../rules/user-rules.js",
   "base-instance-selector.js",
-  "../aws/aws-instance-selector.js",
-  "../azure/azure-instance-selector.js",
-  "../gcp/gcp-instance-selector.js",
+  "../../providers/aws/aws-instance-selector.js",
+  "../../providers/azure/azure-instance-selector.js",
+  "../../providers/gcp/gcp-instance-selector.js",
   "instance-selector-factory.js",
 );
 

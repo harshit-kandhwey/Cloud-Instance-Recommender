@@ -1,4 +1,4 @@
-// fetch-vantage suite: pins tools/fetch-vantage.js's pure builder against recorded
+// fetch-vantage suite: pins scripts/data/fetch-vantage.js's pure builder against recorded
 // Vantage fixtures — field derivations, region filtering, Azure generation carry-
 // forward, and split-data.js format compatibility. No network runs here.
 const fs = require("fs");
@@ -15,8 +15,8 @@ const {
   unmappedAzureAmdFamilies,
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
-} = require("../../../tools/fetch-vantage");
-const { loadCommittedRegions } = require("../../../tools/lib/record-schema");
+} = require("../../../scripts/data/fetch-vantage");
+const { loadCommittedRegions } = require("../../../scripts/lib/record-schema");
 
 const { check, state } = makeChecker();
 
@@ -577,7 +577,15 @@ function splitDataParity(monolith) {
 // already carries this pin — it is here because the twin is what went missing last time.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "fetch-vantage.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "fetch-vantage.js",
+    ),
     "utf8",
   );
   // Strip line comments before looking: the prose above collectAzureGeneration says

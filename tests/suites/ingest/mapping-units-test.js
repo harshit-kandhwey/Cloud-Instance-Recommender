@@ -251,9 +251,9 @@ function setSelects(ctx, values) {
   {
     const { ctx: c5, elements: e5 } = buildContext({
       dataScripts: [
-        "js/aws/aws-data.js",
-        "js/azure/azure-data.js",
-        "js/gcp/gcp-data.js",
+        "src/providers/aws/aws-data.js",
+        "src/providers/azure/azure-data.js",
+        "src/providers/gcp/gcp-data.js",
       ],
     });
     vm.runInContext(`parseCSV(${JSON.stringify(CSV)})`, c5);

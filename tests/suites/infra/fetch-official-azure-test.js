@@ -1,4 +1,4 @@
-// fetch-official-azure suite: pins tools/fetch-official-azure.js's pure normaliser
+// fetch-official-azure suite: pins scripts/data/fetch-official-azure.js's pure normaliser
 // against a recorded Azure Retail Prices page — the Consumption/VM/hourly filter, the
 // Spot and Low Priority exclusions, Linux/Windows split by productName, the armSkuName
 // → shipped-type mapping, and per-region keying. No network runs here.
@@ -11,7 +11,7 @@ const {
   isSpotOrLowPriority,
   azureFilter,
   resolveRegionKeys,
-} = require("../../../tools/fetch-official-azure");
+} = require("../../../scripts/data/fetch-official-azure");
 
 const { check, state } = makeChecker();
 
@@ -131,7 +131,7 @@ const byRegion = parseAzureItems(page.Items);
   // CLI stops calling it — which is precisely the bug being fixed. Pin the wiring
   // separately, scoped to main()'s body so the export list cannot satisfy it.
   const src = fs.readFileSync(
-    path.join(REPO, "tools", "fetch-official-azure.js"),
+    path.join(REPO, "scripts", "data", "fetch-official-azure.js"),
     "utf8",
   );
   const mainFn = src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/);

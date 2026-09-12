@@ -1,4 +1,4 @@
-// Multicloud family-equivalence explainer (js/base/instance-selector-factory.js):
+// Multicloud family-equivalence explainer (src/core/engine/instance-selector-factory.js):
 // a single "Family Equivalence" column, added ONLY on multi-cloud runs, that
 // folds each cloud's family-class name to a shared class and says whether the
 // clouds landed on the same KIND of machine.
@@ -141,13 +141,15 @@ console.log("[describeFamilyEquivalence: agree, differ, fallback, empty]");
 console.log("[the column is added on multi-cloud runs and absent on single]");
 (async () => {
   try {
-    const { ctx } = buildContext({ dataScript: "js/aws/aws-data.js" });
+    const { ctx } = buildContext({
+      dataScript: "src/providers/aws/aws-data.js",
+    });
     // Load a SECOND provider's data into the same context so a real two-cloud
     // run can resolve both regions (mirrors gpu-workload-test's e2e approach).
     vm.runInContext(
-      fs.readFileSync(path.join(REPO, "js/gcp/gcp-data.js"), "utf8"),
+      fs.readFileSync(path.join(REPO, "src/providers/gcp/gcp-data.js"), "utf8"),
       ctx,
-      { filename: "js/gcp/gcp-data.js" },
+      { filename: "src/providers/gcp/gcp-data.js" },
     );
     ctx.__rows = [
       {

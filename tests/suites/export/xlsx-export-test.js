@@ -1,4 +1,4 @@
-// Results .xlsx export verification (js/base/xlsx-export.js):
+// Results .xlsx export verification (src/features/xlsx-export.js):
 //   - resultsColToA1 column-letter math
 //   - resultsCellType numeric detection (bounded, string fallback)
 //   - buildResultsSheetModel: headers/rows/col-widths/autofilter range
@@ -29,7 +29,7 @@ const load = (rel) =>
 const run = (expr) =>
   vm.runInContext(expr, ctx, { filename: "xlsx-export-test" });
 
-load("js/base/xlsx-export.js");
+load("src/features/xlsx-export.js");
 
 let failures = 0;
 function check(name, cond, detail) {

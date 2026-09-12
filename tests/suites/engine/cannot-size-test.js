@@ -14,8 +14,8 @@ const { buildEngineContext } = require("../harness");
 
 const { ctx, run } = buildEngineContext({
   scripts: [
-    "js/base/base-instance-selector.js",
-    "js/base/instance-selector-factory.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/core/engine/instance-selector-factory.js",
   ],
   label: "cannot-size",
 });

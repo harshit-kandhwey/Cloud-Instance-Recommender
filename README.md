@@ -2,8 +2,7 @@
 
 A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
-![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue)
-![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
+![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue) ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 
@@ -28,13 +27,13 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 
 Five interactive dropdowns set global defaults for the entire batch without editing your CSV:
 
-| Dropdown       | Purpose                                                                                                                                                                                                                                           |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ENV**        | Production / Staging / Dev / Test — tightens generation and burstable rules; Dev/Test at low utilization _prefers_ burstable                                                                                                                      |
-| **OS**         | Linux / Windows / macOS — selects the price the row is ranked on; Windows excludes ARM/Graviton machines (the current proxy for Windows support, not a per-type check — see ROADMAP)                                                              |
-| **Workload**   | General / Database / **SQL Server** / Web Server / Cache / ML/AI (GPU) / Batch / HPC / **SAP** — sorts preferred families first; **ML/AI requires an accelerator, every other workload excludes one; SQL Server enforces a 4-vCPU licence floor** |
-| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS)                                                                                                                                                     |
-| **Min Gen**    | Minimum generation number/family, native to each cloud — excludes older instance generations                                                                                                                                                      |
+| Dropdown | Purpose |
+| --- | --- |
+| **ENV** | Production / Staging / Dev / Test — tightens generation and burstable rules; Dev/Test at low utilization _prefers_ burstable |
+| **OS** | Linux / Windows / macOS — selects the price the row is ranked on; Windows excludes ARM/Graviton machines (the current proxy for Windows support, not a per-type check — see ROADMAP) |
+| **Workload** | General / Database / **SQL Server** / Web Server / Cache / ML/AI (GPU) / Batch / HPC / **SAP** — sorts preferred families first; **ML/AI requires an accelerator, every other workload excludes one; SQL Server enforces a 4-vCPU licence floor** |
+| **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS) |
+| **Min Gen** | Minimum generation number/family, native to each cloud — excludes older instance generations |
 
 Per-row CSV column values always override these global defaults.
 
@@ -145,22 +144,9 @@ They appear as separate columns in the results grid/CSV and preview (hideable li
 
 ### 📈 Size against an average, p95, or peak
 
-Averages hide bursts. A VM averaging 20% CPU looks like an obvious downsize; the
-same VM with a p95 of 85% is not one, and shipping that downsize under-provisions
-it in production. **Size against** in Optimization Settings picks which statistic
-drives the N/2 / N / N+1 rules — **Average** (the default, and the historical
-behaviour), **p95**, or **Peak** — reading the matching `… p95` / `… Peak`
-columns when present.
+Averages hide bursts. A VM averaging 20% CPU looks like an obvious downsize; the same VM with a p95 of 85% is not one, and shipping that downsize under-provisions it in production. **Size against** in Optimization Settings picks which statistic drives the N/2 / N / N+1 rules — **Average** (the default, and the historical behaviour), **p95**, or **Peak** — reading the matching `… p95` / `… Peak` columns when present.
 
-Resolution is **per row, not per run**: fleet exports routinely carry p95 for
-monitored VMs and only an average for the rest, so a row missing the requested
-statistic falls back to what it does have rather than dropping to "no utilization
-data". The fallback prefers the _higher_ remaining statistic, because sizing
-against a lower number than you asked for under-provisions. Every row reports the
-basis actually used in a **`Sized On`** column (`p95`, `Average (fallback)`, …),
-so a recommendation can be traced to the number behind it. If you pick p95 or
-Peak and the upload has no such columns, the control says so at that moment
-instead of letting the run look like something it isn't.
+Resolution is **per row, not per run**: fleet exports routinely carry p95 for monitored VMs and only an average for the rest, so a row missing the requested statistic falls back to what it does have rather than dropping to "no utilization data". The fallback prefers the _higher_ remaining statistic, because sizing against a lower number than you asked for under-provisions. Every row reports the basis actually used in a **`Sized On`** column (`p95`, `Average (fallback)`, …), so a recommendation can be traced to the number behind it. If you pick p95 or Peak and the upload has no such columns, the control says so at that moment instead of letting the run look like something it isn't.
 
 ### 📗 Downloads — Excel first, CSVs on demand
 
@@ -202,15 +188,20 @@ Cloud-Instance-Recommender/
 ├── app-portfolio.html       # App-centric dashboard + executive Excel (fed by a handoff)
 ├── user-guide.html          # Full user guide
 │
-├── manifest.json            # PWA manifest (installable app)
-├── sw.js                    # Service worker — offline cache (stale-while-revalidate)
-├── icon.svg                 # App icon
+├── sw.js                    # Service worker — offline cache (stale-while-revalidate);
+│                            #   stays at repo root — its scope defaults to its own
+│                            #   directory, and this static host can't send the
+│                            #   Service-Worker-Allowed header needed to widen it back
+│
+├── public/
+│   ├── manifest.json        # PWA manifest (installable app)
+│   └── icon.svg             # App icon
 │
 ├── assets/
 │   └── templates/
 │       └── aws/             # AWS Pricing Calculator bulk upload templates (.xlsx)
 │
-├── css/
+├── styles/
 │   ├── theme.css            # Light/dark theme tokens (CSS custom properties)
 │   ├── style.css            # Main application styles
 │   ├── portfolio.css        # App Portfolio dashboard styles
@@ -218,75 +209,95 @@ Cloud-Instance-Recommender/
 │
 ├── logos/                   # Cloud provider logos
 │
-├── docs/                    # Data-source provenance (see DATA-SOURCES.md)
+├── docs/
+│   ├── architecture/        # Local-only design-decision reference (gitignored)
+│   ├── data/                # CANONICAL-SOURCES.md, DATA-SOURCES.md — provenance
+│   ├── operations/          # RELEASING.md — the release process
+│   └── product/             # Local-only future-major working drafts (gitignored)
 │
-├── tools/                   # Node build tooling (never shipped to the page)
-│   ├── refresh-local.js                   # npm run refresh: the whole pipeline, in order
-│   ├── fetch-official-{aws,azure,gcp}.js  # Official provider pricing APIs
-│   ├── fetch-vantage.js                   # Specs + families (Vantage API)
-│   ├── reconcile-data.js                  # Merge; official API wins, rest flagged UNVERIFIED
-│   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
-│   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
-│   ├── split-data.js                      # Monolith to manifest + per-region files
-│   ├── lib/build-env.js                   # Generic Node/CI primitives (argv, atomic write, sandboxed loaders)
-│   ├── lib/record-schema.js               # Shipped record shape (FIELD_ORDER, round8, region loaders)
-│   ├── build-coverage-inventory.js        # npm run coverage:check gate
-│   └── static-server.js                   # Zero-dep static server for the Playwright rig
+├── scripts/                 # Node build tooling (never shipped to the page)
+│   ├── data/
+│   │   ├── refresh-local.js                   # npm run refresh: the whole pipeline, in order
+│   │   ├── fetch-official-{aws,azure,gcp}.js  # Official provider pricing APIs
+│   │   ├── fetch-vantage.js                   # Specs + families (Vantage API)
+│   │   ├── reconcile-data.js                  # Merge; official API wins, rest flagged UNVERIFIED
+│   │   ├── data-diff.js                       # Old vs new data, as a refresh-PR report
+│   │   ├── recommendation-diff.js             # Recommendation flips across the golden scenarios
+│   │   └── split-data.js                      # Monolith to manifest + per-region files
+│   ├── testing/
+│   │   ├── build-coverage-inventory.js        # npm run coverage:check gate
+│   │   └── static-server.js                   # Zero-dep static server for the Playwright rig
+│   └── lib/
+│       ├── build-env.js                       # Generic Node/CI primitives (argv, atomic write, sandboxed loaders)
+│       └── record-schema.js                   # Shipped record shape (FIELD_ORDER, round8, region loaders)
 │
 ├── tests/                   # Plain-Node test harness: suites + golden compare (see tests/README.md)
 │
-└── js/
-    ├── pwa-register.js                     # Service-worker registration (loaded by every page)
+├── js/                                      # Residual — everything else moved to
+│   │                                        #   src/ in the 3.16 tail (below).
+│   │                                        #   Kept here: neither fits the
+│   │                                        #   core/providers/features/ui taxonomy.
+│   ├── pwa-register.js                     # Service-worker registration (loaded by every page)
+│   └── vendor/
+│       ├── xlsx.full.min.js                # SheetJS (Excel parsing/upload, lazy-loaded)
+│       ├── XLSX-LICENSE.txt                # Apache-2.0 license for SheetJS
+│       ├── xlsx-js-style.min.js            # SheetJS styling fork (portfolio Excel export)
+│       └── XLSX-JS-STYLE-LICENSE.txt       # Apache-2.0 license for xlsx-js-style
+│
+└── src/                                     # Modules load in the order listed in
+                                              #   the HTML pages; they share one
+                                              #   global scope (no build step, no
+                                              #   bundler) regardless of directory.
+    ├── core/
+    │   ├── engine/
+    │   │   ├── base-instance-selector.js   # Abstract base class + lazy region loading
+    │   │   ├── instance-selector-factory.js # Provider factory + recommendation orchestration
+    │   │   ├── generate.js                 # Option gathering + worker batch runner
+    │   │   └── recommendation-worker.js    # Web Worker running batches off the main thread
+    │   └── rules/
+    │       ├── rule-engine.js              # ENV/OS/Workload/Compliance/MinGen rule logic
+    │       └── user-rules.js               # User-defined conditional rules — model, evaluator, storage
     │
-    ├── base/
-    │   ├── base-instance-selector.js       # Abstract base class + lazy region loading
-    │   ├── instance-selector-factory.js    # Provider factory + recommendation orchestration
-    │   ├── rule-engine.js                  # ENV/OS/Workload/Compliance/MinGen rule logic
-    │   ├── recommendation-worker.js        # Web Worker running batches off the main thread
-    │   ├── app-core.js                     # Shared state, mapping tables, data readiness, region validation
-    │   ├── ui-shell.js                     # Page init, sticky button, accessibility
+    ├── providers/
+    │   ├── aws/
+    │   │   ├── aws-instance-selector.js    # AWS-specific logic
+    │   │   ├── aws-specific.js             # AWS filter UI and sample CSV
+    │   │   ├── aws-data.js                 # Manifest: data date + region key list
+    │   │   └── regions/                    # One data file per region (35 files)
+    │   ├── azure/
+    │   │   ├── azure-instance-selector.js  # Azure-specific logic
+    │   │   ├── azure-specific.js           # Azure filter UI and sample CSV
+    │   │   ├── azure-data.js               # Manifest: data date + region key list
+    │   │   └── regions/                    # One data file per region (60 files)
+    │   └── gcp/
+    │       ├── gcp-instance-selector.js    # GCP-specific logic
+    │       ├── gcp-specific.js             # GCP filter UI and sample CSV
+    │       ├── gcp-data.js                 # Manifest: data date + region key list
+    │       └── regions/                    # One data file per region (46 files)
+    │
+    ├── features/
     │   ├── ingest.js                       # Upload (incl. drag & drop), parsing, column mapping, MB→GB
-    │   ├── manual-entry.js                 # Form-based VM entry
-    │   ├── form-controls.js                # Filters, rule engine UI, option readers
-    │   ├── generate.js                     # Option gathering + worker batch runner
     │   ├── preview.js                      # Stats bar + results preview table
-    │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
-    │   ├── presets.js                      # Filter presets (save/apply, localStorage)
-    │   ├── user-rules.js                   # User-defined conditional rules — model, evaluator, storage
-    │   ├── user-rules-ui.js                # User-defined rules panel (add/list/delete)
+    │   ├── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
     │   ├── xlsx-export.js                  # Styled results .xlsx export
+    │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
     │   ├── scenario-compare.js             # Pin + diff two generation runs
+    │   ├── manual-entry.js                 # Form-based VM entry
+    │   └── presets.js                      # Filter presets (save/apply, localStorage)
+    │
+    ├── ui/
     │   ├── charts.js                       # Inline-SVG result charts (match rate, family mix, before→after)
-    │   └── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
+    │   ├── form-controls.js                # Filters, rule engine UI, option readers
+    │   ├── ui-shell.js                     # Page init, sticky button, accessibility
+    │   └── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │
-    ├── vendor/
-    │   ├── xlsx.full.min.js                # SheetJS (Excel parsing/upload, lazy-loaded)
-    │   ├── XLSX-LICENSE.txt                # Apache-2.0 license for SheetJS
-    │   ├── xlsx-js-style.min.js            # SheetJS styling fork (portfolio Excel export)
-    │   └── XLSX-JS-STYLE-LICENSE.txt       # Apache-2.0 license for xlsx-js-style
-    │
-    ├── aws/
-    │   ├── aws-instance-selector.js        # AWS-specific logic
-    │   ├── aws-specific.js                 # AWS filter UI and sample CSV
-    │   ├── aws-data.js                     # Manifest: data date + region key list
-    │   └── regions/                        # One data file per region (35 files)
-    │
-    ├── azure/
-    │   ├── azure-instance-selector.js      # Azure-specific logic
-    │   ├── azure-specific.js               # Azure filter UI and sample CSV
-    │   ├── azure-data.js                   # Manifest: data date + region key list
-    │   └── regions/                        # One data file per region (60 files)
-    │
-    └── gcp/
-        ├── gcp-instance-selector.js        # GCP-specific logic
-        ├── gcp-specific.js                 # GCP filter UI and sample CSV
-        ├── gcp-data.js                     # Manifest: data date + region key list
-        └── regions/                        # One data file per region (46 files)
+    └── shared/
+        └── app-core.js                     # Shared state, mapping tables, data readiness, region validation
 ```
 
 ### Instance data layout
 
-Each provider ships a small **manifest** (`js/{provider}/{provider}-data.js`) declaring the data date, each instance type's specifications, and the list of available region keys, plus one file per region under `js/{provider}/regions/` carrying that region's prices. A type's specs are identical in every region that offers it, so they are stored once rather than repeated per region; the loader merges the two halves back together as it reads, and nothing above it sees the split. Pages load only the manifest up front; region files are `<script>`-injected on demand (the CSP forbids `fetch`). A monolithic data file dropped in place of the manifest also works — the loader detects it and behaves as before. The data is regenerated at build time from provider APIs, entirely outside the shipped tree until the last step, and every validation runs before any file is written — so a rejected refresh changes nothing on disk. That is not a transaction: each file is replaced atomically, but one at a time, so an interruption partway can still leave some region files new and some old (re-run it; the result is deterministic). [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md) records every source, why the official provider APIs take precedence over the aggregated specs feed, and the known coverage gaps. The served page never fetches anything external.
+Each provider ships a small **manifest** (`src/providers/{provider}/{provider}-data.js`) declaring the data date, each instance type's specifications, and the list of available region keys, plus one file per region under `src/providers/{provider}/regions/` carrying that region's prices. A type's specs are identical in every region that offers it, so they are stored once rather than repeated per region; the loader merges the two halves back together as it reads, and nothing above it sees the split. Pages load only the manifest up front; region files are `<script>`-injected on demand (the CSP forbids `fetch`). A monolithic data file dropped in place of the manifest also works — the loader detects it and behaves as before. The data is regenerated at build time from provider APIs, entirely outside the shipped tree until the last step, and every validation runs before any file is written — so a rejected refresh changes nothing on disk. That is not a transaction: each file is replaced atomically, but one at a time, so an interruption partway can still leave some region files new and some old (re-run it; the result is deterministic). [docs/data/DATA-SOURCES.md](docs/data/DATA-SOURCES.md) records every source, why the official provider APIs take precedence over the aggregated specs feed, and the known coverage gaps. The served page never fetches anything external.
 
 ---
 
@@ -320,21 +331,21 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 
 **Optional columns (enable rule-based filtering per row):**
 
-| Column                                           | Values                                                                           | Effect                                                                                                                                                                   |
-| ------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `App Name`                                       | Any text                                                                         | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance                                                                |
-| `CPU Utilization`                                | 0–100                                                                            | Average CPU; drives N/2 / N / N+1 optimization                                                                                                                           |
-| `Memory Utilization`                             | 0–100                                                                            | Average memory; drives N/2 / N / N+1 optimization                                                                                                                        |
-| `CPU Utilization p95` `Memory Utilization p95`   | 0–100                                                                            | p95 readings, used when the run sizes against p95 (see below)                                                                                                            |
-| `CPU Utilization Peak` `Memory Utilization Peak` | 0–100                                                                            | Peak/max readings, used when the run sizes against Peak                                                                                                                  |
-| `Disk (GB)`                                      | Number (MB/MiB headers convert automatically)                                    | Optional provisioned disk; carried through to the outputs after any MB/MiB→GB conversion, and rounded up to a whole GB for the AWS bulk template. Does not affect sizing |
-| `ENV`                                            | Production / Staging / Dev / Test                                                | Tightens burstable and generation rules                                                                                                                                  |
-| `OS`                                             | Linux / Windows / macOS                                                          | Selects which price the row is ranked on, and excludes machines the provider does not sell with that OS (ARM/Graviton included)                                          |
-| `Workload`                                       | General / Database / SQL Server / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first; `ML/AI` (or `GPU`) requires an accelerator, every other value excludes one; `SQL Server` enforces a 4-vCPU licence floor                 |
-| `Compliance`                                     | PCI / HIPAA / SOC2 / FIPS                                                        | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS)                                                                                                                 |
-| `Min Gen`                                        | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n2d/n4                                       | Minimum instance generation to include (single-provider pages)                                                                                                           |
-| `AWS Min Gen` `Azure Min Gen` `GCP Min Gen`      | as above, per cloud                                                              | Multi-cloud sheets: one column per provider, each in that cloud's own scale                                                                                              |
-| `Exclude`                                        | Comma-separated type names (e.g. `Burstable,GPU`)                                | Exclude specific instance types for this row only                                                                                                                        |
+| Column | Values | Effect |
+| --- | --- | --- |
+| `App Name` | Any text | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
+| `CPU Utilization` | 0–100 | Average CPU; drives N/2 / N / N+1 optimization |
+| `Memory Utilization` | 0–100 | Average memory; drives N/2 / N / N+1 optimization |
+| `CPU Utilization p95` `Memory Utilization p95` | 0–100 | p95 readings, used when the run sizes against p95 (see below) |
+| `CPU Utilization Peak` `Memory Utilization Peak` | 0–100 | Peak/max readings, used when the run sizes against Peak |
+| `Disk (GB)` | Number (MB/MiB headers convert automatically) | Optional provisioned disk; carried through to the outputs after any MB/MiB→GB conversion, and rounded up to a whole GB for the AWS bulk template. Does not affect sizing |
+| `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
+| `OS` | Linux / Windows / macOS | Selects which price the row is ranked on, and excludes machines the provider does not sell with that OS (ARM/Graviton included) |
+| `Workload` | General / Database / SQL Server / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first; `ML/AI` (or `GPU`) requires an accelerator, every other value excludes one; `SQL Server` enforces a 4-vCPU licence floor |
+| `Compliance` | PCI / HIPAA / SOC2 / FIPS | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS) |
+| `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n2d/n4 | Minimum instance generation to include (single-provider pages) |
+| `AWS Min Gen` `Azure Min Gen` `GCP Min Gen` | as above, per cloud | Multi-cloud sheets: one column per provider, each in that cloud's own scale |
+| `Exclude` | Comma-separated type names (e.g. `Burstable,GPU`) | Exclude specific instance types for this row only |
 
 **`Current Instance Type`** (optional, not a rule column) — if your VMs already run in a cloud, this carries what they run on today (`m5.xlarge`, `Standard_D4s_v3`, `n2-standard-4`) through the preview and every export untouched, sitting immediately left of the recommendations so each one can be read against what it replaces. Also recognised as `Instance Type`, `VM Size`, `Machine Type` or `Current Size`. **It does not affect sizing** — CPU Count and Memory (GB) still drive that.
 
@@ -362,20 +373,20 @@ worker-node-07,8,16,85,75,us-west-2,West US 2,us-west1-b,Production,Linux,ML/AI,
 
 The results CSV contains your original columns plus per-provider recommendation columns:
 
-| Column                                            | Description                                                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AWS Like-to-Like Instance`                       | Recommended EC2 type                                                                                                                         |
-| `AWS Like-to-Like Family`                         | Family category of that instance — `General purpose`, `Compute optimized`, …                                                                 |
-| `AWS Like-to-Like vCPUs`                          | vCPU count of recommended instance                                                                                                           |
-| `AWS Like-to-Like Memory (GiB)`                   | Memory of recommended instance                                                                                                               |
-| `AWS Optimized Instance`                          | Optimized EC2 type (if selected)                                                                                                             |
-| `AWS Optimized Family`                            | Family category of the optimized instance                                                                                                    |
-| `AWS Rules Applied`                               | Which ENV/OS/Workload/Compliance/MinGen rules fired                                                                                          |
-| `AWS No Match Reason`                             | Explains why no instance was found (when applicable)                                                                                         |
-| `AWS Nearest Miss`                                | On no-match rows: closest instance that met CPU/memory, and which filters to relax                                                           |
-| _(Azure and GCP columns follow the same pattern)_ |                                                                                                                                              |
-| `Sized On`                                        | _Optimized runs:_ which utilization statistic sized the row — `Average`, `p95`, `Peak`, `… (fallback)`, or split per axis (`CPU: …, Mem: …`) |
-| `Family Equivalence`                              | _Multi-cloud runs:_ whether the clouds landed on the same family class — `General purpose on AWS, AZURE, GCP`, or `Differs — AWS …, GCP …`   |
+| Column | Description |
+| --- | --- |
+| `AWS Like-to-Like Instance` | Recommended EC2 type |
+| `AWS Like-to-Like Family` | Family category of that instance — `General purpose`, `Compute optimized`, … |
+| `AWS Like-to-Like vCPUs` | vCPU count of recommended instance |
+| `AWS Like-to-Like Memory (GiB)` | Memory of recommended instance |
+| `AWS Optimized Instance` | Optimized EC2 type (if selected) |
+| `AWS Optimized Family` | Family category of the optimized instance |
+| `AWS Rules Applied` | Which ENV/OS/Workload/Compliance/MinGen rules fired |
+| `AWS No Match Reason` | Explains why no instance was found (when applicable) |
+| `AWS Nearest Miss` | On no-match rows: closest instance that met CPU/memory, and which filters to relax |
+| _(Azure and GCP columns follow the same pattern)_ |  |
+| `Sized On` | _Optimized runs:_ which utilization statistic sized the row — `Average`, `p95`, `Peak`, `… (fallback)`, or split per axis (`CPU: …, Mem: …`) |
+| `Family Equivalence` | _Multi-cloud runs:_ whether the clouds landed on the same family class — `General purpose on AWS, AZURE, GCP`, or `Differs — AWS …, GCP …` |
 
 The in-browser **results preview** table includes sortable columns, a live search filter, a per-row copy button, vCPU diff highlighting (green = smaller / amber = larger vs Like-to-Like), a **fit/headroom flag** (a ▲% beside a like-for-like match, showing how far the chosen instance over-provisions its worst axis versus the requested size — the discrete-sizing and ratio-mismatch waste), and a stats bar showing match rate, rules fired, and data freshness date. Rows that got no recommendation from any provider can be exported separately via the **CSV ▾** menu's **No-Match Rows** item for fix-and-re-upload remediation. The grid downloads primarily as a styled Excel workbook (**📊 Download Results (Excel)**, with a sheet per alternative strategy) — with the flat CSVs behind the **CSV ▾** checklist — and any two runs can be pinned and diffed with **Scenario comparison** to see exactly what a filter change did — including a one-click **Export comparison CSV** that writes the configuration changes and the changed recommendation rows to a single file. A **🖨️ Print Report** button opens a print-ready one-page executive summary (headline stats plus the match-rate, family, and before → after charts) to print or save as PDF.
 
@@ -457,7 +468,7 @@ The application uses a modular, class-based architecture:
 - **`AWSInstanceSelector` / `AzureInstanceSelector` / `GCPInstanceSelector`** — Provider-specific field mappings, region normalization, and generation detection
 - **`RuleEngine`** — Pure function that applies ENV/OS/Workload/Compliance/MinGen rules to the filtered candidate list
 - **`InstanceSelectorFactory`** — Creates the right selector per provider and orchestrates per-row processing
-- **`js/base/*.js`** — The page controller, split by concern rather than one file: `app-core.js` (shared state, loads first), `ingest.js` (upload/mapping), `generate.js` (option gathering + worker runs), `preview.js` / `downloads.js` (results + exports), `ui-shell.js` (page chrome, accessibility)
+- **`src/{core,features,ui,shared}/**/*.js`** — The page controller, split by concern rather than one file: `app-core.js` (shared state, loads first), `ingest.js` (upload/mapping), `generate.js` (option gathering + worker runs), `preview.js` / `downloads.js` (results + exports), `ui-shell.js` (page chrome, accessibility)
 
 ---
 
@@ -470,7 +481,7 @@ Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE):
 - **The hosted application is free for everyone**, including commercial users — the license governs the source code, not visiting the site.
 - **Other commercial use of the code** (for-profit self-hosting, embedding in commercial products or services, commercial redistribution) requires written permission — reach out at harshitkandhwey@gmail.com.
 
-Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome; see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ## 📞 Contact & Support
 
@@ -478,8 +489,8 @@ Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 - **User Guide**: See `user-guide.html` in this repository
 - **Version History**: See [CHANGELOG.md](CHANGELOG.md)
 - **Roadmap**: See [ROADMAP.md](ROADMAP.md)
-- **Data Sources**: See [docs/DATA-SOURCES.md](docs/DATA-SOURCES.md)
-- **Release Process**: See [RELEASING.md](RELEASING.md)
+- **Data Sources**: See [docs/data/DATA-SOURCES.md](docs/data/DATA-SOURCES.md)
+- **Release Process**: See [docs/operations/RELEASING.md](docs/operations/RELEASING.md)
 - **Bugs / Requests**: Open an issue on GitHub
 - **Email**: harshitkandhwey@gmail.com
 

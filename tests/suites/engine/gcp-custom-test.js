@@ -17,9 +17,9 @@ const { check, state } = makeChecker();
 
 const { ctx, run } = buildEngineContext({
   scripts: [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
+    "src/core/rules/rule-engine.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/providers/gcp/gcp-instance-selector.js",
   ],
   label: "gcp-custom",
 });
@@ -265,7 +265,9 @@ console.log("[customFitSuggestion ties the pieces together]");
 // filled), proving the column is initialised and the suggestion is called.
 (async () => {
   const { buildContext } = require("../harness");
-  const { ctx: c } = buildContext({ dataScript: "js/gcp/gcp-data.js" });
+  const { ctx: c } = buildContext({
+    dataScript: "src/providers/gcp/gcp-data.js",
+  });
   console.log("[a GCP run surfaces the GCP Custom Fit column]");
   const res = await c.getInstanceRecommendationWithSelector(
     [

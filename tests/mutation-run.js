@@ -1,6 +1,6 @@
 // Mutation oracle for the StrykerJS gate (depth gate D) — a SINGLE-process,
-// dependency-light killer scoped to the two mutated files (js/base/rule-engine.js
-// and js/base/instance-selector-factory.js).
+// dependency-light killer scoped to the two mutated files (src/core/rules/rule-engine.js
+// and src/core/engine/instance-selector-factory.js).
 //
 // Why not just spawn the existing suites: Stryker's command runner reruns the
 // whole command once per mutant, and the engine suites load code into a `vm`
@@ -26,12 +26,12 @@ const { buildEngineContext, makeChecker } = require("./suites/harness");
 const { check, state } = makeChecker();
 const { ctx, run, load } = buildEngineContext({
   scripts: [
-    "js/base/base-instance-selector.js",
-    "js/base/rule-engine.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/core/rules/rule-engine.js",
+    "src/providers/aws/aws-instance-selector.js",
+    "src/providers/azure/azure-instance-selector.js",
+    "src/providers/gcp/gcp-instance-selector.js",
+    "src/core/engine/instance-selector-factory.js",
   ],
   label: "mutation-oracle",
 });
@@ -814,9 +814,9 @@ void path;
 // pinning exact instance names — the goldens already lock exact output.
 // ─────────────────────────────────────────────────────────────────────────────
 for (const rel of [
-  "js/aws/regions/us_east_1.js",
-  "js/azure/regions/eastus.js",
-  "js/gcp/regions/us_central1.js",
+  "src/providers/aws/regions/us_east_1.js",
+  "src/providers/azure/regions/eastus.js",
+  "src/providers/gcp/regions/us_central1.js",
 ]) {
   load(rel);
 }

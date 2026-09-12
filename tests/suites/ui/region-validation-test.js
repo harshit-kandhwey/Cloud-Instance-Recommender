@@ -9,9 +9,9 @@ const { buildContext, parse } = require("../harness");
 // file surfaces as a named FAIL instead of a silent "0 instances".
 const { ctx, elements, requested, loaderErrors } = buildContext({
   dataScripts: [
-    "js/aws/aws-data.js",
-    "js/azure/azure-data.js",
-    "js/gcp/gcp-data.js",
+    "src/providers/aws/aws-data.js",
+    "src/providers/azure/azure-data.js",
+    "src/providers/gcp/gcp-data.js",
   ],
 });
 
@@ -81,9 +81,9 @@ c,2,4,narnia-99,Atlantis,mordor1-x`;
 
   // Poll for the fire-and-forget prefetch instead of a fixed sleep (CI-safe)
   const expectedSrcs = [
-    "js/aws/regions/us_east_1.js",
-    "js/azure/regions/eastus.js",
-    "js/gcp/regions/us_central1.js",
+    "src/providers/aws/regions/us_east_1.js",
+    "src/providers/azure/regions/eastus.js",
+    "src/providers/gcp/regions/us_central1.js",
   ];
   const deadline = Date.now() + 2000;
   while (

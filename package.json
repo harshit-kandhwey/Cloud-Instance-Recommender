@@ -14,8 +14,8 @@
     "test:property": "node tests/property/engine-invariants.property.js",
     "test:mutation": "stryker run",
     "syntax-check": "node tests/syntax-check.js",
-    "coverage:check": "node tools/build-coverage-inventory.js --check",
-    "refresh": "node tools/refresh-local.js",
+    "coverage:check": "node scripts/testing/build-coverage-inventory.js --check",
+    "refresh": "node scripts/data/refresh-local.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

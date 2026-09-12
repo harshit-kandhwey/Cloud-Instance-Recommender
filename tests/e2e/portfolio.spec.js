@@ -1,5 +1,5 @@
 // End-to-end for the PORTFOLIO browser path — the residual the 3.10 coverage
-// waiver marked "accepted-but-unverified" (js/base/downloads.js + portfolio.js):
+// waiver marked "accepted-but-unverified" (src/features/downloads.js + portfolio.js):
 // openAppPortfolio, onPortfolioMessage, switchPortfolioTab, sortPortfolioApps,
 // togglePortfolioFilter, downloadAppCsv, exportPortfolioWorkbook. The pure model
 // (buildPortfolioModel, the CSV/XLSX builders) is pinned by export/portfolio-test.js

@@ -14,9 +14,9 @@ const { check, state } = makeChecker();
 
 const { ctx, run } = buildEngineContext({
   scripts: [
-    "js/base/rule-engine.js",
-    "js/base/base-instance-selector.js",
-    "js/base/instance-selector-factory.js",
+    "src/core/rules/rule-engine.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/core/engine/instance-selector-factory.js",
   ],
   label: "cloud-to-cloud",
 });

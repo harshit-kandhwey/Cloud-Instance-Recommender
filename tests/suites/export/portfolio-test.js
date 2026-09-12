@@ -73,8 +73,8 @@ const load = (rel) =>
   vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
     filename: rel,
   });
-load("js/base/app-core.js");
-load("js/base/portfolio.js");
+load("src/shared/app-core.js");
+load("src/features/portfolio.js");
 
 let failures = 0;
 function check(name, cond, detail) {

@@ -1,6 +1,6 @@
 // Data-integrity / manifest suite (depth gate B). The split-data pipeline
-// (tools/split-data.js) turns each monolithic {provider}-data.js into a manifest
-// ({P}_REGION_KEYS) plus one js/{p}/regions/{key}.js per region, each defining a
+// (scripts/data/split-data.js) turns each monolithic {provider}-data.js into a manifest
+// ({P}_REGION_KEYS) plus one src/providers/{p}/regions/{key}.js per region, each defining a
 // window global named for its key. Nothing re-checks that the shipped artifacts
 // stayed consistent after a data refresh, a hand-edit, or a bad merge — and the
 // failure is invisible: a manifest key with no loadable region file, or a file
@@ -20,12 +20,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { REPO, buildEngineContext, makeChecker } = require("../harness");
-const { loadGlobals } = require("../../../tools/lib/build-env");
+const { loadGlobals } = require("../../../scripts/lib/build-env");
 const {
   loadCommittedRegions,
   specFields,
   SERVICE,
-} = require("../../../tools/lib/record-schema");
+} = require("../../../scripts/lib/record-schema");
 
 const { check, state } = makeChecker();
 
@@ -41,10 +41,10 @@ const PROVIDERS = [
 // createStandardizedInstance keys on exactly these names).
 const { run: runSel } = buildEngineContext({
   scripts: [
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/providers/aws/aws-instance-selector.js",
+    "src/providers/azure/azure-instance-selector.js",
+    "src/providers/gcp/gcp-instance-selector.js",
   ],
   label: "data-integrity-selectors",
 });
@@ -69,8 +69,8 @@ function globalsDefinedBy(relPath) {
 
 for (const { name, prefix } of PROVIDERS) {
   const label = prefix;
-  const regionsDir = path.join(REPO, "js", name, "regions");
-  const manifestRel = `js/${name}/${name}-data.js`;
+  const regionsDir = path.join(REPO, "src", "providers", name, "regions");
+  const manifestRel = `src/providers/${name}/${name}-data.js`;
 
   // ── Manifest well-formedness ─────────────────────────────────────────────
   const { sandbox: man, defined: manGlobals } = globalsDefinedBy(manifestRel);
@@ -110,7 +110,7 @@ for (const { name, prefix } of PROVIDERS) {
   // {P}_SPECS must never observe the flag true while the specs half is missing —
   // which is the whole window in which a half-loaded manifest looks loaded.
   const manSrc = fs.readFileSync(
-    path.join(REPO, "js", name, `${name}-data.js`),
+    path.join(REPO, "src", "providers", name, `${name}-data.js`),
     "utf8",
   );
   // indexOf returns -1 for a needle that isn't there, and -1 is not > -1 OR < -1 —
@@ -183,7 +183,7 @@ for (const { name, prefix } of PROVIDERS) {
   let badShape = null; // { file, instanceType, why }
 
   for (const file of diskFiles) {
-    const rel = `js/${name}/regions/${file}.js`;
+    const rel = `src/providers/${name}/regions/${file}.js`;
     let sandbox, defined;
     try {
       ({ sandbox, defined } = globalsDefinedBy(rel));
@@ -303,12 +303,14 @@ for (const { name, prefix } of PROVIDERS) {
 // which is what this pins. (c4n and m4n arrived in the 2026-08-30 refresh; seven more
 // had been missing for longer.)
 {
-  const { gcpAdvancedFilterData } = require("../../../js/gcp/gcp-specific.js");
+  const {
+    gcpAdvancedFilterData,
+  } = require("../../../src/providers/gcp/gcp-specific.js");
   const listed = new Set(
     (gcpAdvancedFilterData.machineFamilies || []).map((f) => f.toLowerCase()),
   );
 
-  const dir = path.join(REPO, "js", "gcp", "regions");
+  const dir = path.join(REPO, "src", "providers", "gcp", "regions");
   const shipped = new Set();
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
     const sandbox = { window: {} };
@@ -346,7 +348,7 @@ for (const { name, prefix } of PROVIDERS) {
 // nothing compared the two. Cheap to re-derive (family + isARM live on each record), so
 // any future refresh that lands data the current table disagrees with fails here.
 {
-  const { azureProcessor } = require("../../../tools/fetch-vantage.js");
+  const { azureProcessor } = require("../../../scripts/data/fetch-vantage.js");
   // Through the shared loader: `family`, `isARM` and `processorArchitecture` are
   // all SPECS and live in the manifest, so a private walk would compare undefined
   // against undefined and pass while proving nothing.
@@ -383,7 +385,7 @@ const rawRegions = {};
 // checks below can fail loud instead of quietly checking less than they claim to.
 const skippedRawFiles = [];
 for (const { name } of PROVIDERS) {
-  const dir = path.join(REPO, "js", name, "regions");
+  const dir = path.join(REPO, "src", "providers", name, "regions");
   const out = (rawRegions[name] = {});
   for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".js"))) {
     const key = file.replace(/\.js$/, "");
@@ -396,7 +398,7 @@ for (const { name } of PROVIDERS) {
     if (sandbox[key] && typeof sandbox[key] === "object") {
       out[key] = sandbox[key];
     } else {
-      skippedRawFiles.push(`js/${name}/regions/${file}`);
+      skippedRawFiles.push(`src/providers/${name}/regions/${file}`);
     }
   }
 }
@@ -419,8 +421,9 @@ check(
   for (const { name, prefix } of PROVIDERS) {
     const specNames = new Set(specFields(name));
     const blob =
-      (loadGlobals(`js/${name}/${name}-data.js`, REPO)[`${prefix}_SPECS`] ||
-        {})[SERVICE] || {};
+      (loadGlobals(`src/providers/${name}/${name}-data.js`, REPO)[
+        `${prefix}_SPECS`
+      ] || {})[SERVICE] || {};
 
     // Direction 1: no region file may carry a spec field. One leaking through
     // would be stored per region again — the duplication 3.15 exists to remove,

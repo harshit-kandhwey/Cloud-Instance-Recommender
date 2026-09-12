@@ -1,4 +1,4 @@
-// build-env suite: pins tools/lib/build-env.js — the generic Node/CI primitives
+// build-env suite: pins scripts/lib/build-env.js — the generic Node/CI primitives
 // (CLI flag reader, validated --date, the scratch-monolith path, atomic write) that
 // every refresh/build tool depends on. No network.
 const fs = require("fs");
@@ -10,7 +10,7 @@ const {
   resolveDataDate,
   writeFileAtomic,
   monolithPath,
-} = require("../../../tools/lib/build-env");
+} = require("../../../scripts/lib/build-env");
 
 const { check, state } = makeChecker();
 
@@ -132,7 +132,10 @@ const { check, state } = makeChecker();
   ];
   const raw = pipeline.filter((f) =>
     fs
-      .readFileSync(path.join(__dirname, "..", "..", "..", "tools", f), "utf8")
+      .readFileSync(
+        path.join(__dirname, "..", "..", "..", "scripts", "data", f),
+        "utf8",
+      )
       .includes("fs.writeFileSync("),
   );
   check(

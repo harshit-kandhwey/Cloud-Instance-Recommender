@@ -12,7 +12,7 @@
 // therefore read from the FAMILY, which carries it and nothing else —
 // nv24 → "nv" (none), nv48sv3 → "nvv3", d4sv5 → "dsv5".
 //
-// Every type/family pair below is REAL, taken from js/azure/regions/eastus.js.
+// Every type/family pair below is REAL, taken from src/providers/azure/regions/eastus.js.
 // Invented names would prove nothing about the format the parser actually meets.
 //
 // NOTE ON THE minGen VALUES. Every value is NATIVE to the cloud it is applied
@@ -24,7 +24,7 @@
 const { buildEngineContext } = require("../harness");
 
 const { ctx } = buildEngineContext({
-  scripts: ["js/base/rule-engine.js"],
+  scripts: ["src/core/rules/rule-engine.js"],
   label: "min-generation",
 });
 const RE = ctx.RuleEngine;
@@ -38,7 +38,7 @@ const check = (name, cond, detail) => {
   }
 };
 
-// Real (instanceType → family) pairs from js/azure/regions/eastus.js.
+// Real (instanceType → family) pairs from src/providers/azure/regions/eastus.js.
 const FAMILY = {
   nv24: "nv",
   nv12: "nv",

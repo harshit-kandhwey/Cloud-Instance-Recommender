@@ -77,21 +77,22 @@ function load(ctx, rel) {
 }
 
 const CODE_FILES = [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
+  "src/core/rules/rule-engine.js",
+  "src/core/engine/base-instance-selector.js",
+  "src/providers/aws/aws-instance-selector.js",
+  "src/providers/azure/azure-instance-selector.js",
+  "src/providers/gcp/gcp-instance-selector.js",
+  "src/core/engine/instance-selector-factory.js",
 ];
 
 // Loads provider data: monolith if present, else manifest + all region files
 function loadProviderData(ctx, name) {
-  load(ctx, `js/${name}/${name}-data.js`);
+  load(ctx, `src/providers/${name}/${name}-data.js`);
   const prefix = name.toUpperCase();
   const keys = ctx[`${prefix}_REGION_KEYS`];
   if (Array.isArray(keys)) {
-    for (const key of keys) load(ctx, `js/${name}/regions/${key}.js`);
+    for (const key of keys)
+      load(ctx, `src/providers/${name}/regions/${key}.js`);
   }
 }
 
@@ -222,7 +223,7 @@ async function main() {
 }
 
 // The canary set (SAMPLE_CSV + SCENARIOS) and the engine file list are the single
-// definition of "a representative recommendation run". tools/recommendation-diff.js
+// definition of "a representative recommendation run". scripts/data/recommendation-diff.js
 // reuses them to detect refresh-driven recommendation flips, so the flip check and the
 // goldens can never diverge on which inputs count. Guarded so requiring this module
 // (for those exports) does not run the golden generator; run-all invokes it as a

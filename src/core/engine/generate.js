@@ -524,11 +524,16 @@ async function collectRegionDataForWorker(providers) {
 // Runs the batch in a Web Worker (real progress, UI stays responsive); on any worker
 // failure (file:// pages, CSP oddities, runtime errors) falls back ONCE to the chunked
 // main-thread path with the same progress reporting.
+//
+// "src/core/engine/..." is relative to the PAGE (repo root), not to this
+// module's own location — the Worker() constructor resolves its URL against
+// the document, same as a <script src>, so this must track wherever the
+// calling page actually sits.
 async function runRecommendationBatch(rows, providers, options) {
   let worker = null;
   try {
     if (typeof Worker !== "undefined") {
-      worker = new Worker("js/base/recommendation-worker.js");
+      worker = new Worker("src/core/engine/recommendation-worker.js");
     }
   } catch (e) {
     console.warn("[Worker] construction failed — using main thread:", e);

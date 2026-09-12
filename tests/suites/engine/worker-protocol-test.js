@@ -95,7 +95,7 @@ const flags = {};
 const regionData = {};
 for (const p of PROVIDERS) {
   vm.runInContext(
-    fs.readFileSync(path.join(REPO, `js/${p}/${p}-data.js`), "utf8"),
+    fs.readFileSync(path.join(REPO, `src/providers/${p}/${p}-data.js`), "utf8"),
     dataCtx,
   );
   const prefix = p.toUpperCase();
@@ -109,7 +109,10 @@ for (const p of PROVIDERS) {
   flags[`${prefix}_SPECS`] = dataCtx[`${prefix}_SPECS`];
   for (const key of REGION_FILES[p]) {
     vm.runInContext(
-      fs.readFileSync(path.join(REPO, `js/${p}/regions/${key}.js`), "utf8"),
+      fs.readFileSync(
+        path.join(REPO, `src/providers/${p}/regions/${key}.js`),
+        "utf8",
+      ),
       dataCtx,
     );
     regionData[key] = dataCtx[key];
@@ -158,7 +161,9 @@ const workerSandbox = {
   postMessage: (m) => posted.push(structuredClone(m)),
   importScripts: (...files) => {
     for (const f of files) {
-      const full = path.join(REPO, "js/base", f);
+      // Resolved relative to the worker's OWN location (src/core/engine/),
+      // matching real importScripts semantics — not the page's location.
+      const full = path.join(REPO, "src/core/engine", f);
       vm.runInContext(fs.readFileSync(full, "utf8"), workerCtx, {
         filename: full,
       });
@@ -169,7 +174,10 @@ workerSandbox.self = workerSandbox;
 const workerCtx = vm.createContext(workerSandbox);
 
 vm.runInContext(
-  fs.readFileSync(path.join(REPO, "js/base/recommendation-worker.js"), "utf8"),
+  fs.readFileSync(
+    path.join(REPO, "src/core/engine/recommendation-worker.js"),
+    "utf8",
+  ),
   workerCtx,
   { filename: "recommendation-worker.js" },
 );
@@ -274,27 +282,33 @@ vm.runInContext(
   mainCtx.window = mainCtx;
   for (const p of PROVIDERS) {
     vm.runInContext(
-      fs.readFileSync(path.join(REPO, `js/${p}/${p}-data.js`), "utf8"),
+      fs.readFileSync(
+        path.join(REPO, `src/providers/${p}/${p}-data.js`),
+        "utf8",
+      ),
       mainCtx,
     );
     for (const key of REGION_FILES[p]) {
       vm.runInContext(
-        fs.readFileSync(path.join(REPO, `js/${p}/regions/${key}.js`), "utf8"),
+        fs.readFileSync(
+          path.join(REPO, `src/providers/${p}/regions/${key}.js`),
+          "utf8",
+        ),
         mainCtx,
       );
     }
   }
   for (const f of [
-    "js/base/rule-engine.js",
+    "src/core/rules/rule-engine.js",
     // Mirrors the worker's importScripts order (recommendation-worker.js): the
     // factory reads user-rules' _matchUserRules / normalizeUserRules, so the
     // fallback context must load it too or a userRules run would ReferenceError.
-    "js/base/user-rules.js",
-    "js/base/base-instance-selector.js",
-    "js/aws/aws-instance-selector.js",
-    "js/azure/azure-instance-selector.js",
-    "js/gcp/gcp-instance-selector.js",
-    "js/base/instance-selector-factory.js",
+    "src/core/rules/user-rules.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/providers/aws/aws-instance-selector.js",
+    "src/providers/azure/azure-instance-selector.js",
+    "src/providers/gcp/gcp-instance-selector.js",
+    "src/core/engine/instance-selector-factory.js",
   ]) {
     vm.runInContext(fs.readFileSync(path.join(REPO, f), "utf8"), mainCtx, {
       filename: f,
@@ -434,7 +448,7 @@ vm.runInContext(
   // "No data available" while the main-thread fallback answers them correctly.
   {
     const genSrc = fs.readFileSync(
-      path.join(REPO, "js", "base", "generate.js"),
+      path.join(REPO, "src", "core", "engine", "generate.js"),
       "utf8",
     );
     const fn = (genSrc.match(

@@ -69,7 +69,7 @@ console.log("[a mistyped copy count cannot run away with the page]");
   );
   ctx.manualAddVM();
   // Read the cap from the module rather than hard-coding 50 — if the source of
-  // truth in js/base/manual-entry.js changes, this stays correct and, on a
+  // truth in src/features/manual-entry.js changes, this stays correct and, on a
   // mismatch, points at the real value instead of a bare literal.
   const cap = vm.runInContext("MANUAL_MAX_COPIES", ctx);
   check(

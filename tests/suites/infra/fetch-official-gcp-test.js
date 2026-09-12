@@ -1,4 +1,4 @@
-// fetch-official-gcp suite: pins tools/fetch-official-gcp.js's pure normalisers against
+// fetch-official-gcp suite: pins scripts/data/fetch-official-gcp.js's pure normalisers against
 // a recorded Cloud Billing Catalog page — the Compute/OnDemand Core/Ram filter, the
 // exact series-template match (which excludes Sole-Tenancy / Reserved / Custom variants
 // and non-OnDemand rates), the Windows per-vCPU licensing rate, and the vCPU×core +
@@ -22,7 +22,7 @@ const {
   LOCAL_SSD_GENERIC,
   UNVERIFIED_TYPES,
   HOURS_PER_MONTH,
-} = require("../../../tools/fetch-official-gcp");
+} = require("../../../scripts/data/fetch-official-gcp");
 
 const { check, state } = makeChecker();
 
@@ -553,7 +553,15 @@ const ssdRates = parseLocalSsdSkus(page.skus);
 // the names, and a whole-file check would pass while main() dropped the argument.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "fetch-official-gcp.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "fetch-official-gcp.js",
+    ),
     "utf8",
   );
   const code = src.replace(/^\s*\/\/.*$/gm, "");
@@ -579,7 +587,15 @@ const ssdRates = parseLocalSsdSkus(page.skus);
 // wrote the empty dump anyway.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "fetch-official-gcp.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "fetch-official-gcp.js",
+    ),
     "utf8",
   );
   const body = (src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/) || [
@@ -607,7 +623,15 @@ const ssdRates = parseLocalSsdSkus(page.skus);
 // the floor from being reached.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "fetch-official-gcp.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "fetch-official-gcp.js",
+    ),
     "utf8",
   );
   // Strip line comments first: a check that matches prose reports on documentation.

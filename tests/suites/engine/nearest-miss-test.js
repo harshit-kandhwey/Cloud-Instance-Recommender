@@ -21,8 +21,8 @@ const { buildEngineContext, REPO } = require("../harness");
 // probe-coupling source scan at the end.
 const { ctx, load, run } = buildEngineContext({
   scripts: [
-    "js/base/base-instance-selector.js",
-    "js/base/instance-selector-factory.js",
+    "src/core/engine/base-instance-selector.js",
+    "src/core/engine/instance-selector-factory.js",
   ],
   label: "nearest-miss",
 });
@@ -235,9 +235,9 @@ check(
 // applyFilters source for `options.<key>` reads and require every key to show
 // up in a `_nearestMissProbes` pick list. Adding a filter without a probe —
 // which would make the Nearest Miss column under-report — fails here.
-load("js/aws/aws-instance-selector.js");
-load("js/azure/azure-instance-selector.js");
-load("js/gcp/gcp-instance-selector.js");
+load("src/providers/aws/aws-instance-selector.js");
+load("src/providers/azure/azure-instance-selector.js");
+load("src/providers/gcp/gcp-instance-selector.js");
 
 const probesSrc = run(
   "BaseInstanceSelector.prototype._nearestMissProbes.toString()",
@@ -301,7 +301,7 @@ for (const scan of filterScans) {
 console.log("[relax controls cover every probe label]");
 {
   const selectorSrc = fs.readFileSync(
-    path.join(REPO, "js/base/base-instance-selector.js"),
+    path.join(REPO, "src/core/engine/base-instance-selector.js"),
     "utf8",
   );
   // `label:` appears only inside _nearestMissProbes, so no slicing games
@@ -310,7 +310,7 @@ console.log("[relax controls cover every probe label]");
   );
 
   const coreSrc = fs.readFileSync(
-    path.join(REPO, "js/base/app-core.js"),
+    path.join(REPO, "src/shared/app-core.js"),
     "utf8",
   );
   // Assert both markers were found first — a rename/reorder makes an indexOf

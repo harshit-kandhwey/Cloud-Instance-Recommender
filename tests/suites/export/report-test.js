@@ -199,7 +199,7 @@ console.log("[the print trigger is scoped, not a bare window.print]");
   // The trigger must gate the print stylesheet behind a body class, so a plain
   // Ctrl+P prints the page as seen and other pages sharing style.css never print
   // blank. The style hook and its class must therefore both exist.
-  const css = fs.readFileSync(path.join(REPO, "css/style.css"), "utf8");
+  const css = fs.readFileSync(path.join(REPO, "styles/style.css"), "utf8");
   check(
     "the print stylesheet is scoped to a deliberate .printing-report press",
     /body\.printing-report/.test(css) && /@media print/.test(css),

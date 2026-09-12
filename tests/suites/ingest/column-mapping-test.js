@@ -187,9 +187,9 @@ function getHeaders(ctx) {
   {
     const { ctx, elements } = buildContext({
       dataScripts: [
-        "js/aws/aws-data.js",
-        "js/azure/azure-data.js",
-        "js/gcp/gcp-data.js",
+        "src/providers/aws/aws-data.js",
+        "src/providers/azure/azure-data.js",
+        "src/providers/gcp/gcp-data.js",
       ],
     });
     parse(ctx, "VM Name,CPU Count,Memory (GB),Region\na,4,16,us-east-1");
@@ -314,9 +314,9 @@ function getHeaders(ctx) {
   {
     const { ctx } = buildContext({
       dataScripts: [
-        "js/aws/aws-data.js",
-        "js/azure/azure-data.js",
-        "js/gcp/gcp-data.js",
+        "src/providers/aws/aws-data.js",
+        "src/providers/azure/azure-data.js",
+        "src/providers/gcp/gcp-data.js",
       ],
     });
     const canonicals = ctx.pageCanonicals();

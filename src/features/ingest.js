@@ -78,7 +78,10 @@ function setupFileDragAndDrop(fileInput) {
 }
 
 // Loads the vendored SheetJS parser on first use only (~900KB; Excel uploads
-// are rare).
+// are rare). "js/vendor/..." is relative to the PAGE (repo root), not
+// to this module's own location — a <script src> path always resolves
+// against the document, so this literal must track wherever the calling
+// page actually sits, not where ingest.js is.
 //
 // SECURITY — must be the FULL build, never the styling fork. Both vendored
 // bundles define window.XLSX with read(), but xlsx-js-style forks SheetJS

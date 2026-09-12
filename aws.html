@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="public/manifest.json" />
     <meta name="theme-color" content="#4c63d2" />
-    <link rel="icon" href="icon.svg" />
+    <link rel="icon" href="public/icon.svg" />
     <script defer src="js/pwa-register.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
@@ -56,35 +56,35 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="css/theme.css" />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="styles/theme.css" />
+    <link rel="stylesheet" href="styles/style.css" />
     <!-- JavaScript Files in Correct Order -->
-    <script defer src="js/aws/aws-data.js"></script>
-    <script defer src="js/base/rule-engine.js"></script>
-    <script defer src="js/base/user-rules.js"></script>
-    <script defer src="js/base/base-instance-selector.js"></script>
-    <script defer src="js/aws/aws-instance-selector.js"></script>
-    <script defer src="js/base/instance-selector-factory.js"></script>
-    <script defer src="js/aws/aws-specific.js"></script>
-    <script defer src="js/base/app-core.js"></script>
-    <script defer src="js/base/ui-shell.js"></script>
-    <script defer src="js/base/ingest.js"></script>
-    <script defer src="js/base/manual-entry.js"></script>
-    <script defer src="js/base/form-controls.js"></script>
-    <script defer src="js/base/generate.js"></script>
-    <script defer src="js/base/preview.js"></script>
-    <script defer src="js/base/charts.js"></script>
-    <script defer src="js/base/downloads.js"></script>
-    <script defer src="js/base/presets.js"></script>
-    <script defer src="js/base/user-rules-ui.js"></script>
-    <script defer src="js/base/xlsx-export.js"></script>
-    <script defer src="js/base/scenario-compare.js"></script>
+    <script defer src="src/providers/aws/aws-data.js"></script>
+    <script defer src="src/core/rules/rule-engine.js"></script>
+    <script defer src="src/core/rules/user-rules.js"></script>
+    <script defer src="src/core/engine/base-instance-selector.js"></script>
+    <script defer src="src/providers/aws/aws-instance-selector.js"></script>
+    <script defer src="src/core/engine/instance-selector-factory.js"></script>
+    <script defer src="src/providers/aws/aws-specific.js"></script>
+    <script defer src="src/shared/app-core.js"></script>
+    <script defer src="src/ui/ui-shell.js"></script>
+    <script defer src="src/features/ingest.js"></script>
+    <script defer src="src/features/manual-entry.js"></script>
+    <script defer src="src/ui/form-controls.js"></script>
+    <script defer src="src/core/engine/generate.js"></script>
+    <script defer src="src/features/preview.js"></script>
+    <script defer src="src/ui/charts.js"></script>
+    <script defer src="src/features/downloads.js"></script>
+    <script defer src="src/features/presets.js"></script>
+    <script defer src="src/ui/user-rules-ui.js"></script>
+    <script defer src="src/features/xlsx-export.js"></script>
+    <script defer src="src/features/scenario-compare.js"></script>
   </head>
 
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
 
-    <!-- Toast notifications (see showToast in js/base/app-core.js) -->
+    <!-- Toast notifications (see showToast in src/shared/app-core.js) -->
     <div
       id="toastStack"
       class="hidden"
@@ -1675,7 +1675,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
     </div>
     <!-- Executive print report: a direct child of <body> so the print
          stylesheet can hide every sibling and reveal only this. Filled in by
-         js/base/charts.js (renderExecutiveReport) after a run; hidden on screen. -->
+         src/ui/charts.js (renderExecutiveReport) after a run; hidden on screen. -->
     <div id="executiveReportSection"></div>
   </body>
 </html>

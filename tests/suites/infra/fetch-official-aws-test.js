@@ -1,4 +1,4 @@
-// fetch-official-aws suite: pins tools/fetch-official-aws.js's pure normaliser against
+// fetch-official-aws suite: pins scripts/data/fetch-official-aws.js's pure normaliser against
 // a recorded AWS Price List Bulk per-region offer file — the compute-instance filter,
 // on-demand Hrs price extraction, Linux/Windows merge onto one type, and spec mapping.
 // No network runs here.
@@ -12,7 +12,7 @@ const {
   keyToRegionCode,
   regionCodeToKey,
   resolveRegionKeys,
-} = require("../../../tools/fetch-official-aws");
+} = require("../../../scripts/data/fetch-official-aws");
 
 const { check, state } = makeChecker();
 
@@ -163,7 +163,7 @@ const types = parseAwsRegion(regionJson);
   // CLI stops calling it. Pin the wiring separately, scoped to main()'s body so the
   // export list cannot satisfy it. (The Azure twin shipped exactly that way.)
   const src = fs.readFileSync(
-    path.join(REPO, "tools", "fetch-official-aws.js"),
+    path.join(REPO, "scripts", "data", "fetch-official-aws.js"),
     "utf8",
   );
   const mainFn = src.match(/async function main\(\)\s*\{[\s\S]*?\n\}/);

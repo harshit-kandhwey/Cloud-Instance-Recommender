@@ -11,7 +11,7 @@
 const { buildEngineContext } = require("../harness");
 
 const { run } = buildEngineContext({
-  scripts: ["js/base/rule-engine.js"],
+  scripts: ["src/core/rules/rule-engine.js"],
   label: "workload-vocabulary-parity",
 });
 

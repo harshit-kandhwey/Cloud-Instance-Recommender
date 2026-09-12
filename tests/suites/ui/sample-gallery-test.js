@@ -228,9 +228,9 @@ console.log(
   // exercises the multi-column split; dataScripts forces the 3-provider path.
   const { ctx } = buildContext({
     dataScripts: [
-      "js/aws/aws-data.js",
-      "js/azure/azure-data.js",
-      "js/gcp/gcp-data.js",
+      "src/providers/aws/aws-data.js",
+      "src/providers/azure/azure-data.js",
+      "src/providers/gcp/gcp-data.js",
     ],
   });
   ctx.loadSampleDataset(3);

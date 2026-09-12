@@ -240,7 +240,7 @@ class BaseInstanceSelector {
     return this._injectRegionScript(normalizedRegion);
   }
 
-  // Lazily loads js/{provider}/regions/{key}.js via a same-origin <script> tag (CSP
+  // Lazily loads src/providers/{provider}/regions/{key}.js via a same-origin <script> tag (CSP
   // forbids fetch/XHR). Active only when the data file is a manifest ({P}_REGION_KEYS
   // present); a monolithic data file throws immediately, so behavior is unchanged.
   async _injectRegionScript(normalizedRegion) {
@@ -272,7 +272,10 @@ class BaseInstanceSelector {
       window._regionScriptPromises[cacheKey] = new Promise(
         (resolve, reject) => {
           const script = document.createElement("script");
-          script.src = `js/${provider}/regions/${normalizedRegion}.js`;
+          // Relative to the PAGE (repo root), not to this module's own
+          // location — a <script src> path always resolves against the
+          // document, so this must track wherever the calling page sits.
+          script.src = `src/providers/${provider}/regions/${normalizedRegion}.js`;
           script.onload = () => resolve();
           script.onerror = () => {
             delete window._regionScriptPromises[cacheKey];

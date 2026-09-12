@@ -20,7 +20,7 @@ function walk(dir) {
   }
 }
 
-for (const dir of ["js", "tools", "tests"]) {
+for (const dir of ["js", "src", "scripts", "tests"]) {
   walk(path.join(repoRoot, dir));
 }
 // Manifests are under js/{p}/ directly, already included by the walk above.

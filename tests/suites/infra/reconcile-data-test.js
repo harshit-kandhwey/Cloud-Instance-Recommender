@@ -1,4 +1,4 @@
-// reconcile-data suite: pins tools/reconcile-data.js's pure merge — official pricing and
+// reconcile-data suite: pins scripts/data/reconcile-data.js's pure merge — official pricing and
 // (for AWS) specs win field by field, a spec disagreement beyond tolerance is recorded as
 // a conflict with the official value taken, a type with no official entry keeps Vantage
 // pricing and is reported UNVERIFIED, and pricing-only providers (Azure/GCP) leave specs
@@ -10,7 +10,7 @@ const {
   reconcileProvider,
   isSpecConflict,
   renderReport,
-} = require("../../../tools/reconcile-data");
+} = require("../../../scripts/data/reconcile-data");
 
 const { check, state } = makeChecker();
 
@@ -208,7 +208,15 @@ const { check, state } = makeChecker();
 // rather than fail. Only split-data may write the shipped tree.
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "reconcile-data.js"),
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "scripts",
+      "data",
+      "reconcile-data.js",
+    ),
     "utf8",
   );
   // Strip line comments — the header above says "-data.js" in prose.

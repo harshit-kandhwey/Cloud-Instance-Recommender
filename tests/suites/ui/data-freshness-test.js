@@ -10,7 +10,9 @@ const { check, state } = makeChecker();
 (async () => {
   // ── Single provider ──────────────────────────────────────────────────────────
   {
-    const { ctx, run } = buildContext({ dataScript: "js/aws/aws-data.js" });
+    const { ctx, run } = buildContext({
+      dataScript: "src/providers/aws/aws-data.js",
+    });
     const awsDate = run("window.AWS_DATA_DATE");
     ctx.renderDataFreshness();
     const el = ctx.document.getElementById("dataFreshness");
@@ -27,9 +29,9 @@ const { check, state } = makeChecker();
   {
     const { ctx, run } = buildContext({
       dataScripts: [
-        "js/aws/aws-data.js",
-        "js/azure/azure-data.js",
-        "js/gcp/gcp-data.js",
+        "src/providers/aws/aws-data.js",
+        "src/providers/azure/azure-data.js",
+        "src/providers/gcp/gcp-data.js",
       ],
     });
     // A refresh stamps every provider with the same snapshot date, so the three
@@ -49,9 +51,9 @@ const { check, state } = makeChecker();
   {
     const { ctx, run } = buildContext({
       dataScripts: [
-        "js/aws/aws-data.js",
-        "js/azure/azure-data.js",
-        "js/gcp/gcp-data.js",
+        "src/providers/aws/aws-data.js",
+        "src/providers/azure/azure-data.js",
+        "src/providers/gcp/gcp-data.js",
       ],
     });
     const awsDate = run("window.AWS_DATA_DATE");
@@ -73,7 +75,9 @@ const { check, state } = makeChecker();
 
   // ── No date loaded → hidden, empty ───────────────────────────────────────────
   {
-    const { ctx, run } = buildContext({ dataScript: "js/aws/aws-data.js" });
+    const { ctx, run } = buildContext({
+      dataScript: "src/providers/aws/aws-data.js",
+    });
     run("delete window.AWS_DATA_DATE");
     ctx.renderDataFreshness();
     const el = ctx.document.getElementById("dataFreshness");
@@ -84,7 +88,7 @@ const { check, state } = makeChecker();
   // ── Placeholder absent → no throw ────────────────────────────────────────────
   {
     const { ctx } = buildContext({
-      dataScript: "js/aws/aws-data.js",
+      dataScript: "src/providers/aws/aws-data.js",
       missingElements: ["dataFreshness"],
     });
     let ok = true;

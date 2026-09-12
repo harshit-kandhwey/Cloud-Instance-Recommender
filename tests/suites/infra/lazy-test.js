@@ -52,14 +52,15 @@ function load(rel) {
 }
 
 // Manifests + code only — NO region files preloaded
-for (const p of ["aws", "azure", "gcp"]) load(`js/${p}/${p}-data.js`);
+for (const p of ["aws", "azure", "gcp"])
+  load(`src/providers/${p}/${p}-data.js`);
 for (const f of [
-  "js/base/rule-engine.js",
-  "js/base/base-instance-selector.js",
-  "js/aws/aws-instance-selector.js",
-  "js/azure/azure-instance-selector.js",
-  "js/gcp/gcp-instance-selector.js",
-  "js/base/instance-selector-factory.js",
+  "src/core/rules/rule-engine.js",
+  "src/core/engine/base-instance-selector.js",
+  "src/providers/aws/aws-instance-selector.js",
+  "src/providers/azure/azure-instance-selector.js",
+  "src/providers/gcp/gcp-instance-selector.js",
+  "src/core/engine/instance-selector-factory.js",
 ])
   load(f);
 
@@ -125,7 +126,7 @@ process.exitCode = 1;
     check(
       `${name}: every manifest region is offered for autocomplete`,
       missing.length === 0,
-      `${missing.length} missing — add them to the hardcoded list in js/${name}/${name}-instance-selector.js: ${missing.slice(0, 10).join(", ")}`,
+      `${missing.length} missing — add them to the hardcoded list in src/providers/${name}/${name}-instance-selector.js: ${missing.slice(0, 10).join(", ")}`,
     );
 
     // The other direction: a hardcoded entry for a region the manifest no longer
@@ -137,7 +138,7 @@ process.exitCode = 1;
     check(
       `${name}: no region is offered that the manifest does not have`,
       stale.length === 0,
-      `${stale.length} stale — remove them from the hardcoded list in js/${name}/${name}-instance-selector.js: ${stale.slice(0, 10).join(", ")}`,
+      `${stale.length} stale — remove them from the hardcoded list in src/providers/${name}/${name}-instance-selector.js: ${stale.slice(0, 10).join(", ")}`,
     );
   }
 
@@ -375,7 +376,7 @@ process.exitCode = 1;
   // exact path that exists to keep it up.
   {
     const src = fs.readFileSync(
-      path.join(REPO, "js", "base", "base-instance-selector.js"),
+      path.join(REPO, "src", "core", "engine", "base-instance-selector.js"),
       "utf8",
     );
     check(

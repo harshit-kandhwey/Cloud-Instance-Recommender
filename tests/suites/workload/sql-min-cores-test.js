@@ -1,4 +1,4 @@
-// SQL — the SQL Server licence floor (js/base/rule-engine.js).
+// SQL — the SQL Server licence floor (src/core/rules/rule-engine.js).
 //
 // SQL Server is licensed per core with a minimum of 4 core licences per VM, so
 // a 1 or 2 vCPU recommendation is billed as 4 regardless: the smaller box saves

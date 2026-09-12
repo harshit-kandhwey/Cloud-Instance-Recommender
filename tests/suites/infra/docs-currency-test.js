@@ -1,13 +1,17 @@
 // docs-currency suite: pins the two contributor-facing docs against the repo they
-// describe. 3.14 added eight build tools, tools/lib/, and docs/DATA-SOURCES.md while
-// README and CONTRIBUTING still listed a single tool under a CLOSING branch and still
-// taught the pre-3.14 hand-edit refresh. Stale instructions that read as complete are
-// the hazard here — a contributor follows them and hand-edits generated data — so the
-// listing, the pipeline order, and the provenance link are all pinned.
+// describe. 3.14 added eight build tools, scripts/lib/, and docs/data/DATA-SOURCES.md
+// while README and CONTRIBUTING still listed a single tool under a CLOSING branch and
+// still taught the pre-3.14 hand-edit refresh. Stale instructions that read as complete
+// are the hazard here — a contributor follows them and hand-edits generated data — so
+// the listing, the pipeline order, and the provenance link are all pinned.
+// `tools/` was renamed to `scripts/{data,testing,lib}/` — three sibling
+// subdirectories, none of them an implicit default the way flat `tools/`'s direct
+// children were — so each is its own block, checked with the same indent-aware
+// algorithm as js/base/'s block below (generalised into `treeBlock`).
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
-const { planSteps } = require("../../../tools/refresh-local");
+const { planSteps } = require("../../../scripts/data/refresh-local");
 
 const { check, state } = makeChecker();
 
@@ -27,40 +31,48 @@ const expandBraces = (text) =>
       .join(" "),
   );
 
-// The tools/ block of a doc's project tree: the tools/ entry through to the next
-// top-level branch. Scoped to the block, not the file: these names also appear in the
-// surrounding prose, and a passing mention is not a listing.
-const toolsBlock = (rel) => {
+// A NAMED entry's block in a doc's project tree — the `${name}/` line through to
+// the next SAME-INDENT tree entry, not the first line starting with the indent
+// prefix at all (a child line, e.g. `│   ├── charts.js`, starts one level deeper
+// than the bare indent the entry itself sits at, so it does not end the block
+// early). Scoped to the block, not the file: these names also appear in the
+// surrounding prose, and a passing mention is not a listing. The entry line may
+// carry a trailing comment, so the match stops at the entry name, not end-of-line.
+// Generalises what were two near-identical functions (tools/'s block finder and
+// js/base/'s) into one, now that `scripts/` and `docs/` each have several
+// same-named children across the two trees (both have a `data/`) — `fromLine`
+// scopes the search to start after a specific line, so `treeBlock(rel, "data",
+// scriptsStart)` cannot match `docs/`'s `data/` entry instead of `scripts/`'s.
+// Indent can carry a `│` continuation column (a non-last parent, e.g. `scripts/`
+// with `tests/`+`js/` still to come) as well as plain spaces (a last parent,
+// e.g. `js/`'s own children) — `\s` alone doesn't match `│`, so both are
+// captured explicitly.
+const treeBlock = (rel, name, fromLine = 0) => {
   const lines = read(rel).split("\n");
-  const start = lines.findIndex((l) => /^[├└]── tools\//.test(l));
+  const start = lines.findIndex(
+    (l, i) =>
+      i >= fromLine && new RegExp(`^([\\s│]*)[├└]── ${name}/(\\s|$)`).test(l),
+  );
   if (start === -1) return "";
-  const end = lines.findIndex((l, i) => i > start && /^[├└]── /.test(l));
+  const indent = lines[start].match(/^([\s│]*)/)[1];
+  // Ends at the next tree-branch line at this SAME OR SHALLOWER indent — a
+  // sibling of this block, or a sibling of one of its ancestors. A same-indent
+  // sibling is the common case (`data/` ending at `testing/`); shallower is
+  // needed for a block with no more siblings of its own (`lib/`, scripts/'s
+  // LAST child) — without either, "no next same-indent line, no closing fence"
+  // falls through to end-of-file and swallows the rest of the document. The
+  // closing fence matters when the block being extracted is the LAST thing in
+  // the tree diagram (`src/`'s own last child, `shared/`) — there is no next
+  // tree line of any indent to stop at, only the ``` that ends the code block.
+  const end = lines.findIndex((l, i) => {
+    if (i <= start) return false;
+    if (/^```/.test(l)) return true;
+    const m = l.match(/^([\s│]*)[├└]── /);
+    return m !== null && m[1].length <= indent.length;
+  });
   return expandBraces(
     lines.slice(start, end === -1 ? lines.length : end).join("\n"),
   );
-};
-
-// The js/base/ block of a doc's project tree — mirrors toolsBlock, for the same
-// reason: `tools/` has always had this pin, and `js/base/` never did, which is
-// exactly how charts.js, user-rules.js and user-rules-ui.js went undocumented in
-// BOTH trees (README's and CONTRIBUTING's) with nothing to catch it. Ends at the
-// next SAME-INDENT tree entry (vendor/), not at the first line starting with the
-// indent prefix at all — a child line (`│   ├── charts.js`) starts one level
-// deeper (`│   `, not the bare indent `base/` itself sits at), so it does not end
-// the block early. The `base/` line itself may carry a trailing comment
-// (CONTRIBUTING's does; README's doesn't), so the match stops at the entry name,
-// not end-of-line.
-const baseBlock = (rel) => {
-  const lines = read(rel).split("\n");
-  const start = lines.findIndex((l) => /^(\s*)[├└]── base\/(\s|$)/.test(l));
-  if (start === -1) return "";
-  const indent = lines[start].match(/^(\s*)/)[1];
-  const end = lines.findIndex(
-    (l, i) =>
-      i > start &&
-      (l.startsWith(`${indent}├── `) || l.startsWith(`${indent}└── `)),
-  );
-  return lines.slice(start, end === -1 ? lines.length : end).join("\n");
 };
 
 // A doc section, heading to next heading of the same level.
@@ -78,81 +90,119 @@ const section = (rel, heading) => {
 const arrowChain = (text) =>
   expandBraces((text.match(/`[\w{},.-]+`(?:\s*→\s*`[\w{},.-]+`)+/) || [""])[0]);
 
-const shipped = [
-  ...fs.readdirSync(path.join(REPO, "tools")).filter((f) => f.endsWith(".js")),
-  ...fs
-    .readdirSync(path.join(REPO, "tools", "lib"))
-    .filter((f) => f.endsWith(".js"))
-    .map((f) => `lib/${f}`),
-];
+// scripts/'s three sibling subdirectories, each checked as its own block —
+// none of the three is an implicit default the way tools/'s direct children
+// were under flat tools/, so there is no single combined "shipped" list anymore.
+const SCRIPT_DIRS = ["data", "testing", "lib"];
+const shippedByDir = Object.fromEntries(
+  SCRIPT_DIRS.map((d) => [
+    d,
+    fs
+      .readdirSync(path.join(REPO, "scripts", d))
+      .filter((f) => f.endsWith(".js")),
+  ]),
+);
 
-// ── The project trees list every build tool, and only tools that exist ──────────
+// ── The project trees list every build script, and only scripts that exist ──────
 {
+  const allShipped = SCRIPT_DIRS.flatMap((d) => shippedByDir[d]);
   check(
-    "tools/ holds more than the one tool the trees used to list",
-    shipped.length > 1,
-    shipped.join(","),
+    "scripts/ holds more than the one tool the trees used to list",
+    allShipped.length > 1,
+    allShipped.join(","),
   );
 
-  for (const rel of ["README.md", "CONTRIBUTING.md"]) {
-    const block = toolsBlock(rel);
-    const missing = shipped.filter((f) => !block.includes(f));
-    check(
-      `${rel} lists every file in tools/`,
-      block !== "" && missing.length === 0,
-      block === "" ? "no tools/ block found" : missing.join(",") || "complete",
-    );
+  for (const rel of ["README.md", ".github/CONTRIBUTING.md"]) {
+    // Scope each data/testing/lib search to start after the top-level `scripts/`
+    // line, so it can't match `docs/`'s own `data/` entry instead.
+    const scriptsLine = read(rel)
+      .split("\n")
+      .findIndex((l) => /^[├└]── scripts\/(\s|$)/.test(l));
+    for (const dir of SCRIPT_DIRS) {
+      const block = treeBlock(rel, dir, scriptsLine + 1);
+      const shipped = shippedByDir[dir];
+      const missing = shipped.filter((f) => !block.includes(f));
+      check(
+        `${rel} lists every file in scripts/${dir}/`,
+        block !== "" && missing.length === 0,
+        block === ""
+          ? `no scripts/${dir}/ block found`
+          : missing.join(",") || "complete",
+      );
 
-    // The other direction: a tool the tree still names after it was deleted sends a
-    // contributor looking for a file that is not there.
-    const named = block.match(/[\w./-]+\.js/g) || [];
-    const ghosts = named.filter(
-      (n) => !fs.existsSync(path.join(REPO, "tools", n)),
-    );
-    check(
-      `${rel} names no tool that no longer exists`,
-      ghosts.length === 0,
-      ghosts.join(",") || "none",
-    );
+      // The other direction: a script the tree still names after it was deleted
+      // sends a contributor looking for a file that is not there.
+      const named = block.match(/[\w./-]+\.js/g) || [];
+      const ghosts = named.filter(
+        (n) => !fs.existsSync(path.join(REPO, "scripts", dir, n)),
+      );
+      check(
+        `${rel} names no scripts/${dir}/ file that no longer exists`,
+        ghosts.length === 0,
+        ghosts.join(",") || "none",
+      );
+    }
   }
 }
 
-// ── README's project tree lists every js/base/ module, and only ones that exist ─
-// js/base/ has no test suite folder of its own to piggyback coverage claims on
-// (unlike tools/, which coverage:check walks separately) — nothing else in this
-// repo would notice a module added here and never named in the tree. That is
-// exactly what happened: charts.js, user-rules.js and user-rules-ui.js shipped,
-// were tested, were wired into every page, and were absent from the tree with no
-// check anywhere to say so.
+// ── README's project tree lists every src/{core,features,ui,shared} module ─────
+// js/base/ (the pre-3.16-tail location) had no test suite folder of its own to
+// piggyback coverage claims on (unlike scripts/, which coverage:check walks
+// separately) — nothing else in this repo would notice a module added here and
+// never named in the tree. That is exactly what happened once: charts.js,
+// user-rules.js and user-rules-ui.js shipped, were tested, were wired into
+// every page, and were absent from the tree with no check anywhere to say so.
+// The 3.16 tail split js/base/ into core/{engine,rules}, features/, ui/ and
+// shared/ — checked here by bare filename against the WHOLE src/ block rather
+// than per-subdirectory (unlike scripts/'s stricter per-block check): every
+// filename in this set is unique, so this still catches an added-and-
+// undocumented or removed-but-still-named module, without needing five
+// separate nested-block extractions for what was one flat directory before.
 {
-  const shippedBase = fs
-    .readdirSync(path.join(REPO, "js", "base"))
-    .filter((f) => f.endsWith(".js"));
+  const SRC_MODULE_DIRS = [
+    ["core", "engine"],
+    ["core", "rules"],
+    ["features"],
+    ["ui"],
+    ["shared"],
+  ];
+  const shippedBase = SRC_MODULE_DIRS.flatMap((parts) =>
+    fs
+      .readdirSync(path.join(REPO, "src", ...parts))
+      .filter((f) => f.endsWith(".js")),
+  );
   check(
-    "js/base/ holds more than the tree's first few entries",
+    "src/{core,features,ui,shared} holds more than the tree's first few entries",
     shippedBase.length > 5,
     shippedBase.join(","),
   );
 
-  for (const rel of ["README.md", "CONTRIBUTING.md"]) {
-    const block = baseBlock(rel);
+  for (const rel of ["README.md", ".github/CONTRIBUTING.md"]) {
+    const block = treeBlock(rel, "src");
     const missing = shippedBase.filter((f) => !block.includes(f));
     check(
-      `${rel} lists every file in js/base/`,
+      `${rel} lists every module in src/{core,features,ui,shared}`,
       block !== "" && missing.length === 0,
-      block === ""
-        ? "no js/base/ block found"
-        : missing.join(",") || "complete",
+      block === "" ? "no src/ block found" : missing.join(",") || "complete",
     );
 
     // The other direction: a module the tree still names after it was deleted or
-    // renamed sends a contributor looking for a file that is not there.
+    // renamed sends a contributor looking for a file that is not there. Checked
+    // against the whole SRC_MODULE_DIRS set (providers/ has its own, much larger
+    // per-provider file set and is not part of this claim).
     const named = block.match(/[\w./-]+\.js/g) || [];
+    const existsSomewhere = (n) =>
+      SRC_MODULE_DIRS.some((parts) =>
+        fs.existsSync(path.join(REPO, "src", ...parts, n)),
+      ) ||
+      ["aws", "azure", "gcp"].some((p) =>
+        fs.existsSync(path.join(REPO, "src", "providers", p, n)),
+      );
     const ghosts = named.filter(
-      (n) => !fs.existsSync(path.join(REPO, "js", "base", n)),
+      (n) => n.includes("/") === false && !existsSomewhere(n),
     );
     check(
-      `${rel} names no js/base/ module that no longer exists`,
+      `${rel} names no src/ module that no longer exists`,
       ghosts.length === 0,
       ghosts.join(",") || "none",
     );
@@ -161,7 +211,10 @@ const shipped = [
 
 // ── The refresh runbook matches the pipeline it documents ───────────────────────
 {
-  const refresh = section("CONTRIBUTING.md", "## Updating Instance Data");
+  const refresh = section(
+    ".github/CONTRIBUTING.md",
+    "## Updating Instance Data",
+  );
   check(
     "CONTRIBUTING has an Updating Instance Data section",
     refresh !== "",
@@ -192,17 +245,21 @@ const shipped = [
 // ── The provenance doc is reachable, and every doc link resolves ────────────────
 {
   check(
-    "README links docs/DATA-SOURCES.md",
-    read("README.md").includes("(docs/DATA-SOURCES.md)"),
+    "README links docs/data/DATA-SOURCES.md",
+    read("README.md").includes("(docs/data/DATA-SOURCES.md)"),
   );
 
-  for (const rel of ["README.md", "CONTRIBUTING.md"]) {
-    // In-repo targets only: `../../discussions` and friends are GitHub-relative and
-    // resolve above the repo root, where there is nothing to check.
+  for (const rel of ["README.md", ".github/CONTRIBUTING.md"]) {
+    // In-repo targets only: `../../../discussions` and friends are GitHub-relative
+    // and resolve above the repo root, where there is nothing to check.
     const links = [...read(rel).matchAll(/\]\(([^)#:\s]+)\)/g)]
       .map((m) => m[1])
       .filter((l) => !l.startsWith(".."));
-    const broken = links.filter((l) => !fs.existsSync(path.join(REPO, l)));
+    // Resolve against the FILE's own directory, not the repo root — a same-dir
+    // sibling link (CONTRIBUTING.md -> SECURITY.md, both now under .github/) is
+    // only correct relative to where the linking file actually sits.
+    const fileDir = path.dirname(path.join(REPO, rel));
+    const broken = links.filter((l) => !fs.existsSync(path.join(fileDir, l)));
     check(
       `${rel} has no broken relative link`,
       broken.length === 0,
@@ -211,24 +268,27 @@ const shipped = [
   }
 }
 
-// ── Every tools/ path a doc names must exist ───────────────────────────────────
-// .env.example told the reader GCP_BILLING_API_KEY was "used by
-// tools/fetch-pricing-gcp.js", a file that has never existed — the real consumer is
-// fetch-official-gcp.js, which in turn points back at .env.example. Prose naming a
-// path is the one kind of doc claim that can be checked mechanically, so check it
-// everywhere rather than only where it was found wrong.
+// ── Every scripts/ path a doc names must exist ─────────────────────────────────
+// .env.example once told the reader GCP_BILLING_API_KEY was "used by
+// tools/fetch-pricing-gcp.js", a file that had never existed — the real consumer
+// was fetch-official-gcp.js, which in turn pointed back at .env.example. Prose
+// naming a path is the one kind of doc claim that can be checked mechanically,
+// so check it everywhere rather than only where it was found wrong. The pattern
+// allows one extra path segment (`[\w./-]+` not `[\w.-]+`) now that scripts/
+// nests three levels deep (scripts/data/fetch-official-gcp.js), unlike flat
+// tools/.
 {
-  for (const rel of [".env.example", "README.md", "CONTRIBUTING.md"]) {
-    const named = [...read(rel).matchAll(/\btools\/[\w.-]+\.js\b/g)].map(
+  for (const rel of [".env.example", "README.md", ".github/CONTRIBUTING.md"]) {
+    const named = [...read(rel).matchAll(/\bscripts\/[\w./-]+\.js\b/g)].map(
       (m) => m[0],
     );
     const missing = [
       ...new Set(named.filter((p) => !fs.existsSync(path.join(REPO, p)))),
     ];
     check(
-      `${rel} names no tools/ file that does not exist`,
+      `${rel} names no scripts/ file that does not exist`,
       missing.length === 0,
-      missing.join(",") || `${new Set(named).size} tool paths resolve`,
+      missing.join(",") || `${new Set(named).size} script paths resolve`,
     );
   }
 }
@@ -318,7 +378,7 @@ const shipped = [
   //
   // A command can appear on each side in either form — `npm run X` or the `node
   // path.js` the script ultimately runs — and the two sides don't always agree on
-  // which: CI runs coverage:check as `node tools/build-coverage-inventory.js
+  // which: CI runs coverage:check as `node scripts/testing/build-coverage-inventory.js
   // --check` while the table names it `npm run coverage:check`. So compare by
   // RESOLVED IDENTITY: an npm-run name resolves to package.json's script text; a
   // node path resolves to itself. A CI command is documented if either its own

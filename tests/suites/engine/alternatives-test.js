@@ -32,7 +32,7 @@ check(
     rank({ instanceType: "n2-standard-4", family: "n2" }, "gcp") >
       rank({ instanceType: "e2-standard-4", family: "e2" }, "gcp"),
 );
-// Real (type, family) pairs from js/azure/regions/ — the families here used to
+// Real (type, family) pairs from src/providers/azure/regions/ — the families here used to
 // be invented ("d", "nv"), which is not what the parser meets in production.
 // The version is read from the FAMILY, since the type alone cannot be parsed:
 // nv72adsv5 needs its trailing v5, but nv24's trailing "v24" is its vCPU count.

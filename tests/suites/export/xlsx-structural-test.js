@@ -68,8 +68,8 @@ const load = (rel) =>
     filename: rel,
   });
 const run = (expr) => vm.runInContext(expr, ctx);
-load("js/base/app-core.js");
-load("js/base/portfolio.js");
+load("src/shared/app-core.js");
+load("src/features/portfolio.js");
 load("js/vendor/xlsx-js-style.min.js");
 
 let failures = 0;

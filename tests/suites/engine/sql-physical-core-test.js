@@ -12,7 +12,7 @@
 const { buildEngineContext } = require("../harness");
 
 const { ctx, run } = buildEngineContext({
-  scripts: ["js/base/rule-engine.js"],
+  scripts: ["src/core/rules/rule-engine.js"],
   label: "sql-physical-core",
 });
 

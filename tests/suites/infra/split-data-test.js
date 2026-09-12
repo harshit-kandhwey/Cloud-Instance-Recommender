@@ -1,4 +1,4 @@
-// tools/split-data.js — the writer for the two-part shipped format.
+// scripts/data/split-data.js — the writer for the two-part shipped format.
 //
 // Nothing exercised this tool before: the committed repo holds only its OUTPUT
 // (a manifest plus regions/) and the monolithic input is a transient file that
@@ -21,9 +21,12 @@ const {
   splitProvider,
   verifyRoundTrip,
   SERVICE,
-} = require("../../../tools/split-data");
-const { monolithPath } = require("../../../tools/lib/build-env");
-const { specFields, priceFields } = require("../../../tools/lib/record-schema");
+} = require("../../../scripts/data/split-data");
+const { monolithPath } = require("../../../scripts/lib/build-env");
+const {
+  specFields,
+  priceFields,
+} = require("../../../scripts/lib/record-schema");
 
 const { check, state } = makeChecker();
 
@@ -155,7 +158,7 @@ function writeMonolith(root, source, name = "aws") {
 
 function tempRoot(source, name = "aws") {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
-  fs.mkdirSync(path.join(root, "js", name), { recursive: true });
+  fs.mkdirSync(path.join(root, "src", "providers", name), { recursive: true });
   writeMonolith(root, source, name);
   return root;
 }
@@ -182,11 +185,11 @@ function loadEmitted(root, keys) {
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
-  vm.runInContext(read("js/aws/aws-data.js"), sandbox, {
+  vm.runInContext(read("src/providers/aws/aws-data.js"), sandbox, {
     filename: "aws-data.js",
   });
   for (const key of keys) {
-    vm.runInContext(read(`js/aws/regions/${key}.js`), sandbox, {
+    vm.runInContext(read(`src/providers/aws/regions/${key}.js`), sandbox, {
       filename: `${key}.js`,
     });
   }
@@ -204,7 +207,7 @@ const threw = (fn) => {
 
 // ── The shipped tree is untouched until this tool runs ─────────────────────────
 // The whole point of Option D: fetch-vantage, reconcile and both diffs leave
-// js/{p}/ alone, so the diffs can still read the OLD data — the specs included,
+// src/providers/{p}/ alone, so the diffs can still read the OLD data — the specs included,
 // which live in the shipped manifest — while the NEW data waits in .refresh-cache/.
 // Splitting must therefore consume the scratch file and leave it in place, never
 // write back over its own input.
@@ -221,7 +224,10 @@ console.log("[the scratch monolith is input only]");
   check(
     "and the manifest was written to the shipped path, not the scratch one",
     fs
-      .readFileSync(path.join(root, "js", "aws", "aws-data.js"), "utf8")
+      .readFileSync(
+        path.join(root, "src", "providers", "aws", "aws-data.js"),
+        "utf8",
+      )
       .includes("window.AWS_REGION_KEYS"),
   );
   fs.rmSync(root, { recursive: true, force: true });
@@ -283,7 +289,7 @@ console.log("[split: the two-part format]");
   // second READY assignment planted ahead of the specs still leaves the trailing
   // one in place and the ordering can be read either way.
   const src = fs.readFileSync(
-    path.join(root, "js", "aws", "aws-data.js"),
+    path.join(root, "src", "providers", "aws", "aws-data.js"),
     "utf8",
   );
   const at = (needle) => src.indexOf(needle);
@@ -357,7 +363,7 @@ console.log("[split: the two-part format]");
     JSON.stringify(second),
   );
   const afterSecond = fs.readFileSync(
-    path.join(root, "js", "aws", "aws-data.js"),
+    path.join(root, "src", "providers", "aws", "aws-data.js"),
     "utf8",
   );
   check("and lands on a byte-identical manifest", afterSecond === src);
@@ -374,7 +380,10 @@ console.log("[split: the two-part format]");
   splitProvider(AWS, root);
   writeMonolith(
     root,
-    fs.readFileSync(path.join(root, "js", "aws", "aws-data.js"), "utf8"),
+    fs.readFileSync(
+      path.join(root, "src", "providers", "aws", "aws-data.js"),
+      "utf8",
+    ),
   );
   const msg = threw(() => splitProvider(AWS, root));
   check(
@@ -403,7 +412,7 @@ console.log("[hard-fails]");
   );
   check(
     "and nothing was written",
-    !fs.existsSync(path.join(root, "js", "aws", "regions")),
+    !fs.existsSync(path.join(root, "src", "providers", "aws", "regions")),
   );
   fs.rmSync(root, { recursive: true, force: true });
 }
@@ -433,7 +442,7 @@ console.log("[hard-fails]");
   );
   check(
     "and nothing was written (not even the duplicated region)",
-    !fs.existsSync(path.join(root, "js", "aws", "regions")),
+    !fs.existsSync(path.join(root, "src", "providers", "aws", "regions")),
   );
   fs.rmSync(root, { recursive: true, force: true });
 }
@@ -460,7 +469,7 @@ console.log("[hard-fails]");
   );
   check(
     "and nothing was written",
-    !fs.existsSync(path.join(root, "js", "aws", "regions")),
+    !fs.existsSync(path.join(root, "src", "providers", "aws", "regions")),
   );
   fs.rmSync(root, { recursive: true, force: true });
 }
@@ -604,10 +613,10 @@ for (const provider of [AWS, AZURE, GCP]) {
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   const read = (rel) => fs.readFileSync(path.join(root, rel), "utf8");
-  vm.runInContext(read(`js/${name}/${name}-data.js`), sandbox, {
+  vm.runInContext(read(`src/providers/${name}/${name}-data.js`), sandbox, {
     filename: `${name}-data.js`,
   });
-  vm.runInContext(read(`js/${name}/regions/${key}.js`), sandbox, {
+  vm.runInContext(read(`src/providers/${name}/regions/${key}.js`), sandbox, {
     filename: `${key}.js`,
   });
 
@@ -669,7 +678,7 @@ console.log("[upstream drift]");
     check(label, msg !== null && pattern.test(msg), msg || "did not throw");
     check(
       `  ${label} — wrote nothing`,
-      !fs.existsSync(path.join(root, "js", "aws", "regions")),
+      !fs.existsSync(path.join(root, "src", "providers", "aws", "regions")),
     );
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -705,7 +714,7 @@ console.log("[upstream drift]");
     ),
     lines.join(" | ") || "nothing logged",
   );
-  check("the skip wrote nothing", !fs.existsSync(path.join(root, "js")));
+  check("the skip wrote nothing", !fs.existsSync(path.join(root, "src")));
   fs.rmSync(root, { recursive: true, force: true });
 }
 
@@ -723,7 +732,7 @@ console.log("[pruning a dropped region]");
     }),
   );
   splitProvider(AWS, root);
-  const regionsDir = path.join(root, "js", "aws", "regions");
+  const regionsDir = path.join(root, "src", "providers", "aws", "regions");
   check(
     "both regions written on the first pass",
     fs.readdirSync(regionsDir).sort().join(",") === "eu_west_1.js,us_east_1.js",
@@ -775,7 +784,7 @@ console.log("[pruning a dropped region]");
 console.log("[CLI wiring]");
 {
   const src = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "tools", "split-data.js"),
+    path.join(__dirname, "..", "..", "..", "scripts", "data", "split-data.js"),
     "utf8",
   );
   // Strip line comments first, then extract. main() documents why it must NOT call
@@ -799,7 +808,7 @@ console.log("[CLI wiring]");
     body.replace(/\s+/g, " ").slice(0, 200),
   );
   // exitCode, never exit(): the workflow runs this tool as
-  // `node tools/split-data.js | tee split.log` and greps that log for the
+  // `node scripts/data/split-data.js | tee split.log` and greps that log for the
   // region-removal warning that says sw.js needs a CACHE bump. With stdout a pipe,
   // exit() can kill the process before the warning flushes — losing the signal on
   // the one run that had something to say. This suite's own footer carries the same

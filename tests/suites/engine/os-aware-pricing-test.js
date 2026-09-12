@@ -36,7 +36,7 @@ const { buildEngineContext, makeChecker } = require("../harness");
 const { check, state } = makeChecker();
 
 const { ctx, run } = buildEngineContext({
-  scripts: ["js/base/base-instance-selector.js"],
+  scripts: ["src/core/engine/base-instance-selector.js"],
   label: "os-aware-pricing",
 });
 
@@ -451,10 +451,10 @@ run(`__sel.instanceData = { r1: poolMain, r2: poolFlip };`);
 {
   const { ctx: pctx, run: prun } = buildEngineContext({
     scripts: [
-      "js/base/base-instance-selector.js",
-      "js/aws/aws-instance-selector.js",
-      "js/azure/azure-instance-selector.js",
-      "js/gcp/gcp-instance-selector.js",
+      "src/core/engine/base-instance-selector.js",
+      "src/providers/aws/aws-instance-selector.js",
+      "src/providers/azure/azure-instance-selector.js",
+      "src/providers/gcp/gcp-instance-selector.js",
     ],
     label: "os-aware-pricing-mappings",
   });

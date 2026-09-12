@@ -7,7 +7,10 @@
     "command": "node tests/mutation-run.js"
   },
   "coverageAnalysis": "off",
-  "mutate": ["js/base/rule-engine.js", "js/base/instance-selector-factory.js"],
+  "mutate": [
+    "src/core/rules/rule-engine.js",
+    "src/core/engine/instance-selector-factory.js"
+  ],
   "reporters": ["html", "clear-text", "progress"],
   "htmlReporter": {
     "fileName": "reports/mutation/index.html"

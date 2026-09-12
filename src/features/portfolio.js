@@ -1522,6 +1522,8 @@ function writeWorkbook(wbModel, styled) {
 
 // Lazy-loads the spreadsheet engine on first export: the styling fork if it's
 // vendored, else the plain community build already used for uploads.
+// "js/vendor/..." is relative to the PAGE (app-portfolio.html, repo root),
+// not to this module's own location — track wherever the page actually sits.
 let _pfXlsxPromise = null;
 function loadScriptOnce(src) {
   return new Promise((resolve, reject) => {

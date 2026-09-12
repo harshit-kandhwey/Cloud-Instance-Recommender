@@ -29,9 +29,9 @@
   },
   "include": [
     "types/**/*.d.ts",
-    "js/base/**/*.js",
-    "tools/**/*.js",
+    "src/**/*.js",
+    "scripts/**/*.js",
     "tests/**/*.js"
   ],
-  "exclude": ["node_modules", "js/aws", "js/azure", "js/gcp", "js/vendor"]
+  "exclude": ["node_modules", "src/providers", "js/vendor"]
 }

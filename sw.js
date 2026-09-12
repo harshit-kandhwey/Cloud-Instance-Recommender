@@ -22,7 +22,12 @@
 // (GitHub Pages sends no CSP header for sw.js), so caching works. Lazy region
 // loading via <script> injection is intercepted here and served from cache.
 
-const CACHE = "cir-cache-v2";
+// Bumped v2 -> v3: css/ renamed to styles/ and manifest.json/icon.svg moved
+// into public/, so several PRECACHE keys below changed — a same-name cache
+// would keep the old keys around forever unused (activate only deletes whole
+// OTHER cache names, never prunes stale keys within one), so this forces a
+// clean re-precache instead of accumulating dead entries.
+const CACHE = "cir-cache-v3";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.
@@ -34,13 +39,13 @@ const PRECACHE = [
   "multicloud.html",
   "app-portfolio.html",
   "user-guide.html",
-  "css/theme.css",
-  "css/style.css",
-  "css/index_style.css",
-  "css/portfolio.css",
+  "styles/theme.css",
+  "styles/style.css",
+  "styles/index_style.css",
+  "styles/portfolio.css",
   "js/pwa-register.js",
-  "manifest.json",
-  "icon.svg",
+  "public/manifest.json",
+  "public/icon.svg",
 ];
 
 self.addEventListener("install", (event) => {

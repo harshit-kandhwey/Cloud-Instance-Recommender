@@ -1,4 +1,4 @@
-// record-schema suite: pins tools/lib/record-schema.js — the shipped record's field
+// record-schema suite: pins scripts/lib/record-schema.js — the shipped record's field
 // schema (the 8-decimal price contract, FIELD_ORDER/PRICE_FIELDS and their
 // derivations, the emitters) and reading that shape back out of committed data. No
 // network.
@@ -17,7 +17,7 @@ const {
   priceFields,
   emitValue,
   emitRecordBody,
-} = require("../../../tools/lib/record-schema");
+} = require("../../../scripts/lib/record-schema");
 
 const { check, state } = makeChecker();
 
@@ -59,11 +59,11 @@ const { check, state } = makeChecker();
 }
 
 // ── loadCommittedRegions: the old side both refresh diffs read ──────────────────
-// Against a throwaway tree, not js/: the point is the malformed case, which the
+// Against a throwaway tree, not the repo: the point is the malformed case, which the
 // shipped region files must never contain.
 {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-regions-"));
-  const dir = path.join(root, "js", "aws", "regions");
+  const dir = path.join(root, "src", "providers", "aws", "regions");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(
     path.join(dir, "us_east_1.js"),
@@ -91,7 +91,8 @@ const { check, state } = makeChecker();
   }
   check(
     "loadCommittedRegions names the region file that assigned no global",
-    msg.includes("js/aws/regions/ghost.js") && msg.includes("window.ghost"),
+    msg.includes("src/providers/aws/regions/ghost.js") &&
+      msg.includes("window.ghost"),
     msg || "(did not throw)",
   );
 
@@ -123,11 +124,11 @@ const { check, state } = makeChecker();
     { specs = SPECS[name], prices = PRICES[name] } = {},
   ) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-rehydrate-"));
-    const dir = path.join(root, "js", name, "regions");
+    const dir = path.join(root, "src", "providers", name, "regions");
     fs.mkdirSync(dir, { recursive: true });
     const P = name.toUpperCase();
     fs.writeFileSync(
-      path.join(root, "js", name, `${name}-data.js`),
+      path.join(root, "src", "providers", name, `${name}-data.js`),
       `window.${P}_SPECS = { ${SERVICE}: ` +
         `${specs ? JSON.stringify({ [TYPE[name]]: specs }) : "{}"} };\n`,
     );
@@ -173,7 +174,7 @@ const { check, state } = makeChecker();
     }
     check(
       "a record with prices and no specs fails, naming the file, the type and the manifest",
-      msg.includes("js/aws/regions/r1.js") &&
+      msg.includes("src/providers/aws/regions/r1.js") &&
         msg.includes("m5.large") &&
         msg.includes("AWS_SPECS.compute"),
       msg || "(did not throw)",
@@ -210,7 +211,7 @@ const { check, state } = makeChecker();
   // that rejected those would fail every tool on today's committed data.
   {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-rehydrate-"));
-    const dir = path.join(root, "js", "aws", "regions");
+    const dir = path.join(root, "src", "providers", "aws", "regions");
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, "r1.js"),

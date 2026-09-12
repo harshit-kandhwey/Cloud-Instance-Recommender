@@ -201,7 +201,7 @@ function main() {
   if (!changed) {
     process.stderr.write(
       "No data changes vs the committed region files. split-data was skipped, so\n" +
-        "the shipped js/ tree is untouched and there is nothing to discard.\n\n",
+        "the shipped src/providers/ tree is untouched and there is nothing to discard.\n\n",
     );
     return;
   }
@@ -210,7 +210,7 @@ function main() {
       "Next, BY HAND:\n" +
       "  1. Review the diff above (and .refresh-cache/reconcile-report.md on a pricing run).\n" +
       "  2. Re-baseline any goldens a price move shifted; bump sw.js CACHE if a region was pruned.\n" +
-      "  3. git add js/ and commit WITH a CHANGELOG version-map row + annotated tag.\n" +
+      "  3. git add src/providers/ and commit WITH a CHANGELOG version-map row + annotated tag.\n" +
       "  4. Open the PR against main.\n",
   );
 }

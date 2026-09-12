@@ -1,4 +1,4 @@
-// Filter presets verification (js/base/presets.js):
+// Filter presets verification (src/features/presets.js):
 //   - capturePresetConfig snapshots the live controls into a JSON-safe object
 //   - applyPresetConfig restores that snapshot (incl. clearing + re-checking
 //     the dynamic per-provider filter checkboxes, and mutating selectedProviders
@@ -131,9 +131,9 @@ const ctx = vm.createContext(sandbox);
 const run = (expr) => vm.runInContext(expr, ctx, { filename: "presets-test" });
 
 vm.runInContext(
-  fs.readFileSync(path.join(REPO, "js/base/presets.js"), "utf8"),
+  fs.readFileSync(path.join(REPO, "src/features/presets.js"), "utf8"),
   ctx,
-  { filename: "js/base/presets.js" },
+  { filename: "src/features/presets.js" },
 );
 
 // Build the fake control surface from presets.js's constants so a newly
@@ -382,7 +382,7 @@ makeEl({ id: "presetDeleteBtn", textContent: "Delete" });
 check(
   "presets.js no longer calls window.prompt/window.confirm",
   !/window\.(prompt|confirm)\(/.test(
-    fs.readFileSync(path.join(REPO, "js/base/presets.js"), "utf8"),
+    fs.readFileSync(path.join(REPO, "src/features/presets.js"), "utf8"),
   ),
 );
 

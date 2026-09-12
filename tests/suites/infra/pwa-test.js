@@ -26,10 +26,14 @@ function check(name, cond, detail) {
 
 // ── manifest.json ───────────────────────────────────────────────────────────
 const manifest = JSON.parse(
-  fs.readFileSync(path.join(REPO, "manifest.json"), "utf8"),
+  fs.readFileSync(path.join(REPO, "public", "manifest.json"), "utf8"),
 );
 check("manifest has a name", !!manifest.name);
-check("manifest start_url is a page", manifest.start_url === "index.html");
+check("manifest start_url is a page", manifest.start_url === "../index.html");
+// start_url and scope resolve relative to the MANIFEST's own URL
+// (public/manifest.json), not the page — "../" is what keeps both pointing
+// at repo root, not public/.
+check("manifest scope is repo root", manifest.scope === "../");
 check(
   "manifest is standalone (installable)",
   manifest.display === "standalone",
@@ -46,7 +50,9 @@ check(
       manifest.icons.find(
         (i) => i.type === "image/svg+xml" && /maskable/.test(i.purpose || ""),
       );
-    return !!icon && fs.existsSync(path.join(REPO, icon.src));
+    // icon.src resolves relative to the manifest's own directory (public/),
+    // same reasoning as start_url/scope above.
+    return !!icon && fs.existsSync(path.join(REPO, "public", icon.src));
   })(),
 );
 
@@ -70,14 +76,14 @@ const serverFiles = new Set(
     "multicloud.html",
     "app-portfolio.html",
     "user-guide.html",
-    "css/theme.css",
-    "css/style.css",
-    "css/index_style.css",
-    "css/portfolio.css",
+    "styles/theme.css",
+    "styles/style.css",
+    "styles/index_style.css",
+    "styles/portfolio.css",
     "js/pwa-register.js",
-    "manifest.json",
-    "icon.svg",
-    "js/aws/regions/us_east_1.js", // a lazily-loaded region file
+    "public/manifest.json",
+    "public/icon.svg",
+    "src/providers/aws/regions/us_east_1.js", // a lazily-loaded region file
   ].map(absKey),
 );
 const makeRes = (url, ok) => ({
@@ -200,8 +206,8 @@ process.exitCode = 1;
     "install precaches the app shell",
     v1 &&
       v1.has(absKey("aws.html")) &&
-      v1.has(absKey("css/style.css")) &&
-      v1.has(absKey("icon.svg")),
+      v1.has(absKey("styles/style.css")) &&
+      v1.has(absKey("public/icon.svg")),
     v1 ? [...v1.keys()].join(",") : "no cache",
   );
 
@@ -231,7 +237,7 @@ process.exitCode = 1;
   );
 
   // fetch uncached same-origin GET (online) → network + runtime cache it
-  const e4 = makeEvent(req("js/aws/regions/us_east_1.js"));
+  const e4 = makeEvent(req("src/providers/aws/regions/us_east_1.js"));
   handlers.fetch(e4);
   const r4 = await e4.getResponse();
   await Promise.all(e4.waits);
@@ -243,7 +249,7 @@ process.exitCode = 1;
     "runtime-caches the fetched region file",
     cachesStore
       .get(CACHE_NAME)
-      .has("https://x.test/js/aws/regions/us_east_1.js"),
+      .has("https://x.test/src/providers/aws/regions/us_east_1.js"),
   );
 
   // offline + uncached navigation → cached shell fallback
@@ -268,7 +274,7 @@ process.exitCode = 1;
   );
 
   // offline + uncached non-navigation → error response (not a wrong page)
-  const e6 = makeEvent(req("js/gcp/regions/never.js"));
+  const e6 = makeEvent(req("src/providers/gcp/regions/never.js"));
   handlers.fetch(e6);
   const r6 = await e6.getResponse();
   await Promise.allSettled(e6.waits);

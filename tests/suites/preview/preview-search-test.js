@@ -750,7 +750,16 @@ function check(name, cond, detail) {
   // ALL THREE (alert/confirm/prompt) are banned: banning only alert() let a
   // confirm() survive the 3.5 migration until 3.7.
   const scanTargets = [];
-  for (const dir of ["js/base", "js/aws", "js/azure", "js/gcp"]) {
+  for (const dir of [
+    "src/core/engine",
+    "src/core/rules",
+    "src/features",
+    "src/ui",
+    "src/shared",
+    "src/providers/aws",
+    "src/providers/azure",
+    "src/providers/gcp",
+  ]) {
     for (const file of fs.readdirSync(path.join(REPO, dir))) {
       if (file.endsWith(".js") && !file.endsWith("-data.js")) {
         scanTargets.push({

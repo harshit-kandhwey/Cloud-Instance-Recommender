@@ -15,7 +15,7 @@
 const { buildEngineContext } = require("../harness");
 
 const { ctx, run } = buildEngineContext({
-  scripts: ["js/base/rule-engine.js"],
+  scripts: ["src/core/rules/rule-engine.js"],
   label: "compliance-options",
 });
 
@@ -174,6 +174,28 @@ console.log("[Confidential Computing: Azure's dc*/ec* family match]");
   );
 }
 
+console.log(
+  "[Confidential Computing: GCP's per-series match (v3.16.15 — was a total no-op before)]",
+);
+{
+  ctx.pool = [
+    inst({ instanceType: "c2d-vm", family: "c2d" }),
+    inst({ instanceType: "n2d-vm", family: "n2d" }),
+    inst({ instanceType: "c3d-vm", family: "c3d" }),
+    inst({ instanceType: "c4d-vm", family: "c4d" }),
+    inst({ instanceType: "c3-vm", family: "c3" }),
+    inst({ instanceType: "n2-vm", family: "n2" }),
+  ];
+  const res = apply(ctx.pool, "Confidential Computing", "gcp");
+  const types = res.instances.map((i) => i.instanceType).sort();
+  check(
+    "GCP Confidential Computing keeps only the confirmed-eligible series (C2D/N2D/C3D/C4D/C3), not n2",
+    JSON.stringify(types) ===
+      JSON.stringify(["c2d-vm", "n2d-vm", "c3d-vm", "c4d-vm", "c3-vm"].sort()),
+    JSON.stringify(types),
+  );
+}
+
 console.log("[Min Gen: c4d ranks with c4 (generation 4), not as generation 1]");
 {
   // Found by CodeRabbit (3.16 tail round 3): c4d was added as confidential-capable
@@ -197,28 +219,6 @@ console.log("[Min Gen: c4d ranks with c4 (generation 4), not as generation 1]");
     types.includes("c4d-vm") &&
       types.includes("c4-vm") &&
       !types.includes("n2-vm"),
-    JSON.stringify(types),
-  );
-}
-
-console.log(
-  "[Confidential Computing: GCP's per-series match (v3.16.15 — was a total no-op before)]",
-);
-{
-  ctx.pool = [
-    inst({ instanceType: "c2d-vm", family: "c2d" }),
-    inst({ instanceType: "n2d-vm", family: "n2d" }),
-    inst({ instanceType: "c3d-vm", family: "c3d" }),
-    inst({ instanceType: "c4d-vm", family: "c4d" }),
-    inst({ instanceType: "c3-vm", family: "c3" }),
-    inst({ instanceType: "n2-vm", family: "n2" }),
-  ];
-  const res = apply(ctx.pool, "Confidential Computing", "gcp");
-  const types = res.instances.map((i) => i.instanceType).sort();
-  check(
-    "GCP Confidential Computing keeps only the confirmed-eligible series (C2D/N2D/C3D/C4D/C3), not n2",
-    JSON.stringify(types) ===
-      JSON.stringify(["c2d-vm", "n2d-vm", "c3d-vm", "c4d-vm", "c3-vm"].sort()),
     JSON.stringify(types),
   );
 }

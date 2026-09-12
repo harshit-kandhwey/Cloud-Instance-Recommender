@@ -1,6 +1,6 @@
-// refresh-local suite: pins tools/refresh-local.js's pure plan — the pipeline order
+// refresh-local suite: pins scripts/data/refresh-local.js's pure plan — the pipeline order
 // (each step consumes what the one before it produced, and split-data runs LAST because
-// it is the only step that writes the shipped js/ tree both diffs read as the OLD side),
+// it is the only step that writes the shipped src/providers/ tree both diffs read as the OLD side),
 // that --specs-only drops the official fetch + reconcile, the .env parser, and the
 // required-key gate. The order IS the reason this tool exists, so it is guarded RED.
 const fs = require("fs");
@@ -11,7 +11,7 @@ const {
   skipNotice,
   parseEnv,
   missingKeys,
-} = require("../../../tools/refresh-local");
+} = require("../../../scripts/data/refresh-local");
 
 const { check, state } = makeChecker();
 
@@ -46,7 +46,7 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
   );
 
   // Guard B (plant-RED: put split-data before data-diff): the diff and the flip check both
-  // read the shipped js/ tree as the OLD side, and split-data is the one step that rewrites
+  // read the shipped src/providers/ tree as the OLD side, and split-data is the one step that rewrites
   // it, so both must come first — reconcile between vantage and diff so the diff sees
   // reconciled prices; recommendation-diff after data-diff and before split.
   check(
@@ -196,9 +196,9 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
   };
 
   for (const rel of [
-    "tools/refresh-local.js",
+    "scripts/data/refresh-local.js",
     ".github/workflows/data-refresh.yml",
-    "docs/DATA-SOURCES.md",
+    "docs/data/DATA-SOURCES.md",
   ]) {
     const chain = chainOf(rel);
     const missing = chainSteps.filter((n) => !chain.includes(n));

@@ -1,4 +1,4 @@
-// GPU / accelerator workload support (js/base/rule-engine.js).
+// GPU / accelerator workload support (src/core/rules/rule-engine.js).
 //
 // Two directions, and the second is the one that matters in practice:
 //   1. An ML/AI row must land on an accelerator.
@@ -192,7 +192,7 @@ console.log(
 );
 (async () => {
   try {
-    const g = buildContext({ dataScript: "js/gcp/gcp-data.js" });
+    const g = buildContext({ dataScript: "src/providers/gcp/gcp-data.js" });
     g.ctx.__rows = [
       {
         "VM Name": "a",

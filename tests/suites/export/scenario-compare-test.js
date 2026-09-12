@@ -1,4 +1,4 @@
-// Scenario comparison verification (js/base/scenario-compare.js):
+// Scenario comparison verification (src/features/scenario-compare.js):
 //   - diffScenarios pairs rows by VM Name (order-independent), falling back to
 //     index when names are absent/duplicated
 //   - detects changed recommendation cells and counts newly-matched /
@@ -32,8 +32,8 @@ const load = (rel) =>
 const run = (expr) =>
   vm.runInContext(expr, ctx, { filename: "scenario-compare-test" });
 
-load("js/base/app-core.js");
-load("js/base/scenario-compare.js");
+load("src/shared/app-core.js");
+load("src/features/scenario-compare.js");
 
 let failures = 0;
 function check(name, cond, detail) {

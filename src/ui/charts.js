@@ -1,7 +1,7 @@
 // Results charts. No charting library by policy (dependency-free, no CDN); CSP
 // would permit a vendored one. Rendered into #resultsChartsSection by
 // renderResultsCharts(); tolerates a missing placeholder (no charts, no throw).
-// Colours are theme tokens chosen per theme against its surface (css/theme.css);
+// Colours are theme tokens chosen per theme against its surface (styles/theme.css);
 // mark colours never double as label colours.
 
 // ─── Match rate ───────────────────────────────────────────────────────────────

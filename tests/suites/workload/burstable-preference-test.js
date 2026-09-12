@@ -1,5 +1,5 @@
 // BP — burstable preference for Dev/Test at low utilization
-// (js/base/rule-engine.js), the inverse of rule 1a.
+// (src/core/rules/rule-engine.js), the inverse of rule 1a.
 //
 // 1a keeps burstable families OUT of Production/Staging. This rule prefers
 // them for a Dev/Test box that idles, which is exactly what a credit-based

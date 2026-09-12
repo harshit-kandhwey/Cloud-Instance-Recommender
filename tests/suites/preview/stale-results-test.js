@@ -175,7 +175,10 @@ console.log("[data replaced WHILE the run is in flight]");
   const fs = require("fs");
   const path = require("path");
   const { REPO } = require("../harness");
-  const src = fs.readFileSync(path.join(REPO, "js/base/generate.js"), "utf8");
+  const src = fs.readFileSync(
+    path.join(REPO, "src/core/engine/generate.js"),
+    "utf8",
+  );
   const snapshot = src.indexOf("const ingestTokenForRun = window._ingestToken");
   const awaited = src.indexOf("await runRecommendationBatch");
   const recorded = src.indexOf(

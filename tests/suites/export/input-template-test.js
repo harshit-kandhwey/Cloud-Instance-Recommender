@@ -35,8 +35,8 @@ const run = (expr) =>
   vm.runInContext(expr, ctx, { filename: "input-template-test" });
 
 // The engine (for RECOGNIZED), the template builders, then the vendored writer.
-load("js/base/rule-engine.js");
-load("js/base/xlsx-export.js");
+load("src/core/rules/rule-engine.js");
+load("src/features/xlsx-export.js");
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -58,7 +58,7 @@ console.log("[the template columns stay in step with the sample CSV]");
   // Pull downloadSampleCSV's header line straight from the source, so a column
   // added to one and not the other is caught rather than silently diverging.
   const ingestSrc = fs.readFileSync(
-    path.join(REPO, "js/base/ingest.js"),
+    path.join(REPO, "src/features/ingest.js"),
     "utf8",
   );
   const headerLine = (ingestSrc.match(/const csvContent = `([^\n]*)/) || [])[1];

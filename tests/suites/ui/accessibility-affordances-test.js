@@ -140,7 +140,7 @@ check(
 );
 // Stub's getElementById auto-creates, so the creation branch can't run here —
 // verify the toast attributes at source level instead
-const src = read("js/base/app-core.js");
+const src = read("src/shared/app-core.js");
 check(
   "toast sets role=status + aria-live in source",
   /toast\.setAttribute\("role", "status"\)/.test(src) &&
@@ -210,8 +210,8 @@ for (const f of [
 }
 check(
   "theme.css has :focus-visible + .skip-link",
-  read("css/theme.css").includes(":focus-visible") &&
-    read("css/theme.css").includes(".skip-link"),
+  read("styles/theme.css").includes(":focus-visible") &&
+    read("styles/theme.css").includes(".skip-link"),
 );
 check(
   "user-guide has :focus-visible",
@@ -224,7 +224,7 @@ check(
 // and back-to-top is bottom-left — put it bottom-right and a toast hides it.
 console.log("[floating controls]");
 {
-  const shell = read("js/base/ui-shell.js");
+  const shell = read("src/ui/ui-shell.js");
   // Bound the slice to this function: running to end-of-file would drag in
   // unrelated code and could fail (or pass) for reasons that have nothing to do
   // with the button

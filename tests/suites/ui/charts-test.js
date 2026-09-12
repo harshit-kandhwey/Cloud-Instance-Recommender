@@ -431,7 +431,7 @@ console.log("[nothing to draw is drawn as nothing]");
 
 console.log("[no library, no literal colours]");
 {
-  const src = fs.readFileSync(path.join(REPO, "js/base/charts.js"), "utf8");
+  const src = fs.readFileSync(path.join(REPO, "src/ui/charts.js"), "utf8");
   // Staying dependency-free is a policy, so it needs a guard: `script-src 'self'`
   // would happily load a vendored library by injected script (SheetJS already
   // arrives that way), and `connect-src 'none'` only blocks network connections.

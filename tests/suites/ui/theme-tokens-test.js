@@ -16,7 +16,7 @@ const read = (f) => fs.readFileSync(path.join(REPO, f), "utf8");
 
 console.log("[token coverage]");
 {
-  const themeCss = read("css/theme.css");
+  const themeCss = read("styles/theme.css");
   const defined = new Set(
     [...themeCss.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((m) => m[1]),
   );
@@ -27,17 +27,17 @@ console.log("[token coverage]");
   );
 
   const filesSharedTokens = [
-    "css/style.css",
-    "css/index_style.css",
-    "js/base/app-core.js",
-    "js/base/ui-shell.js",
-    "js/base/ingest.js",
-    "js/base/manual-entry.js",
-    "js/base/form-controls.js",
-    "js/base/generate.js",
-    "js/base/preview.js",
-    "js/base/charts.js",
-    "js/base/downloads.js",
+    "styles/style.css",
+    "styles/index_style.css",
+    "src/shared/app-core.js",
+    "src/ui/ui-shell.js",
+    "src/features/ingest.js",
+    "src/features/manual-entry.js",
+    "src/ui/form-controls.js",
+    "src/core/engine/generate.js",
+    "src/features/preview.js",
+    "src/ui/charts.js",
+    "src/features/downloads.js",
     "aws.html",
     "azure.html",
     "gcp.html",
@@ -117,10 +117,10 @@ console.log("[page wiring]");
     const c = read(f);
     check(
       `${f}: theme.css linked before page css`,
-      c.indexOf("css/theme.css") !== -1 &&
-        c.indexOf("css/theme.css") <
+      c.indexOf("styles/theme.css") !== -1 &&
+        c.indexOf("styles/theme.css") <
           c.indexOf(
-            f === "index.html" ? "css/index_style.css" : "css/style.css",
+            f === "index.html" ? "styles/index_style.css" : "styles/style.css",
           ),
     );
     check(
