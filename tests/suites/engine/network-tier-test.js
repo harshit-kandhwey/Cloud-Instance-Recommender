@@ -276,6 +276,42 @@ console.log(
   );
 }
 
+console.log(
+  "[Rule 1d, AWS: when NOTHING clears the network-tier floor, burst never resorts the pool]",
+);
+{
+  // Found by CodeRabbit (3.16 tail round 3): the burst sort used to run
+  // unconditionally on `filtered` whenever provider === "aws", even when
+  // `net.length === 0` left `filtered` as the untouched, floor-missing pool —
+  // silently reordering a price tie on a rule that reported nothing (no "1d:
+  // Network-tier preference" line at all). Both instances are BELOW the
+  // network-tier floor (baseline < 1 Gbps) — 1d does not apply.
+  ctx.belowFloorLowBurst = inst({
+    instanceType: "below-floor-low-burst",
+    price: 0.3,
+    originalData: { baselineBandwidthGbps: 0.5, burstBandwidthGbps: 2 },
+  });
+  ctx.belowFloorHighBurst = inst({
+    instanceType: "below-floor-high-burst",
+    price: 0.3,
+    originalData: { baselineBandwidthGbps: 0.5, burstBandwidthGbps: 10 },
+  });
+  ctx.belowFloorPool = [ctx.belowFloorLowBurst, ctx.belowFloorHighBurst];
+  const res = run(
+    "RuleEngine.apply(belowFloorPool, { rowEnv: 'production', rowWorkload: 'database' }, 'aws')",
+  );
+  check(
+    "1d did not apply (no rule line) — pool order is untouched, not resorted by burst",
+    !res.rules.some((r) => r.includes("Network-tier")) &&
+      res.instances[0].instanceType === "below-floor-low-burst" &&
+      res.instances[1].instanceType === "below-floor-high-burst",
+    JSON.stringify({
+      rules: res.rules,
+      order: res.instances.map((i) => i.instanceType),
+    }),
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exitCode = 1;

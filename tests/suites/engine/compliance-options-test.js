@@ -174,6 +174,33 @@ console.log("[Confidential Computing: Azure's dc*/ec* family match]");
   );
 }
 
+console.log("[Min Gen: c4d ranks with c4 (generation 4), not as generation 1]");
+{
+  // Found by CodeRabbit (3.16 tail round 3): c4d was added as confidential-capable
+  // (v3.16.16) but GCP_GEN_ORDER had no c4d entry, so generationRank/meetsMinGeneration
+  // fell back to `?? 1` — a row combining Confidential Computing with a Min Gen floor of
+  // n4 (rank 4) would have its only confidential-eligible newest-gen candidate filtered
+  // out by the MinGen rule, as if c4d were as old as n1/e2. Needs a genuine rank-4
+  // control (c4) in the pool: with only c4d present, the MinGen filter's own "never empty
+  // the pool" guard (see rule-engine.js) would mask the bug by keeping c4d anyway.
+  ctx.pool = [
+    inst({ instanceType: "c4d-vm", family: "c4d" }),
+    inst({ instanceType: "c4-vm", family: "c4" }),
+    inst({ instanceType: "n2-vm", family: "n2" }),
+  ];
+  const res = run(
+    `RuleEngine.apply(${JSON.stringify(ctx.pool)}, { rowMinGen: "n4" }, "gcp")`,
+  );
+  const types = res.instances.map((i) => i.instanceType);
+  check(
+    "MinGen n4 keeps c4d alongside c4 (both generation 4), drops n2",
+    types.includes("c4d-vm") &&
+      types.includes("c4-vm") &&
+      !types.includes("n2-vm"),
+    JSON.stringify(types),
+  );
+}
+
 console.log(
   "[Confidential Computing: GCP's per-series match (v3.16.15 — was a total no-op before)]",
 );
