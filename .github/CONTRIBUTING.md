@@ -165,7 +165,7 @@ That is the quick loop, **not** the full bar. Eight commands across six CI jobs 
 
 ## Versioning and Releases
 
-Versions live only in [CHANGELOG.md](../CHANGELOG.md) and git tags — never in the pages, the README, or `package.json`. Every commit gets a version, a changelog row, and an annotated tag; releases are published per minor line, from a dedicated `release/<minor>` branch. [docs/operations/RELEASING.md](../docs/operations/RELEASING.md) is the full process, opening a minor through publishing it.
+Versions live only in [CHANGELOG.md](../CHANGELOG.md) and git tags — never in the pages, the README, or `package.json`. Every non-generated commit gets a version, a changelog row, and an annotated tag; a scheduled data-refresh commit follows the exception under "Updating Instance Data" above instead. Releases are published per minor line, from a dedicated `release/<minor>` branch. [docs/operations/RELEASING.md](../docs/operations/RELEASING.md) is the full process, opening a minor through publishing it.
 
 ## Pull Request Guidelines
 

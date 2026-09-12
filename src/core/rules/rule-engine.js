@@ -276,7 +276,16 @@ const RuleEngine = (() => {
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean)
       .forEach((t) => {
-        (COMPLIANCE_ALIASES[t] || [t]).forEach((a) => tokens.add(a));
+        // Own-property check: COMPLIANCE_ALIASES is a plain object literal, so an
+        // untrusted t of "constructor"/"toString"/etc. would otherwise resolve to
+        // an inherited Object.prototype function instead of falling through to [t].
+        const expanded = Object.prototype.hasOwnProperty.call(
+          COMPLIANCE_ALIASES,
+          t,
+        )
+          ? COMPLIANCE_ALIASES[t]
+          : [t];
+        expanded.forEach((a) => tokens.add(a));
       });
     return tokens;
   }

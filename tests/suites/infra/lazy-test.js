@@ -142,6 +142,30 @@ process.exitCode = 1;
     );
   }
 
+  // Regression: getAllAvailableRegionKeys() must derive straight from the
+  // manifest, not intersect with the hardcoded awsRegions list above it — a
+  // refresh-added region the hardcoded list hasn't caught up with must still
+  // be offered for pre-warm, not silently dropped until someone hand-edits it.
+  console.log(
+    "[aws: a manifest region NOT in the hardcoded list is still offered]",
+  );
+  {
+    const originalKeys = ctx.window.AWS_REGION_KEYS.slice();
+    // A fabricated region key, deliberately absent from this.awsRegions (the
+    // hardcoded list at the top of this class) — models a real refresh-added
+    // region the hardcoded list hasn't caught up with yet.
+    ctx.window.AWS_REGION_KEYS = [...originalKeys, "xx_newregion_9"];
+    const offeredNow = aws
+      .getAllAvailableRegionKeys()
+      .map((r) => aws.normalizeRegionForJS(r));
+    check(
+      "a brand-new manifest region is offered even before the hardcoded list is updated",
+      offeredNow.includes("xx_newregion_9"),
+      JSON.stringify(offeredNow.slice(-3)),
+    );
+    ctx.window.AWS_REGION_KEYS = originalKeys; // restore for later checks
+  }
+
   console.log("[lazy inject: known regions]");
   check("us_east_1 not on window before load", ctx.us_east_1 === undefined);
   await aws.loadInstanceData(new Set(["us-east-1"]));

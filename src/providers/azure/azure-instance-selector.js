@@ -13,9 +13,6 @@ function azureSeriesParts(instanceType) {
   // v1/v2 names embed the "S" in the pre-vCPU letters (DS1_v2), not as a
   // lowercase flag after the digits — strip it from the base the same way,
   // or "Standard_DS1_v2" itself never matches the "Standard_DS" filter.
-  // v1/v2 names embed the "S" in the pre-vCPU letters (DS1_v2), not as a
-  // lowercase flag after the digits — strip it from the base the same way,
-  // or "Standard_DS1_v2" itself never matches the "Standard_DS" filter.
   const embeddedStorageFlag = /s$/i.test(m[1]);
   return {
     base: (embeddedStorageFlag ? m[1].slice(0, -1) : m[1]).toUpperCase(),
@@ -415,7 +412,7 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
   // Azure-specific: Get VM series from instance type
   getVMSeries(instanceType) {
-    // Standard_D2s_v3 -> Dsv3
+    // Standard_D2s_v3 -> "D" (match stops at the first digit)
     const match = instanceType.match(/^Standard_([A-Z]+[a-z]*)/);
     return match ? match[1] : "";
   }

@@ -338,6 +338,31 @@ console.log("[a before→after endpoint pair reconstructs the reported delta]");
   );
 }
 
+console.log(
+  "[fractional endpoints: independent rounding must not break the invariant]",
+);
+{
+  // 8.05 and 4.04 are chosen so 1-decimal rounding EACH endpoint independently
+  // disagrees with rounding their unrounded difference — the exact shape of
+  // the bug this pins. Round(8.05)=8.1, round(4.04)=4.0, so the true rounded
+  // delta must be 8.1-4.0=4.1, NOT round(8.05-4.04)=round(4.01)=4.0.
+  const { ctx } = buildContext();
+  const savings = ctx.computeSizingSavings([
+    baRow("a", { l2lCpu: 8.05, l2lMem: 8.05, optCpu: 4.04, optMem: 4.04 }),
+  ]);
+  const s = savings[0];
+  check(
+    "beforeVcpus − afterVcpus still equals the reported vcpus delta at fractional inputs",
+    Math.abs(s.beforeVcpus - s.afterVcpus - s.vcpus) < 1e-9,
+    JSON.stringify(s),
+  );
+  check(
+    "beforeMemory − afterMemory still equals the reported memory delta at fractional inputs",
+    Math.abs(s.beforeMemory - s.afterMemory - s.memory) < 1e-9,
+    JSON.stringify(s),
+  );
+}
+
 console.log("[an axis that did not move is not drawn as equal bars]");
 {
   // vCPU is identical before and after; only memory changed. The vCPU chart

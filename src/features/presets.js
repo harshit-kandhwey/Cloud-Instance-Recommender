@@ -204,7 +204,22 @@ function migrateLegacyMinGen(texts) {
   const map = Object.prototype.hasOwnProperty.call(LEGACY_MIN_GEN, legacy)
     ? LEGACY_MIN_GEN[legacy]
     : null;
-  if (!map) return texts;
+  // An unrecognized legacy value must still clear the three native keys, the
+  // same as the empty-legacy branch above — returning texts unchanged here
+  // leaves ruleDefaultMinGen (an id gone on multicloud) as the only signal,
+  // so nothing gets written and the controls silently keep a stale generation.
+  if (!map) {
+    if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = "";
+    if (!savedNative("ruleDefaultMinGenAzure")) out.ruleDefaultMinGenAzure = "";
+    if (!savedNative("ruleDefaultMinGenGcp")) out.ruleDefaultMinGenGcp = "";
+    if (typeof showToast === "function") {
+      showToast(
+        `Preset used an unrecognised shared Min Gen (${legacy}); any unset per-provider values were cleared — set them and re-save.`,
+        "warning",
+      );
+    }
+    return out;
+  }
   if (!savedNative("ruleDefaultMinGenAws")) out.ruleDefaultMinGenAws = map.aws;
   if (!savedNative("ruleDefaultMinGenAzure"))
     out.ruleDefaultMinGenAzure = map.azure;

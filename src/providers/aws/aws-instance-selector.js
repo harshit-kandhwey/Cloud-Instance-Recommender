@@ -679,10 +679,10 @@ class AWSInstanceSelector extends BaseInstanceSelector {
   getAllAvailableRegionKeys() {
     if (!window.AWS_DATA_READY) return [];
     if (Array.isArray(window.AWS_REGION_KEYS)) {
-      const known = new Set(
-        window.AWS_REGION_KEYS.map((k) => k.replace(/_/g, "-")),
-      );
-      return this.awsRegions.filter((region) => known.has(region));
+      // Derive directly from the manifest rather than intersecting with the
+      // hardcoded awsRegions list above — that list is a second copy that
+      // silently drops any region a data refresh adds until hand-edited.
+      return window.AWS_REGION_KEYS.map((k) => k.replace(/_/g, "-"));
     }
     return this.awsRegions.filter((region) => {
       const key = this.normalizeRegionForJS(region);

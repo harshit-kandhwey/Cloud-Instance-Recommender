@@ -749,6 +749,68 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
     JSON.stringify(toasts),
   );
 
+  // Regression: an UNRECOGNISED legacy value (not 5/6/7 — outside LEGACY_MIN_GEN
+  // entirely) must clear the three native selects the same as the empty-legacy
+  // branch, not silently leave them at whatever they showed before. Seed stale
+  // values first so a no-op would be caught.
+  [
+    "ruleDefaultMinGenAws",
+    "ruleDefaultMinGenAzure",
+    "ruleDefaultMinGenGcp",
+  ].forEach((id) => {
+    els[id].value = "stale";
+  });
+  toasts.length = 0;
+  sandbox.__cfg = { texts: { ruleDefaultMinGen: "9" } }; // not in LEGACY_MIN_GEN
+  run("applyPresetConfig(__cfg)");
+  check(
+    "an unrecognised legacy value clears all three native Min Gen selects",
+    els.ruleDefaultMinGenAws.value === "" &&
+      els.ruleDefaultMinGenAzure.value === "" &&
+      els.ruleDefaultMinGenGcp.value === "",
+    JSON.stringify({
+      aws: els.ruleDefaultMinGenAws.value,
+      azure: els.ruleDefaultMinGenAzure.value,
+      gcp: els.ruleDefaultMinGenGcp.value,
+    }),
+  );
+  check(
+    "the unrecognised value is surfaced as a warning naming only UNSET values as cleared",
+    toasts.length === 1 &&
+      toasts[0].kind === "warning" &&
+      /any unset per-provider values were cleared/.test(toasts[0].msg),
+    JSON.stringify(toasts),
+  );
+
+  // Regression (2nd CodeRabbit pass on this same fix): if the preset ALSO
+  // carried an explicit native value alongside the unrecognised legacy one,
+  // that native value must survive untouched — the toast's wording ("any
+  // UNSET per-provider values were cleared") must actually be true, not just
+  // sound careful.
+  [
+    "ruleDefaultMinGenAws",
+    "ruleDefaultMinGenAzure",
+    "ruleDefaultMinGenGcp",
+  ].forEach((id) => {
+    els[id].value = "";
+  });
+  toasts.length = 0;
+  sandbox.__cfg = {
+    texts: { ruleDefaultMinGen: "9", ruleDefaultMinGenAws: "6" },
+  };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "an explicit native value survives an unrecognised legacy value; only the unset ones clear",
+    els.ruleDefaultMinGenAws.value === "6" &&
+      els.ruleDefaultMinGenAzure.value === "" &&
+      els.ruleDefaultMinGenGcp.value === "",
+    JSON.stringify({
+      aws: els.ruleDefaultMinGenAws.value,
+      azure: els.ruleDefaultMinGenAzure.value,
+      gcp: els.ruleDefaultMinGenGcp.value,
+    }),
+  );
+
   // Regression: legacy 6 must ACTIVELY clear a prior GCP selection, not retain
   // whatever the control happened to show. applyLegacy zeroes the controls
   // first, so it can't catch this — seed a stale value and confirm it's blanked.

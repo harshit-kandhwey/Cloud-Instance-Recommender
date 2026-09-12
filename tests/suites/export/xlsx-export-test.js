@@ -10,6 +10,7 @@ const vm = require("vm");
 
 const REPO = path.resolve(__dirname, "..", "..", "..");
 
+const toasts = [];
 const sandbox = {
   console: { log: () => {}, warn: () => {}, error: () => {} },
   setTimeout,
@@ -19,6 +20,7 @@ const sandbox = {
     head: { appendChild: () => {} },
     getElementById: () => null,
   },
+  showToast: (msg, kind) => toasts.push({ msg, kind }),
 };
 sandbox.window = sandbox;
 const ctx = vm.createContext(sandbox);
@@ -86,6 +88,26 @@ check(
   run("JSON.stringify(resultsCellType(Infinity))") ===
     '{"t":"s","v":"Infinity"}',
   run("JSON.stringify(resultsCellType(Infinity))"),
+);
+check(
+  "cell type: zero-padded integer stays text — a leading zero is an identifier, not a number",
+  ct("0001") === '{"t":"s","v":"0001"}',
+  ct("0001"),
+);
+check(
+  "cell type: bare zero is still a number",
+  ct("0") === '{"t":"n","v":0}',
+  ct("0"),
+);
+check(
+  "cell type: a decimal below one (0.5) is still a number, not mistaken for zero-padded",
+  ct("0.5") === '{"t":"n","v":0.5}',
+  ct("0.5"),
+);
+check(
+  "cell type: zero-padded decimal (00.5) stays text",
+  ct("00.5") === '{"t":"s","v":"00.5"}',
+  ct("00.5"),
 );
 
 // ── Sheet model ─────────────────────────────────────────────────────────────
@@ -238,6 +260,19 @@ check(
   run(
     '__wb2.Sheets["Workload Based"]["D2"] && __wb2.Sheets["Workload Based"]["D2"].v',
   ),
+);
+
+// ── downloadResultsXlsx: the null guard matches downloads.js/scenario-compare.js ──
+// A stale flow can leave processedResults explicitly null (not just undefined);
+// the original guard only tested `.length`, which throws on null instead of
+// toasting.
+toasts.length = 0;
+run("processedResults = null;");
+run("downloadResultsXlsx();");
+check(
+  "a null processedResults toasts instead of throwing",
+  toasts.length === 1 && /No results to download/.test(toasts[0].msg),
+  JSON.stringify(toasts),
 );
 
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout

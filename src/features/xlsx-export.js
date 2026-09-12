@@ -36,7 +36,9 @@ function resultsCellType(v) {
   if (typeof v === "number")
     return Number.isFinite(v) ? { t: "n", v } : { t: "s", v: String(v) };
   const s = String(v);
-  if (/^-?\d{1,15}(\.\d+)?$/.test(s)) return { t: "n", v: Number(s) };
+  // Reject zero-padded integers ("0001") — they're identifiers, not numbers.
+  if (/^-?(0|0\.\d+|[1-9]\d{0,14}(\.\d+)?)$/.test(s))
+    return { t: "n", v: Number(s) };
   return { t: "s", v: s };
 }
 
@@ -202,7 +204,11 @@ function ensureResultsXlsx() {
 }
 
 function downloadResultsXlsx() {
-  if (typeof processedResults === "undefined" || !processedResults.length) {
+  if (
+    typeof processedResults === "undefined" ||
+    !processedResults ||
+    !processedResults.length
+  ) {
     showToast(
       "No results to download. Please generate recommendations first.",
       "warning",

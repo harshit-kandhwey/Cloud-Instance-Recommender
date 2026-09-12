@@ -210,6 +210,43 @@ console.log("[mergeImportedUserRules dedups by meaning and re-ids]");
   );
 }
 
+console.log(
+  "[mergeImportedUserRules treats token order as irrelevant to meaning]",
+);
+{
+  // Same dimension/action/equals, tokens in a DIFFERENT order — must still
+  // dedupe as the same rule, since the token SET is what matters, not order.
+  const existing = [
+    {
+      id: "existing-1",
+      dimension: "compliance",
+      equals: "aws",
+      action: "includeOnly",
+      tokens: ["r5", "r6"],
+    },
+  ];
+  const imported = [
+    {
+      id: "imported-1",
+      dimension: "compliance",
+      equals: "aws",
+      action: "includeOnly",
+      tokens: ["r6", "r5"],
+    },
+  ]
+    .map(ctx.normalizeUserRule)
+    .filter(Boolean);
+  const { merged, added, skipped } = ctx.mergeImportedUserRules(
+    existing,
+    imported,
+  );
+  check(
+    "a reordered-but-equivalent token set is recognised as a duplicate",
+    added === 0 && skipped === 1 && merged.length === 1,
+    JSON.stringify({ added, skipped, len: merged.length }),
+  );
+}
+
 console.log("[import round-trips through storage and re-renders the panel]");
 {
   ctx.saveUserRules([]);

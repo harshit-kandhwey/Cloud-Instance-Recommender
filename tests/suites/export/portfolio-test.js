@@ -635,4 +635,35 @@ check(
   run("__evil"),
 );
 
+console.log(
+  "[the Unassigned panel's App CSV button carries a well-formed onclick]",
+);
+{
+  // idx is "unassigned" (a string) for the Unassigned panel, a number for a
+  // real app. JSON.stringify("unassigned") is double-quoted, which used to
+  // break out of the onclick attribute's own double quotes.
+  run("__unassignedHtml = renderAppPanel(__m.unassigned, __m, 'unassigned');");
+  check(
+    "the button calls downloadAppCsv('unassigned') with single quotes, not a broken attribute",
+    run("__unassignedHtml.includes(\"downloadAppCsv('unassigned')\")"),
+    run("__unassignedHtml").match(/onclick="[^"]*"/)?.[0],
+  );
+  check(
+    "the title attribute right after it is intact, not swallowed by a broken onclick",
+    run(
+      "__unassignedHtml.includes('title=\"Download this application\\'s VM rows as CSV\"')",
+    ),
+  );
+
+  // A real app's numeric idx must still be passed as a bare number, unquoted.
+  run("__billingIdx = __m.apps.findIndex((a) => a.app === 'Billing');");
+  run("__billingHtml = renderAppPanel(__billing, __m, __billingIdx);");
+  const billingIdx = run("__billingIdx");
+  check(
+    "a numeric app index is emitted as a bare number",
+    run(`__billingHtml.includes("downloadAppCsv(${billingIdx})")`),
+    run("__billingHtml").match(/onclick="[^"]*"/)?.[0],
+  );
+}
+
 process.exitCode = failures ? 1 : 0;

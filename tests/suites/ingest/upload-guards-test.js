@@ -355,6 +355,30 @@ const AOA = [
     );
   }
 
+  // A page missing #fileStatus (a panel absence, per coding.md §8) must not
+  // throw and strand csvData already set before showFileStatistics and the
+  // rest of applyIngest's tail ever run.
+  console.log(
+    "[a page with no #fileStatus does not throw, and later steps still run]",
+  );
+  {
+    const noStatus = buildContext({ missingElements: ["fileStatus"] });
+    await noStatus.ctx.ingestFile({
+      name: "ok.csv",
+      size: 10,
+      text: async () => "VM Name,CPU Count,Memory (GB)\na,4,16",
+    });
+    check(
+      "#fileStatus is genuinely absent in this context",
+      noStatus.ctx.document.getElementById("fileStatus") === null,
+    );
+    check(
+      "showFileStatistics still ran (a later step, past the unguarded write)",
+      noStatus.elements.fileStatsSection.innerHTML.includes("Total Rows: 1"),
+      noStatus.elements.fileStatsSection.innerHTML,
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
   // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = failures ? 1 : 0;

@@ -852,11 +852,14 @@ function renderAppTableBody() {
   const apps = sortApps(
     portfolioFilterApps(portfolioModel.apps, overviewState),
   );
+  // Filter/sort return the same app objects, reordered — look up each one's
+  // original index from a map built once rather than an indexOf per row.
+  const indexOfApp = new Map(portfolioModel.apps.map((a, idx) => [a, idx]));
 
   tbody.innerHTML =
     apps
       .map((a) => {
-        const i = portfolioModel.apps.indexOf(a);
+        const i = indexOfApp.get(a);
         const open = overviewState.expanded.has(i);
         const regionCell = a.regions.length
           ? a.multiRegion
@@ -1036,7 +1039,9 @@ function renderAppPanel(a, m, idx) {
 
   return `<div class="pf-app-head">
       <h3 style="margin:0;color:var(--heading-indigo)">${esc(title)}</h3>
-      <button class="btn btn-secondary pf-mini-btn" onclick="downloadAppCsv(${JSON.stringify(idx)})" title="Download this application's VM rows as CSV">⬇️ App CSV</button>
+      <button class="btn btn-secondary pf-mini-btn" onclick="downloadAppCsv(${
+        typeof idx === "number" ? idx : `'${esc(idx)}'`
+      })" title="Download this application's VM rows as CSV">⬇️ App CSV</button>
     </div>
     ${kpis}${mixes}<div class="pf-blocks">${blocks}</div>${renderVmTable(a, m)}`;
 }

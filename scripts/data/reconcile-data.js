@@ -123,6 +123,7 @@ function reconcileProvider(name, byRegion, official) {
     unverifiedPrices: [], // "type@region" with no official price at all
     specConflicts: [], // { type, region, field, vantage, official }
     specsUnverified: cfg.spec.length === 0, // whole provider: no official spec source
+    nonFiniteOfficialSpecs: [], // "type@region.field" — official value was NaN, Vantage's kept
   };
 
   for (const [rk, types] of Object.entries(byRegion)) {
@@ -143,6 +144,13 @@ function reconcileProvider(name, byRegion, official) {
       }
       for (const f of cfg.spec) {
         if (o[f] === undefined || o[f] === null) continue;
+        // A numeric official spec that arrived NaN (unparseable/missing bulk
+        // attribute) must not be taken: emitValue refuses it later and aborts
+        // the whole re-emit, discarding every price correction already applied.
+        if (typeof o[f] === "number" && !Number.isFinite(o[f])) {
+          report.nonFiniteOfficialSpecs.push(`${type}@${rk}.${f}`);
+          continue;
+        }
         if (isSpecConflict(f, rec[f], o[f])) {
           report.specConflicts.push({
             type,
@@ -161,6 +169,7 @@ function reconcileProvider(name, byRegion, official) {
   }
 
   report.unverifiedPrices.sort();
+  report.nonFiniteOfficialSpecs.sort();
   report.specConflicts.sort(
     (a, b) =>
       (a.type < b.type ? -1 : a.type > b.type ? 1 : 0) ||
@@ -204,13 +213,23 @@ function renderProviderReport(r) {
         (n > 8 ? ` — e.g. ${sample}, …` : `: ${sample}`),
     );
   }
+  if (r.nonFiniteOfficialSpecs.length) {
+    const n = r.nonFiniteOfficialSpecs.length;
+    const sample = r.nonFiniteOfficialSpecs.slice(0, 8).join(", ");
+    L.push(
+      `- ⚠ ${n} official spec value(s) were non-numeric (NaN), Vantage kept, UNVERIFIED` +
+        (n > 8 ? ` — e.g. ${sample}, …` : `: ${sample}`),
+    );
+  }
   return L.join("\n");
 }
 
 // First line is a machine-readable sentinel: CONFLICTS if any provider disagreed on a
 // spec (a reviewer must look), else CLEAN.
 function renderReport(reports) {
-  const anyConflict = reports.some((r) => r.specConflicts.length);
+  const anyConflict = reports.some(
+    (r) => r.specConflicts.length || r.nonFiniteOfficialSpecs.length,
+  );
   const L = [
     `<!-- reconcile: ${anyConflict ? "CONFLICTS" : "CLEAN"} -->`,
     "## Official-source reconciliation",

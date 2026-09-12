@@ -292,6 +292,24 @@ console.log("[Unrecognised tokens are silently ignored by apply() itself]");
   );
 }
 
+console.log(
+  "[A Compliance cell shaped like an Object.prototype key does not crash apply()]",
+);
+{
+  // COMPLIANCE_ALIASES is a plain object literal, so an untrusted token of
+  // "constructor" resolves to the inherited Object function unless the lookup
+  // is an own-property check — that function is truthy, so `.forEach` would be
+  // called on it and throw, turning the whole row into an Error instead of a
+  // recommendation.
+  ctx.pool = [inst({ instanceType: "x", generation: 0 })];
+  const res = apply(ctx.pool, "constructor", "aws");
+  check(
+    'a Compliance cell of "constructor" is treated as an unrecognised token, not a crash',
+    res.instances.length === 1,
+    JSON.stringify(res),
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exitCode = 1;

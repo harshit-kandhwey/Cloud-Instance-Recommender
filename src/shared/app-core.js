@@ -862,14 +862,20 @@ function computeSizingSavings(results) {
 
     if (rows > 0 && (vcpus !== 0 || memory !== 0)) {
       const round = (n) => Math.round(n * 10) / 10;
+      // Round endpoints first, then derive the delta from them — rounding
+      // vcpus/memory independently can disagree with beforeX - afterX by 0.1.
+      const bv = round(beforeVcpus);
+      const av = round(afterVcpus);
+      const bm = round(beforeMemory);
+      const am = round(afterMemory);
       savings.push({
         provider,
-        vcpus: round(vcpus),
-        memory: round(memory),
-        beforeVcpus: round(beforeVcpus),
-        afterVcpus: round(afterVcpus),
-        beforeMemory: round(beforeMemory),
-        afterMemory: round(afterMemory),
+        vcpus: round(bv - av),
+        memory: round(bm - am),
+        beforeVcpus: bv,
+        afterVcpus: av,
+        beforeMemory: bm,
+        afterMemory: am,
         rows,
         baseline: againstLikeForLike ? "like-for-like" : "current size",
       });

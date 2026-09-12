@@ -1571,7 +1571,16 @@ function applyIngest(headers, rows, mapping, units = {}) {
     : "";
   const editBtn = ` <button onclick="editColumnMapping()" title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
   const okLabel = window._ingestLabel || "File loaded successfully";
-  if (missingColumns.length > 0) {
+  // Guarded like every other status write in this file (showUploadError, the
+  // reader error handler, showColumnMappingPanel) — a page missing #fileStatus
+  // must not throw here and strand csvData already set before the later steps run.
+  if (!fileStatus) {
+    if (missingColumns.length > 0) {
+      console.warn("Missing required columns:", missingColumns);
+    } else {
+      console.log("File validation successful");
+    }
+  } else if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
     fileStatus.innerHTML = `⚠️ Missing required columns: ${missingColumns
       .map(escapeHtml)
@@ -1584,7 +1593,7 @@ function applyIngest(headers, rows, mapping, units = {}) {
     fileStatus.innerHTML = `✅ ${okLabel}: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}${sizeNote}${editBtn}`;
     console.log("File validation successful");
   }
-  fileStatus.classList.remove("hidden");
+  if (fileStatus) fileStatus.classList.remove("hidden");
 
   // Show file statistics
   showFileStatistics();

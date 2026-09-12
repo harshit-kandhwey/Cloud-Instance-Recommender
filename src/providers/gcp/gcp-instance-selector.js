@@ -386,9 +386,12 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 
   // GCP-specific: Get machine type category
   getMachineTypeCategory(instanceType) {
-    if (instanceType.includes("standard")) return "standard";
+    // Specific categories before the generic one: z3-highmem-*-standardlssd
+    // names contain "standard" as a substring of their storage suffix, so
+    // testing it first would miscategorize every highmem/highcpu shape.
     if (instanceType.includes("highmem")) return "highmem";
     if (instanceType.includes("highcpu")) return "highcpu";
+    if (instanceType.includes("standard")) return "standard";
     if (instanceType.includes("micro") || instanceType.includes("small"))
       return "shared-core";
     return "standard";

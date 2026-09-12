@@ -101,6 +101,56 @@ const { check, state } = makeChecker();
   );
 }
 
+// ── AWS: a NaN official spec (unparseable/missing bulk attribute) is skipped,
+// not taken — emitValue would otherwise refuse it downstream and abort the
+// whole re-emit, discarding every price correction already applied ──────────
+{
+  const byRegion = {
+    us_east1: {
+      "m5.large": {
+        instanceFamily: "m5",
+        vCpus: 2,
+        memorySizeInGiB: 8,
+        onDemandLinuxHr: 0.096,
+        onDemandWindowsHr: 0.188,
+      },
+    },
+  };
+  const official = {
+    us_east1: {
+      "m5.large": {
+        instanceFamily: "m5",
+        vCpus: NaN, // e.g. Number.parseInt() on an unparseable bulk attribute
+        memorySizeInGiB: 8, // agrees with Vantage — isolates the NaN field alone
+        onDemandLinuxHr: 0.1,
+        onDemandWindowsHr: 0.19,
+      },
+    },
+  };
+  const { byRegion: out, report } = reconcileProvider(
+    "aws",
+    byRegion,
+    official,
+  );
+
+  check(
+    "NaN official vCpus is skipped: Vantage's value survives, not overwritten with NaN",
+    out.us_east1["m5.large"].vCpus === 2 &&
+      !Number.isNaN(out.us_east1["m5.large"].vCpus),
+    JSON.stringify(out.us_east1["m5.large"]),
+  );
+  check(
+    "NaN official spec is reported, not silently dropped",
+    report.nonFiniteOfficialSpecs.join(",") === "m5.large@us_east1.vCpus" &&
+      report.specConflicts.length === 0,
+    JSON.stringify(report),
+  );
+  check(
+    "the sibling finite spec field (memorySizeInGiB) is untouched, no conflict",
+    out.us_east1["m5.large"].memorySizeInGiB === 8,
+  );
+}
+
 // ── GCP: pricing-only → prices win, specs untouched + provider-level UNVERIFIED ───
 {
   const byRegion = {
@@ -172,6 +222,7 @@ const { check, state } = makeChecker();
       unverifiedPrices: [],
       specConflicts: [],
       specsUnverified: true,
+      nonFiniteOfficialSpecs: [],
     },
   ]);
   const conflicted = renderReport([
@@ -191,12 +242,32 @@ const { check, state } = makeChecker();
         },
       ],
       specsUnverified: false,
+      nonFiniteOfficialSpecs: [],
+    },
+  ]);
+  // A NaN official spec is reported the same as a disagreement (a reviewer
+  // must look), even though nothing landed in specConflicts.
+  const nonFinite = renderReport([
+    {
+      provider: "aws",
+      typesVerified: 1,
+      priceFieldsUpdated: 1,
+      specFieldsUpdated: 0,
+      unverifiedPrices: [],
+      specConflicts: [],
+      specsUnverified: false,
+      nonFiniteOfficialSpecs: ["m5.large@us_east1.vCpus"],
     },
   ]);
   check(
     "sentinel: CLEAN with no conflicts, CONFLICTS when a spec disagreed",
     clean.startsWith("<!-- reconcile: CLEAN -->") &&
       conflicted.startsWith("<!-- reconcile: CONFLICTS -->"),
+  );
+  check(
+    "sentinel: CONFLICTS when an official spec was non-finite, and the row is named",
+    nonFinite.startsWith("<!-- reconcile: CONFLICTS -->") &&
+      nonFinite.includes("m5.large@us_east1.vCpus"),
   );
 }
 

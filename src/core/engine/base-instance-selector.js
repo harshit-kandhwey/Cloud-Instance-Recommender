@@ -695,8 +695,10 @@ class BaseInstanceSelector {
     // the same tie-break Rule 1d's own filtering already uses.
     let bestNetwork = null;
     if (RE && (provider === "aws" || provider === "azure")) {
-      const networkPool = windowed.length ? windowed : pool;
-      const networkCapable = networkPool.filter((i) =>
+      // No fallback to the full pool here (unlike genPool above): an empty
+      // fit window means leave bestNetwork null, not recommend an oversized
+      // instance just because it happens to carry the network-tier signal.
+      const networkCapable = windowed.filter((i) =>
         RE.hasNetworkTier(i, provider),
       );
       if (networkCapable.length) {
@@ -1100,7 +1102,12 @@ class BaseInstanceSelector {
       // "undefined" in the exported CSV.
       familyName: "",
       // Same shape as a matched result: no alternatives for an unmatched row.
-      alternatives: { cost: null, workload: null, newestGen: null },
+      alternatives: {
+        cost: null,
+        workload: null,
+        newestGen: null,
+        bestNetwork: null,
+      },
       rulesApplied: (this._lastRulesApplied || []).join(" | "),
       reason: reason,
     };

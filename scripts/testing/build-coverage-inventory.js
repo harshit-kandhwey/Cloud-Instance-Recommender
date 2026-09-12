@@ -19,8 +19,8 @@
 // — a partial run can't produce a trustworthy inventory or gate.
 //
 // Scope note, deliberate and documented under "What is NOT covered": the surface
-// walk below reads js/ ONLY. Nothing under scripts/ is counted, so this gate makes
-// no claim at all about build-tool coverage.
+// walk below reads src/ plus js/pwa-register.js ONLY. Nothing under scripts/ is
+// counted, so this gate makes no claim at all about build-tool coverage.
 "use strict";
 const fs = require("fs");
 const os = require("os");

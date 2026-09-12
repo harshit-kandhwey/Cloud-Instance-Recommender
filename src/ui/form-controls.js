@@ -380,7 +380,7 @@ function checkRuleConflicts() {
     const el = document.getElementById(id);
     if (el) {
       el.style.border = "1.5px solid var(--border-slate)";
-      el.style.background = "white";
+      el.style.background = "var(--surface)";
     }
   });
   conflictIds.forEach((id) => {

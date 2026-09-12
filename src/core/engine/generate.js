@@ -509,6 +509,9 @@ async function collectRegionDataForWorker(providers, rows) {
       entries = { [def]: resolveRegion(provider, def) };
     }
 
+    // Not guaranteed to exist here: buildDerivedSpecs only creates it in
+    // cloud-to-cloud mode, and this path also runs for an ordinary run.
+    window._prewarmedSelectors = window._prewarmedSelectors || {};
     const selector =
       window._prewarmedSelectors[provider] ||
       InstanceSelectorFactory.createSelector(provider);

@@ -382,6 +382,31 @@ console.log("[an empty or unloaded selector answers null, never throws]");
     );
   }
 
+  // buildDerivedSpecs only creates window._prewarmedSelectors in cloud-to-cloud
+  // mode — an ordinary run against a page that never pre-warms must not throw
+  // reading it here (found by CodeRabbit: only this call site lacked the guard
+  // the other two already have).
+  console.log(
+    "[collectRegionDataForWorker does not throw when _prewarmedSelectors was never created]",
+  );
+  {
+    const { ctx: c } = buildContext();
+    delete c.window._prewarmedSelectors; // model an ordinary, non-cloud-to-cloud run
+    c.window._regionValidation = null;
+    const rowsForRun = [{ "AWS Region": "us-east-1" }];
+    let threw = false;
+    try {
+      await c.collectRegionDataForWorker(["aws"], rowsForRun);
+    } catch {
+      threw = true;
+    }
+    check("no throw, and a selector gets cached for reuse", !threw);
+    check(
+      "the selector is now cached on window._prewarmedSelectors for a later phase to reuse",
+      !!(c.window._prewarmedSelectors && c.window._prewarmedSelectors.aws),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
   // pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = state.failures ? 1 : 0;

@@ -366,6 +366,12 @@ nav a.active {
   animation: bounce 2s infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .download-icon {
+    animation: none;
+  }
+}
+
 @keyframes bounce {
   0%,
   20%,

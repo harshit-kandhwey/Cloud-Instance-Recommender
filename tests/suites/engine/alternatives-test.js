@@ -32,7 +32,7 @@ check(
     rank({ instanceType: "n2-standard-4", family: "n2" }, "gcp") >
       rank({ instanceType: "e2-standard-4", family: "e2" }, "gcp"),
 );
-// Real (type, family) pairs from src/providers/azure/regions/ — the families here used to
+// Real (type, family) pairs from js/azure/regions/ — the families here used to
 // be invented ("d", "nv"), which is not what the parser meets in production.
 // The version is read from the FAMILY, since the type alone cannot be parsed:
 // nv72adsv5 needs its trailing v5, but nv24's trailing "v24" is its vCPU count.
@@ -153,6 +153,32 @@ check(
 check(
   "never the sub-floor instance, even though it's cheapest overall",
   netPick?.instanceType !== "t3.small",
+);
+
+console.log(
+  "[Best Network stays null when NOTHING is inside the fit window, rather than falling back to the full pool]",
+);
+ctx.awsAllOversizedPool = [
+  // Grossly oversized for a 2-vCPU/4-GiB request (fails isWorkloadFit both
+  // ways) — no originalData, so hasNetworkTier's dormant fallback (vCpus>=4)
+  // is true. Genuinely network-capable per that fallback, but outside the fit
+  // window entirely: bestNetwork must NOT recommend it just because the
+  // window came up empty.
+  {
+    instanceType: "m5.4xlarge",
+    family: "m5",
+    vCpus: 16,
+    memory: 64,
+    price: 0.5,
+  },
+];
+run(
+  "altOversized = selAws.computeAlternatives(awsAllOversizedPool, 2, 4, {});",
+);
+check(
+  "bestNetwork is null, not the oversized instance, when the fit window is empty",
+  run("altOversized.bestNetwork") === null,
+  run("JSON.stringify(altOversized.bestNetwork)"),
 );
 
 console.log(

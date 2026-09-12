@@ -164,7 +164,10 @@ function mergeImportedUserRules(existing, imported) {
       r.dimension,
       r.action,
       r.equals.toLowerCase(),
-      r.tokens.map((t) => t.toLowerCase()).join(","),
+      r.tokens
+        .map((t) => t.toLowerCase())
+        .sort()
+        .join(","),
     ].join("|");
   const seen = new Set((existing || []).map(keyOf));
   const merged = (existing || []).slice();
