@@ -15,8 +15,8 @@ const {
   unmappedAzureAmdFamilies,
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
-} = require("../../../scripts/data/fetch-vantage");
-const { loadCommittedRegions } = require("../../../scripts/lib/record-schema");
+} = require("../../../tools/fetch-vantage");
+const { loadCommittedRegions } = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 

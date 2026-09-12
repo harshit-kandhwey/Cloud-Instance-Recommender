@@ -20,12 +20,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { REPO, buildEngineContext, makeChecker } = require("../harness");
-const { loadGlobals } = require("../../../scripts/lib/build-env");
+const { loadGlobals } = require("../../../tools/lib/build-env");
 const {
   loadCommittedRegions,
   specFields,
   SERVICE,
-} = require("../../../scripts/lib/record-schema");
+} = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 
@@ -346,7 +346,7 @@ for (const { name, prefix } of PROVIDERS) {
 // nothing compared the two. Cheap to re-derive (family + isARM live on each record), so
 // any future refresh that lands data the current table disagrees with fails here.
 {
-  const { azureProcessor } = require("../../../scripts/data/fetch-vantage.js");
+  const { azureProcessor } = require("../../../tools/fetch-vantage.js");
   // Through the shared loader: `family`, `isARM` and `processorArchitecture` are
   // all SPECS and live in the manifest, so a private walk would compare undefined
   // against undefined and pass while proving nothing.

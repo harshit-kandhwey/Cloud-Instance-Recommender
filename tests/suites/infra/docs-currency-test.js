@@ -7,7 +7,7 @@
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
-const { planSteps } = require("../../../scripts/data/refresh-local");
+const { planSteps } = require("../../../tools/refresh-local");
 
 const { check, state } = makeChecker();
 

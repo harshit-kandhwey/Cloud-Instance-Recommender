@@ -11,7 +11,7 @@ const {
   skipNotice,
   parseEnv,
   missingKeys,
-} = require("../../../scripts/data/refresh-local");
+} = require("../../../tools/refresh-local");
 
 const { check, state } = makeChecker();
 

@@ -14,7 +14,7 @@ const {
   renderReport,
   selectScenarios,
   SINGLE_PROVIDERS,
-} = require("../../../scripts/data/recommendation-diff");
+} = require("../../../tools/recommendation-diff");
 const { SCENARIOS } = require("../../golden/golden-run");
 
 const { check, state } = makeChecker();

@@ -12,7 +12,7 @@ const {
   keyToRegionCode,
   regionCodeToKey,
   resolveRegionKeys,
-} = require("../../../scripts/data/fetch-official-aws");
+} = require("../../../tools/fetch-official-aws");
 
 const { check, state } = makeChecker();
 

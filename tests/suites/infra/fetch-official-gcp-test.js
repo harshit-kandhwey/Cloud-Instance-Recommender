@@ -22,7 +22,7 @@ const {
   LOCAL_SSD_GENERIC,
   UNVERIFIED_TYPES,
   HOURS_PER_MONTH,
-} = require("../../../scripts/data/fetch-official-gcp");
+} = require("../../../tools/fetch-official-gcp");
 
 const { check, state } = makeChecker();
 

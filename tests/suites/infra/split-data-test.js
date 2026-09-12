@@ -21,9 +21,9 @@ const {
   splitProvider,
   verifyRoundTrip,
   SERVICE,
-} = require("../../../scripts/data/split-data");
-const { monolithPath } = require("../../../scripts/lib/build-env");
-const { specFields, priceFields } = require("../../../scripts/lib/record-schema");
+} = require("../../../tools/split-data");
+const { monolithPath } = require("../../../tools/lib/build-env");
+const { specFields, priceFields } = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 

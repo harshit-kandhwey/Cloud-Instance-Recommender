@@ -11,7 +11,7 @@ const {
   isSpotOrLowPriority,
   azureFilter,
   resolveRegionKeys,
-} = require("../../../scripts/data/fetch-official-azure");
+} = require("../../../tools/fetch-official-azure");
 
 const { check, state } = makeChecker();
 

@@ -11,8 +11,8 @@ const {
   renderProvider,
   renderUnpriced,
   regionsFromMonolith,
-} = require("../../../scripts/data/data-diff");
-const { buildMonolith } = require("../../../scripts/data/fetch-vantage");
+} = require("../../../tools/data-diff");
+const { buildMonolith } = require("../../../tools/fetch-vantage");
 
 const { check, state } = makeChecker();
 

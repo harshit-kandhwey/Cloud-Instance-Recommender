@@ -10,7 +10,7 @@ const {
   resolveDataDate,
   writeFileAtomic,
   monolithPath,
-} = require("../../../scripts/lib/build-env");
+} = require("../../../tools/lib/build-env");
 
 const { check, state } = makeChecker();
 

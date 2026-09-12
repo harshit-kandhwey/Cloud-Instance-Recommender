@@ -17,7 +17,7 @@ const {
   priceFields,
   emitValue,
   emitRecordBody,
-} = require("../../../scripts/lib/record-schema");
+} = require("../../../tools/lib/record-schema");
 
 const { check, state } = makeChecker();
 
