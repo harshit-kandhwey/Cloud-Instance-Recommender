@@ -133,7 +133,7 @@ Use this for a standing preference the built-in Rule Engine doesn't express — 
 
 ### 🎛️ Alternative recommendations (per row)
 
-Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries four labeled alternatives per provider — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
+Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries up to four labeled alternatives per provider (three on GCP — Best Network has no signal there) — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
 
 - **Most Cost Optimized** — the cheapest instance that still meets the requirement, ignoring the workload family.
 - **Workload Based** — the cheapest instance in the workload-appropriate family (e.g. memory-optimized for Cache/Database), even if it over-provisions; blank when there's no workload or no member exists in the preferred family.

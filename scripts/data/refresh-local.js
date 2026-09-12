@@ -16,13 +16,13 @@
  *     -> recommendation-diff -> split-data
  *
  * Each step consumes what the one before it produced. Only split-data writes into the
- * shipped js/ tree; everything upstream reads it and writes to .refresh-cache/. That
+ * shipped src/providers/ tree; everything upstream reads it and writes to .refresh-cache/. That
  * is what lets both diffs read the OLD data — including the specs, which live in the
  * shipped manifest — while the NEW data sits in the scratch monolith beside it.
  *
  * Keys come from the environment; a gitignored .env is loaded first if present
  * (values never printed). This script does NOT touch git: it leaves the regenerated
- * js/ tree, writes the diff + reconcile reports under the gitignored .refresh-cache/,
+ * src/providers/ tree, writes the diff + reconcile reports under the gitignored .refresh-cache/,
  * echoes the diff, and then tells you to review, commit with a CHANGELOG row + tag,
  * and open the PR. Build tool only; never shipped.
  */
@@ -42,7 +42,7 @@ const CACHE = path.join(ROOT, ".refresh-cache");
 // ── Pure plan ────────────────────────────────────────────────────────────────
 
 // The ordered pipeline for a run. Split is last: it is the only step that writes the
-// shipped js/ tree, which both diffs read as the OLD side, so the diffs must precede
+// shipped src/providers/ tree, which both diffs read as the OLD side, so the diffs must precede
 // it. Reconcile and the official fetch only exist on a pricing run. Pure so the order
 // — the whole point of this tool — is unit-testable without spawning anything.
 function planSteps({ pricing, date }) {
