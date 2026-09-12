@@ -364,6 +364,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 
   // azure
   const type = raw.instance_type;
+  if (!type) return out; // no type key → nothing to split, nothing to emit
   const family = raw.family || "";
   const isARM = (raw.arch || []).some((a) => /arm64|arm/i.test(a)) ? 1 : 0;
   const base = {

@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 62 | 264 | 326 |
-| Waived | 24 | 0 | 24 |
-| Uncovered | 0 | 115 | 115 |
-| **Total** | 86 | 379 | 465 |
+| Covered | 63 | 268 | 331 |
+| Waived | 26 | 0 | 26 |
+| Uncovered | 0 | 111 | 111 |
+| **Total** | 89 | 379 | 468 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -47,6 +47,7 @@ waiver still records the reason.
 | `_manualEditIndex` | src/features/manual-entry.js | window | internal | uncovered | — |
 | `_manualRegionDefaults` | src/features/manual-entry.js | window | internal | uncovered | — |
 | `_matchRateMeter` | src/ui/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
+| `_matchRatePct` | src/ui/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
 | `_matchUserRules` | src/core/rules/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js |
 | `_memoryUnitAcknowledged` | src/features/ingest.js | window | internal | uncovered | — |
 | `_newRuleId` | src/core/rules/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
@@ -71,7 +72,7 @@ waiver still records the reason.
 | `_regionValidation` | src/shared/app-core.js | window | internal | uncovered | — |
 | `_relaxSuggestion` | src/features/preview.js | window | internal | uncovered | — |
 | `_renderPreviewTable` | src/features/preview.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/rightsize-verdict-test.js, preview/workload-shape-test.js, ui/accessibility-affordances-test.js |
-| `_reportHeadline` | src/ui/charts.js | function | internal | covered | export/report-test.js |
+| `_reportHeadline` | src/ui/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
 | `_rerenderPreview` | src/features/preview.js | function | internal | covered | preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, ui/accessibility-affordances-test.js |
 | `_resultsIngestToken` | src/core/engine/generate.js | window | internal | uncovered | — |
 | `_resultsProviders` | src/core/engine/generate.js | window | internal | uncovered | — |
@@ -104,11 +105,13 @@ waiver still records the reason.
 | `ariaSortFor` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `armPresetButton` | src/features/presets.js | function | internal | covered | ui/presets-test.js |
 | `autoMatchHeaders` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/app-mapping-test.js |
+| `azureMatchesVmFamily` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
+| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
 | `buildAboutSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildAppCsv` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `buildAppSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildDerivedSpecs` | src/core/engine/generate.js | function | internal | covered | engine/cloud-to-cloud-test.js |
-| `buildExecutiveReport` | src/ui/charts.js | function+window | internal | covered | export/report-test.js |
+| `buildExecutiveReport` | src/ui/charts.js | function+window | internal | covered | export/report-test.js, ui/charts-test.js |
 | `buildInputTemplateAllowedValues` | src/features/xlsx-export.js | function | internal | covered | export/input-template-test.js |
 | `buildInputTemplateWorkbook` | src/features/xlsx-export.js | function | internal | covered | export/input-template-test.js |
 | `buildPortfolioModel` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
@@ -131,7 +134,7 @@ waiver still records the reason.
 | `classifyEolOs` | src/features/ingest.js | function | internal | covered | ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, preview/stale-results-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `classifyWorkloadShape` | src/shared/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, export/portfolio-test.js, export/xlsx-structural-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/rightsize-verdict-test.js, preview/workload-shape-test.js |
 | `clearScenarios` | src/features/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
-| `collectRegionDataForWorker` | src/core/engine/generate.js | function | internal | covered | engine/watchdog-test.js |
+| `collectRegionDataForWorker` | src/core/engine/generate.js | function | internal | covered | engine/cloud-to-cloud-test.js, engine/watchdog-test.js |
 | `compareScenarios` | src/features/scenario-compare.js | function | behavioral | waived | _waived: Guard (>= 2 pinned runs) then renderScenarioComparison. The comparison CSV builders are covered by scenario-compare-test.js; this adds only the guard + DOM render. Its browser residual is now VERIFIED end-to-end by tests/e2e/scenario-comparison.spec.js (the Compare button re-rendering the comparison after two real pins, which runs outside this V8-instrumented node run)._ |
 | `complianceTags` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `computeAppStats` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
@@ -214,8 +217,8 @@ waiver still records the reason.
 | `getFamilyNameDescription` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
 | `getGCPCostOptimizationTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPExcludeTypeDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPFamilyAdvancedDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPFamilyDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
+| `getGCPFamilyAdvancedDescription` | src/providers/gcp/gcp-specific.js | function | internal | covered | engine/family-column-test.js |
+| `getGCPFamilyDescription` | src/providers/gcp/gcp-specific.js | function | internal | covered | engine/family-column-test.js |
 | `getGCPMachineTypeDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPPerformanceOptimizationTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPPricingTier` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
@@ -254,9 +257,9 @@ waiver still records the reason.
 | `ingestFile` | src/features/ingest.js | function | internal | covered | ingest/sheet-picker-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js |
 | `ingestPastedData` | src/features/ingest.js | function | behavioral | covered | ingest/paste-test.js, preview/stale-results-test.js |
 | `ingestRows` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `initFilterPresets` | src/features/presets.js | function | internal | uncovered | — |
-| `initPortfolioHandoff` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
-| `initUserRulesUi` | src/ui/user-rules-ui.js | function | internal | uncovered | — |
+| `initFilterPresets` | src/features/presets.js | function | behavioral | waived | _waived: DOMContentLoaded boot wrapper, one line delegating to renderPresetsBar (covered by ui/presets-test.js). Surfaced by the build-coverage-inventory.js addEventListener regex fix (CodeRabbit: the old lowercase-only pattern never matched "DOMContentLoaded", so this name was silently miscounted as internal until now). No computed output of its own; browser residual (the real page-load firing) deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
+| `initPortfolioHandoff` | src/features/portfolio.js | function | behavioral | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
+| `initUserRulesUi` | src/ui/user-rules-ui.js | function | behavioral | waived | _waived: DOMContentLoaded boot wrapper, one line delegating to renderUserRulesPanel (covered by ui/user-rules-ui-test.js). Surfaced by the same addEventListener regex fix as initFilterPresets, same reasoning. No computed output of its own; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `initializeAWSFilters` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
 | `initializeAllProviderFilters` | src/ui/ui-shell.js | function | internal | uncovered | — |
 | `initializeAzureExcludeTypes` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |

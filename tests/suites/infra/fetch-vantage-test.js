@@ -638,6 +638,34 @@ function splitDataParity(monolith) {
       }
     })(),
   );
+  // Found by CodeRabbit: the AWS/GCP branches got this guard, Azure did not —
+  // a record with no instance_type shipped a record literally keyed "undefined".
+  // A real region+price is supplied so the loop that pushes into `out`
+  // actually runs — an empty `pricing` object (like the aws/gcp checks above
+  // use) never reaches the push at all, which would pass with or without the
+  // guard and prove nothing.
+  check(
+    "azure: a record with no instance_type is skipped, not thrown",
+    (() => {
+      try {
+        return (
+          instanceRegionRecords(
+            "azure",
+            {
+              vcpu: 4,
+              memory: 16,
+              regions: { "us-east": "East US" },
+              pricing: { "us-east": { linux: { ondemand: 0.1 } } },
+            },
+            new Set(["eastus"]),
+            null,
+          ).length === 0
+        );
+      } catch {
+        return false;
+      }
+    })(),
+  );
 }
 
 if (state.failures) {

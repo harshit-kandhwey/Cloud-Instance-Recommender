@@ -126,7 +126,7 @@ for (const m of allJsSrc.matchAll(
 }
 // 3. addEventListener(evt, NAME)
 for (const m of allJsSrc.matchAll(
-  /addEventListener\(\s*["'][a-z]+["']\s*,\s*([A-Za-z_$][\w$]*)/g,
+  /addEventListener\(\s*["'][^"']+["']\s*,\s*([A-Za-z_$][\w$]*)/g,
 )) {
   markBehavioral(m[1], "event-listener");
 }
