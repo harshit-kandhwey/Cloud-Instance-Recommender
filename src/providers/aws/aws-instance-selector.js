@@ -690,13 +690,19 @@ class AWSInstanceSelector extends BaseInstanceSelector {
     });
   }
 
+  // Delegates to RuleEngine.isFlagTrue (the wider, canonical value set — it
+  // accepts the string "1" too) so this file isn't a second, narrower copy of
+  // that parsing; falls back to the old literal test only if RuleEngine isn't
+  // loaded in this context (e.g. a test harness without it).
+  _flagTrue(v) {
+    return typeof RuleEngine !== "undefined"
+      ? RuleEngine.isFlagTrue(v)
+      : v === 1 || v === "1" || v === "1.0";
+  }
+
   // AWS-specific: Enhanced Graviton detection
   isGravitonInstance(instance) {
-    return (
-      instance.isGraviton === 1 ||
-      instance.isGraviton === "1.0" ||
-      instance.isGraviton === true
-    );
+    return instance.isGraviton === true || this._flagTrue(instance.isGraviton);
   }
 
   // AWS-specific: Create standardized instance with AWS-specific fields
@@ -731,8 +737,7 @@ class AWSInstanceSelector extends BaseInstanceSelector {
 
     result.processor = processorDisplay;
     result.isGraviton = this.isGravitonInstance(instance);
-    result.nitroSupport =
-      instance.nitroSupport === 1 || instance.nitroSupport === "1.0";
+    result.nitroSupport = this._flagTrue(instance.nitroSupport);
 
     return result;
   }
@@ -752,13 +757,9 @@ class AWSInstanceSelector extends BaseInstanceSelector {
 
     // AWS-specific: Legacy Graviton filtering (backwards compatibility)
     if (options.excludeGraviton) {
-      filteredInstances = filteredInstances.filter((instance) => {
-        if (this.isGravitonInstance(instance)) {
-          console.log(`Excluding Graviton: ${instance.instanceType}`);
-          return false;
-        }
-        return true;
-      });
+      filteredInstances = filteredInstances.filter(
+        (instance) => !this.isGravitonInstance(instance),
+      );
     }
 
     // AWS-specific: Main Families Filter
@@ -766,18 +767,11 @@ class AWSInstanceSelector extends BaseInstanceSelector {
       options.restrictMainFamilies &&
       options.selectedMainFamilies?.length > 0
     ) {
-      filteredInstances = filteredInstances.filter((instance) => {
-        const instanceMainFamily = this.getMainInstanceFamily(
-          instance.instanceType,
-        );
-        if (!options.selectedMainFamilies.includes(instanceMainFamily)) {
-          console.log(
-            `Filtering out main family: ${instance.instanceType} (mainFamily=${instanceMainFamily})`,
-          );
-          return false;
-        }
-        return true;
-      });
+      filteredInstances = filteredInstances.filter((instance) =>
+        options.selectedMainFamilies.includes(
+          this.getMainInstanceFamily(instance.instanceType),
+        ),
+      );
     }
 
     return filteredInstances;
@@ -790,8 +784,8 @@ class AWSInstanceSelector extends BaseInstanceSelector {
     const gravitonCount = instances.filter((i) =>
       this.isGravitonInstance(i),
     ).length;
-    const nitroCount = instances.filter(
-      (i) => i.nitroSupport === 1 || i.nitroSupport === "1.0",
+    const nitroCount = instances.filter((i) =>
+      this._flagTrue(i.nitroSupport),
     ).length;
 
     console.log(`  - Graviton: ${gravitonCount} instances`);
@@ -845,7 +839,7 @@ class AWSInstanceSelector extends BaseInstanceSelector {
         }
 
         // Nitro instances
-        if (instance.nitroSupport === 1 || instance.nitroSupport === "1.0") {
+        if (this._flagTrue(instance.nitroSupport)) {
           stats.nitroInstances++;
         }
       });

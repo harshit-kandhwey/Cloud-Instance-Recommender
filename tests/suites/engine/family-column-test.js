@@ -332,6 +332,102 @@ const OPTIONS = {
     );
   }
 
+  console.log(
+    "[Azure VM Family filter matches both v1/v2 and v3+ naming for *S families]",
+  );
+  {
+    const ctx = buildRun();
+    const matches = (type, filter) =>
+      vm.runInContext(
+        `azureMatchesVmFamily(${JSON.stringify(type)}, ${JSON.stringify(filter)})`,
+        ctx,
+      );
+    // Found by CodeRabbit round 1: a plain prefix test never matched v3+ names
+    // (Standard_D2s_v3), since the "s" moved after the vCPU count. Found by
+    // CodeRabbit round 2: the FIX then broke v1/v2 names (Standard_DS1_v2),
+    // which embed the "S" directly in the family letters instead.
+    check(
+      "Standard_DS matches the v1/v2 embedded-S name Standard_DS1_v2",
+      matches("Standard_DS1_v2", "Standard_DS") === true,
+    );
+    check(
+      "Standard_DS matches the v3+ suffix-flag name Standard_D2s_v3",
+      matches("Standard_D2s_v3", "Standard_DS") === true,
+    );
+    check(
+      "Standard_D does NOT match a storage-flagged v1/v2 name",
+      matches("Standard_D1_v2", "Standard_DS") === false,
+    );
+    check(
+      "Standard_D does NOT match a storage-flagged v3+ name",
+      matches("Standard_D2_v3", "Standard_DS") === false,
+    );
+    check(
+      "Standard_D still matches its own plain v3+ name",
+      matches("Standard_D2_v3", "Standard_D") === true,
+    );
+    check(
+      "Standard_B (no S-variant in the family list) matches Standard_B2ms",
+      matches("Standard_B2ms", "Standard_B") === true,
+    );
+  }
+
+  console.log(
+    "[GCP family description lookup survives the family's real casing]",
+  );
+  {
+    const ctx = buildRun();
+    load(ctx, "src/providers/gcp/gcp-specific.js");
+    // Found by CodeRabbit: the wrapper lowercased its argument before looking
+    // it up in a map keyed by UPPERCASE names, so every call fell through to
+    // the generic fallback text regardless of family.
+    const e2 = vm.runInContext(`getGCPFamilyDescription("E2")`, ctx);
+    const fallback = vm.runInContext(
+      `getGCPFamilyDescription("not-a-real-family")`,
+      ctx,
+    );
+    check(
+      "a real family name resolves to its own description, not the fallback",
+      typeof e2 === "string" && e2 !== fallback,
+      e2,
+    );
+    check(
+      "an unrecognised family still falls back cleanly (no throw)",
+      typeof fallback === "string" && fallback.length > 0,
+      fallback,
+    );
+  }
+
+  console.log(
+    "[AWS Graviton/Nitro flags delegate to RuleEngine.isFlagTrue's wider value set]",
+  );
+  {
+    const ctx = buildRun();
+    vm.runInContext(`__aws = new AWSInstanceSelector();`, ctx);
+    // Found by CodeRabbit: the local literal test accepted 1/"1.0"/true but not
+    // the string "1" that RuleEngine.isFlagTrue itself already treats as true —
+    // a second, narrower copy of the same parsing.
+    check(
+      'isGravitonInstance now accepts the string "1", not just 1/"1.0"',
+      vm.runInContext(`__aws.isGravitonInstance({ isGraviton: "1" })`, ctx) ===
+        true,
+    );
+    check(
+      "isGravitonInstance still rejects a falsy value",
+      vm.runInContext(`__aws.isGravitonInstance({ isGraviton: 0 })`, ctx) ===
+        false,
+    );
+    const result = vm.runInContext(
+      `__aws.createInstanceResult({ nitroSupport: "1", processor: "AWS", price: 0.1, vCpus: 2, memory: 4, instanceType: "m5.large", family: "m5", familyName: "General purpose", generation: 1 }, 2, 4)`,
+      ctx,
+    );
+    check(
+      'nitroSupport on the result also accepts the string "1"',
+      result.nitroSupport === true,
+      JSON.stringify(result.nitroSupport),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
   // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = state.failures ? 1 : 0;

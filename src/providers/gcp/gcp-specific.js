@@ -34,7 +34,11 @@ const gcpAdvancedFilterData = {
     "Z3",
   ],
 
-  machineTypes: ["standard", "highmem", "highcpu", "shared-core", "custom"],
+  // "custom" is deliberately absent: getMachineTypeCategory() only ever returns
+  // standard/highmem/highcpu/shared-core, so listing "custom" here let a user
+  // pick a filter value nothing could ever match — custom shapes are handled
+  // separately by customFitSuggestion, not by this category filter.
+  machineTypes: ["standard", "highmem", "highcpu", "shared-core"],
 
   processorPlatforms: [
     "Intel Skylake",
@@ -334,7 +338,7 @@ function initializeGCPExcludeTypes() {
 
 // Get GCP machine family description (legacy support)
 function getGCPFamilyDescription(family) {
-  return getGCPFamilyAdvancedDescription(family.toLowerCase());
+  return getGCPFamilyAdvancedDescription(String(family || "").toUpperCase());
 }
 
 // GCP region mapping and validation

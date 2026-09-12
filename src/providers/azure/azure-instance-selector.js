@@ -1,6 +1,38 @@
 // Azure Instance Selector - Azure-specific implementation
 // Extends BaseInstanceSelector with Azure-specific functionality
 
+// v1/v2 names put the premium-storage "S" directly in the family code
+// (Standard_DS1_v2); v3+ names moved it to a lowercase flag AFTER the vCPU
+// count (Standard_D2s_v3) — a plain prefix test on the filter string never
+// matches those, so every "*S" family filter silently returned zero results.
+// Parses both sides the same way and compares family + storage-flag separately.
+function azureSeriesParts(instanceType) {
+  const name = String(instanceType || "").replace(/^Standard_/, "");
+  const m = name.match(/^([A-Za-z]+)(\d+)([a-z]*)/);
+  if (!m) return { base: name.toUpperCase(), hasStorageFlag: false };
+  // v1/v2 names embed the "S" in the pre-vCPU letters (DS1_v2), not as a
+  // lowercase flag after the digits — strip it from the base the same way,
+  // or "Standard_DS1_v2" itself never matches the "Standard_DS" filter.
+  // v1/v2 names embed the "S" in the pre-vCPU letters (DS1_v2), not as a
+  // lowercase flag after the digits — strip it from the base the same way,
+  // or "Standard_DS1_v2" itself never matches the "Standard_DS" filter.
+  const embeddedStorageFlag = /s$/i.test(m[1]);
+  return {
+    base: (embeddedStorageFlag ? m[1].slice(0, -1) : m[1]).toUpperCase(),
+    hasStorageFlag: embeddedStorageFlag || m[3].includes("s"),
+  };
+}
+
+function azureMatchesVmFamily(instanceType, familyFilter) {
+  const filterCode = String(familyFilter || "").replace(/^Standard_/, "");
+  const requiresStorageFlag = /S$/.test(filterCode) && filterCode.length > 1;
+  const filterBase = (
+    requiresStorageFlag ? filterCode.slice(0, -1) : filterCode
+  ).toUpperCase();
+  const { base, hasStorageFlag } = azureSeriesParts(instanceType);
+  return base === filterBase && (!requiresStorageFlag || hasStorageFlag);
+}
+
 class AzureInstanceSelector extends BaseInstanceSelector {
   constructor() {
     super();
@@ -464,14 +496,15 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     }
 
     // Azure-specific: VM Family Filter
-    // UI returns "Standard_D"/"Standard_B"/etc.; check instance type prefix
+    // UI returns "Standard_D"/"Standard_DS"/etc.; matched via azureMatchesVmFamily
+    // (see comment above the class) so "*S" families work against v3+ names too.
     if (
       options.restrictMainFamilies &&
       options.selectedAzureVMFamilies?.length > 0
     ) {
       filteredInstances = filteredInstances.filter((instance) =>
         options.selectedAzureVMFamilies.some((f) =>
-          instance.instanceType.startsWith(f),
+          azureMatchesVmFamily(instance.instanceType, f),
         ),
       );
     }
