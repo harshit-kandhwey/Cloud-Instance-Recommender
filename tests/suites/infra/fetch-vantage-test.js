@@ -15,6 +15,7 @@ const {
   unmappedAzureAmdFamilies,
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
+  instanceRegionRecords,
 } = require("../../../scripts/data/fetch-vantage");
 const { loadCommittedRegions } = require("../../../scripts/lib/record-schema");
 
@@ -603,6 +604,39 @@ function splitDataParity(monolith) {
     /readdirSync\s*\(/.test(code)
       ? "has its own readdirSync"
       : "no loadCommittedRegions call",
+  );
+}
+
+// A record missing instance_type used to throw TypeError on type.split(...),
+// aborting the whole refresh with a message naming no record — one malformed
+// entry in the bulk feed took down every provider's fetch. Skip it instead,
+// like every other unparseable case in this function.
+{
+  check(
+    "aws: a record with no instance_type is skipped, not thrown",
+    (() => {
+      try {
+        return (
+          instanceRegionRecords("aws", { pricing: {} }, new Set(), null)
+            .length === 0
+        );
+      } catch {
+        return false;
+      }
+    })(),
+  );
+  check(
+    "gcp: a record with no instance_type is skipped, not thrown",
+    (() => {
+      try {
+        return (
+          instanceRegionRecords("gcp", { pricing: {} }, new Set(), null)
+            .length === 0
+        );
+      } catch {
+        return false;
+      }
+    })(),
   );
 }
 

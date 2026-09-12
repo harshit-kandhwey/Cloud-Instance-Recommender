@@ -280,6 +280,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 
   if (name === "aws") {
     const type = raw.instance_type;
+    if (!type) return out; // no type key → nothing to split, nothing to emit
     const base = {
       instanceFamily: type.split(".")[0],
       instanceFamilyName: raw.family || "",
@@ -319,6 +320,7 @@ function instanceRegionRecords(name, raw, shippedKeys, azureGen) {
 
   if (name === "gcp") {
     const type = raw.instance_type;
+    if (!type) return out; // no type key → nothing to split, nothing to emit
     const series = type.split("-")[0];
     const plat = gcpPlatform(series);
     const base = {

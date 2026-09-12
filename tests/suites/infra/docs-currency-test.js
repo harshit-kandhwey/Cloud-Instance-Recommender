@@ -293,6 +293,33 @@ const shippedByDir = Object.fromEntries(
   }
 }
 
+// ── No doc still names the retired tools/ prefix ─────────────────────────────
+// The check above only recognises scripts/... paths, so it silently passes a
+// doc that still says tools/fetch-vantage.js — a real gap a CodeRabbit review
+// caught: docs/data/DATA-SOURCES.md kept 3 tools/-prefixed mentions after the
+// scripts/ rename with nothing here to flag it. tools/ is fully retired (no
+// path under it exists at all any more), so any literal tools/<name> mention
+// is stale by definition — check every doc that has ever named a tool by path.
+{
+  for (const rel of [
+    ".env.example",
+    "README.md",
+    ".github/CONTRIBUTING.md",
+    "docs/data/DATA-SOURCES.md",
+    "docs/data/CANONICAL-SOURCES.md",
+    "docs/operations/RELEASING.md",
+  ]) {
+    const stale = [...read(rel).matchAll(/\btools\/[\w./-]+\b/g)].map(
+      (m) => m[0],
+    );
+    check(
+      `${rel} names no retired tools/ path`,
+      stale.length === 0,
+      [...new Set(stale)].join(",") || "none",
+    );
+  }
+}
+
 // ── tests/README.md's gate table matches the CI it describes ───────────────────
 // Testing instructions used to be split across CONTRIBUTING (two commands) and
 // this file's subject docs, so a contributor could follow CONTRIBUTING exactly,

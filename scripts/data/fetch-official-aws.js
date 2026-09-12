@@ -159,6 +159,15 @@ async function fetchAwsPricing(shippedKeys) {
       `[aws] ${code}: ${Object.keys(types).length} priced compute types`,
     );
   }
+  // A shifted region index or an all-miss run would otherwise return {} with
+  // exit 0 — reconcile then reports every type UNVERIFIED with no failure
+  // signal at all. Refuse to write a dump that quiet.
+  if (!Object.keys(byRegion).length) {
+    throw new Error(
+      `[aws] no offer file resolved for any of ${wanted.length} shipped region(s) — ` +
+        `refusing to write an empty dump that reconcile would read as authoritative`,
+    );
+  }
   return byRegion;
 }
 

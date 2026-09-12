@@ -239,15 +239,13 @@ async function ingestFile(file) {
     return;
   }
 
-  // Past the gates: this file is going to be read, so the old one can go.
-  resetIngestState();
-
-  // Content wins over the name, but say so — a silently re-routed file would be
-  // confusing when the user goes looking for why their ".csv" opened as Excel.
+  // The "content wins over name" note text, decided now but not APPLIED until
+  // the file is actually known-readable — see the two commit points below.
+  let uploadNote = null;
   if (kind === "excel" && !namedXlsx) {
-    window._uploadNote = `"${file.name}" is named as a CSV but is an Excel workbook — read as Excel`;
+    uploadNote = `"${file.name}" is named as a CSV but is an Excel workbook — read as Excel`;
   } else if (kind === "text" && namedXlsx) {
-    window._uploadNote = `"${file.name}" is named as an Excel file but is plain text — read as CSV`;
+    uploadNote = `"${file.name}" is named as an Excel file but is plain text — read as CSV`;
   }
 
   const asExcel = kind === "unknown" ? namedXlsx : kind === "excel";
@@ -255,6 +253,12 @@ async function ingestFile(file) {
   if (!asExcel) {
     const reader = new FileReader();
     reader.onload = function (e) {
+      // Commit point: only past here is the old file's state torn down — a
+      // reader failure below leaves the previous upload's rows and controls
+      // intact, matching the module's own "nothing torn down until known
+      // usable" invariant (see the ingestFile comment above).
+      resetIngestState();
+      window._uploadNote = uploadNote;
       parseCSV(e.target.result);
     };
     reader.onerror = function () {
@@ -284,6 +288,12 @@ async function ingestFile(file) {
     if (!sheets.length) throw new Error("The workbook has no sheets with data");
 
     const chosen = pickBestSheet(sheets);
+    // Commit point: only past here is the old file's state torn down — a
+    // parse failure above (empty workbook, a thrown SheetJS error) leaves the
+    // previous upload's rows and controls intact, same invariant as the CSV
+    // path above.
+    resetIngestState();
+    window._uploadNote = uploadNote;
     window._uploadedSheets = sheets;
     // The file-level note ("named .csv but is a workbook") survives a sheet
     // switch, so keep it to re-apply — _uploadNote is consumed per ingest.

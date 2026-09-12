@@ -6,7 +6,7 @@ This describes the maintainer's own flow for developing a themed minor. A one-of
 
 ## Where versions live
 
-**Only in [CHANGELOG.md](CHANGELOG.md) and git tags.** No version string appears in the README, the user guide, the pages, or `package.json` — there is nothing to hand-bump, and nothing that can drift.
+**Only in [CHANGELOG.md](../../CHANGELOG.md) and git tags.** No version string appears in the README, the user guide, the pages, or `package.json` — there is nothing to hand-bump, and nothing that can drift.
 
 The project uses [Semantic Versioning](https://semver.org), applied per commit:
 
@@ -39,7 +39,7 @@ Every commit on the branch follows the same loop:
 
    If the change touched a guard or a test, plant the bug it exists to catch and watch it go red before trusting it — a green test proves nothing until it has been watched fail.
 
-2. **Update the version map** at the top of [CHANGELOG.md](CHANGELOG.md):
+2. **Update the version map** at the top of [CHANGELOG.md](../../CHANGELOG.md):
    - Replace `_this commit_` in the previous top row with that commit's real short SHA (`git rev-parse --short HEAD`).
    - Add a new top row for the change you are about to commit, with `_this commit_` as its SHA and a sentence describing what the change does — written for a reader, not a diff.
 

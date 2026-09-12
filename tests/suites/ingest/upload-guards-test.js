@@ -286,6 +286,43 @@ const AOA = [
     );
   }
 
+  // Nothing is torn down until the new file is known usable (see ingestFile's
+  // own comment): a reader failure must leave the PREVIOUS upload's state
+  // alone, not just show an error. Load a real workbook first to establish
+  // genuine prior state, then fail a second upload's read and confirm that
+  // state survived.
+  console.log("[reader.onerror does not clear the previous upload's state]");
+  {
+    resetUi();
+    ctx.FileReader = undefined; // this block never reaches the CSV reader path for the first upload
+    const buf = makeXlsx([{ name: "Data", aoa: AOA }]);
+    await ctx.ingestFile({
+      name: "prior.xlsx",
+      size: buf.byteLength,
+      arrayBuffer: async () => buf,
+    });
+    const sheetsBefore = ctx._uploadedSheets;
+    check(
+      "prior upload established real state",
+      Array.isArray(sheetsBefore) && sheetsBefore.length === 1,
+      JSON.stringify(sheetsBefore),
+    );
+
+    ctx.FileReader = class {
+      readAsText() {
+        const self = this;
+        setTimeout(() => self.onerror && self.onerror(new Error("io")), 0);
+      }
+    };
+    await ctx.ingestFile({ name: "broken2.csv", size: 10 });
+    await new Promise((r) => setTimeout(r, 50));
+    check(
+      "prior upload's sheets survive a failed second read",
+      ctx._uploadedSheets === sheetsBefore,
+      JSON.stringify(ctx._uploadedSheets),
+    );
+  }
+
   // Size and emptiness are checked for CSV too, not just xlsx — the legacy
   // file handler used to be the only thing enforcing this on the CSV path
   console.log("[csv size/emptiness validation]");
