@@ -133,12 +133,12 @@ Use this for a standing preference the built-in Rule Engine doesn't express — 
 
 ### 🎛️ Alternative recommendations (per row)
 
-Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries up to four labeled alternatives per provider (three on GCP — Best Network has no signal there) — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
+Beside the primary **Best Match** (like-to-like) and utilization-based **Optimized** picks, each row carries up to four labeled alternatives per provider — every one a genuinely deployable instance drawn from the same valid candidate pool, differing only in what it optimizes for:
 
 - **Most Cost Optimized** — the cheapest instance that still meets the requirement, ignoring the workload family.
 - **Workload Based** — the cheapest instance in the workload-appropriate family (e.g. memory-optimized for Cache/Database), even if it over-provisions; blank when there's no workload or no member exists in the preferred family.
 - **Newest Generation** — the newest hardware that fits, kept close to the requested size.
-- **Best Network** — the cheapest instance that clears the real network-tier signal (AWS baseline bandwidth / Azure accelerated networking), kept close to the requested size; blank on GCP, where no such signal exists in the feed.
+- **Best Network** — the cheapest instance that clears the network-tier signal (AWS baseline bandwidth / Azure accelerated networking; GCP has no such published field, so a ≥4-vCPU proxy is used instead), kept close to the requested size; blank when nothing in the fit window clears it.
 
 They appear as separate columns in the results grid/CSV and preview (hideable like any column), and the **Excel export adds one sheet per strategy**. Pricing is only ever used to rank internally — never shown.
 
