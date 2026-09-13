@@ -321,6 +321,12 @@ function buildPortfolioPayload() {
     dataDates,
     hasOptimized: keys.some((k) => k.includes("Optimized Instance")),
     hasLikeToLike: keys.some((k) => k.includes("Like-to-Like Instance")),
+    // Copied to a plain top-level field, not left as `results.priceSavings`:
+    // the array-level property survives postMessage's structured clone, but
+    // NOT the JSON.stringify localStorage fallback two lines below this
+    // function's own comment — JSON.stringify silently drops a non-index own
+    // property on an array. A plain object field survives both paths.
+    priceSavings: processedResults.priceSavings || {},
     results: processedResults,
   };
 }

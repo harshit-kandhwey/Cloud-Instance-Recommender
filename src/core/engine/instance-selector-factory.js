@@ -176,6 +176,13 @@ window.getInstanceRecommendationWithSelector = async function (
 
   // Process each row with all providers
   const results = [];
+  // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed 2026-09-14
+  // — see ROADMAP.md's 3.17). Summed per provider from the same rows
+  // computeSizingSavings already pairs (both a like-to-like AND an optimized match),
+  // reading `.price` off the result objects BEFORE it is dropped below — the row
+  // objects that reach `results` (and every export) never carry a price field, only
+  // this array-level total does. No absolute price is ever attached to a row.
+  const priceSavings = {};
   for (let index = 0; index < csvData.length; index++) {
     const row = csvData[index];
     const result = { ...row };
@@ -405,6 +412,7 @@ window.getInstanceRecommendationWithSelector = async function (
         // result (computed against the requested size) when present, else the
         // optimized result (against its target) on an optimized-only run.
         let altSource = null;
+        let likeToLikeResult = null;
         if (generateLikeToLike) {
           const likeToLike = selector.getLikeToLikeInstance(
             region,
@@ -417,6 +425,7 @@ window.getInstanceRecommendationWithSelector = async function (
           // optimized fallback can supply on a "both" run.
           altSource =
             likeToLike.instanceType === "No data available" ? null : likeToLike;
+          likeToLikeResult = altSource;
           result[`${providerUpper} Like-to-Like Instance`] =
             likeToLike.instanceType;
           // The provider's own family category, from the region data — never parsed
@@ -457,6 +466,31 @@ window.getInstanceRecommendationWithSelector = async function (
             result[`${providerUpper} Optimized vCPUs`] = optimized.vCpus;
             result[`${providerUpper} Optimized Memory (GiB)`] =
               optimized.memory;
+
+            // Aggregate-only relative price comparison — same pairing rule as
+            // computeSizingSavings (app-core.js): only rows where BOTH passes
+            // matched, so the two totals describe the same fleet subset. Both
+            // prices are already resolved for the row's own OS (base-instance-
+            // selector's `_poolForOS` remaps `.price` before either result is
+            // built), so this never accidentally compares a Linux rate against
+            // a Windows one. Zero/undefined prices are excluded rather than
+            // treated as free, matching `isValidInstance`'s own price>0 guard.
+            if (
+              likeToLikeResult &&
+              optimized.instanceType !== "No data available" &&
+              likeToLikeResult.price > 0 &&
+              optimized.price > 0
+            ) {
+              const bucket = (priceSavings[providerUpper] ||= {
+                l2lTotal: 0,
+                optTotal: 0,
+                rows: 0,
+              });
+              bucket.l2lTotal += likeToLikeResult.price;
+              bucket.optTotal += optimized.price;
+              bucket.rows += 1;
+            }
+
             if (!generateLikeToLike) {
               result[`${providerUpper} Rules Applied`] =
                 optimized.rulesApplied || "";
@@ -577,6 +611,23 @@ window.getInstanceRecommendationWithSelector = async function (
   }
 
   console.log("Recommendation generation completed successfully");
+
+  // Finished here, once, rather than left as raw totals for a caller to divide —
+  // one definition of the percentage (CANONICAL-SOURCES.md), not a formula
+  // hand-copied into every place that displays it. Attached to the ARRAY, never
+  // to a row: `results.priceSavings`, not `results[i].priceSavings` — so no
+  // export or column-derivation code that reads a row's own keys is affected.
+  results.priceSavings = {};
+  for (const [providerUpper, bucket] of Object.entries(priceSavings)) {
+    if (bucket.l2lTotal <= 0) continue; // avoid a divide-by-zero / Infinity%
+    results.priceSavings[providerUpper] = {
+      pct: Math.round(
+        ((bucket.l2lTotal - bucket.optTotal) / bucket.l2lTotal) * 100,
+      ),
+      rows: bucket.rows,
+    };
+  }
+
   return results;
 };
 

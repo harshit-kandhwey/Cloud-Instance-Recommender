@@ -503,6 +503,32 @@ console.log("[no library, no literal colours]");
   );
 }
 
+console.log(
+  "[the Executive Print Report's Relative cost block (CLAUDE.md rule 7, reversed 2026-09-14)]",
+);
+{
+  const { ctx } = buildContext();
+  const rows = [matched("a")];
+  rows.priceSavings = { AWS: { pct: 14, rows: 1 } };
+  const html = ctx.buildExecutiveReport(rows);
+  check(
+    "shows the relative percentage and direction",
+    /AWS<\/strong>[\s\S]*?−14%/.test(html),
+    html,
+  );
+  check("carries the not-a-quote disclaimer", /not a quote/.test(html), html);
+}
+{
+  const { ctx } = buildContext();
+  const rows = [matched("a")]; // no .priceSavings attached
+  const html = ctx.buildExecutiveReport(rows);
+  check(
+    "no Relative cost section when nothing was computed",
+    !/Relative cost/.test(html),
+    html,
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = state.failures ? 1 : 0;

@@ -96,6 +96,11 @@ const payload = {
   dataDates: { AWS: "2026-06-27", AZURE: "2026-06-27" },
   hasOptimized: true,
   hasLikeToLike: true,
+  // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed
+  // 2026-09-14). A plain top-level payload field, not results.priceSavings —
+  // that's how downloads.js's handoff carries it through the JSON.stringify
+  // localStorage fallback, which drops a non-index array property.
+  priceSavings: { AWS: { pct: 12, rows: 2 } },
   results: [
     // Billing — 2 matched VMs, multi-region, PCI on one
     {
@@ -179,6 +184,18 @@ run(`__payload = ${JSON.stringify(payload)};`);
 run("__m = buildPortfolioModel(__payload);");
 
 console.log("[grouping + estate]");
+check(
+  "estate.priceSavings carries the payload's plain field through, unchanged",
+  run("__m.estate.priceSavings.AWS.pct") === 12 &&
+    run("__m.estate.priceSavings.AWS.rows") === 2,
+  run("JSON.stringify(__m.estate.priceSavings)"),
+);
+check(
+  "a payload with no priceSavings field yields an empty object, not a crash",
+  run(
+    '__noPrice = buildPortfolioModel({ providers: ["aws"], results: [{ "App Name": "X", "CPU Count": "2", "Memory (GB)": "4", "AWS Like-to-Like Instance": "t3.small" }] }); JSON.stringify(__noPrice.estate.priceSavings)',
+  ) === "{}",
+);
 check("2 named apps", run("__m.apps.length") === 2);
 check(
   "apps sorted alphabetically (Analytics, Billing)",

@@ -325,9 +325,32 @@ function _reportHeadline(results) {
       </figure>`
     : "";
 
+  // Relative-only price comparison (CLAUDE.md rule 7, reversed 2026-09-14 —
+  // see CANONICAL-SOURCES.md). `results` is the live in-page array here (this
+  // report is never sent through postMessage/localStorage), so the array
+  // property is read directly rather than a copied plain field.
+  const priceLines = Object.entries(results.priceSavings || {})
+    .map(
+      ([provider, s]) => `
+        <div style="font-size:12px;margin:2px 0;color:var(--text-body);">
+          <strong style="color:var(--text);">${escapeHtml(provider)}</strong>
+          <span style="font-weight:700;"> ${s.pct >= 0 ? "−" : "+"}${Math.abs(s.pct)}%</span>
+          <span style="color:var(--text-soft);"> ranked cost, Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</span>
+        </div>`,
+    )
+    .join("");
+  const priceBlock = priceLines
+    ? `<figure style="margin:14px 0 0 0;">
+        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:4px;">Relative cost</figcaption>
+        ${priceLines}
+        <p style="font-size:10px;color:var(--text-soft);margin:4px 0 0 0;">Relative ranking only, not a quote — use your provider's pricing calculator for actual cost.</p>
+      </figure>`
+    : "";
+
   return `
     <div style="display:flex;flex-wrap:wrap;gap:10px;">${tiles}</div>
-    ${savingsBlock}`;
+    ${savingsBlock}
+    ${priceBlock}`;
 }
 
 // Full report: header, headline, three charts. "" for an empty result set.

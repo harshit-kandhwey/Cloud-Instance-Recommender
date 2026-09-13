@@ -164,6 +164,22 @@ function _buildStatsHtml(results) {
     .map(([k, v]) => `${escapeHtml(k)}(${v})`)
     .join(" · ");
 
+  // Relative-only price comparison (CLAUDE.md rule 7, reversed 2026-09-14 — see
+  // CANONICAL-SOURCES.md). `results.priceSavings` is attached to the ARRAY by
+  // instance-selector-factory.js, never to a row, so this is the only place that
+  // reads it — no export or column-derivation code touches it. Never a bare
+  // percentage: always paired with which providers and how many rows it covers,
+  // and the disclaimer belongs next to it, not assumed understood.
+  const priceEntries = Object.entries(results.priceSavings || {});
+  const priceSummary = priceEntries.length
+    ? `<span style="color:var(--text-body);" title="Relative ranking only, not a quote — use your provider's pricing calculator for actual cost">💲 ${priceEntries
+        .map(
+          ([provider, s]) =>
+            `${escapeHtml(provider)} Optimized ranks <strong>${s.pct >= 0 ? "~" + s.pct + "% lower" : "~" + Math.abs(s.pct) + "% higher"}</strong> than Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})`,
+        )
+        .join(" · ")}</span>`
+    : "";
+
   // Data freshness
   const dates = [
     window.AWS_DATA_DATE,
@@ -188,6 +204,7 @@ function _buildStatsHtml(results) {
       }
       ${appCount > 0 ? `<span style="color:var(--text-body);">🧩 <strong>${appCount}</strong> apps</span>` : ""}
       ${savingsChips}
+      ${priceSummary}
       ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;

@@ -299,6 +299,12 @@ function buildPortfolioModel(payload) {
     familyCol,
     optInstCol,
     optVcpuCol,
+    // Read from the payload's own plain field, not results.priceSavings — the
+    // handoff (downloads.js) copies it there specifically because a cold-open
+    // via the localStorage/JSON.stringify fallback drops a non-index array
+    // property. Falls back to the array property for a direct in-page call.
+    priceSavings:
+      (payload && payload.priceSavings) || results.priceSavings || {},
   };
 
   // Group VMs by app; blank App Name → the Unassigned bucket.
@@ -328,6 +334,7 @@ function buildPortfolioModel(payload) {
     matched: allStats.reduce((s, a) => s + a.matched, 0),
     noMatch: 0,
     matchRate: 0,
+    priceSavings: meta.priceSavings,
   };
   estate.noMatch = estate.vms - estate.matched;
   estate.matchRate = estate.vms
@@ -793,6 +800,24 @@ function sortableTh(label, key) {
   return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSortFor(key)}" onclick="sortPortfolioApps('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortPortfolioApps('${key}');}" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
 }
 
+// One aggregate relative-savings tile per provider that has one, appended after
+// the fixed KPI set. Not `kpiTile()` — needs a title attribute carrying the
+// disclaimer, which the shared helper's 3-arg signature has no room for.
+function priceSavingsKpiTiles(priceSavings) {
+  return Object.entries(priceSavings || {})
+    .map(([provider, s]) => {
+      const label =
+        s.pct >= 0
+          ? `~${s.pct}% lower ranked cost`
+          : `~${Math.abs(s.pct)}% higher ranked cost`;
+      return `<div class="counter-card" title="Relative ranking only, not a quote — use ${esc(provider)}'s own pricing calculator for actual cost">
+        <div class="counter-number">${esc(label)}</div>
+        <div class="counter-title">💲 ${esc(provider)} Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</div>
+      </div>`;
+    })
+    .join("");
+}
+
 function renderOverview(m) {
   const est = m.estate;
   const kpis = `<div class="pf-kpis">
@@ -801,6 +826,7 @@ function renderOverview(m) {
     ${kpiTile("⚙️", est.vcpus, "vCPUs")}
     ${kpiTile("💾", fmtNum(est.memory), "Memory (GB)")}
     ${kpiTile("✅", est.matchRate + "%", "Match rate")}
+    ${priceSavingsKpiTiles(est.priceSavings)}
   </div>`;
 
   const table = `<div class="pf-section">
