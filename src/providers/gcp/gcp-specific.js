@@ -281,7 +281,6 @@ function getSelectedGCPMachineTypes() {
   return selected;
 }
 
-// Get selected GCP exclude types (ADDED - was missing)
 function getSelectedGCPExcludeTypes() {
   const selected = [];
   gcpExcludeTypesData.forEach((type, index) => {
@@ -293,7 +292,6 @@ function getSelectedGCPExcludeTypes() {
   return selected;
 }
 
-// Initialize GCP exclude types with enhanced options (ADDED - was missing)
 function initializeGCPExcludeTypes() {
   const excludeContainer = document.getElementById("excludeTypeControls");
   if (!excludeContainer) return;
@@ -467,7 +465,6 @@ frontend-08,Storefront,2,4,40,50,europe-west1,Staging,Windows,Web Server,,,,,e2-
   downloadCsv(csvContent, "GCP_sample_instance_data.csv");
 }
 
-// GCP-specific cost optimization recommendations (ENHANCED with emojis)
 function getGCPCostOptimizationTips() {
   return [
     "🔹 Use Committed Use Discounts for 1-3 year commitments (up to 57% savings)",
@@ -485,7 +482,6 @@ function getGCPCostOptimizationTips() {
   ];
 }
 
-// GCP performance optimization recommendations (ADDED - was missing)
 function getGCPPerformanceOptimizationTips() {
   return [
     "⚡ Use C2 instances for highest single-threaded performance",
@@ -501,7 +497,6 @@ function getGCPPerformanceOptimizationTips() {
   ];
 }
 
-// GCP sustainability and green computing tips (ADDED - was missing)
 function getGCPSustainabilityTips() {
   return [
     "🌱 GCP runs on renewable energy in many regions",

@@ -122,9 +122,7 @@ check(
     resolve(full, undefined).cpuStatistic === "avg",
 );
 // TWO lookups here can reach the prototype chain, from two different sources,
-// and they need separate cases — the one below used to carry a comment about
-// CSV headers while actually exercising the statistic argument, so the row side
-// went untested.
+// so they need separate cases.
 //
 // (1) The STATISTIC indexes UTILIZATION_STATISTICS. It arrives from the run's
 // options, which presets persist to localStorage and replay, so it is not

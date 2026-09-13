@@ -161,7 +161,6 @@ function updateAzureFilterLabels() {
   }
 }
 
-// Enhanced Azure series descriptions (FIXED - removed duplicate)
 function getAzureSeriesDescription(series) {
   const descriptions = {
     "A-series": "Basic compute needs, entry-level workloads",

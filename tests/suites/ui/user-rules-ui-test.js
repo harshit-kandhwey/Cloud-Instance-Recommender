@@ -39,12 +39,10 @@ console.log("[the panel renders empty, with the add-form]");
   );
 
   // The dropdowns are DERIVED from user-rules.js's own canonical arrays, not a
-  // second, independent copy — the shape of the bug found and fixed in 3.15
-  // (this exact file used to hand-list ["workload","env","os","compliance"]
-  // and ["exclude","includeOnly"] literally, so a dimension or action added to
-  // USER_RULE_DIMENSIONS/USER_RULE_ACTIONS would never have reached this UI).
-  // Assert every canonical value has an <option>, not the reverse, so this
-  // still passes if a future value's label formatting changes.
+  // hand-listed copy, so a new dimension/action added to
+  // USER_RULE_DIMENSIONS/USER_RULE_ACTIONS can't fail to reach this UI. Assert
+  // every canonical value has an <option>, not the reverse, so this still
+  // passes if a future value's label formatting changes.
   const dims = run("USER_RULE_DIMENSIONS");
   const actions = run("USER_RULE_ACTIONS");
   check(

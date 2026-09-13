@@ -5,8 +5,7 @@
 // field on all three providers and `parseData` price-sorted on it once, so every
 // Windows row was both FILTERED and RANKED on a price it would never pay. That
 // single fact produced two visible defects — a machine sold only with Linux stayed
-// in the running for Windows rows (443 records across AWS and Azure: the
-// Inferentia, GPU and FPGA families), and a machine sold only with Windows was
+// in the running for Windows rows, and a machine sold only with Windows was
 // dropped at load for want of a Linux price (u-6tb1.metal has no published Linux
 // rate in ANY region, so a 6 TiB machine was unrecommendable to anyone).
 //

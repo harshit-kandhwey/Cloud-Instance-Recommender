@@ -119,13 +119,13 @@ Suites are grouped by feature area. `run-all.js` and the coverage ledger both re
 
 ## Golden maintenance
 
-The goldens are tied to the committed instance data (see `window.{P}_DATA_DATE` in `src/providers/{p}/{p}-data.js`). They change **only** when the instance data is refreshed. To regenerate after a data update:
+The goldens are tied to the committed instance data (see `window.{P}_DATA_DATE` in `src/providers/{p}/{p}-data.js`) — a data refresh regenerates all of them:
 
 ```bash
 node --max-old-space-size=4096 tests/golden/golden-run.js . tests/golden/goldens
 ```
 
-Review the diff before committing — golden changes should correspond to real data changes, never to code changes.
+A golden also legitimately shifts when a recommendation-logic bug fix changes what the correct output for some row actually is — plenty of real fixes have (Windows-price ranking, Min Gen misreads, the network-tier tie-break, and others). What matters is not the trigger but the review: attribute the diff before adopting it — regenerate from the pre-fix code in a throwaway worktree and diff base-vs-fixed, so the change is isolated to the exact row/column the fix targets, not an unrelated regression riding along. A diff that touches more than the fix explains is a red flag, not a golden to accept.
 
 ## Conventions
 

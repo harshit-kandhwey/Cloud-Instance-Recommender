@@ -121,7 +121,6 @@ function toggleCloudProvider(provider) {
   }
 }
 
-// Handle recommendation type change - Updated for modular system
 function handleRecommendationTypeChange() {
   const optimizationControls = document.getElementById("optimizationControls");
   const selectedType = document.querySelector(

@@ -287,10 +287,10 @@ process.exitCode = 1;
     // catalogue change. It must say so instead — by NAMING the broken type and
     // excluding IT ALONE, not by taking the whole region down. A throw here is
     // caught by loadRegionData's try/catch, which replaces the ENTIRE region with
-    // sample data — a review finding on this exact code (2026-09-03): one bad
-    // manifest entry used to disable a whole region's real data for every user.
-    // console.error is strictly louder (visible in devtools, same as a throw) and
-    // strictly narrower (only the one type is lost) than the throw it replaced.
+    // sample data, so one bad manifest entry must not disable a whole region's
+    // real data for every user. console.error is strictly louder (visible in
+    // devtools, same as a throw) and strictly narrower (only the one type is
+    // lost) than the throw it replaced.
     const { result: guarded, lines: guardLines } = capturingConsoleError(() =>
       selector._mergeSpecs(
         { "zz.unknown": { [priceField]: 1.5 }, [type]: { [priceField]: 1.5 } },

@@ -13,7 +13,6 @@ class BaseInstanceSelector {
     this.isInitialized = false;
   }
 
-  // Common initialization logic
   async initialize(csvData, regions) {
     this.isInitialized = false;
     console.log(`Initializing ${this.getProviderName()} InstanceSelector`);
@@ -462,7 +461,6 @@ class BaseInstanceSelector {
     }));
   }
 
-  // Log loading statistics
   logLoadingStatistics(instances, region) {
     const currentGenCount = instances.filter(
       (i) => i.generation === 1.0 || i.generation === "1.0",
@@ -1158,5 +1156,4 @@ class BaseInstanceSelector {
   }
 }
 
-// Export base class
 window.BaseInstanceSelector = BaseInstanceSelector;

@@ -134,7 +134,6 @@ window.getInstanceRecommendationWithSelector = async function (
 
       console.log(`${provider.toUpperCase()} regions:`, Array.from(regions));
 
-      // Initialize selector
       initPromises.push(
         selector.initialize(csvData, regions).then(() => {
           selectors[provider] = selector;
@@ -806,7 +805,6 @@ window.validateProviderSupport = function (providers) {
   return unsupported.length === 0;
 };
 
-// Export factory class
 window.InstanceSelectorFactory = InstanceSelectorFactory;
 
 console.log(

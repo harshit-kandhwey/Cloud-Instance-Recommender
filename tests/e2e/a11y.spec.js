@@ -13,15 +13,8 @@
 // switch to bypassCSP) can't quietly hollow the gate out.
 //
 // Scope: BOTH themes are gated at zero violations on all four pages, color-contrast
-// INCLUDED. 3.10 had disabled color-contrast in dark as "tracked debt"; the 3.11
-// dark-contrast pass found that was a false positive, not real debt — the dark
-// palette is AA-compliant at rest. The apparent failures came from scanning the
-// page MID-TRANSITION: switching data-theme fires the 0.3s theme fade on every
-// element, and axe sampled colors part-way between the light and dark tokens
-// (e.g. a button caught at #959daa on #363d4e — neither the light nor the settled
-// dark value). The dark test now disables transitions before scanning so axe reads
-// the settled colors a user actually reads; with that, all four pages pass
-// color-contrast in dark with no token changes.
+// INCLUDED — the dark test freezes CSS transitions before scanning so axe reads
+// the settled colors, not a mid-fade blend (see below).
 
 const { test, expect } = require("@playwright/test");
 const { AxeBuilder } = require("@axe-core/playwright");

@@ -1,11 +1,9 @@
 // meetsMinGeneration must read an Azure instance's VERSION, not a digit that
 // happens to follow a "v" in its name (rule-engine.js).
 //
-// The bug this pins: the Azure branch used /v(\d+)/i on the instance TYPE, which
-// takes the FIRST v<digits>. For the NV/NC series the "v" belongs to the series
-// name, so nv48sv3 (a v3 machine) was read as generation 48 and nv24 (no version
-// at all) as generation 24. Both looked absurdly new, so a MinGen filter could
-// never exclude them.
+// A regex anchored on the first `v<digits>` in the instance TYPE takes the
+// series-name "v" for NV/NC types (nv48sv3, nv24) as if it were the version —
+// reading both as absurdly new, so a MinGen filter could never exclude them.
 //
 // Anchoring to the trailing version is NOT enough on its own: "nv24" ends in
 // "v24", and no suffix rule separates that from a real version. The version is

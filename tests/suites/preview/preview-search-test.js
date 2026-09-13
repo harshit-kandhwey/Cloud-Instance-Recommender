@@ -743,12 +743,11 @@ function check(name, cond, detail) {
   }
 
   // Guard against native dialogs (they block the page, ignore the theme, can't be
-  // styled/dismissed by code). Modules are DISCOVERED, not listed — a hand list
-  // once missed the provider-specific files, where alert() lived. Inline <script>
-  // bodies in the HTML pages are scanned too (a confirm() in markup would pass a
-  // js-only scan), skipping <script src=…> which points back at scanned files.
-  // ALL THREE (alert/confirm/prompt) are banned: banning only alert() let a
-  // confirm() survive the 3.5 migration until 3.7.
+  // styled/dismissed by code). Modules are DISCOVERED, not hand-listed, since a
+  // hand list can miss a file; inline <script> bodies in the HTML pages are
+  // scanned too (a markup-only dialog call would pass a js-only scan), skipping
+  // <script src=…> which points back at scanned files. All three dialog fns are
+  // banned — excluding just alert() would let confirm() slip through unnoticed.
   const scanTargets = [];
   for (const dir of [
     "src/core/engine",

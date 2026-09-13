@@ -3,17 +3,10 @@
 // (a collapsed panel, a shifted control, a colour-token change) fails here even
 // when every functional assertion still passes.
 //
-// Why a SEPARATE config/dir/CI job (playwright-visual.config.js, tests/visual/,
-// the `visual` job) instead of folding into the happy-path e2e run:
-//
-//   * Pixel baselines are OS- and engine-specific. The committed baselines are
-//     the `-linux` set generated on the ubuntu CI runner (see tests/README.md);
-//     a Windows or WebKit run would diff against them purely on font hinting.
-//     So this gate is chromium-only and its baselines are produced on CI, never
-//     on a contributor's machine.
-//   * Keeping it out of `npm run test:e2e` means the functional matrix stays
-//     green and fast on any OS; the visual gate runs only where its baselines
-//     are valid.
+// A separate config/dir/CI job (playwright-visual.config.js, tests/visual/, the
+// `visual` job), chromium-only: pixel baselines are OS/engine-specific (the
+// committed `-linux` set is generated on the ubuntu CI runner — see
+// tests/README.md), so any other engine or OS would diff on font hinting alone.
 //
 // Plant-confirm, like every guard in this minor: change a page's layout or a
 // colour token and this spec must go RED. A green visual run against a visibly

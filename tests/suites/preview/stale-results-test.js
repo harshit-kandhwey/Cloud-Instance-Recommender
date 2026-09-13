@@ -119,13 +119,10 @@ console.log("[the provider case still works, and is worded for itself]");
 
 console.log("[data replaced WHILE the run is in flight]");
 {
-  // The token must be snapshotted when the run starts, not read when it ends.
-  // Reading it at the end stamps the finished batch with the token of data that
-  // landed DURING the run — so results computed from the old rows would present
-  // themselves as describing the new ones. That is the precise case the token
-  // exists for, and it is the one it would have got wrong.
-  //
-  // Modelled at the seam: take the snapshot, ingest mid-flight, then record.
+  // The token must be snapshotted when the run starts, not read at the end —
+  // reading it late would stamp a finished batch with data that replaced it
+  // mid-run. Modelled at the seam: take the snapshot, ingest mid-flight, then
+  // record.
   const { ctx, elements } = buildContext();
   parse(ctx, FILE_A);
   vm.runInContext(

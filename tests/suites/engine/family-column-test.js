@@ -5,8 +5,8 @@
 // never parsed back out of the instance name. That is not a stylistic
 // preference — Azure's family is genuinely NOT a function of its instance name:
 // `b2ms` → `bs` and `b1ls` → `bs` drop the size letter, but `d16lsv6` → `dlsv6`
-// keeps it, and `d15iv2` → `dv2` drops an `i`. Deriving it cost 6,183 wrong
-// answers out of 52,143 real Azure instances on the most plausible rule.
+// keeps it, and `d15iv2` → `dv2` drops an `i` — no name-based rule reliably
+// reproduces Azure's family field, so it is read from the data instead of parsed.
 //
 // So these checks pin the column to the DATA, exhaustively, for every row of a
 // real run: the value must equal the family name the region file itself carries
@@ -311,11 +311,9 @@ const OPTIONS = {
 
   console.log("[the dead family regexes are gone, not merely unused]");
   {
-    // Four getInstanceFamily() definitions (base + all three providers) had zero
-    // call sites, and Azure's could not match a real key: it wanted
-    // `Standard_D2s_v3` while the data is keyed `d4psv6`, so it returned "" for
-    // every instance in the catalogue. Removed rather than left to be found and
-    // trusted by the next reader.
+    // Dead code left for a future reader to trust is worse than none — one of
+    // these definitions was also silently broken (Azure's key shape never
+    // matched a real record), so removal closes both problems at once.
     const files = [
       "src/core/engine/base-instance-selector.js",
       "src/providers/aws/aws-instance-selector.js",

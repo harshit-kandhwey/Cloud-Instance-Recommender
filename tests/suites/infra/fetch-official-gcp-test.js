@@ -302,11 +302,9 @@ const ssdRates = parseLocalSsdSkus(page.skus);
 
 // ── Which SKU a series is priced from is a TABLE, not a rule ───────────────────
 // z3 HAS a per-series "Z3 Instance Local SSD" SKU and it is NOT the one z3 is
-// priced from: the implied rate solved from Vantage matched the GENERIC SKU in
-// 43/43 regions and the per-series one only in the 19 where the two coincide. A
-// "use the per-series SKU when one exists" refactor would look principled and
-// misprice z3 in 24 regions, so the mapping is pinned here rather than left to
-// read as an oversight.
+// priced from — verified against the real Vantage-implied rate. A "use the
+// per-series SKU when one exists" refactor would look principled and misprice
+// z3, so the mapping is pinned here rather than left to read as an oversight.
 {
   check(
     "z3 is priced from the generic SKU even though a per-series one exists",
@@ -327,16 +325,15 @@ const ssdRates = parseLocalSsdSkus(page.skus);
   );
   // c4a's two tokens differ, and that is real, not a typo waiting to be tidied:
   // the core/ram SKU is "C4A Arm Instance Core", the local-SSD one is plain "C4A".
-  // Verified 0.0000% across 924 non-SSD type × region comparisons, 2026-09-02.
   check(
     "c4a's core/ram token is 'C4A Arm' while its local-SSD token is plain 'C4A'",
     SERIES_SKU_NAME.c4a === "C4A Arm" &&
       LOCAL_SSD_SKU_NAME.c4a === "C4A Instance Local SSD",
     `${SERIES_SKU_NAME.c4a} / ${LOCAL_SSD_SKU_NAME.c4a}`,
   );
-  // c4d is NOT the local-SSD problem: its core/ram composition is 3.29% off across
-  // 1518 comparisons that involve no SSD at all. Mapping it once local SSD landed
-  // would be the obvious next step and it would be wrong.
+  // c4d is NOT the local-SSD problem: its core/ram composition is already off
+  // before local SSD enters. Mapping it once local SSD landed would be the
+  // obvious next step and it would be wrong.
   check(
     "c4d stays unmapped — its core/ram is off before local SSD enters",
     SERIES_SKU_NAME.c4d === undefined &&

@@ -581,10 +581,8 @@ function loadUsageStatistics() {
 // Enhanced save usage statistics
 function saveUsageStatistics() {
   try {
-    // Update timestamp
     usageStats.lastUpdated = new Date().toISOString();
 
-    // Save to localStorage
     localStorage.setItem(
       "cloudInstanceRecommenderStats",
       JSON.stringify(usageStats),
@@ -609,7 +607,6 @@ function updateUsageStatistics(vmCount) {
   );
 }
 
-// Update usage counter display
 function updateUsageCounters() {
   const toolUsageElement = document.getElementById("toolUsageCount");
   const totalVMsElement = document.getElementById("totalVMsProcessed");

@@ -481,11 +481,9 @@ console.log("[no library, no literal colours]");
     ),
     "charts.js reaches outside the page",
   );
-  // Colours come from theme.css tokens so both themes are deliberate. A literal
-  // colour here would be invisible to the theme and wrong in one mode or the
-  // other. This guard used to match hex only, which let rgb()/hsl() through —
-  // they bypass the tokens just as completely, so the guard was reporting a
-  // safety it had never checked. The check is named for what it actually tests.
+  // Colours must come from theme.css tokens for both themes to be deliberate,
+  // so the guard matches hex AND rgb()/hsl() literals — either bypasses the
+  // tokens just as completely.
   const literals =
     src.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgb|hsl)a?\([^)]*\)/g) || [];
   check(

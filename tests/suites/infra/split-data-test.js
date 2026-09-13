@@ -281,13 +281,11 @@ console.log("[split: the two-part format]");
   // consumer that waits on AWS_DATA_READY must never see it true while the specs
   // half is still missing, so the flag is assigned last.
   //
-  // Match the ASSIGNMENTS, not the bare names. The manifest's own header comment
-  // says "AWS_SPECS holds each type's specifications once", and an earlier version
-  // of this check compared indexOf("AWS_SPECS") — which found that comment, sat
-  // before everything, and passed no matter where the real assignment went. It
-  // survived a planted reorder. Count them too: with only an ordering test, a
-  // second READY assignment planted ahead of the specs still leaves the trailing
-  // one in place and the ordering can be read either way.
+  // Match the ASSIGNMENTS, not the bare names — a bare-name search also matches
+  // the manifest's own header comment, which sits before everything regardless
+  // of where the real assignment lands. Count them too: with only an ordering
+  // test, a second READY assignment planted ahead of the specs still leaves the
+  // trailing one in place and the ordering can be read either way.
   const src = fs.readFileSync(
     path.join(root, "src", "providers", "aws", "aws-data.js"),
     "utf8",
