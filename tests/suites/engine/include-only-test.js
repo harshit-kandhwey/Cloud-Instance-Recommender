@@ -143,6 +143,85 @@ console.log(
   );
 }
 
+// ── Azure series naming: Include Only/Exclude tokens name a full series
+// ("Dsv3"), not the VM Family Filter dropdown's base+storage-flag-only value
+// (review 2 of the 3.16 bug-fix tail) ────────────────────────────────────────
+console.log(
+  "[Azure Include Only/Exclude match real series names (family + storage flag + version)]",
+);
+{
+  const { ctx: azCtx, run: azRun } = buildEngineContext({
+    scripts: [
+      "src/core/rules/rule-engine.js",
+      "src/core/engine/base-instance-selector.js",
+      "src/providers/azure/azure-instance-selector.js",
+      "src/core/engine/instance-selector-factory.js",
+    ],
+    label: "include-only-azure",
+  });
+  azRun(`
+    __selAz = new BaseInstanceSelector();
+    __selAz.getProviderName = function () { return "Azure"; };
+    __selAz.getSampleData = function () { return []; };
+  `);
+  const azBox = (instanceType, price) => ({
+    instanceType,
+    vCpus: 2,
+    memory: 8,
+    price,
+    family: "d",
+    familyName: "General purpose",
+    processor: "Intel",
+    generation: 1,
+    isGraviton: 0,
+  });
+  // The storage-flagged v3 instance is the CHEAPEST, so a matcher that
+  // silently matches nothing (the pre-fix substring bug) would be masked by
+  // Include Only returning No-Match anyway, or by Exclude leaving the wrong
+  // instance in place by coincidence — pricing is arranged so only a
+  // genuinely correct match produces the expected survivor.
+  azCtx.azPool = [
+    azBox("Standard_D2s_v3", 0.08), // Dsv3 — cheapest
+    azBox("Standard_D2_v3", 0.1), // Dv3 — no storage flag
+    azBox("Standard_D2s_v2", 0.12), // Dsv2 — storage flag, OLDER version
+  ];
+  azRun(`__selAz.instanceData = { r: azPool };`);
+  const azPick = (opts) =>
+    azRun(`__selAz.getLikeToLikeInstance("r", 2, 8, ${JSON.stringify(opts)})`);
+
+  // Before this fix, Include Only "Dsv3" substring-matched against the
+  // lowercased instanceType and found nothing ("standard_d2s_v3" does not
+  // contain "dsv3" — the vCPU digit sits between D and s), so the pool went
+  // to No-Match instead of keeping the storage-flagged instance.
+  const r = azPick({ includeOnlyTypes: ["Dsv3"] });
+  check(
+    'Include Only "Dsv3" keeps exactly the matching series, not No-Match',
+    r.instanceType === "Standard_D2s_v3",
+    JSON.stringify(r),
+  );
+
+  // Exclude "Dsv3" must drop ONLY the exact series match (cheapest), leaving
+  // the next-cheapest survivor — proving the match isn't a no-op that
+  // coincidentally leaves the cheapest instance in place.
+  const rEx = azPick({ excludeTypes: ["Dsv3"] });
+  check(
+    'Exclude "Dsv3" drops exactly that series, not its Dv3/Dsv2 look-alikes',
+    rEx.instanceType === "Standard_D2_v3",
+    JSON.stringify(rEx),
+  );
+
+  // Negative control: "Dsv3" must NOT match the same family+flag on a
+  // DIFFERENT version — Azure ships non-interchangeable generations under
+  // the same base+flag, so a version-blind match would be a wrong answer,
+  // not just an imprecise one.
+  const rOld = azPick({ includeOnlyTypes: ["Dsv2"] });
+  check(
+    '"Dsv2" matches only the older-version storage-flagged instance, not v3',
+    rOld.instanceType === "Standard_D2s_v2",
+    JSON.stringify(rOld),
+  );
+}
+
 // ── Factory layer: the CSV "Include Only" column actually reaches the run ────
 console.log("[the factory wires the CSV Include Only column into the run]");
 {

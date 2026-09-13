@@ -49,7 +49,7 @@
  * @property {number|string} [generation]
  * @property {number|string} [isGraviton]
  * @property {string} [processor]
- * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number, burstMinutes?: number, sharedCpu?: number|string, gpuCount?: number, isBareMetal?: number|string, trustedLaunch?: number|string }} [originalData]
+ * @property {{ nitroEnclavesSupport?: number|string, baselineBandwidthGbps?: number, burstBandwidthGbps?: number, acceleratedNetworking?: number|string, cores?: number, vcpusPerCore?: number, burstMinutes?: number, sharedCpu?: number|string, gpuCount?: number, isBareMetal?: number|string, trustedLaunch?: number|string }} [originalData]
  */
 
 /**
@@ -268,10 +268,25 @@ const RuleEngine = (() => {
   // expands through COMPLIANCE_ALIASES if it's a legacy name, or is used
   // as-is if it's already one of the atomic names; unrecognised tokens are
   // dropped silently here (the hygiene check is what names them to the user).
+  //
+  // Memoized on the raw string: apply() calls this once per row per provider,
+  // and a real inventory typically shares one (or a handful of) Compliance
+  // values across thousands of rows — re-splitting/re-parsing the identical
+  // string every time is pure waste. Every caller only reads the returned
+  // Set (`.has(...)`), never mutates it, so sharing one cached Set instance
+  // across calls with the same raw string is safe. Capped so a pathological
+  // CSV with a unique value per row can't grow this cache unbounded — past
+  // the cap it just stops caching, falling back to the uncached computation.
+  const COMPLIANCE_TOKEN_CACHE = new Map();
+  const COMPLIANCE_TOKEN_CACHE_MAX = 1000;
   /** @param {string|undefined} raw */
   function expandComplianceTokens(raw) {
+    const key = String(raw || "");
+    const cached = COMPLIANCE_TOKEN_CACHE.get(key);
+    if (cached) return cached;
+
     const tokens = new Set();
-    String(raw || "")
+    key
       .split(",")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean)
@@ -287,6 +302,9 @@ const RuleEngine = (() => {
           : [t];
         expanded.forEach((a) => tokens.add(a));
       });
+    if (COMPLIANCE_TOKEN_CACHE.size < COMPLIANCE_TOKEN_CACHE_MAX) {
+      COMPLIANCE_TOKEN_CACHE.set(key, tokens);
+    }
     return tokens;
   }
   const OS_WINDOWS = ["windows", "windows server"];
@@ -445,6 +463,20 @@ const RuleEngine = (() => {
       return v === 1;
     }
     return inst.vCpus >= 4; // GCP: see note above — no better signal exists.
+  }
+
+  // AWS-only burst-bandwidth headroom, used to break an exact price tie in
+  // Rule 1d and in base-instance-selector's "Best Network" alternative pick
+  // — ONE definition so the two can't quietly disagree about what "more
+  // burst headroom" means (they used to be two hand-copied inline copies).
+  // Azure/GCP have no equivalent field, so 0 there is correct, not a guess.
+  /**
+   * @param {Instance} inst
+   * @returns {number}
+   */
+  function burstBandwidthGbps(inst) {
+    const v = Number(inst.originalData?.burstBandwidthGbps);
+    return Number.isFinite(v) && v > 0 ? v : 0;
   }
 
   // Physical core count for Rule SQL's optional physical-core licensing mode
@@ -880,12 +912,23 @@ const RuleEngine = (() => {
     }
 
     // ── 1b: AWS Nitro Enclaves required (Compliance) ────────────────────────
-    if (requiresAwsNitro && provider === "aws") {
-      const before = filtered.length;
-      const nitro = filtered.filter(isNitroCapable);
-      if (nitro.length > 0) {
-        filtered = nitro;
-        rules.push(withCount("1b: Nitro required (Compliance)", before));
+    // Always reports SOMETHING when requested, even when it doesn't apply
+    // here or finds no candidate — an AWS-scoped requirement silently doing
+    // nothing on an Azure/GCP row must not look identical to a row with no
+    // requirement at all (the same shape Confidential Computing already
+    // uses below).
+    if (requiresAwsNitro) {
+      if (provider === "aws") {
+        const before = filtered.length;
+        const nitro = filtered.filter(isNitroCapable);
+        if (nitro.length > 0) {
+          filtered = nitro;
+          rules.push(withCount("1b: Nitro required (Compliance)", before));
+        } else {
+          rules.push("1b: Nitro required (not applied — no candidate)");
+        }
+      } else {
+        rules.push("1b: Nitro required (not applicable on this provider)");
       }
     }
 
@@ -912,18 +955,27 @@ const RuleEngine = (() => {
     }
 
     // ── 1b: Azure Trusted Launch required (Compliance) ──────────────────────
-    // Azure-only, same shape as the Nitro rule: skipped entirely for AWS/GCP,
-    // neither of which publishes an equivalent field in this feed.
-    if (requiresTrustedLaunch && provider === "azure") {
-      const before = filtered.length;
-      const trusted = filtered.filter(isTrustedLaunchCapable);
-      if (trusted.length > 0) {
-        filtered = trusted;
-        rules.push(
-          withCount("1b: Trusted Launch required (Compliance)", before),
-        );
+    // Azure-only (neither AWS nor GCP publishes an equivalent field in this
+    // feed), but still reports SOMETHING on the other providers rather than
+    // silently doing nothing — same reasoning as the Nitro rule above.
+    if (requiresTrustedLaunch) {
+      if (provider === "azure") {
+        const before = filtered.length;
+        const trusted = filtered.filter(isTrustedLaunchCapable);
+        if (trusted.length > 0) {
+          filtered = trusted;
+          rules.push(
+            withCount("1b: Trusted Launch required (Compliance)", before),
+          );
+        } else {
+          rules.push(
+            "1b: Trusted Launch required (not applied — no candidate)",
+          );
+        }
       } else {
-        rules.push("1b: Trusted Launch required (not applied — no candidate)");
+        rules.push(
+          "1b: Trusted Launch required (not applicable on this provider)",
+        );
       }
     }
 
@@ -963,13 +1015,28 @@ const RuleEngine = (() => {
         // both fields, but 55% show zero burst headroom (burst == baseline),
         // so a tie candidate with none loses nothing by this resort.
         if (provider === "aws") {
-          const burstOf = (i) => {
-            const v = Number(i.originalData?.burstBandwidthGbps);
-            return Number.isFinite(v) && v > 0 ? v : 0;
-          };
-          filtered = [...filtered].sort(
-            (a, b) => a.price - b.price || burstOf(b) - burstOf(a),
-          );
+          // filtered is ALREADY price-sorted (see above), so an exact tie is
+          // always a contiguous run — reorder just that run instead of a full
+          // O(n log n) re-sort of the whole survivor pool on every row, most
+          // of which carry no tie at all.
+          const result = filtered.slice();
+          let start = 0;
+          while (start < result.length) {
+            let end = start + 1;
+            while (
+              end < result.length &&
+              result[end].price === result[start].price
+            )
+              end++;
+            if (end - start > 1) {
+              const tie = result
+                .slice(start, end)
+                .sort((a, b) => burstBandwidthGbps(b) - burstBandwidthGbps(a));
+              for (let k = 0; k < tie.length; k++) result[start + k] = tie[k];
+            }
+            start = end;
+          }
+          filtered = result;
         }
       }
     }
@@ -1038,19 +1105,33 @@ const RuleEngine = (() => {
     if (SQL_WORKLOADS.includes(workload)) {
       // GCP never honours the toggle (no comparable field); AWS/Azure only do
       // once physicalCores() finds a real count, which the dormant pre-refresh
-      // window means it may not. anyRealCores makes the label reflect what the
-      // pool's evaluation actually used, not just what the toggle requested.
+      // window means it may not. The checkbox itself is shared across all
+      // three tool pages (presets.js/generate.js), so it renders and saves
+      // like any other option on the GCP-only page too — report the gap
+      // explicitly rather than leaving the toggle silently inert there.
+      if (options.sqlPhysicalCoreLicensing && provider === "gcp") {
+        rules.push(
+          "SQL: physical-core licensing requested but not supported on GCP (no comparable field) — vCPU floor applied instead",
+        );
+      }
       const physicalRequested =
         !!options.sqlPhysicalCoreLicensing && provider !== "gcp";
-      let anyRealCores = false;
       const meetsFloor = (i) => {
         const cores = physicalRequested ? physicalCores(i, provider) : null;
-        if (cores !== null) anyRealCores = true;
         return (cores ?? i.vCpus) >= SQL_MIN_CORES;
       };
       const before = filtered.length;
       const licensed = filtered.filter(meetsFloor);
-      const unit = physicalRequested && anyRealCores ? "physical-core" : "vCPU";
+      // The label must describe what the SURVIVING candidates' own floor
+      // check used, not whether any candidate ANYWHERE in the pre-filter pool
+      // (including ones this rule just rejected) happened to carry real core
+      // data — a "physical-core" label on a row that actually passed via the
+      // vCPU fallback would justify a licensing/cost decision on the wrong
+      // basis.
+      const anyRealCores =
+        physicalRequested &&
+        licensed.some((i) => physicalCores(i, provider) !== null);
+      const unit = anyRealCores ? "physical-core" : "vCPU";
       if (licensed.length > 0) {
         filtered = licensed;
         if (filtered.length < before) {
@@ -1182,6 +1263,7 @@ const RuleEngine = (() => {
     isFlagTrue,
     isWindowsOS,
     hasNetworkTier,
+    burstBandwidthGbps,
     physicalCores,
     meetsMinGeneration,
     // Exposed for the alternative-strategy picks (base-instance-selector):

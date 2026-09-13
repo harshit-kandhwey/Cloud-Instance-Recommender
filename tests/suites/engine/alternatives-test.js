@@ -210,10 +210,70 @@ check(
   JSON.stringify(burstPick),
 );
 
-console.log("[Best Network is always null on GCP — no real signal, v3.16.18]");
+console.log(
+  "[RuleEngine.burstBandwidthGbps is ONE shared definition — review 7 of the 3.16 bug-fix tail]",
+);
 check(
-  "GCP's own pool (used for Cost/Workload/Newest Gen above) yields no Best Network pick",
+  "reads a real burstBandwidthGbps value",
+  run(
+    `RuleEngine.burstBandwidthGbps({ originalData: { burstBandwidthGbps: 12 } })`,
+  ) === 12,
+);
+check(
+  "falls back to 0 when the field is absent or non-positive (never a guess)",
+  run(`RuleEngine.burstBandwidthGbps({ originalData: {} })`) === 0 &&
+    run(
+      `RuleEngine.burstBandwidthGbps({ originalData: { burstBandwidthGbps: -1 } })`,
+    ) === 0,
+);
+check(
+  "computeAlternatives's Best Network tie-break reads it through the SAME exported function, not a second hand-copy",
+  fs
+    .readFileSync(
+      path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "src/core/engine/base-instance-selector.js",
+      ),
+      "utf8",
+    )
+    .includes("RE.burstBandwidthGbps"),
+);
+
+console.log(
+  "[Best Network on GCP: null here because nothing in-window clears the vCPU proxy, not a provider-wide exclusion]",
+);
+check(
+  "GCP's own pool (used for Cost/Workload/Newest Gen above) yields no Best Network pick — both in-window candidates are 2 vCPUs, below the proxy floor",
   run("alt.bestNetwork") === null,
+);
+
+console.log(
+  "[Best Network on GCP: DOES populate once an in-window candidate clears the vCPU proxy — review 5 of the 3.16 bug-fix tail]",
+);
+ctx.gcpNetPool = [
+  {
+    instanceType: "e2-standard-4",
+    family: "e2",
+    vCpus: 4,
+    memory: 16,
+    price: 0.1,
+  },
+  {
+    instanceType: "n4-highcpu-2",
+    family: "n4",
+    vCpus: 2,
+    memory: 4,
+    price: 0.05,
+  },
+];
+run("altGcpNet = sel.computeAlternatives(gcpNetPool, 2, 4, {});");
+check(
+  "the ≥4-vCPU candidate is picked as Best Network on GCP, not left null",
+  run("altGcpNet.bestNetwork?.instanceType") === "e2-standard-4",
+  run("JSON.stringify(altGcpNet.bestNetwork)"),
 );
 
 console.log("[Workload Based is empty for a General workload]");

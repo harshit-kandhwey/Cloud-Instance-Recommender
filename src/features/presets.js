@@ -239,10 +239,71 @@ function migrateLegacyMinGen(texts) {
   return out;
 }
 
+// ─── Legacy Compliance presets ─────────────────────────────────────────────
+// Pre-3.16 presets carry a single #ruleDefaultCompliance text value (—
+// none —/PCI/HIPAA/SOC2); that id is gone from the page (replaced by four
+// independently-selectable checkboxes — see rule-engine.js's
+// COMPLIANCE_ALIASES for what each old value actually enforced), so applying
+// such a preset would leave all four checkboxes unchecked, silently dropping
+// the saved constraint exactly as migrateLegacyMinGen above exists to
+// prevent for Min Gen.
+const LEGACY_COMPLIANCE = {
+  pci: { currentGen: true, nitro: true },
+  hipaa: { currentGen: true, nitro: true },
+  soc2: { currentGen: true },
+};
+
+function migrateLegacyCompliance(cfg) {
+  const texts = cfg.texts || {};
+  // Presence, not truthiness — a saved "" (— none —) is a legitimate legacy
+  // state that must still clear the modern checkboxes, not be skipped.
+  if (!Object.prototype.hasOwnProperty.call(texts, "ruleDefaultCompliance"))
+    return cfg;
+
+  const legacyRaw = texts.ruleDefaultCompliance;
+  const legacy = String(legacyRaw || "")
+    .toLowerCase()
+    .trim();
+  const outTexts = { ...texts };
+  delete outTexts.ruleDefaultCompliance;
+  const outChecks = { ...(cfg.checkboxes || {}) };
+
+  // A native checkbox value in the preset always wins (saved against the
+  // current design). Presence, not truthiness — a saved `false` must survive.
+  const savedNative = (id) =>
+    Object.prototype.hasOwnProperty.call(outChecks, id);
+  const recognized =
+    !legacy || Object.prototype.hasOwnProperty.call(LEGACY_COMPLIANCE, legacy);
+  const map = LEGACY_COMPLIANCE[legacy] || {};
+
+  if (!savedNative("ruleDefaultComplianceCurrentGen"))
+    outChecks.ruleDefaultComplianceCurrentGen = !!map.currentGen;
+  if (!savedNative("ruleDefaultComplianceNitro"))
+    outChecks.ruleDefaultComplianceNitro = !!map.nitro;
+  // Confidential Computing / Azure Trusted Launch have no legacy equivalent —
+  // always clear them so no stale checked state can survive from elsewhere.
+  if (!savedNative("ruleDefaultComplianceConfidential"))
+    outChecks.ruleDefaultComplianceConfidential = false;
+  if (!savedNative("ruleDefaultComplianceTrustedLaunch"))
+    outChecks.ruleDefaultComplianceTrustedLaunch = false;
+
+  if (typeof showToast === "function" && legacy) {
+    showToast(
+      recognized
+        ? `Preset used the old shared Compliance option (${legacyRaw}); applied as the equivalent checkboxes — review and re-save.`
+        : `Preset used an unrecognised Compliance value (${legacyRaw}); the compliance checkboxes were cleared — set them and re-save.`,
+      recognized ? "info" : "warning",
+    );
+  }
+
+  return { ...cfg, texts: outTexts, checkboxes: outChecks };
+}
+
 // Restore a captured config onto the live controls, cascading through the
 // existing UI handlers so derived/rendered state stays consistent.
 function applyPresetConfig(cfg) {
   if (!cfg) return;
+  cfg = migrateLegacyCompliance(cfg);
 
   // Providers first: they drive which exclude options render. Mutate the
   // shared array in place (avoids duplicate-push from toggleCloudProvider).

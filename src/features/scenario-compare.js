@@ -241,6 +241,10 @@ const SCENARIO_CONFIG_LABELS = {
   ruleDefaultEnv: "Default ENV",
   ruleDefaultOS: "Default OS",
   ruleDefaultWorkload: "Default Workload",
+  // Pre-3.16 key, no longer a live control (see presets.js's
+  // migrateLegacyCompliance) — kept so an old scenario snapshot still shows a
+  // friendly label instead of the raw id, same precedent as ruleDefaultMinGen.
+  ruleDefaultCompliance: "Default Compliance",
   ruleDefaultComplianceCurrentGen: "Compliance: Current-Generation Hardware",
   ruleDefaultComplianceNitro: "Compliance: AWS Nitro Enclaves",
   ruleDefaultComplianceConfidential: "Compliance: Confidential Computing",

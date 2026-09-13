@@ -8,8 +8,9 @@
 // Parses both sides the same way and compares family + storage-flag separately.
 function azureSeriesParts(instanceType) {
   const name = String(instanceType || "").replace(/^Standard_/, "");
-  const m = name.match(/^([A-Za-z]+)(\d+)([a-z]*)/);
-  if (!m) return { base: name.toUpperCase(), hasStorageFlag: false };
+  const m = name.match(/^([A-Za-z]+)(\d+)([a-z]*)(?:_(v\d+))?/i);
+  if (!m)
+    return { base: name.toUpperCase(), hasStorageFlag: false, version: null };
   // v1/v2 names embed the "S" in the pre-vCPU letters (DS1_v2), not as a
   // lowercase flag after the digits — strip it from the base the same way,
   // or "Standard_DS1_v2" itself never matches the "Standard_DS" filter.
@@ -17,17 +18,65 @@ function azureSeriesParts(instanceType) {
   return {
     base: (embeddedStorageFlag ? m[1].slice(0, -1) : m[1]).toUpperCase(),
     hasStorageFlag: embeddedStorageFlag || m[3].includes("s"),
+    version: m[4] ? m[4].toLowerCase() : null,
+  };
+}
+
+// Split out of azureMatchesVmFamily so a caller filtering a whole pool
+// against a fixed, short list of selected families (the VM Family Filter)
+// can parse each filter ONCE outside the per-instance loop, instead of
+// re-parsing the same filter string for every instance it's compared
+// against.
+function azureParseFamilyFilter(familyFilter) {
+  const filterCode = String(familyFilter || "").replace(/^Standard_/, "");
+  const requiresStorageFlag = /S$/.test(filterCode) && filterCode.length > 1;
+  return {
+    base: (requiresStorageFlag
+      ? filterCode.slice(0, -1)
+      : filterCode
+    ).toUpperCase(),
+    requiresStorageFlag,
   };
 }
 
 function azureMatchesVmFamily(instanceType, familyFilter) {
-  const filterCode = String(familyFilter || "").replace(/^Standard_/, "");
-  const requiresStorageFlag = /S$/.test(filterCode) && filterCode.length > 1;
-  const filterBase = (
-    requiresStorageFlag ? filterCode.slice(0, -1) : filterCode
-  ).toUpperCase();
+  const { base: filterBase, requiresStorageFlag } =
+    azureParseFamilyFilter(familyFilter);
   const { base, hasStorageFlag } = azureSeriesParts(instanceType);
   return base === filterBase && (!requiresStorageFlag || hasStorageFlag);
+}
+
+// A per-row Include Only / Exclude token names a full Azure SERIES — the
+// name Azure's own docs use and the one the shipped sample data carries
+// ("Dsv3", "Fsv2") — a DIFFERENT convention from the VM Family Filter
+// dropdown above (base + optional storage flag ONLY, no version, and a
+// bare base is deliberately a superset match). A series token carries no
+// vCPU count, so it's parsed the same way but without a digit group, and
+// (unlike the dropdown) storage-flag and version are matched EXACTLY when
+// the token specifies them — "Dsv3" and "Dv3" name genuinely different
+// series, not a broad "D family" bucket, and Azure has shipped the same
+// base+flag across multiple non-interchangeable generations (v2 vs v3 vs
+// v5), so treating them as the same family would be a wrong, not just an
+// imprecise, match.
+function azureTokenParts(token) {
+  const raw = String(token || "").replace(/^Standard_/i, "");
+  const versionMatch = raw.match(/(v\d+)$/i);
+  const version = versionMatch ? versionMatch[1].toLowerCase() : null;
+  const prefix = versionMatch ? raw.slice(0, -versionMatch[1].length) : raw;
+  const hasStorageFlag = /s$/i.test(prefix) && prefix.length > 1;
+  const base = (hasStorageFlag ? prefix.slice(0, -1) : prefix).toUpperCase();
+  return { base, hasStorageFlag, version };
+}
+
+function azureMatchesSeriesToken(instanceType, token) {
+  const t = azureTokenParts(token);
+  if (!t.base) return false;
+  const i = azureSeriesParts(instanceType);
+  return (
+    i.base === t.base &&
+    i.hasStorageFlag === t.hasStorageFlag &&
+    (t.version === null || i.version === t.version)
+  );
 }
 
 class AzureInstanceSelector extends BaseInstanceSelector {
@@ -495,15 +544,26 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     // Azure-specific: VM Family Filter
     // UI returns "Standard_D"/"Standard_DS"/etc.; matched via azureMatchesVmFamily
     // (see comment above the class) so "*S" families work against v3+ names too.
+    // Filters are parsed ONCE here (azureParseFamilyFilter), and each instance
+    // is parsed ONCE (azureSeriesParts) rather than once per selected family —
+    // both were being re-derived from the same strings on every comparison
+    // when this ran through azureMatchesVmFamily's own per-call parsing.
     if (
       options.restrictMainFamilies &&
       options.selectedAzureVMFamilies?.length > 0
     ) {
-      filteredInstances = filteredInstances.filter((instance) =>
-        options.selectedAzureVMFamilies.some((f) =>
-          azureMatchesVmFamily(instance.instanceType, f),
-        ),
+      const parsedFilters = options.selectedAzureVMFamilies.map(
+        azureParseFamilyFilter,
       );
+      filteredInstances = filteredInstances.filter((instance) => {
+        const { base, hasStorageFlag } = azureSeriesParts(
+          instance.instanceType,
+        );
+        return parsedFilters.some(
+          (pf) =>
+            base === pf.base && (!pf.requiresStorageFlag || hasStorageFlag),
+        );
+      });
     }
 
     return filteredInstances;

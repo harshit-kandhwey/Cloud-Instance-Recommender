@@ -906,6 +906,142 @@ console.log("[legacy multi-cloud Min Gen presets are migrated, not dropped]");
   delete sandbox.showToast;
 }
 
+// ── Legacy Compliance migration ─────────────────────────────────────────────
+// A preset saved before Compliance went from one <select> (none/PCI/HIPAA/
+// SOC2) to four independent checkboxes carries the old #ruleDefaultCompliance
+// text value; that id is gone from the page, so applying it verbatim would
+// leave all four checkboxes unchecked and silently drop the constraint —
+// review 6 of the 3.16 bug-fix tail. Values translate to what the OLD engine
+// actually enforced (see rule-engine.js's COMPLIANCE_ALIASES): PCI/HIPAA
+// required current-gen + Nitro, SOC2 required current-gen only.
+console.log("[legacy Compliance presets are migrated, not dropped]");
+{
+  const complianceIds = [
+    "ruleDefaultComplianceCurrentGen",
+    "ruleDefaultComplianceNitro",
+    "ruleDefaultComplianceConfidential",
+    "ruleDefaultComplianceTrustedLaunch",
+  ];
+  const toasts = [];
+  sandbox.showToast = (msg, kind) => toasts.push({ msg, kind });
+
+  const applyLegacy = (v) => {
+    complianceIds.forEach((id) => {
+      els[id].checked = true; // seed stale so a no-op is caught
+    });
+    toasts.length = 0;
+    sandbox.__cfg = { texts: { ruleDefaultCompliance: v } };
+    run("applyPresetConfig(__cfg)");
+    return Object.fromEntries(complianceIds.map((id) => [id, els[id].checked]));
+  };
+
+  const pci = applyLegacy("PCI");
+  check(
+    "legacy PCI becomes Current-Gen + Nitro, nothing else",
+    pci.ruleDefaultComplianceCurrentGen === true &&
+      pci.ruleDefaultComplianceNitro === true &&
+      pci.ruleDefaultComplianceConfidential === false &&
+      pci.ruleDefaultComplianceTrustedLaunch === false,
+    JSON.stringify(pci),
+  );
+  check("the migration is announced, not silent", toasts.length === 1);
+
+  const hipaa = applyLegacy("HIPAA");
+  check(
+    "legacy HIPAA becomes Current-Gen + Nitro too (PCI/HIPAA were indistinguishable)",
+    hipaa.ruleDefaultComplianceCurrentGen === true &&
+      hipaa.ruleDefaultComplianceNitro === true,
+    JSON.stringify(hipaa),
+  );
+
+  const soc2 = applyLegacy("SOC2");
+  check(
+    "legacy SOC2 becomes Current-Gen only",
+    soc2.ruleDefaultComplianceCurrentGen === true &&
+      soc2.ruleDefaultComplianceNitro === false,
+    JSON.stringify(soc2),
+  );
+
+  // Legacy "— none —" ("") is a saved no-constraint state, not a missing one —
+  // it must actively clear all four checkboxes (seeded checked above), not
+  // silently leave them at whatever a prior preset left checked.
+  toasts.length = 0;
+  const none = applyLegacy("");
+  check(
+    'legacy "— none —" clears all four Compliance checkboxes',
+    complianceIds.every((id) => none[id] === false),
+    JSON.stringify(none),
+  );
+  check(
+    "the no-constraint case is not announced (nothing to review)",
+    toasts.length === 0,
+  );
+
+  // Regression: an UNRECOGNISED legacy value must still clear all four
+  // checkboxes (the safe default) and be surfaced as a warning, mirroring
+  // migrateLegacyMinGen's unrecognised-value handling.
+  complianceIds.forEach((id) => {
+    els[id].checked = true;
+  });
+  toasts.length = 0;
+  sandbox.__cfg = { texts: { ruleDefaultCompliance: "fedramp" } };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "an unrecognised legacy Compliance value clears all four checkboxes",
+    complianceIds.every((id) => els[id].checked === false),
+    JSON.stringify(
+      Object.fromEntries(complianceIds.map((id) => [id, els[id].checked])),
+    ),
+  );
+  check(
+    "the unrecognised value is surfaced as a warning",
+    toasts.length === 1 && toasts[0].kind === "warning",
+    JSON.stringify(toasts),
+  );
+
+  // An explicit native checkbox value in the preset always wins over the
+  // legacy translation — presence, not truthiness, so a saved `false` survives.
+  complianceIds.forEach((id) => {
+    els[id].checked = false;
+  });
+  sandbox.__cfg = {
+    texts: { ruleDefaultCompliance: "PCI" },
+    checkboxes: { ruleDefaultComplianceNitro: false },
+  };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "an explicit native checkbox value survives the legacy translation",
+    els.ruleDefaultComplianceCurrentGen.checked === true &&
+      els.ruleDefaultComplianceNitro.checked === false,
+    JSON.stringify({
+      currentGen: els.ruleDefaultComplianceCurrentGen.checked,
+      nitro: els.ruleDefaultComplianceNitro.checked,
+    }),
+  );
+
+  // A preset saved against the CURRENT design (no legacy key at all) must pass
+  // through untouched — migrateLegacyCompliance is a no-op when the old key
+  // is absent.
+  complianceIds.forEach((id) => {
+    els[id].checked = false;
+  });
+  sandbox.__cfg = {
+    checkboxes: { ruleDefaultComplianceConfidential: true },
+  };
+  run("applyPresetConfig(__cfg)");
+  check(
+    "a modern preset with no legacy key applies its native checkboxes unchanged",
+    els.ruleDefaultComplianceConfidential.checked === true &&
+      els.ruleDefaultComplianceCurrentGen.checked === false,
+    JSON.stringify({
+      confidential: els.ruleDefaultComplianceConfidential.checked,
+      currentGen: els.ruleDefaultComplianceCurrentGen.checked,
+    }),
+  );
+
+  delete sandbox.showToast;
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 if (failures) {

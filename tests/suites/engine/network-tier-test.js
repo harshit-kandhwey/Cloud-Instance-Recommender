@@ -312,6 +312,51 @@ console.log(
   );
 }
 
+console.log(
+  "[Rule 1d, AWS: a tie in the MIDDLE of the pool reorders only that run — review 8 of the 3.16 bug-fix tail]",
+);
+{
+  // The tie-break was rewritten from a full re-sort to a targeted, price-
+  // already-sorted segment scan (for the "don't re-sort the whole survivor
+  // pool on every row" efficiency fix) — this proves the segment logic still
+  // finds and reorders a tie that ISN'T the first or last group, not just the
+  // simple two-instance case above.
+  ctx.midTiePool = [
+    inst({
+      instanceType: "cheapest",
+      price: 0.1,
+      originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 1 },
+    }),
+    inst({
+      instanceType: "mid-tie-low-burst",
+      price: 0.2,
+      originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 2 },
+    }),
+    inst({
+      instanceType: "mid-tie-high-burst",
+      price: 0.2,
+      originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 10 },
+    }),
+    inst({
+      instanceType: "priciest",
+      price: 0.3,
+      originalData: { baselineBandwidthGbps: 2, burstBandwidthGbps: 1 },
+    }),
+  ];
+  const res = run(
+    "RuleEngine.apply(midTiePool, { rowEnv: 'production', rowWorkload: 'database' }, 'aws')",
+  );
+  const order = res.instances.map((i) => i.instanceType);
+  check(
+    "the untied cheapest/priciest keep their positions; the middle tie reorders by burst",
+    order[0] === "cheapest" &&
+      order[1] === "mid-tie-high-burst" &&
+      order[2] === "mid-tie-low-burst" &&
+      order[3] === "priciest",
+    JSON.stringify(order),
+  );
+}
+
 if (failures) {
   console.log(`\n${failures} check(s) failed`);
   process.exitCode = 1;

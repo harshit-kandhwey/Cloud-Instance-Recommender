@@ -618,10 +618,12 @@ class BaseInstanceSelector {
   //   Newest Generation   — bounded workload preference first (3.8.12 rule), then
   //                         highest generation, then cheapest.
   //   Best Network        — bounded like Newest Generation, then cheapest instance
-  //                         with the real per-provider network-tier signal
-  //                         (RuleEngine.hasNetworkTier, same one Rule 1d applies).
-  //                         AWS/Azure only — GCP has no real signal (see
-  //                         hasNetworkTier), so always "—" there.
+  //                         with the per-provider network-tier signal
+  //                         (RuleEngine.hasNetworkTier, same one Rule 1d applies —
+  //                         AWS/Azure real published fields, GCP a vCPU-count
+  //                         proxy). Runs on all three providers so this column
+  //                         can't disagree with what Rule 1d already applied to
+  //                         the row's primary recommendation.
   computeAlternatives(pool, reqCpu, reqMemory, options = {}) {
     const compact = (i) =>
       i
@@ -692,7 +694,7 @@ class BaseInstanceSelector {
     // to clear that floor. AWS ties additionally prefer more burst headroom,
     // the same tie-break Rule 1d's own filtering already uses.
     let bestNetwork = null;
-    if (RE && (provider === "aws" || provider === "azure")) {
+    if (RE) {
       // No fallback to the full pool here (unlike genPool above): an empty
       // fit window means leave bestNetwork null, not recommend an oversized
       // instance just because it happens to carry the network-tier signal.
@@ -700,12 +702,13 @@ class BaseInstanceSelector {
         RE.hasNetworkTier(i, provider),
       );
       if (networkCapable.length) {
-        const burstOf = (i) => {
-          const v = Number(i.originalData?.burstBandwidthGbps);
-          return Number.isFinite(v) && v > 0 ? v : 0;
-        };
+        // RE.burstBandwidthGbps — the SAME function Rule 1d's own tie-break
+        // uses, so the two can't quietly disagree about what "more burst
+        // headroom" means (they used to be two hand-copied inline copies).
         bestNetwork = [...networkCapable].sort(
-          (a, b) => a.price - b.price || burstOf(b) - burstOf(a),
+          (a, b) =>
+            a.price - b.price ||
+            RE.burstBandwidthGbps(b) - RE.burstBandwidthGbps(a),
         )[0];
       }
     }
@@ -727,6 +730,15 @@ class BaseInstanceSelector {
       .trim();
   }
 
+  // The RAW (case-preserved) token text. Every token type but one is
+  // case-insensitive, so _typeTokenName's lowercased form is what they match
+  // against — the one exception is Azure's storage-flag detection
+  // (azureMatchesVmFamily's trailing-"S" check), which needs the case the
+  // user actually typed to know whether a storage flag was requested.
+  _typeTokenRaw(item) {
+    return (typeof item === "string" ? item : (item && item.type) || "").trim();
+  }
+
   // A provider-tagged token (the run-level Exclude shape) applies only to its
   // provider; a plain string token applies everywhere. Row-level tokens are plain
   // strings, so they always apply to the provider whose pool is being filtered.
@@ -743,7 +755,7 @@ class BaseInstanceSelector {
   // and Include Only (keep only on match), so the two can't disagree about what
   // "burstable"/"gpu"/"m5" means. "gpu" is the BROAD accelerator match (isAccelerator),
   // so excluding/allow-listing "gpu" also covers FPGA/ML-ASIC/media; "fpga" is narrower.
-  _matchesTypeToken(instance, name, providerName) {
+  _matchesTypeToken(instance, name, providerName, rawName) {
     if (!name) return false;
     const fam = (instance.family || "").toLowerCase();
     const instType = (instance.instanceType || "").toLowerCase();
@@ -789,6 +801,21 @@ class BaseInstanceSelector {
           ? !RuleEngine.isCurrentGen(instance)
           : instance.generation !== 1 && instance.generation !== "1.0";
       default:
+        // A per-row token names a full Azure SERIES ("Dsv3", "Fsv2" — Azure's
+        // own docs' naming, and what the shipped sample data uses), not the
+        // VM Family Filter dropdown's base+storage-flag-only value. A plain
+        // substring test fails because the vCPU-count digit a real instance
+        // type embeds ("Standard_D2s_v3") never appears in the token at all.
+        // See azure-instance-selector.js's azureMatchesSeriesToken.
+        if (
+          providerName === "azure" &&
+          typeof azureMatchesSeriesToken === "function"
+        ) {
+          return azureMatchesSeriesToken(
+            instance.instanceType,
+            rawName != null ? rawName : name,
+          );
+        }
         return instType.includes(name);
     }
   }
@@ -847,6 +874,7 @@ class BaseInstanceSelector {
                 instance,
                 this._typeTokenName(item),
                 providerName,
+                this._typeTokenRaw(item),
               ),
           )
         ) {
@@ -870,6 +898,7 @@ class BaseInstanceSelector {
                 instance,
                 this._typeTokenName(item),
                 providerName,
+                this._typeTokenRaw(item),
               ),
           )
         ) {

@@ -176,6 +176,72 @@ console.log(
     on.rules.some((r) => r.startsWith("SQL: 4-vCPU licence floor")),
     JSON.stringify(on.rules),
   );
+  // Review 6 of the 3.16 bug-fix tail: the checkbox is a shared control that
+  // renders and saves on the GCP-only page like any other option, so a GCP
+  // user checking it must see SOMETHING, not silently get no effect at all.
+  check(
+    "and the inert toggle is called out explicitly, not silently ignored",
+    on.rules.some(
+      (r) =>
+        r.includes("physical-core licensing") && r.includes("not supported"),
+    ),
+    JSON.stringify(on.rules),
+  );
+}
+
+console.log(
+  "[Rule SQL: the GCP inert-toggle note appears ONLY when the toggle is actually on]",
+);
+{
+  const off = run(
+    "RuleEngine.apply(gcpPool, { rowWorkload: 'SQL Server' }, 'gcp')",
+  );
+  check(
+    "with the toggle absent, GCP gets no inert-toggle note at all",
+    !off.rules.some((r) => r.includes("physical-core licensing")),
+    JSON.stringify(off.rules),
+  );
+}
+
+console.log(
+  "[Rule SQL: the label describes what the SURVIVOR used, not a rejected candidate]",
+);
+{
+  // "metal" carries the -1 sentinel (no real core data) but its 16 vCPUs
+  // clear the floor via the vCPU fallback and it's cheaper, so it's the sole
+  // survivor. "smallReal" DOES have real core data (1 physical core) but
+  // fails the floor and is excluded. Before this fix, anyRealCores was set
+  // from the WHOLE pre-filter pool (including rejected candidates), so the
+  // excluded smallReal's real core data alone mislabelled the floor as
+  // "physical-core" even though the surviving metal instance never used one.
+  ctx.mixedPool = [
+    inst({
+      instanceType: "metal",
+      vCpus: 16,
+      price: 0.2,
+      originalData: { cores: -1 }, // sentinel: no real data
+    }),
+    inst({
+      instanceType: "smallReal",
+      vCpus: 4,
+      price: 0.3,
+      originalData: { cores: 1 }, // real data, but fails the floor
+    }),
+  ];
+  const on = run(
+    "RuleEngine.apply(mixedPool, { rowWorkload: 'SQL Server', sqlPhysicalCoreLicensing: true }, 'aws')",
+  );
+  check(
+    "only the vCPU-fallback survivor (metal) clears the floor",
+    on.instances.length === 1 && on.instances[0].instanceType === "metal",
+    JSON.stringify(on.instances.map((i) => i.instanceType)),
+  );
+  check(
+    "the label says vCPU — the surviving instance's own basis — not physical-core",
+    on.rules.some((r) => r.startsWith("SQL: 4-vCPU licence floor")) &&
+      !on.rules.some((r) => r.includes("physical-core")),
+    JSON.stringify(on.rules),
+  );
 }
 
 if (failures) {

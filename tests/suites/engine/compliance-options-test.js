@@ -257,11 +257,17 @@ console.log("[Azure Trusted Launch: Azure-only real field]");
     res.instances.length === 1 && res.instances[0].instanceType === "tl",
     JSON.stringify(res.instances.map((i) => i.instanceType)),
   );
+  // Review 4 of the 3.16 bug-fix tail: this used to be a total no-op on
+  // AWS/GCP — no rule line at all, indistinguishable from a row with no
+  // Compliance requirement. Now reports "not applicable" honestly, the same
+  // shape Confidential Computing already used.
   const awsRes = apply(ctx.pool, "Azure Trusted Launch", "aws");
   check(
-    "Azure Trusted Launch is skipped entirely on AWS — no rule line, pool untouched",
+    "Azure Trusted Launch on AWS leaves the pool untouched but reports 'not applicable'",
     awsRes.instances.length === 2 &&
-      !awsRes.rules.some((r) => r.includes("Trusted Launch")),
+      awsRes.rules.some(
+        (r) => r.includes("Trusted Launch") && r.includes("not applicable"),
+      ),
     JSON.stringify({ n: awsRes.instances.length, rules: awsRes.rules }),
   );
   // isTrustedLaunchCapable used to reject the string "1.0" (see isFlagTrue).
@@ -275,6 +281,82 @@ console.log("[Azure Trusted Launch: Azure-only real field]");
     tlStringRes.instances.length === 1 &&
       tlStringRes.instances[0].instanceType === "tl",
     JSON.stringify(tlStringRes.instances.map((i) => i.instanceType)),
+  );
+}
+
+console.log(
+  "[AWS Nitro Enclaves reports 'not applicable' on Azure/GCP, not a silent no-op]",
+);
+{
+  // Symmetric with Azure Trusted Launch above — review 4 of the 3.16
+  // bug-fix tail. Before the fix, a row requesting Nitro on a non-AWS
+  // provider column got zero audit-trail feedback, looking identical to a
+  // row with no Compliance requirement at all.
+  ctx.pool = [inst({ instanceType: "x", generation: 0 })];
+  const azureRes = apply(ctx.pool, "AWS Nitro Enclaves", "azure");
+  check(
+    "AWS Nitro Enclaves on Azure leaves the pool untouched but reports 'not applicable'",
+    azureRes.instances.length === 1 &&
+      azureRes.rules.some(
+        (r) => r.includes("Nitro") && r.includes("not applicable"),
+      ),
+    JSON.stringify({ n: azureRes.instances.length, rules: azureRes.rules }),
+  );
+  const gcpRes = apply(ctx.pool, "AWS Nitro Enclaves", "gcp");
+  check(
+    "AWS Nitro Enclaves on GCP leaves the pool untouched but reports 'not applicable'",
+    gcpRes.instances.length === 1 &&
+      gcpRes.rules.some(
+        (r) => r.includes("Nitro") && r.includes("not applicable"),
+      ),
+    JSON.stringify({ n: gcpRes.instances.length, rules: gcpRes.rules }),
+  );
+
+  // And on AWS itself, when requested but no candidate actually qualifies —
+  // the "not applied" branch, previously untested for Nitro specifically
+  // (Confidential Computing already had this coverage above).
+  ctx.noNitroPool = [
+    inst({ instanceType: "plain", originalData: { nitroEnclavesSupport: 0 } }),
+  ];
+  const noneRes = apply(ctx.noNitroPool, "AWS Nitro Enclaves", "aws");
+  check(
+    "AWS Nitro Enclaves with no qualifying candidate -> pool stands, 'not applied' reported",
+    noneRes.instances.length === 1 &&
+      noneRes.rules.some(
+        (r) => r.includes("Nitro") && r.includes("not applied"),
+      ),
+    JSON.stringify(noneRes.rules),
+  );
+}
+
+console.log(
+  "[expandComplianceTokens is memoized by raw string — review 8 of the 3.16 bug-fix tail]",
+);
+{
+  // Called indirectly (it's an internal closure fn, not on the public API) —
+  // exercise it through apply(), which is the real call site, and prove
+  // identical raw strings share a cached result while still computing the
+  // right answer, not just returning something cheap.
+  ctx.memoPool = [inst({ instanceType: "prevgen", generation: 0 })];
+  const a = apply(ctx.memoPool, "Current-Generation Hardware", "aws");
+  const b = apply(ctx.memoPool, "Current-Generation Hardware", "aws");
+  check(
+    "repeated calls with the same raw Compliance string both compute correctly (cache doesn't corrupt the answer)",
+    a.instances.length === 0 && b.instances.length === 0,
+    JSON.stringify({ a: a.instances, b: b.instances }),
+  );
+  // A DIFFERENT raw string must not reuse the wrong cache entry — "Current-
+  // Generation Hardware" (cached above) would have excluded this prevgen
+  // instance; "Confidential Computing" is a genuinely different requirement
+  // that doesn't touch generation at all, so it must survive untouched
+  // (no AWS candidate is Nitro-capable here, so the rule reports "not
+  // applied" and leaves the pool as-is, per its own honest-reporting shape).
+  ctx.memoPool2 = [inst({ instanceType: "prevgen", generation: 0 })];
+  const c = apply(ctx.memoPool2, "Confidential Computing", "aws");
+  check(
+    "a different raw Compliance string is NOT served the previous string's cached result",
+    c.instances.length === 1 && c.instances[0].instanceType === "prevgen",
+    JSON.stringify(c.instances),
   );
 }
 

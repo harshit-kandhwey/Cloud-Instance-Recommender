@@ -371,6 +371,39 @@ const OPTIONS = {
   }
 
   console.log(
+    "[VM Family Filter with MULTIPLE selected families: the pre-parsed-filter optimization matches azureMatchesVmFamily's own per-call logic — review 8 of the 3.16 bug-fix tail]",
+  );
+  {
+    // applyFilters used to call azureMatchesVmFamily (which re-parses the
+    // filter string) once per instance PER selected family; this proves the
+    // now-precomputed-filter loop still selects the SAME set for a mixed
+    // v1/v2 + v3+, storage-flagged + plain selection.
+    const ctx = buildRun();
+    const pool = [
+      { instanceType: "Standard_DS1_v2", vCpus: 1, memory: 3.5, price: 0.1 },
+      { instanceType: "Standard_D2s_v3", vCpus: 2, memory: 8, price: 0.1 },
+      { instanceType: "Standard_D2_v3", vCpus: 2, memory: 8, price: 0.1 }, // excluded: no storage flag, not requested plain
+      { instanceType: "Standard_B2ms", vCpus: 2, memory: 8, price: 0.05 },
+      { instanceType: "Standard_F2s_v2", vCpus: 2, memory: 4, price: 0.09 }, // excluded: not selected
+    ];
+    vm.runInContext(`sel = new AzureInstanceSelector();`, ctx);
+    ctx.pool = pool;
+    const result = vm.runInContext(
+      `sel.applyFilters(pool, 1, 1, { restrictMainFamilies: true, selectedAzureVMFamilies: ["Standard_DS", "Standard_B"] })`,
+      ctx,
+    );
+    const types = result.map((i) => i.instanceType).sort();
+    check(
+      "keeps both storage-flagged D-series names (v1/v2 embedded-S and v3+ suffix-flag) plus the plain B-series, excludes the non-storage-flagged D and the unselected F",
+      JSON.stringify(types) ===
+        JSON.stringify(
+          ["Standard_DS1_v2", "Standard_D2s_v3", "Standard_B2ms"].sort(),
+        ),
+      JSON.stringify(types),
+    );
+  }
+
+  console.log(
     "[GCP family description lookup survives the family's real casing]",
   );
   {
