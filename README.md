@@ -6,6 +6,8 @@ A comprehensive web-based tool for generating optimal cloud instance recommendat
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 
+**Why not just use AWS Migration Evaluator, Azure Migrate, or GCP's Migration Center?** Each of those is free, but single-provider. This tool does all three side by side from one file, and — unlike a vendor's own hosted tool — nothing you upload is ever sent anywhere: it's read and processed entirely in your own browser.
+
 ---
 
 ## 🚀 Features
@@ -480,6 +482,8 @@ Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE):
 - **Charitable organizations, educational institutions, government institutions, and public research organizations** may use the code for permitted purposes regardless of their source of funding, per the license's noncommercial-organization provision.
 - **The hosted application is free for everyone**, including commercial users — the license governs the source code, not visiting the site.
 - **Other commercial use of the code** (for-profit self-hosting, embedding in commercial products or services, commercial redistribution) requires written permission — reach out at harshitkandhwey@gmail.com.
+
+**If this project ever goes quiet:** it's maintained by one person, and the license already gives you a way forward without needing anyone's ongoing involvement — fork the repository and self-host it yourself, under the same noncommercial terms.
 
 Contributions are welcome; see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 

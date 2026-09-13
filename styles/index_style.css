@@ -45,6 +45,21 @@ body {
   margin-top: 16px;
 }
 
+/* Reuses the active-nav-pill token pair — already proven legible against
+   this same gradient in both themes — so this badge needs no new colors. */
+.header-differentiator {
+  display: inline-block;
+  margin: 18px auto 0;
+  padding: 8px 18px;
+  max-width: none;
+  background: var(--nav-active-bg);
+  color: var(--nav-active-text);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 1;
+}
+
 nav a {
   margin-right: 10px;
   padding: 3px 9px;
