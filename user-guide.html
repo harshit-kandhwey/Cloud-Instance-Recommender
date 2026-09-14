@@ -2269,13 +2269,17 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
       </p>
 
       <div class="callout callout-info">
-        <strong>Why no pricing in the output?</strong>
+        <strong>Why no dollar figures in the output?</strong>
         Cloud pricing changes frequently and varies with discounts, reserved
         instances, Savings Plans, and enterprise agreements. This tool uses
         pricing internally to rank candidates and find the cheapest match, but
-        does not surface prices in the output CSV to avoid giving users stale or
-        context-free figures. Always verify pricing in the official
-        AWS/Azure/GCP pricing calculators before making commitments.
+        does not surface an absolute dollar figure anywhere — no price column,
+        no CSV field, no export sheet. Since 3.17, the stats bar, the App
+        Portfolio Overview, and the Executive Print Report show one aggregate,
+        <em>relative</em> figure per provider instead — "Optimized ranks ~X%
+        lower than Like-to-Like" — always paired with the data-freshness date
+        and a reminder to check the official AWS/Azure/GCP pricing calculators
+        before making commitments.
       </div>
 
       <h3>Status values for recommendation columns</h3>
@@ -2601,10 +2605,11 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
         </ul>
 
         <div class="callout callout-info">
-          <strong>No pricing, no upload</strong>
-          As everywhere else in the tool, no pricing appears in any sheet, and
-          the data is passed to the portfolio page in-browser — it never leaves
-          your machine.
+          <strong>No dollar figures, no upload</strong>
+          No absolute price ever appears in any exported sheet — the Overview
+          tab's relative "Optimized ranks ~X% lower" KPI (since 3.17) lives only
+          on the live in-browser page, not in this workbook. The data is passed
+          to the portfolio page in-browser, too — it never leaves your machine.
         </div>
       </div>
 
@@ -3363,13 +3368,18 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
       </p>
 
       <p>
-        <strong>Q: Why doesn't the output include pricing?</strong><br />
+        <strong>Q: Why doesn't the output include a dollar amount?</strong
+        ><br />
         A: Cloud pricing is not static — it changes with region, OS, discounts,
         Savings Plans, Reserved Instances, and enterprise agreements. Showing a
-        price in the output would be misleading within weeks. This tool
-        identifies the right <em>instance type</em>; use your provider's pricing
-        calculator for accurate cost figures. The AWS Pricing Calculator Bulk
-        Template export makes this workflow seamless for AWS.
+        dollar figure in the output would be misleading within weeks, so none
+        ever appears — no price column, no CSV field, no export sheet. Since
+        3.17, the stats bar, App Portfolio Overview, and Executive Print Report
+        show one aggregate, relative percentage per provider instead ("Optimized
+        ranks ~X% lower than Like-to-Like"). This tool identifies the right
+        <em>instance type</em>; use your provider's pricing calculator for
+        accurate cost figures. The AWS Pricing Calculator Bulk Template export
+        makes this workflow seamless for AWS.
       </p>
 
       <p>
@@ -3608,8 +3618,9 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
           on whether your utilisation data is averages or percentiles
         </li>
         <li>
-          Pricing is intentionally excluded from output — use the AWS Pricing
-          Calculator Bulk Template export for cost estimation
+          No absolute dollar figure is ever in the output — a relative savings
+          percentage is shown since 3.17, and the AWS Pricing Calculator Bulk
+          Template export is still the way to get an authoritative cost estimate
         </li>
         <li>
           Treat recommendations as an informed starting point, not a final
