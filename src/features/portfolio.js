@@ -807,9 +807,11 @@ function priceSavingsKpiTiles(priceSavings) {
   return Object.entries(priceSavings || {})
     .map(([provider, s]) => {
       const label =
-        s.pct >= 0
-          ? `~${s.pct}% lower ranked cost`
-          : `~${Math.abs(s.pct)}% higher ranked cost`;
+        s.pct === 0
+          ? "same ranked cost"
+          : s.pct > 0
+            ? `~${s.pct}% lower ranked cost`
+            : `~${Math.abs(s.pct)}% higher ranked cost`;
       return `<div class="counter-card" title="Relative ranking only, not a quote — use ${esc(provider)}'s own pricing calculator for actual cost">
         <div class="counter-number">${esc(label)}</div>
         <div class="counter-title">💲 ${esc(provider)} Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</div>

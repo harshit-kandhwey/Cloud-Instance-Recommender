@@ -23,7 +23,7 @@ console.log("[a downsize shows a 'lower' line with the row count]");
   const html = ctx._buildStatsHtml(rows);
   check(
     "shows the percentage and direction",
-    /AWS Optimized ranks <strong>~18% lower<\/strong> than Like-to-Like/.test(
+    /AWS Optimized ranks <strong>~18% lower than<\/strong> Like-to-Like/.test(
       html,
     ),
     html,
@@ -44,12 +44,25 @@ console.log("[an upsize shows a 'higher' line]");
   const html = ctx._buildStatsHtml(rows);
   check(
     "shows the magnitude with 'higher', not a bare negative number",
-    /AWS Optimized ranks <strong>~7% higher<\/strong> than Like-to-Like/.test(
+    /AWS Optimized ranks <strong>~7% higher than<\/strong> Like-to-Like/.test(
       html,
     ),
     html,
   );
   check("plural row count", /\(3 rows\)/.test(html), html);
+}
+
+console.log("[an identical result reports 'the same', not '0% lower']");
+{
+  const { ctx } = buildContext();
+  const rows = [row()];
+  rows.priceSavings = { AWS: { pct: 0, rows: 2 } };
+  const html = ctx._buildStatsHtml(rows);
+  check(
+    "shows 'the same' rather than a fabricated 0% saving",
+    /AWS Optimized ranks <strong>the same as<\/strong> Like-to-Like/.test(html),
+    html,
+  );
 }
 
 console.log("[no priceSavings on the array -> no price line at all]");

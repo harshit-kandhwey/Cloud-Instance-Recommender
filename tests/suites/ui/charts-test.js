@@ -520,6 +520,17 @@ console.log(
 }
 {
   const { ctx } = buildContext();
+  const rows = [matched("a")];
+  rows.priceSavings = { AWS: { pct: 0, rows: 1 } };
+  const html = ctx.buildExecutiveReport(rows);
+  check(
+    "an identical result shows 'same', not a fabricated −0%",
+    /AWS<\/strong>[\s\S]*?same/.test(html) && !/−0%/.test(html),
+    html,
+  );
+}
+{
+  const { ctx } = buildContext();
   const rows = [matched("a")]; // no .priceSavings attached
   const html = ctx.buildExecutiveReport(rows);
   check(

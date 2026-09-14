@@ -334,7 +334,7 @@ function _reportHeadline(results) {
       ([provider, s]) => `
         <div style="font-size:12px;margin:2px 0;color:var(--text-body);">
           <strong style="color:var(--text);">${escapeHtml(provider)}</strong>
-          <span style="font-weight:700;"> ${s.pct >= 0 ? "−" : "+"}${Math.abs(s.pct)}%</span>
+          <span style="font-weight:700;"> ${s.pct === 0 ? "same" : (s.pct > 0 ? "−" : "+") + Math.abs(s.pct) + "%"}</span>
           <span style="color:var(--text-soft);"> ranked cost, Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</span>
         </div>`,
     )

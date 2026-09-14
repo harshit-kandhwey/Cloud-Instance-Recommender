@@ -84,16 +84,16 @@ const { check, state } = makeChecker();
       ctx,
       { filename: "price-savings-upsize" },
     );
+    check(
+      "the upsize fixture produces a comparable AWS entry",
+      upsized.priceSavings && typeof upsized.priceSavings.AWS === "object",
+      JSON.stringify(upsized.priceSavings),
+    );
     if (upsized.priceSavings && upsized.priceSavings.AWS) {
       check(
         "the upsize's percentage is negative (optimized ranks higher)",
         upsized.priceSavings.AWS.pct < 0,
         `pct=${upsized.priceSavings.AWS.pct}`,
-      );
-    } else {
-      check(
-        "or no entry at all if the upsize picked the same/no comparable instance",
-        true,
       );
     }
 

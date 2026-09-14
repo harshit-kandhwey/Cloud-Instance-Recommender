@@ -175,7 +175,7 @@ function _buildStatsHtml(results) {
     ? `<span style="color:var(--text-body);" title="Relative ranking only, not a quote — use your provider's pricing calculator for actual cost">💲 ${priceEntries
         .map(
           ([provider, s]) =>
-            `${escapeHtml(provider)} Optimized ranks <strong>${s.pct >= 0 ? "~" + s.pct + "% lower" : "~" + Math.abs(s.pct) + "% higher"}</strong> than Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})`,
+            `${escapeHtml(provider)} Optimized ranks <strong>${s.pct === 0 ? "the same as" : s.pct > 0 ? "~" + s.pct + "% lower than" : "~" + Math.abs(s.pct) + "% higher than"}</strong> Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})`,
         )
         .join(" · ")}</span>`
     : "";
