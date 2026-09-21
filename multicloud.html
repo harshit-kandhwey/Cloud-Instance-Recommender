@@ -1731,26 +1731,24 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
       }
 
       // ── Override provider-specific getters with unified multicloud versions ──
-      window.getSelectedProcessorManufacturers = _mcProcessors;
-      window.getSelectedAzureProcessors = _mcProcessors;
-      window.getSelectedGCPProcessors = _mcProcessors;
-      window.getSelectedMainFamilies = _mcAWSFamilies;
-      window.getSelectedAzureSeries = _mcAzureSeries;
-      window.getSelectedAzureVMFamilies = _mcAzureVMFamilies;
-      window.getSelectedGCPFamilies = _mcGCPFamilies;
+      // This inline script runs at parse time, BEFORE the deferred modules, whose
+      // top-level function declarations of the same names would overwrite anything
+      // assigned now. DOMContentLoaded fires after every deferred script has run.
+      document.addEventListener("DOMContentLoaded", function () {
+        window.getSelectedProcessorManufacturers = _mcProcessors;
+        window.getSelectedAzureProcessors = _mcProcessors;
+        window.getSelectedGCPProcessors = _mcProcessors;
+        window.getSelectedMainFamilies = _mcAWSFamilies;
+        window.getSelectedAzureSeries = _mcAzureSeries;
+        window.getSelectedAzureVMFamilies = _mcAzureVMFamilies;
+        window.getSelectedGCPFamilies = _mcGCPFamilies;
+      });
 
       // ── Exclude controls (still dynamic per-provider) ─────────────────────────
       function updateMultiCloudFilters() {
         const excludeCheckbox = document.getElementById("excludeTypes");
         if (excludeCheckbox?.checked) updateExcludeControls();
       }
-
-      // Override toggleCloudProvider to refresh exclude options when providers change
-      const _origToggleCloudProvider = window.toggleCloudProvider;
-      window.toggleCloudProvider = function (provider) {
-        if (_origToggleCloudProvider) _origToggleCloudProvider(provider);
-        setTimeout(updateMultiCloudFilters, 100);
-      };
 
       // ── Init: reset checkboxes, hide panels, wire exclude ────────────────────
       document.addEventListener("DOMContentLoaded", function () {
