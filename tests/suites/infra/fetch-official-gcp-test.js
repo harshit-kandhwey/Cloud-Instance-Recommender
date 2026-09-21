@@ -686,6 +686,27 @@ async function paginationChecks() {
       JSON.stringify({ calls: ok.calls, error: ok.error }),
     );
 
+    // Guard (plant-RED: drop the encodeURIComponent on the token): a page token is
+    // opaque and may carry + / =, which an unencoded query string would corrupt
+    // into a different page — or a 400 that the retry-free fetcher surfaces late.
+    const urls = [];
+    globalThis.fetch = async (url) => {
+      urls.push(String(url));
+      const body =
+        urls.length === 1
+          ? { skus: [{ name: "a" }], nextPageToken: "a+b/c=" }
+          : { skus: [{ name: "b" }] };
+      return { ok: true, json: async () => body };
+    };
+    await fetchAllSkus();
+    check(
+      "the page token is percent-encoded in the next request",
+      urls.length === 2 &&
+        urls[1].includes("pageToken=a%2Bb%2Fc%3D") &&
+        !urls[1].includes("pageToken=a+b"),
+      urls[1],
+    );
+
     // Guard (plant-RED: return the collected skus at the cap instead of throwing).
     // A catalog still handing out a token at the cap means the dump is short, and a
     // short dump prices only some series while reconcile treats it as authoritative.

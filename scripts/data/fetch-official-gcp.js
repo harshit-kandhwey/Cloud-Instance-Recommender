@@ -467,8 +467,8 @@ async function fetchAllSkus() {
     }
     if (token) seen.add(token);
     const url =
-      `${CATALOG_HOST}/v1/${COMPUTE_SERVICE}/skus?key=${key}` +
-      `&pageSize=${PAGE_SIZE}${token ? `&pageToken=${token}` : ""}`;
+      `${CATALOG_HOST}/v1/${COMPUTE_SERVICE}/skus?key=${encodeURIComponent(key)}` +
+      `&pageSize=${PAGE_SIZE}${token ? `&pageToken=${encodeURIComponent(token)}` : ""}`;
     const j = await fetchJson(url, {
       timeoutMs: REQUEST_TIMEOUT_MS,
       headers: {
