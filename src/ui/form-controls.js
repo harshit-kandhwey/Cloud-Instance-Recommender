@@ -714,12 +714,15 @@ function initializeInstanceFamilyNameFilter(names) {
   const container = document.getElementById("familyNameCheckboxes");
   if (!container) return;
   container.innerHTML = "";
-  names.forEach((familyName, index) => {
+  names.forEach((familyName) => {
     const item = document.createElement("div");
     item.className = "filter-checkbox-item";
     const input = document.createElement("input");
     input.type = "checkbox";
-    input.id = `familyName_${index}`;
+    // Presets and the scenario diff key on the id, and the list is derived from
+    // data: a positional id would re-point a saved preset at another name when a
+    // refresh adds one.
+    input.id = `familyName_${familyName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
     input.value = familyName;
     const label = document.createElement("label");
     label.htmlFor = input.id;

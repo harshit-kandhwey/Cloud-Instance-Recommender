@@ -46,6 +46,13 @@ for (const c of CASES) {
     // The options are the catalogue's own names: the list must offer this one.
     const box = page.locator(`#familyNameCheckboxes input[value="${c.name}"]`);
     await expect(box).toHaveCount(1);
+    // Presets key on the id, so it must follow the name, not its position in a
+    // list a data refresh can reorder — and every id must be unique.
+    await expect(box).toHaveAttribute("id", "familyName_memory_optimized");
+    const ids = await page
+      .locator("#familyNameCheckboxes input")
+      .evaluateAll((els) => els.map((e) => e.id));
+    expect(new Set(ids).size).toBe(ids.length);
     await box.check();
 
     await page.click("button.generate-btn");
