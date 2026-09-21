@@ -14,9 +14,9 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 64 | 273 | 337 |
+| Covered | 64 | 275 | 339 |
 | Waived | 26 | 0 | 26 |
-| Uncovered | 0 | 112 | 112 |
+| Uncovered | 0 | 110 | 110 |
 | **Total** | 90 | 385 | 475 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
@@ -289,7 +289,7 @@ waiver still records the reason.
 | `loadSampleDataset` | src/features/ingest.js | function | behavioral | covered | preview/stale-results-test.js, ui/sample-gallery-test.js |
 | `loadScriptOnce` | src/features/portfolio.js | function | internal | uncovered | — |
 | `loadSectionStates` | src/ui/ui-shell.js | function | internal | covered | ui/accessibility-affordances-test.js |
-| `loadUsageStatistics` | src/features/downloads.js | function | internal | uncovered | — |
+| `loadUsageStatistics` | src/features/downloads.js | function | internal | covered | export/usage-stats-load-test.js |
 | `loadUserRules` | src/core/rules/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/user-rules-ui-test.js |
 | `makeScenario` | src/features/scenario-compare.js | function | internal | covered | export/scenario-compare-test.js |
 | `manualAddVM` | src/features/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
@@ -480,7 +480,7 @@ waiver still records the reason.
 | `updateSelectedPreset` | src/features/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `updateSortIndicators` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
 | `updateStaleResultsNotice` | src/features/preview.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `updateUsageCounters` | src/features/downloads.js | function | internal | uncovered | — |
+| `updateUsageCounters` | src/features/downloads.js | function | internal | covered | export/usage-stats-load-test.js |
 | `updateUsageStatistics` | src/features/downloads.js | function | internal | uncovered | — |
 | `userRuleActionOptions` | src/core/rules/user-rules.js | function | internal | covered | ui/user-rules-ui-test.js |
 | `userRuleDimensionOptions` | src/core/rules/user-rules.js | function | internal | covered | ui/user-rules-ui-test.js |
