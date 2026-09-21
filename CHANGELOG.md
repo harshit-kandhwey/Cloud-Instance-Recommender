@@ -18,11 +18,12 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 
 ## Version map
 
-### 3.18 — Filter reachability cleanup (2026-09-21 → )
+### 3.18 — Filter reachability cleanup (2026-09-21 → 2026-09-22)
 
 | Version | Commit | Date | Change |
 | --- | --- | --- | --- |
-| 3.18.11 | _this commit_ | 2026-09-22 | **Document the family-name filter for all three tool pages, found by 3.18's doc-divergence pass.** `user-guide.html` described "Instance Family Names" only in the AWS table, with a category list that did not match the real names and no mention that the control was unreachable everywhere. The AWS row now lists the real names and says the options come from the catalogue; Azure and GCP gain their own rows; and the AWS row notes that the multi-cloud page uses its Instance Category filter instead. |
+| 3.18.12 | _this commit_ | 2026-09-22 | **Close the 3.18 line: set the end date on the `### 3.18` version-map heading and write its Release notes section.** Last commit of the 3.18 line, pending only the visual-baseline regeneration that a CI run on the pushed branch produces. |
+| 3.18.11 | bad50e7 | 2026-09-22 | **Document the family-name filter for all three tool pages, found by 3.18's doc-divergence pass.** `user-guide.html` described "Instance Family Names" only in the AWS table, with a category list that did not match the real names and no mention that the control was unreachable everywhere. The AWS row now lists the real names and says the options come from the catalogue; Azure and GCP gain their own rows; and the AWS row notes that the multi-cloud page uses its Instance Category filter instead. |
 | 3.18.10 | 0d163ab | 2026-09-22 | **Regenerate the coverage inventory** for the line numbers and the one new suite the preceding commits moved. Generated file, no behaviour change. |
 | 3.18.9 | 784a875 | 2026-09-22 | **Percent-encode the GCP billing request's key and page token, from the repository audit.** Both were interpolated raw into the query string; a page token is opaque and may carry `+`, `/` or `=`, which would have fetched a different page or failed with a 400. Data pipeline only — nothing shipped changes. Plant-confirmed. |
 | 3.18.8 | de23850 | 2026-09-22 | **Ignore persisted state of the wrong shape, from the repository audit.** A stored manual-entry value that parsed to an object, string or number became `manualVMs` as-is and broke the next render; a stored usage-stats value that parsed to a string or array was spread into the stats object as character or index keys. Both now accept only the expected shape and otherwise keep their defaults. A new suite covers the usage-stats loader, which had no test; both changes were watched fail with the check removed. |
@@ -558,6 +559,19 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 ## Release notes
 
 Newest first. Readable summaries of each feature release; per-commit detail is in the version map above.
+
+### 3.18 — 2026-09-21 → 2026-09-22
+
+Filter reachability cleanup: two filters the engine already honoured but no page let a user reach, and everything the closing review found behind them. The line started as two known issues and grew because each one turned out to sit on top of another; every finding was fixed rather than logged.
+
+- **The instance-family-name filter has a panel.** `restrictInstanceFamilyNames` was read by the engine, the option gatherer, the presets and the scenario diff, but no page rendered its checkbox, so it could never be switched on and its nearest-miss probe could never fire. `aws.html`, `azure.html` and `gcp.html` now carry it. The options are the distinct names each provider's shipped catalogue carries (never a hand-kept list, so a data refresh cannot leave one stale), and each checkbox id follows the name rather than its position so a saved preset can never re-point at another name. `multicloud.html` deliberately omits it: its Instance Category filter covers the need, and per-provider name strings differ.
+- **The GCP processor filter offered platforms the data never carries.** It listed `Intel Skylake`, `AMD Rome` and so on while every record says `Intel`, `AMD` or `ARM`, so nothing a user ticked could match. It now offers exactly the three values the data ships, and a test pins the two equal.
+- **Azure series and GCP machine-family filters were unreachable too — and the Azure one could never have matched.** Their checkboxes were rendered into an element no page carried. Making the Azure series filter reachable exposed a second defect underneath: `getVMSeries` parsed only `Standard_`-prefixed names while the shipped keys are lowercase and unprefixed (`d4asv6`), so every series resolved to an empty string.
+- **`multicloud.html`'s processor and category filters restricted nothing.** The page assigned its own getters from an inline script that runs before the deferred modules, whose same-named function declarations then overwrote all five. With "AMD" or a category ticked the engine still saw no restriction. This was found while checking the Azure parser fix, is the most consequential result of the line, and is fixed and covered end to end.
+- **A guard for the whole class.** `page-parity-test.js` used to skip any element id found on zero pages — exactly how the first defect shipped unnoticed. It now fails on any shared-module lookup present on no tool page unless documented with a reason.
+- **A repository-wide audit and a CodeRabbit round, fixed rather than deferred.** CI gained least-privilege permissions, per-job timeouts and superseding-run cancellation (with a suite pinning them); `npm audit` went from three dev-only vulnerabilities to none; a non-data global can no longer be parsed as region data; persisted state of the wrong shape is ignored instead of breaking a render or polluting the usage stats; and the GCP billing request encodes its key and page token. Deferred to 3.19 on purpose: service-worker HTML staleness, console-log volume, and positional ids on the older processor and family checkboxes.
+
+The only behaviour change to an existing result is that filters which were being ignored now apply. No recommendation logic changed and every golden output is byte-identical to `3.17`'s.
 
 ### 3.17 — 2026-09-14 → 2026-09-14
 
