@@ -108,7 +108,7 @@ waiver still records the reason.
 | `azureMatchesSeriesToken` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `azureMatchesVmFamily` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
 | `azureParseFamilyFilter` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
-| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/include-only-test.js |
+| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/include-only-test.js, engine/worker-protocol-test.js, infra/lazy-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `azureTokenParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `buildAboutSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildAppCsv` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |

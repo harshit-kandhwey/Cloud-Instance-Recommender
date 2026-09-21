@@ -77,6 +77,25 @@ function initializeAzureFilters() {
     distinctSpecValues(window.AZURE_SPECS, "familyName"),
   );
 
+  // Initialize instance series checkboxes
+  const seriesContainer = document.getElementById("seriesCheckboxes");
+  if (seriesContainer) {
+    azureAdvancedFilterData.instanceSeries.forEach((series, index) => {
+      const div = document.createElement("div");
+      div.className = "filter-checkbox-item";
+      div.innerHTML = `
+        <input type="checkbox" id="azureSeries_${index}" value="${series}">
+        <label for="azureSeries_${index}">
+          <strong>${series}</strong>
+          <span class="filter-description">${getAzureSeriesDescription(
+            series,
+          )}</span>
+        </label>
+      `;
+      seriesContainer.appendChild(div);
+    });
+  }
+
   // Initialize processor architecture checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
   if (processorContainer) {

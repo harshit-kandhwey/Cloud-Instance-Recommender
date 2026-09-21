@@ -60,3 +60,48 @@ for (const c of CASES) {
     expect(consoleErrors).toEqual([]);
   });
 }
+
+// Azure series and GCP machine families share the "Restrict to specific instance
+// families" gate with the panel above them; the checkboxes were once rendered
+// into an element no page carried, so ticking one was impossible.
+const SERIES_CASES = [
+  {
+    page: "azure",
+    flag: "AZURE_DATA_READY",
+    value: "D-series",
+    instance: /^(?:standard_)?d/i,
+  },
+  { page: "gcp", flag: "GCP_DATA_READY", value: "N2", instance: /^n2-/i },
+];
+
+for (const c of SERIES_CASES) {
+  test(`${c.page}.html: restricting to "${c.value}" yields only that series`, async ({
+    page,
+  }) => {
+    await page.goto(`/${c.page}.html`);
+    await page.waitForFunction((flag) => window[flag] === true, c.flag);
+    await page.setInputFiles(
+      "#csvFile",
+      path.join(__dirname, "fixtures", `${c.page}-sample.csv`),
+    );
+
+    await page.click('[data-section-id="advanced-filters"]');
+    await page.check("#restrictMainFamilies");
+    const box = page.locator(`#seriesCheckboxes input[value="${c.value}"]`);
+    await expect(box).toHaveCount(1);
+    await box.check();
+
+    await page.click("button.generate-btn");
+    await expect(page.locator("#downloadSection")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const { rows } = await exportResultsCsv(page);
+    const col = `${c.page.toUpperCase()} Like-to-Like Instance`;
+    const sized = rows
+      .map((r) => r[col])
+      .filter((v) => v && !/^(?:n\/a|no |error|missing)/i.test(v));
+    expect(sized.length).toBeGreaterThan(0);
+    for (const v of sized) expect(v).toMatch(c.instance);
+  });
+}

@@ -461,9 +461,9 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
   // Azure-specific: Get VM series from instance type
   getVMSeries(instanceType) {
-    // Standard_D2s_v3 -> "D" (match stops at the first digit)
-    const match = instanceType.match(/^Standard_([A-Z]+[a-z]*)/);
-    return match ? match[1] : "";
+    // Shipped keys are lowercase with no Standard_ prefix (d4asv6), so this
+    // must parse both forms: d4asv6 and Standard_D2s_v3 -> "D".
+    return azureSeriesParts(instanceType).base;
   }
 
   // Azure-specific: Enhanced instance result
@@ -514,15 +514,14 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     ) {
       filteredInstances = filteredInstances.filter((instance) => {
         const vmSeries = this.getVMSeries(instance.instanceType);
-        const seriesLabel = (vmSeries + "-series").toLowerCase();
-        if (
-          !options.selectedAzureSeries.some(
-            (s) => s.toLowerCase() === seriesLabel,
-          )
-        ) {
-          return false;
-        }
-        return true;
+        // "N-series" is the whole GPU line (NC, ND, NV, ...).
+        return options.selectedAzureSeries.some((s) => {
+          const letters = s.replace(/-series$/i, "").toUpperCase();
+          return (
+            vmSeries === letters ||
+            (letters === "N" && vmSeries.startsWith("N"))
+          );
+        });
       });
     }
 

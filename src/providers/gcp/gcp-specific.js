@@ -75,6 +75,25 @@ function initializeGCPFilters() {
     distinctSpecValues(window.GCP_SPECS, "seriesName"),
   );
 
+  // Initialize machine families checkboxes
+  const familiesContainer = document.getElementById("seriesCheckboxes");
+  if (familiesContainer) {
+    gcpAdvancedFilterData.machineFamilies.forEach((family, index) => {
+      const div = document.createElement("div");
+      div.className = "filter-checkbox-item";
+      div.innerHTML = `
+        <input type="checkbox" id="gcpFamily_${index}" value="${family}">
+        <label for="gcpFamily_${index}">
+          <strong>${family}</strong>
+          <span class="filter-description">${getGCPFamilyAdvancedDescription(
+            family,
+          )}</span>
+        </label>
+      `;
+      familiesContainer.appendChild(div);
+    });
+  }
+
   // Initialize processor platforms checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
   if (processorContainer) {

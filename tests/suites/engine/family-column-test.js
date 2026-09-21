@@ -331,6 +331,36 @@ const OPTIONS = {
   }
 
   console.log(
+    "[Azure series parsing reads the shipped lowercase keys, not just Standard_ names]",
+  );
+  {
+    const ctx = buildRun();
+    vm.runInContext(`sel = new AzureInstanceSelector();`, ctx);
+    const series = (type) =>
+      vm.runInContext(`sel.getVMSeries(${JSON.stringify(type)})`, ctx);
+    check(
+      "a shipped key (d4asv6) resolves to its series letter",
+      series("d4asv6") === "D",
+      series("d4asv6"),
+    );
+    check(
+      "the Standard_ form resolves the same way",
+      series("Standard_D2s_v3") === "D",
+      series("Standard_D2s_v3"),
+    );
+    check(
+      "a storage-flagged shipped key (ds1v2) folds into its base series",
+      series("ds1v2") === "D",
+      series("ds1v2"),
+    );
+    check(
+      "a GPU key (nc24rsv3) resolves inside the N line",
+      series("nc24rsv3").startsWith("N"),
+      series("nc24rsv3"),
+    );
+  }
+
+  console.log(
     "[Azure VM Family filter matches both v1/v2 and v3+ naming for *S families]",
   );
   {
