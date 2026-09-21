@@ -15,9 +15,21 @@ on:
         type: boolean
         default: false
 
+# Every job only reads the repo and uploads artifacts, so the token needs no
+# write scope. Set explicitly: the default depends on the repo/org setting.
+permissions:
+  contents: read
+
+# A newer push to the same ref supersedes an in-flight run. Never cancels main,
+# so every merged commit keeps a completed result.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   format:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # @playwright/test is a devDependency now, and its postinstall downloads
     # browser binaries. This job (and typecheck) only needs the JS packages, so
     # skip that ~150 MB download here — only the e2e job needs the browser.
@@ -38,6 +50,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -56,6 +69,7 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     steps:
@@ -73,6 +87,7 @@ jobs:
 
   property:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Property-based engine gate. Unlike the `test` job it needs a node_module
     # (fast-check), so it installs deps — but not the Playwright browser, which
     # it never uses.
@@ -93,6 +108,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -130,6 +146,7 @@ jobs:
     # committed baselines are the -linux PNGs this runner produces; a pixel diff
     # here is a layout/colour regression. See playwright-visual.config.js.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
