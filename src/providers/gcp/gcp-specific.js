@@ -40,18 +40,9 @@ const gcpAdvancedFilterData = {
   // separately by customFitSuggestion, not by this category filter.
   machineTypes: ["standard", "highmem", "highcpu", "shared-core"],
 
-  processorPlatforms: [
-    "Intel Skylake",
-    "Intel Broadwell",
-    "Intel Haswell",
-    "Intel Ice Lake",
-    "Intel Cascade Lake",
-    "AMD Rome",
-    "AMD Milan",
-    "ARM Ampere Altra",
-  ],
-
-  cpuPlatforms: ["Intel", "AMD", "ARM"],
+  // Must equal the cpuPlatform values the shipped records carry: the engine
+  // compares a ticked value to instance.processor by equality.
+  processorPlatforms: ["Intel", "AMD", "ARM"],
 };
 
 // Updated with enhanced exclude types
@@ -80,24 +71,9 @@ const gcpFilterData = {
 function initializeGCPFilters() {
   console.log("GCP filters initialized with advanced capabilities");
 
-  // Initialize machine families checkboxes
-  const familiesContainer = document.getElementById("familyNameCheckboxes");
-  if (familiesContainer) {
-    gcpAdvancedFilterData.machineFamilies.forEach((family, index) => {
-      const div = document.createElement("div");
-      div.className = "filter-checkbox-item";
-      div.innerHTML = `
-        <input type="checkbox" id="gcpFamily_${index}" value="${family}">
-        <label for="gcpFamily_${index}">
-          <strong>${family}</strong>
-          <span class="filter-description">${getGCPFamilyAdvancedDescription(
-            family,
-          )}</span>
-        </label>
-      `;
-      familiesContainer.appendChild(div);
-    });
-  }
+  initializeInstanceFamilyNameFilter(
+    distinctSpecValues(window.GCP_SPECS, "seriesName"),
+  );
 
   // Initialize processor platforms checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
@@ -204,14 +180,9 @@ function getGCPFamilyAdvancedDescription(family) {
 // Enhanced GCP processor descriptions
 function getGCPProcessorDescription(processor) {
   const descriptions = {
-    "Intel Skylake": "Balanced performance for general workloads",
-    "Intel Broadwell": "Proven platform for enterprise applications",
-    "Intel Haswell": "Cost-effective option for basic workloads",
-    "Intel Ice Lake": "Latest Intel with enhanced AI acceleration",
-    "Intel Cascade Lake": "High-performance Intel for demanding workloads",
-    "AMD Rome": "High core count processors with excellent value",
-    "AMD Milan": "Latest AMD with improved performance per dollar",
-    "ARM Ampere Altra": "Energy-efficient ARM processors for cloud-native apps",
+    Intel: "x86-64 Xeon processors, widely compatible",
+    AMD: "x86-64 EPYC processors, high core counts",
+    ARM: "Arm-based processors (Tau T2A, Axion) for cloud-native workloads",
   };
   return descriptions[processor] || "Specialized processor platform";
 }

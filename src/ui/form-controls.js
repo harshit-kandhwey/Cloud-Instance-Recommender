@@ -674,12 +674,70 @@ function getExcludeTypeDescription(provider, type) {
   return `Exclude ${type} instance types`;
 }
 
-// Fallback getter functions - these will be overridden by provider-specific files if available
+// The family-name filter's options are the distinct names the shipped catalogue
+// carries, never a hand-kept list — a name the data lacks matches nothing, and a
+// name the list lacks can never be ticked.
+function distinctSpecValues(specs, field) {
+  const compute = (specs && specs.compute) || {};
+  return [
+    ...new Set(
+      Object.values(compute)
+        .map((spec) => spec[field])
+        .filter(Boolean),
+    ),
+  ].sort();
+}
+
+const FAMILY_NAME_DESCRIPTIONS = {
+  "General purpose": "Balanced compute, memory, and networking",
+  "Micro instances": "Low-cost, low-throughput applications",
+  "Compute optimized": "High-performance processors",
+  "Storage optimized": "High sequential read/write",
+  "Memory optimized": "Fast performance for in-memory databases",
+  "GPU instance": "Accelerated computing workloads",
+  GPU: "Accelerated computing workloads",
+  "Accelerator optimized": "GPU and accelerator workloads",
+  "Network optimized": "High-bandwidth networking",
+  "High performance compute": "Tightly-coupled HPC workloads",
+  "Machine Learning ASIC Instances": "Machine learning inference",
+  "FPGA Instances": "Hardware acceleration",
+  "Media Accelerator Instances": "Video processing workloads",
+};
+
+function getFamilyNameDescription(familyName) {
+  return FAMILY_NAME_DESCRIPTIONS[familyName] || "Specialized instance type";
+}
+
+// Fills #familyNameCheckboxes; the getter below reads it back by id prefix.
+// A page without the container is skipped, not an error.
+function initializeInstanceFamilyNameFilter(names) {
+  const container = document.getElementById("familyNameCheckboxes");
+  if (!container) return;
+  container.innerHTML = "";
+  names.forEach((familyName, index) => {
+    const item = document.createElement("div");
+    item.className = "filter-checkbox-item";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = `familyName_${index}`;
+    input.value = familyName;
+    const label = document.createElement("label");
+    label.htmlFor = input.id;
+    const strong = document.createElement("strong");
+    strong.textContent = familyName;
+    const description = document.createElement("span");
+    description.className = "filter-description";
+    description.textContent = getFamilyNameDescription(familyName);
+    label.append(strong, description);
+    item.append(input, label);
+    container.appendChild(item);
+  });
+}
+
 function getSelectedInstanceFamilyNames() {
   const selected = [];
-  // Look for checked checkboxes with pattern familyName_, azureSeries_, gcpFamily_
   const checkboxes = document.querySelectorAll(
-    'input[id^="familyName_"]:checked, input[id^="azureSeries_"]:checked, input[id^="gcpFamily_"]:checked',
+    'input[id^="familyName_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {

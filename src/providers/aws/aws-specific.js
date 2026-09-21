@@ -2,17 +2,6 @@
 
 // AWS Filter Data based on actual CSV structure
 const awsFilterData = {
-  instanceFamilyNames: [
-    "General purpose",
-    "Micro instances",
-    "Compute optimized",
-    "Storage optimized",
-    "Memory optimized",
-    "GPU instance",
-    "Machine Learning ASIC Instances",
-    "FPGA Instances",
-    "Media Accelerator Instances",
-  ],
   processorManufacturers: [
     "Intel",
     "AWS", // Graviton
@@ -70,24 +59,9 @@ const awsExcludeTypesData = [
 
 // Initialize AWS filter controls
 function initializeAWSFilters() {
-  // Initialize instance family name checkboxes
-  const familyNameContainer = document.getElementById("familyNameCheckboxes");
-  if (familyNameContainer) {
-    awsFilterData.instanceFamilyNames.forEach((familyName, index) => {
-      const div = document.createElement("div");
-      div.className = "filter-checkbox-item";
-      div.innerHTML = `
-        <input type="checkbox" id="familyName_${index}" value="${familyName}">
-        <label for="familyName_${index}">
-          <strong>${familyName}</strong>
-          <span class="filter-description">${getFamilyNameDescription(
-            familyName,
-          )}</span>
-        </label>
-      `;
-      familyNameContainer.appendChild(div);
-    });
-  }
+  initializeInstanceFamilyNameFilter(
+    distinctSpecValues(window.AWS_SPECS, "instanceFamilyName"),
+  );
 
   // Initialize processor manufacturer checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
@@ -128,22 +102,6 @@ function initializeAWSFilters() {
       mainFamiliesContainer.appendChild(div);
     });
   }
-}
-
-// Get family name descriptions
-function getFamilyNameDescription(familyName) {
-  const descriptions = {
-    "General purpose": "Balanced compute, memory, and networking",
-    "Micro instances": "Low-cost, low-throughput applications",
-    "Compute optimized": "High-performance processors",
-    "Storage optimized": "High sequential read/write",
-    "Memory optimized": "Fast performance for in-memory databases",
-    "GPU instance": "Accelerated computing workloads",
-    "Machine Learning ASIC Instances": "Machine learning inference",
-    "FPGA Instances": "Hardware acceleration",
-    "Media Accelerator Instances": "Video processing workloads",
-  };
-  return descriptions[familyName] || "Specialized instance type";
 }
 
 // Get processor descriptions
@@ -226,18 +184,6 @@ function toggleMainFamiliesFilter() {
   }
 }
 
-// Get selected instance family names
-function getSelectedInstanceFamilyNames() {
-  const selected = [];
-  awsFilterData.instanceFamilyNames.forEach((familyName, index) => {
-    const checkbox = document.getElementById(`familyName_${index}`);
-    if (checkbox && checkbox.checked) {
-      selected.push(familyName);
-    }
-  });
-  return selected;
-}
-
 // Get selected processor manufacturers
 function getSelectedProcessorManufacturers() {
   const selected = [];
@@ -298,14 +244,12 @@ if (typeof module !== "undefined" && module.exports) {
     awsFamilyData,
     awsExcludeTypesData,
     initializeAWSFilters,
-    getFamilyNameDescription,
     getProcessorDescription,
     getMainFamilyDescription,
     toggleCurrentGenerationFilter,
     toggleInstanceFamilyNameFilter,
     toggleProcessorManufacturerFilter,
     toggleMainFamiliesFilter,
-    getSelectedInstanceFamilyNames,
     getSelectedProcessorManufacturers,
     getSelectedMainFamilies,
     getAWSExcludeTypeDescription,

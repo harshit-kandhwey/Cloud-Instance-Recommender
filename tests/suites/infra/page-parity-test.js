@@ -70,11 +70,31 @@ const INTENTIONAL = {
   // live 2026-09-04 — no field of any kind), so the toggle would do nothing
   // on a GCP-only page. Present everywhere a real effect is possible.
   sqlPhysicalCoreLicensing: ["aws.html", "azure.html", "multicloud.html"],
+  // multicloud.html's "Instance Category (All Providers)" filter already
+  // covers workload categories across all three providers; a second control
+  // over each provider's own family-name strings, which differ by provider
+  // ("GPU instance" vs "GPU"), would let a user filter two providers to nothing.
+  restrictInstanceFamilyNames: ["aws.html", "azure.html", "gcp.html"],
+  instanceFamilyNameControls: ["aws.html", "azure.html", "gcp.html"],
+  familyNameCheckboxes: ["aws.html", "azure.html", "gcp.html"],
   // Compliance's checkboxes (ruleDefaultCompliance*) are NOT listed here:
   // form-controls.js reads them via a prefix querySelectorAll, not individual
   // getElementById calls, so the automatic scan below never sees them at all
   // — see the dedicated "Compliance offers only..." check further down for
   // their real per-page enforcement.
+};
+
+// Lookups no tool page carries, each with the reason it is safe. The partial-
+// presence scan below skips an id found on ZERO pages, which is exactly how a
+// filter whose checkbox no page rendered went unnoticed.
+const ABSENT_FROM_ALL_TOOL_PAGES = {
+  exclude_aws_Graviton: "rendered by the exclude-types builder",
+  exclude_azure_ARM: "rendered by the exclude-types builder",
+  exclude_gcp_ARM: "rendered by the exclude-types builder",
+  manual_0: "rendered by manual-entry.js when the grid opens",
+  portfolioEmpty: "lives on app-portfolio.html, not a tool page",
+  portfolioContent: "lives on app-portfolio.html, not a tool page",
+  dataToast: "created on demand by showToast",
 };
 
 // ─── Every shared-module lookup is on every page, or deliberately not ────────
@@ -134,6 +154,17 @@ console.log("[shared modules find their elements on every page]");
           : " — not in the deliberate list"),
     );
   }
+  const nowhere = lookedUp.filter(
+    (id) =>
+      !generated.has(id) &&
+      !ABSENT_FROM_ALL_TOOL_PAGES[id] &&
+      PAGES.every((p) => !hasElementId(p, id)),
+  );
+  check(
+    "no shared-module lookup is missing from every tool page (unreachable control)",
+    nowhere.length === 0,
+    nowhere.join(", "),
+  );
   check(
     "every partial-presence id is a documented, deliberate divergence",
     unexplained.length === 0,

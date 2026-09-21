@@ -15,9 +15,9 @@ waiver still records the reason.
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
 | Covered | 64 | 273 | 337 |
-| Waived | 25 | 0 | 25 |
-| Uncovered | 0 | 111 | 111 |
-| **Total** | 89 | 384 | 473 |
+| Waived | 26 | 0 | 26 |
+| Uncovered | 0 | 112 | 112 |
+| **Total** | 90 | 385 | 475 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -163,6 +163,7 @@ waiver still records the reason.
 | `disarmAllPresetButtons` | src/features/presets.js | function | internal | covered | ui/presets-test.js |
 | `disarmPresetButton` | src/features/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `dismissToast` | src/shared/app-core.js | function+window | behavioral | covered | preview/preview-search-test.js |
+| `distinctSpecValues` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `downloadAWSBulkTemplate` | src/features/downloads.js | function | behavioral | covered | ingest/storage-passthrough-test.js |
 | `downloadAWSSampleCSV` | src/providers/aws/aws-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadAppCsv` | src/features/portfolio.js | function | behavioral | waived | _waived: Builds a per-app VM CSV from the portfolio model (columns via vmDetailColumns, covered by portfolio-test.js) and triggers an anchor download. Adds only the download plumbing; its browser residual (the portfolio_*.csv download firing from an app panel) is now VERIFIED end-to-end by tests/e2e/portfolio.spec.js (which runs outside this V8-instrumented node run)._ |
@@ -217,7 +218,7 @@ waiver still records the reason.
 | `getExcludeGravitonSetting` | src/core/engine/generate.js | function | internal | uncovered | — |
 | `getExcludeTypeDescription` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `getExcludedTypes` | src/core/engine/generate.js | function | internal | uncovered | — |
-| `getFamilyNameDescription` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
+| `getFamilyNameDescription` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `getGCPCostOptimizationTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPExcludeTypeDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPFamilyAdvancedDescription` | src/providers/gcp/gcp-specific.js | function | internal | covered | engine/family-column-test.js |
@@ -245,7 +246,7 @@ waiver still records the reason.
 | `getSelectedGCPFamilies` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
 | `getSelectedGCPMachineTypes` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
 | `getSelectedGCPProcessors` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedInstanceFamilyNames` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedInstanceFamilyNames` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `getSelectedMainFamilies` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
 | `getSelectedProcessorManufacturers` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
 | `handleFileUpload` | src/features/ingest.js | function | behavioral | waived | _waived: input[type=file] change wrapper that hands the File to ingestFile. ingestFile is covered by upload-guards-test.js, xlsx-ingest-test.js and sheet-picker-test.js; this is the one-line event wiring. browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
@@ -269,6 +270,7 @@ waiver still records the reason.
 | `initializeAzureFilters` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `initializeGCPExcludeTypes` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `initializeGCPFilters` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
+| `initializeInstanceFamilyNameFilter` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `initializeRecommendationTypeHandlers` | src/ui/ui-shell.js | function | internal | uncovered | — |
 | `isMbHeader` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `isNoMatchValue` | src/shared/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/family-column-test.js, engine/fit-headroom-test.js, export/nomatch-export-test.js, export/portfolio-test.js, export/report-test.js, export/scenario-compare-test.js, export/xlsx-structural-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/price-savings-display-test.js, preview/rightsize-verdict-test.js, preview/stats-consistency-test.js, ui/accessibility-affordances-test.js, ui/charts-test.js, workload/app-summary-test.js |
@@ -454,7 +456,7 @@ waiver still records the reason.
 | `toggleCsvMenu` | src/features/downloads.js | function | behavioral | waived | _waived: Open/close of the CSV download dropdown — sets aria-expanded and arms/disarms an outside-click listener. DOM/interaction wiring with no computed output; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `toggleCurrentGenerationFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | covered | preview/preview-search-test.js |
 | `toggleExcludeTypes` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of #excludeControls off a checkbox, delegating the render to updateExcludeControls. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
-| `toggleInstanceFamilyNameFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
+| `toggleInstanceFamilyNameFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the instance-family-name restriction controls off a checkbox. Visibility-only wiring; browser residual covered by tests/e2e/family-name-filter.spec.js, which runs outside this V8-instrumented node run._ |
 | `toggleMainFamiliesFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `toggleManualEntry` | src/features/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `toggleOptimizationMode` | src/ui/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |

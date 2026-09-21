@@ -340,6 +340,39 @@ for (const { name, prefix } of PROVIDERS) {
   );
 }
 
+// ── The GCP processor filter must offer exactly the values the records carry ──
+// The engine compares a ticked value to instance.processor by equality, so an
+// offered platform the data never uses ("Intel Skylake") can never match, and a
+// shipped vendor the list omits can never be ticked.
+{
+  const {
+    gcpAdvancedFilterData,
+  } = require("../../../src/providers/gcp/gcp-specific.js");
+  const sandbox = { window: {} };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(
+    fs.readFileSync(
+      path.join(REPO, "src", "providers", "gcp", "gcp-data.js"),
+      "utf8",
+    ),
+    sandbox,
+    { filename: "gcp-data.js" },
+  );
+  const shippedCpu = [
+    ...new Set(
+      Object.values(sandbox.GCP_SPECS.compute).map((s) => s.cpuPlatform),
+    ),
+  ].sort();
+  const offered = [...gcpAdvancedFilterData.processorPlatforms].sort();
+  check(
+    "the GCP processor filter offers exactly the cpuPlatform values the data ships",
+    JSON.stringify(offered) === JSON.stringify(shippedCpu) &&
+      shippedCpu.length === 3,
+    `offered=${offered.join("/")} shipped=${shippedCpu.join("/")}`,
+  );
+}
+
 // ── The shipped Azure CPU vendor must agree with the classifier that produced it ──
 // The Azure feed carries no processor field, so fetch-vantage derives the vendor from
 // AZURE_AMD_FAMILIES. The tool's own suite pins that function; this pins the artifact,
