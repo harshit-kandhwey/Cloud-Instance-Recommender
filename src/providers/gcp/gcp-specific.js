@@ -151,7 +151,7 @@ function updateGCPFilterLabels() {
     "#instanceFamilyNameControls .form-label",
   );
   if (familyLabel) {
-    familyLabel.textContent = "GCP Machine Families:";
+    familyLabel.textContent = "GCP Instance Family Names:";
   }
 
   // Update main families label

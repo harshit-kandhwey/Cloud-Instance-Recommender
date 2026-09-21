@@ -155,7 +155,7 @@ function updateAzureFilterLabels() {
     "#instanceFamilyNameControls .form-label",
   );
   if (familyLabel) {
-    familyLabel.textContent = "Azure Instance Series:";
+    familyLabel.textContent = "Azure Instance Family Names:";
   }
 
   // Update main families label

@@ -37,6 +37,11 @@ for (const c of CASES) {
     await page.click('[data-section-id="advanced-filters"]');
     await page.check("#restrictInstanceFamilyNames");
     await expect(page.locator("#instanceFamilyNameControls")).toBeVisible();
+    // The panel holds family NAMES; a provider label override once called it
+    // the series list, which is a different filter.
+    await expect(
+      page.locator("#instanceFamilyNameControls .form-label"),
+    ).toContainText("Family Names");
 
     // The options are the catalogue's own names: the list must offer this one.
     const box = page.locator(`#familyNameCheckboxes input[value="${c.name}"]`);
