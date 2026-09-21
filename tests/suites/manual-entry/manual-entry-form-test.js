@@ -207,6 +207,19 @@ function fill(ctx, values) {
     );
   }
 
+  console.log("[a corrupted stored value of the wrong shape is ignored]");
+  for (const bad of ['{"a":1}', '"text"', "42", "null"]) {
+    const { ctx: c3 } = buildContext({
+      seedStorage: { cloudInstanceRecommenderManualVMs: bad },
+    });
+    c3.toggleManualEntry();
+    check(
+      `stored ${bad} leaves an empty array, not a non-array`,
+      vm.runInContext("Array.isArray(manualVMs) && manualVMs.length", c3) === 0,
+      vm.runInContext("typeof manualVMs", c3),
+    );
+  }
+
   console.log("[clear all]");
   ctx.manualClearVMs();
   check("cleared", vm.runInContext("manualVMs.length", ctx) === 0);

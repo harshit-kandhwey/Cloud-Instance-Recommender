@@ -10,7 +10,8 @@ let manualVMs = [];
 function loadManualVMs() {
   try {
     const stored = localStorage.getItem("cloudInstanceRecommenderManualVMs");
-    if (stored) manualVMs = JSON.parse(stored) || [];
+    const parsed = stored ? JSON.parse(stored) : [];
+    manualVMs = Array.isArray(parsed) ? parsed : [];
   } catch {
     manualVMs = [];
   }

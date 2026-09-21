@@ -575,7 +575,11 @@ function loadUsageStatistics() {
   try {
     const stored = localStorage.getItem("cloudInstanceRecommenderStats");
     if (stored) {
-      usageStats = { ...usageStats, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      // Spreading a string or array would inject character/index keys.
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        usageStats = { ...usageStats, ...parsed };
+      }
       updateUsageCounters();
       console.log("Loaded usage statistics:", usageStats);
     }
