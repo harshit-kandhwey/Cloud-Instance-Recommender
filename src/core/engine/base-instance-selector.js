@@ -293,6 +293,12 @@ class BaseInstanceSelector {
     if (!regionData) {
       throw new Error(`Global variable ${normalizedRegion} not found`);
     }
+    // A CSV region can normalize to a real global (location, navigator, self);
+    // only a plain data object is region data. The tag check, unlike a prototype
+    // comparison, holds across realms.
+    if (Object.prototype.toString.call(regionData) !== "[object Object]") {
+      throw new Error(`Global variable ${normalizedRegion} is not region data`);
+    }
     return regionData;
   }
 

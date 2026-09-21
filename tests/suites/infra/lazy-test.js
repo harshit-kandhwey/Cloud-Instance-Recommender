@@ -427,6 +427,29 @@ process.exitCode = 1;
     );
   }
 
+  // A CSV region can normalize to the name of a real global (location,
+  // navigator, self). Only a plain data object is region data; anything else
+  // must fall through to the manifest lookup instead of being parsed as one.
+  console.log("[a global that is not region data is refused]");
+  {
+    ctx.window.not_a_region = vm.runInContext("new Map()", ctx);
+    let refused = false;
+    try {
+      aws.getRegionDataFromGlobal("not_a_region");
+    } catch {
+      refused = true;
+    }
+    check("a non-plain global is not returned as region data", refused);
+
+    ctx.window.plain_region = { "m5.large": {} };
+    check(
+      "a plain region object is still returned",
+      aws.getRegionDataFromGlobal("plain_region") === ctx.window.plain_region,
+    );
+    delete ctx.window.not_a_region;
+    delete ctx.window.plain_region;
+  }
+
   console.log("[requested srcs] " + requestedSrcs.join(", "));
   console.log("[freshness] AWS_DATA_DATE=" + ctx.AWS_DATA_DATE);
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
