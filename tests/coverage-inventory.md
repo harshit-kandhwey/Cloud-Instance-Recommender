@@ -16,8 +16,8 @@ waiver still records the reason.
 | --- | ---: | ---: | ---: |
 | Covered | 65 | 284 | 349 |
 | Waived | 25 | 0 | 25 |
-| Uncovered | 0 | 105 | 105 |
-| **Total** | 90 | 389 | 479 |
+| Uncovered | 0 | 88 | 88 |
+| **Total** | 90 | 372 | 462 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -25,10 +25,10 @@ waiver still records the reason.
 
 | Name | File | Kind | Tier | Status | Covered by / waiver |
 | --- | --- | --- | --- | --- | --- |
-| `AWSInstanceSelector` | src/providers/aws/aws-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/cloud-to-cloud-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/include-only-test.js, engine/nonpositive-size-test.js, engine/os-aware-pricing-test.js, engine/percentile-utilization-test.js, engine/price-savings-test.js, engine/user-rules-test.js, engine/watchdog-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/hostile-headers-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/app-core-hardening-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/sql-min-cores-test.js |
-| `AzureInstanceSelector` | src/providers/azure/azure-instance-selector.js | window | internal | covered | engine/family-column-test.js, engine/os-aware-pricing-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `BaseInstanceSelector` | src/core/engine/base-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/cannot-size-test.js, engine/cloud-to-cloud-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/gcp-custom-test.js, engine/gcp-machine-category-test.js, engine/gpu-baremetal-test.js, engine/include-only-test.js, engine/nearest-miss-test.js, engine/nonpositive-size-test.js, engine/os-aware-pricing-test.js, engine/percentile-utilization-test.js, engine/price-savings-test.js, engine/user-rules-test.js, engine/watchdog-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/hostile-headers-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/app-core-hardening-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js |
-| `GCPInstanceSelector` | src/providers/gcp/gcp-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/gcp-custom-test.js, engine/gcp-machine-category-test.js, engine/os-aware-pricing-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/gpu-workload-test.js |
+| `AWSInstanceSelector` | src/providers/aws/aws-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/cloud-to-cloud-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/filtering-statistics-test.js, engine/include-only-test.js, engine/nonpositive-size-test.js, engine/os-aware-pricing-test.js, engine/percentile-utilization-test.js, engine/price-savings-test.js, engine/provider-region-names-test.js, engine/user-rules-test.js, engine/watchdog-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/hostile-headers-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/app-core-hardening-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/sql-min-cores-test.js |
+| `AzureInstanceSelector` | src/providers/azure/azure-instance-selector.js | window | internal | covered | engine/family-column-test.js, engine/filtering-statistics-test.js, engine/os-aware-pricing-test.js, engine/provider-region-names-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
+| `BaseInstanceSelector` | src/core/engine/base-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/cannot-size-test.js, engine/cloud-to-cloud-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/filtering-statistics-test.js, engine/gcp-custom-test.js, engine/gcp-machine-category-test.js, engine/gpu-baremetal-test.js, engine/include-only-test.js, engine/nearest-miss-test.js, engine/nonpositive-size-test.js, engine/os-aware-pricing-test.js, engine/percentile-utilization-test.js, engine/price-savings-test.js, engine/provider-region-names-test.js, engine/user-rules-test.js, engine/watchdog-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/hostile-headers-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/app-core-hardening-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js |
+| `GCPInstanceSelector` | src/providers/gcp/gcp-instance-selector.js | window | internal | covered | engine/alternatives-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/filtering-statistics-test.js, engine/gcp-custom-test.js, engine/gcp-machine-category-test.js, engine/os-aware-pricing-test.js, engine/provider-region-names-test.js, engine/worker-protocol-test.js, infra/data-integrity-test.js, infra/lazy-test.js, infra/monolith-test.js, ingest/column-mapping-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js, workload/gpu-workload-test.js |
 | `InstanceSelectorFactory` | src/core/engine/instance-selector-factory.js | window | internal | uncovered | — |
 | `RuleEngine` | src/core/rules/rule-engine.js | window | internal | uncovered | — |
 | `_beforeAfter` | src/ui/charts.js | function | internal | covered | export/report-test.js, ui/charts-test.js |
@@ -109,7 +109,7 @@ waiver still records the reason.
 | `azureMatchesSeriesToken` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `azureMatchesVmFamily` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
 | `azureParseFamilyFilter` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
-| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/include-only-test.js, engine/worker-protocol-test.js, infra/lazy-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
+| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/filtering-statistics-test.js, engine/include-only-test.js, engine/worker-protocol-test.js, infra/lazy-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `azureTokenParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `buildAboutSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildAppCsv` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
@@ -208,29 +208,19 @@ waiver still records the reason.
 | `getAWSExcludeTypeDescription` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
 | `getAppSummary` | src/features/downloads.js | function | internal | covered | export/nomatch-export-test.js, workload/app-summary-test.js |
 | `getAvailableInstanceFamilies` | src/core/engine/instance-selector-factory.js | window | internal | uncovered | — |
-| `getAzureCostOptimizationTips` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `getAzureExcludeTypeDescription` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
-| `getAzurePricingZone` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `getAzureProcessorDescription` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
-| `getAzureRegionCode` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
-| `getAzureRegionOptimizationTips` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `getAzureSeriesDescription` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `getAzureVMFamilyDescription` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `getExcludeGravitonSetting` | src/core/engine/generate.js | function | internal | uncovered | — |
 | `getExcludeTypeDescription` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `getExcludedTypes` | src/core/engine/generate.js | function | internal | uncovered | — |
 | `getFamilyNameDescription` | src/ui/form-controls.js | function | internal | uncovered | — |
-| `getGCPCostOptimizationTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPExcludeTypeDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPFamilyAdvancedDescription` | src/providers/gcp/gcp-specific.js | function | internal | covered | engine/family-column-test.js |
 | `getGCPFamilyDescription` | src/providers/gcp/gcp-specific.js | function | internal | covered | engine/family-column-test.js |
 | `getGCPMachineTypeDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPPerformanceOptimizationTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPPricingTier` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getGCPProcessorDescription` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPRegionLocation` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPSustainabilityTips` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getGCPZones` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `getInstanceColumns` | src/shared/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/family-column-test.js, engine/fit-headroom-test.js, export/nomatch-export-test.js, export/portfolio-hostile-values-test.js, export/portfolio-test.js, export/report-test.js, export/scenario-compare-test.js, export/xlsx-structural-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/price-savings-display-test.js, preview/rightsize-verdict-test.js, preview/stats-consistency-test.js, preview/workload-shape-test.js, ui/accessibility-affordances-test.js, ui/app-core-hardening-test.js, ui/charts-test.js, workload/app-summary-test.js |
 | `getInstanceRecommendationWithSelector` | src/core/engine/instance-selector-factory.js | window | behavioral | covered | engine/alternatives-test.js, engine/cloud-to-cloud-test.js, engine/current-instance-test.js, engine/family-column-test.js, engine/family-equivalence-test.js, engine/gcp-custom-test.js, engine/include-only-test.js, engine/nonpositive-size-test.js, engine/percentile-utilization-test.js, engine/price-savings-test.js, engine/user-rules-test.js, engine/watchdog-test.js, engine/worker-protocol-test.js, ingest/storage-passthrough-test.js, manual-entry/manual-entry-form-test.js, workload/gpu-workload-test.js, workload/sql-min-cores-test.js |
 | `getMainFamilyDescription` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
@@ -239,17 +229,15 @@ waiver still records the reason.
 | `getProcessorDescription` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
 | `getProviderStatistics` | src/core/engine/instance-selector-factory.js | window | internal | uncovered | — |
 | `getRuleDefaults` | src/ui/form-controls.js | function | internal | covered | preview/preview-search-test.js |
-| `getSelectedAzureExcludeTypes` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
-| `getSelectedAzureProcessors` | src/providers/azure/azure-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedAzureSeries` | src/providers/azure/azure-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedAzureVMFamilies` | src/providers/azure/azure-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedGCPExcludeTypes` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
-| `getSelectedGCPFamilies` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedGCPMachineTypes` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedGCPProcessors` | src/providers/gcp/gcp-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedAzureProcessors` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedAzureSeries` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedAzureVMFamilies` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedGCPFamilies` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedGCPMachineTypes` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedGCPProcessors` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `getSelectedInstanceFamilyNames` | src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedMainFamilies` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
-| `getSelectedProcessorManufacturers` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedMainFamilies` | src/ui/form-controls.js | function | internal | uncovered | — |
+| `getSelectedProcessorManufacturers` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `handleFileUpload` | src/features/ingest.js | function | behavioral | waived | _waived: input[type=file] change wrapper that hands the File to ingestFile. ingestFile is covered by upload-guards-test.js, xlsx-ingest-test.js and sheet-picker-test.js; this is the one-line event wiring. browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `handlePresetImportFile` | src/features/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `handleRecommendationTypeChange` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of #optimizationControls off the recommendation-type radio. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
@@ -267,9 +255,7 @@ waiver still records the reason.
 | `initUserRulesUi` | src/ui/user-rules-ui.js | function | behavioral | waived | _waived: DOMContentLoaded boot wrapper, one line delegating to renderUserRulesPanel (covered by ui/user-rules-ui-test.js). Surfaced by the same addEventListener regex fix as initFilterPresets, same reasoning. No computed output of its own; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `initializeAWSFilters` | src/providers/aws/aws-specific.js | function | internal | uncovered | — |
 | `initializeAllProviderFilters` | src/ui/ui-shell.js | function | internal | uncovered | — |
-| `initializeAzureExcludeTypes` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `initializeAzureFilters` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
-| `initializeGCPExcludeTypes` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `initializeGCPFilters` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `initializeInstanceFamilyNameFilter` | src/ui/form-controls.js | function | internal | uncovered | — |
 | `initializeRecommendationTypeHandlers` | src/ui/ui-shell.js | function | internal | uncovered | — |
@@ -335,7 +321,6 @@ waiver still records the reason.
 | `parseCSV` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `parseCSVLine` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/quoted-newline-test.js, ingest/repeated-header-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `parseDelimitedText` | src/features/ingest.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/quoted-newline-test.js, ingest/repeated-header-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `parseGCPMachineType` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `parseRelaxLabels` | src/shared/app-core.js | function | internal | covered | preview/preview-search-test.js, ui/app-core-hardening-test.js |
 | `pct` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `pfBar` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js |
@@ -458,16 +443,16 @@ waiver still records the reason.
 | `toWsCell` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `toggleCloudProvider` | src/ui/form-controls.js | function | behavioral | covered | ui/app-core-hardening-test.js |
 | `toggleCsvMenu` | src/features/downloads.js | function | behavioral | waived | _waived: Open/close of the CSV download dropdown — sets aria-expanded and arms/disarms an outside-click listener. DOM/interaction wiring with no computed output; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
-| `toggleCurrentGenerationFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | covered | preview/preview-search-test.js |
+| `toggleCurrentGenerationFilter` | src/ui/form-controls.js | function | behavioral | covered | preview/preview-search-test.js |
 | `toggleExcludeTypes` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of #excludeControls off a checkbox, delegating the render to updateExcludeControls. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
-| `toggleInstanceFamilyNameFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the instance-family-name restriction controls off a checkbox. Visibility-only wiring; browser residual covered by tests/e2e/family-name-filter.spec.js, which runs outside this V8-instrumented node run._ |
-| `toggleMainFamiliesFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
+| `toggleInstanceFamilyNameFilter` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the instance-family-name restriction controls off a checkbox. Visibility-only wiring; browser residual covered by tests/e2e/family-name-filter.spec.js, which runs outside this V8-instrumented node run._ |
+| `toggleMainFamiliesFilter` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the main-families restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `toggleManualEntry` | src/features/manual-entry.js | function | behavioral | covered | manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js |
 | `toggleOptimizationMode` | src/ui/form-controls.js | function | behavioral | covered | ui/utilization-hint-test.js |
 | `togglePastePanel` | src/features/ingest.js | function | behavioral | covered | ingest/paste-test.js, preview/stale-results-test.js |
 | `togglePortfolioAppRow` | src/features/portfolio.js | function | behavioral | covered | export/portfolio-test.js |
 | `togglePortfolioFilter` | src/features/portfolio.js | function | behavioral | waived | _waived: Sets a boolean overviewState filter (noMatchOnly / complianceOnly) and re-renders the app table. Filter-state wiring; its browser residual is now VERIFIED end-to-end by tests/e2e/portfolio.spec.js (checking No-match-only strictly reduces the visible app rows and unchecking restores them, which runs outside this V8-instrumented node run)._ |
-| `toggleProcessorManufacturerFilter` | src/providers/aws/aws-specific.js, src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the processor-manufacturer restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
+| `toggleProcessorManufacturerFilter` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of the processor-manufacturer restriction controls off a checkbox. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `toggleSection` | src/ui/ui-shell.js | function | behavioral | covered | ui/accessibility-affordances-test.js |
 | `uniqueSheetName` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `updateAnalysisGroupVisibility` | src/features/downloads.js | function | internal | uncovered | — |
@@ -490,9 +475,7 @@ waiver still records the reason.
 | `userRuleDimensionOptions` | src/core/rules/user-rules.js | function | internal | covered | ui/user-rules-ui-test.js |
 | `userRuleLabel` | src/core/rules/user-rules.js | function | internal | covered | engine/user-rules-test.js, engine/worker-protocol-test.js, ui/user-rules-ui-test.js |
 | `userRulesPageKey` | src/core/rules/user-rules.js | function | internal | covered | engine/user-rules-test.js, ui/persisted-shape-test.js, ui/user-rules-ui-test.js |
-| `validateAzureRegion` | src/providers/azure/azure-specific.js | function | internal | uncovered | — |
 | `validateCsvRegions` | src/shared/app-core.js | function | internal | covered | engine/current-instance-test.js, ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/hostile-headers-test.js, ingest/input-hygiene-test.js, ingest/mapping-units-test.js, ingest/paste-test.js, ingest/saved-mappings-test.js, ingest/sheet-picker-test.js, ingest/storage-passthrough-test.js, ingest/upload-guards-test.js, ingest/xlsx-ingest-test.js, manual-entry/manual-entry-bulk-edit-test.js, manual-entry/manual-entry-form-test.js, preview/preview-search-test.js, preview/stale-results-test.js, ui/ads-preset-test.js, ui/app-core-hardening-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
-| `validateGCPRegion` | src/providers/gcp/gcp-specific.js | function | internal | uncovered | — |
 | `validatePresetImport` | src/features/presets.js | function | internal | covered | ui/persisted-shape-test.js, ui/presets-test.js |
 | `validateProviderSupport` | src/core/engine/instance-selector-factory.js | window | internal | covered | ui/app-core-hardening-test.js |
 | `validateUserRulesImport` | src/ui/user-rules-ui.js | function | internal | covered | ui/user-rules-ui-test.js |
