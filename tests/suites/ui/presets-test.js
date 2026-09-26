@@ -1123,6 +1123,91 @@ console.log("[legacy Compliance presets are migrated, not dropped]");
   );
 }
 
+// A preset saved before the filter ids were keyed on the option value names the
+// older checkboxes by list position ("azureSeries_1"). Applying it must restore
+// what it can by position and say so, since the position is only right while the
+// list has not changed since the save. Ids that were never positional are left.
+console.log("[a preset saved with positional ids is restored, and says so]");
+{
+  const toasts = [];
+  sandbox.showToast = (msg, type) => toasts.push({ msg, type });
+  const prefix = "azureSeries_";
+  // A real page carries value-keyed boxes: swap this prefix's fake ones for them.
+  const removed = allEls.filter((e) => e.id.startsWith(prefix));
+  removed.forEach((e) => {
+    allEls.splice(allEls.indexOf(e), 1);
+    delete els[e.id];
+  });
+  const boxes = ["dv5", "ev5", "fsv2"].map((v) =>
+    makeEl({ id: `${prefix}${v}`, type: "checkbox" }),
+  );
+  const apply = (groupChecked) => {
+    reset();
+    toasts.length = 0;
+    sandbox.__cfg = { groupChecked };
+    run("applyPresetConfig(__cfg)");
+  };
+  const checkedNow = () =>
+    boxes
+      .filter((b) => b.checked)
+      .map((b) => b.id)
+      .join(",");
+
+  apply([`${prefix}1`]);
+  check(
+    "a positional id checks the option now at that position",
+    checkedNow() === "azureSeries_ev5",
+    checkedNow(),
+  );
+  check(
+    "and a warning tells the user to check it and re-save",
+    toasts.length === 1 &&
+      toasts[0].type === "warning" &&
+      /1 filter selection/.test(toasts[0].msg) &&
+      /re-save/.test(toasts[0].msg),
+    JSON.stringify(toasts),
+  );
+
+  apply([`${prefix}0`, `${prefix}2`]);
+  check(
+    "several positional ids are all restored and counted",
+    checkedNow() === "azureSeries_dv5,azureSeries_fsv2" &&
+      toasts.length === 1 &&
+      /2 filter selection/.test(toasts[0].msg),
+    `${checkedNow()} ${JSON.stringify(toasts)}`,
+  );
+
+  apply([`${prefix}dv5`]);
+  check(
+    "a current value-keyed id is restored with no warning",
+    checkedNow() === "azureSeries_dv5" && toasts.length === 0,
+    `${checkedNow()} ${JSON.stringify(toasts)}`,
+  );
+
+  apply([`${prefix}9`]);
+  check(
+    "a position past the end of the list restores nothing and says nothing",
+    checkedNow() === "" && toasts.length === 0,
+    `${checkedNow()} ${JSON.stringify(toasts)}`,
+  );
+
+  // Number("") is 0 and Number("0x1") is 1, so a loose suffix reading would restore
+  // an option the preset never named.
+  apply([`${prefix}abc`, prefix, `${prefix}0x1`, "familyName_7"]);
+  check(
+    "an id with no numeric position, or one past the list, is left alone",
+    checkedNow() === "" && toasts.length === 0,
+    `${checkedNow()} ${JSON.stringify(toasts)}`,
+  );
+
+  boxes.forEach((b) => {
+    allEls.splice(allEls.indexOf(b), 1);
+    delete els[b.id];
+  });
+  removed.forEach(reg);
+  delete sandbox.showToast;
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 if (failures) {

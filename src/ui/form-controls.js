@@ -676,6 +676,16 @@ function getExcludeTypeDescription(provider, type) {
   return `Exclude ${type} instance types`;
 }
 
+// The id of one filter option, keyed on its value. Presets and the scenario diff
+// identify a checkbox by its id, and these lists change as the data does: a
+// positional id would re-point a saved preset at another option the day one is
+// added mid-list.
+function filterOptionId(prefix, value) {
+  return `${prefix}${String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")}`;
+}
+
 // The family-name filter's options are the distinct names the shipped catalogue
 // carries, never a hand-kept list — a name the data lacks matches nothing, and a
 // name the list lacks can never be ticked.
@@ -721,10 +731,7 @@ function initializeInstanceFamilyNameFilter(names) {
     item.className = "filter-checkbox-item";
     const input = document.createElement("input");
     input.type = "checkbox";
-    // Presets and the scenario diff key on the id, and the list is derived from
-    // data: a positional id would re-point a saved preset at another name when a
-    // refresh adds one.
-    input.id = `familyName_${familyName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
+    input.id = filterOptionId("familyName_", familyName);
     input.value = familyName;
     const label = document.createElement("label");
     label.htmlFor = input.id;

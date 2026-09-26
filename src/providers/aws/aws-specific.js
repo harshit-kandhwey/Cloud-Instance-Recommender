@@ -66,12 +66,12 @@ function initializeAWSFilters() {
   // Initialize processor manufacturer checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
   if (processorContainer) {
-    awsFilterData.processorManufacturers.forEach((processor, index) => {
+    awsFilterData.processorManufacturers.forEach((processor) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="processor_${index}" value="${processor}">
-        <label for="processor_${index}">
+        <input type="checkbox" id="${filterOptionId("processor_", processor)}" value="${processor}">
+        <label for="${filterOptionId("processor_", processor)}">
           <strong>${processor}</strong>
           <span class="filter-description">${getProcessorDescription(
             processor,
@@ -87,12 +87,12 @@ function initializeAWSFilters() {
     "mainFamiliesCheckboxes",
   );
   if (mainFamiliesContainer) {
-    awsFilterData.mainFamilies.forEach((family, index) => {
+    awsFilterData.mainFamilies.forEach((family) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="mainFamily_${index}" value="${family}">
-        <label for="mainFamily_${index}">
+        <input type="checkbox" id="${filterOptionId("mainFamily_", family)}" value="${family}">
+        <label for="${filterOptionId("mainFamily_", family)}">
           <strong>${family.toUpperCase()}</strong>
           <span class="filter-description">${getMainFamilyDescription(
             family,

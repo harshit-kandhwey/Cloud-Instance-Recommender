@@ -71,12 +71,12 @@ function initializeGCPFilters() {
   // Initialize machine families checkboxes
   const familiesContainer = document.getElementById("seriesCheckboxes");
   if (familiesContainer) {
-    gcpAdvancedFilterData.machineFamilies.forEach((family, index) => {
+    gcpAdvancedFilterData.machineFamilies.forEach((family) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="gcpFamily_${index}" value="${family}">
-        <label for="gcpFamily_${index}">
+        <input type="checkbox" id="${filterOptionId("gcpFamily_", family)}" value="${family}">
+        <label for="${filterOptionId("gcpFamily_", family)}">
           <strong>${family}</strong>
           <span class="filter-description">${getGCPFamilyAdvancedDescription(
             family,
@@ -90,12 +90,12 @@ function initializeGCPFilters() {
   // Initialize processor platforms checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
   if (processorContainer) {
-    gcpAdvancedFilterData.processorPlatforms.forEach((processor, index) => {
+    gcpAdvancedFilterData.processorPlatforms.forEach((processor) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="gcpProcessor_${index}" value="${processor}">
-        <label for="gcpProcessor_${index}">
+        <input type="checkbox" id="${filterOptionId("gcpProcessor_", processor)}" value="${processor}">
+        <label for="${filterOptionId("gcpProcessor_", processor)}">
           <strong>${processor}</strong>
           <span class="filter-description">${getGCPProcessorDescription(
             processor,
@@ -109,12 +109,12 @@ function initializeGCPFilters() {
   // Initialize machine types checkboxes
   const typesContainer = document.getElementById("mainFamiliesCheckboxes");
   if (typesContainer) {
-    gcpAdvancedFilterData.machineTypes.forEach((type, index) => {
+    gcpAdvancedFilterData.machineTypes.forEach((type) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="gcpType_${index}" value="${type}">
-        <label for="gcpType_${index}">
+        <input type="checkbox" id="${filterOptionId("gcpType_", type)}" value="${type}">
+        <label for="${filterOptionId("gcpType_", type)}">
           <strong>${type}</strong>
           <span class="filter-description">${getGCPMachineTypeDescription(
             type,

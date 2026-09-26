@@ -381,11 +381,51 @@ function applyPresetConfig(cfg) {
   document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     if (cb.id && isPresetGroupId(cb.id)) cb.checked = false;
   });
+  const allBoxes = Array.from(
+    document.querySelectorAll('input[type="checkbox"]'),
+  );
+  let restoredByPosition = 0;
   (Array.isArray(cfg.groupChecked) ? cfg.groupChecked : []).forEach((id) => {
     if (typeof id !== "string" || !isPresetGroupId(id)) return;
-    const el = document.getElementById(id);
+    let el = document.getElementById(id);
+    if (!el) {
+      const resolved = resolveLegacyGroupId(id, allBoxes);
+      if (resolved) {
+        el = document.getElementById(resolved);
+        restoredByPosition++;
+      }
+    }
     if (el) el.checked = true;
   });
+  if (restoredByPosition && typeof showToast === "function") {
+    showToast(
+      `${restoredByPosition} filter selection(s) in this preset were saved by position and restored by name — check them and re-save the preset.`,
+      "warning",
+    );
+  }
+}
+
+// Presets saved before 3.19 name the older filter checkboxes by list position
+// ("processor_1"); those ids are keyed on the option value now. A positional id no
+// checkbox carries is read against the current option order, which is right only
+// while the list has not changed since the save, so the caller says so.
+const LEGACY_POSITIONAL_PREFIXES = [
+  "processor_",
+  "mainFamily_",
+  "azureSeries_",
+  "azureProcessor_",
+  "azureFamily_",
+  "gcpFamily_",
+  "gcpProcessor_",
+  "gcpType_",
+];
+function resolveLegacyGroupId(id, checkboxes) {
+  const m = /^([A-Za-z]+_)(\d+)$/.exec(id);
+  if (!m || !LEGACY_POSITIONAL_PREFIXES.includes(m[1])) return null;
+  const target = checkboxes.filter((cb) => cb.id.startsWith(m[1]))[
+    Number(m[2])
+  ];
+  return target ? target.id : null;
 }
 
 // ─── Export / import (JSON) ───────────────────────────────────────────────────

@@ -72,12 +72,12 @@ function initializeAzureFilters() {
   // Initialize instance series checkboxes
   const seriesContainer = document.getElementById("seriesCheckboxes");
   if (seriesContainer) {
-    azureAdvancedFilterData.instanceSeries.forEach((series, index) => {
+    azureAdvancedFilterData.instanceSeries.forEach((series) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="azureSeries_${index}" value="${series}">
-        <label for="azureSeries_${index}">
+        <input type="checkbox" id="${filterOptionId("azureSeries_", series)}" value="${series}">
+        <label for="${filterOptionId("azureSeries_", series)}">
           <strong>${series}</strong>
           <span class="filter-description">${getAzureSeriesDescription(
             series,
@@ -91,33 +91,31 @@ function initializeAzureFilters() {
   // Initialize processor architecture checkboxes
   const processorContainer = document.getElementById("processorCheckboxes");
   if (processorContainer) {
-    azureAdvancedFilterData.processorArchitectures.forEach(
-      (processor, index) => {
-        const div = document.createElement("div");
-        div.className = "filter-checkbox-item";
-        div.innerHTML = `
-        <input type="checkbox" id="azureProcessor_${index}" value="${processor}">
-        <label for="azureProcessor_${index}">
+    azureAdvancedFilterData.processorArchitectures.forEach((processor) => {
+      const div = document.createElement("div");
+      div.className = "filter-checkbox-item";
+      div.innerHTML = `
+        <input type="checkbox" id="${filterOptionId("azureProcessor_", processor)}" value="${processor}">
+        <label for="${filterOptionId("azureProcessor_", processor)}">
           <strong>${processor}</strong>
           <span class="filter-description">${getAzureProcessorDescription(
             processor,
           )}</span>
         </label>
       `;
-        processorContainer.appendChild(div);
-      },
-    );
+      processorContainer.appendChild(div);
+    });
   }
 
   // Initialize VM families checkboxes
   const familiesContainer = document.getElementById("mainFamiliesCheckboxes");
   if (familiesContainer) {
-    azureAdvancedFilterData.vmFamilies.forEach((family, index) => {
+    azureAdvancedFilterData.vmFamilies.forEach((family) => {
       const div = document.createElement("div");
       div.className = "filter-checkbox-item";
       div.innerHTML = `
-        <input type="checkbox" id="azureFamily_${index}" value="${family}">
-        <label for="azureFamily_${index}">
+        <input type="checkbox" id="${filterOptionId("azureFamily_", family)}" value="${family}">
+        <label for="${filterOptionId("azureFamily_", family)}">
           <strong>${family}</strong>
           <span class="filter-description">${getAzureVMFamilyDescription(
             family,
