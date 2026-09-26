@@ -145,6 +145,33 @@ for (const bad of ['"text"', "[1,2]", "42"]) {
   );
 }
 
+// The page key comes from the URL. One that names an inherited member must still
+// get its own entry: assigning to "__proto__" sets the prototype and stores nothing,
+// so the save reported success while persisting no rules.
+console.log(
+  "[a page key naming an inherited property still gets its own entry]",
+);
+for (const page of ["__proto__", "constructor", "toString"]) {
+  const ctx = ctxWith({});
+  ctx.location = { pathname: `/${page}` };
+  const saved = vm.runInContext(
+    'saveUserRules([{ dimension: "workload", equals: "database", action: "exclude", tokens: ["m5"] }])',
+    ctx,
+  );
+  const back = run(ctx, "loadUserRules()");
+  check(
+    `rules saved on a page called ${page} are read back`,
+    saved === true && back.length === 1 && back[0].tokens[0] === "m5",
+    `saved=${saved} back=${JSON.stringify(back)}`,
+  );
+  const other = ctxWith({});
+  other.location = { pathname: `/${page}` };
+  check(
+    `nothing saved for ${page} reads as an empty list, not the inherited member`,
+    JSON.stringify(run(other, "loadUserRules()")) === "[]",
+  );
+}
+
 if (state.failures) {
   console.error(`\npersisted-shape: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;

@@ -173,7 +173,13 @@ function userRulesPageKey() {
 
 function loadUserRules() {
   try {
-    const list = readStoredObject(USER_RULES_KEY)[userRulesPageKey()];
+    const store = readStoredObject(USER_RULES_KEY);
+    const page = userRulesPageKey();
+    // Own entry only: the page key comes from the URL, and a store key that names an
+    // inherited member ("constructor") would otherwise read that member.
+    const list = Object.prototype.hasOwnProperty.call(store, page)
+      ? store[page]
+      : undefined;
     return Array.isArray(list)
       ? list.map(normalizeUserRule).filter(Boolean)
       : [];
@@ -188,7 +194,14 @@ function saveUserRules(rules) {
       .map(normalizeUserRule)
       .filter(Boolean);
     const store = readStoredObject(USER_RULES_KEY);
-    store[userRulesPageKey()] = clean;
+    // defineProperty, not assignment: assigning to "__proto__" sets the prototype and
+    // stores nothing, so the save would report success and persist no rules.
+    Object.defineProperty(store, userRulesPageKey(), {
+      value: clean,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
     localStorage.setItem(USER_RULES_KEY, JSON.stringify(store));
     return true;
   } catch {
