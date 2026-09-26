@@ -577,8 +577,19 @@ function loadUsageStatistics() {
     if (stored) {
       const parsed = JSON.parse(stored);
       // Spreading a string or array would inject character/index keys.
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        usageStats = { ...usageStats, ...parsed };
+      if (isPlainObject(parsed)) {
+        const merged = { ...usageStats, ...parsed };
+        // A counter that is not a finite number would turn `+=` into string
+        // concatenation ("5" + 3 is "53") or NaN, so it reverts to its default.
+        for (const key of Object.keys(usageStats)) {
+          if (typeof usageStats[key] !== "number") continue;
+          const n = Number(merged[key]);
+          merged[key] =
+            typeof merged[key] === "number" && Number.isFinite(n)
+              ? n
+              : usageStats[key];
+        }
+        usageStats = merged;
       }
       updateUsageCounters();
       console.log("Loaded usage statistics:", usageStats);

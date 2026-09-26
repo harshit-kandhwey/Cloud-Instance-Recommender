@@ -31,6 +31,28 @@ for (const bad of ['"hello"', "[1,2,3]", "42", "null"]) {
   );
 }
 
+console.log("[a stored counter that is not a number is not trusted]");
+for (const bad of [
+  '{"totalVMs":"5"}',
+  '{"totalVMs":null}',
+  '{"totalVMs":"abc"}',
+  '{"toolUses":{"a":1}}',
+]) {
+  const s = statsAfterLoading(bad);
+  check(
+    `stored ${bad} keeps numeric counters`,
+    typeof s.totalVMs === "number" &&
+      typeof s.toolUses === "number" &&
+      s.totalVMs === 0 &&
+      s.toolUses === 0,
+    JSON.stringify(s),
+  );
+}
+check(
+  "a valid stored counter next to a bad one is still applied",
+  statsAfterLoading('{"toolUses":4,"totalVMs":"x"}').toolUses === 4,
+);
+
 if (state.failures) {
   console.error(`\nusage-stats-load: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;
