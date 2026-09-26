@@ -11,7 +11,9 @@ function loadManualVMs() {
   try {
     const stored = localStorage.getItem("cloudInstanceRecommenderManualVMs");
     const parsed = stored ? JSON.parse(stored) : [];
-    manualVMs = Array.isArray(parsed) ? parsed : [];
+    // Elements too: a null or a string in the list would throw when the table
+    // reads its fields, or be copied into a row.
+    manualVMs = Array.isArray(parsed) ? parsed.filter(isPlainObject) : [];
   } catch {
     manualVMs = [];
   }

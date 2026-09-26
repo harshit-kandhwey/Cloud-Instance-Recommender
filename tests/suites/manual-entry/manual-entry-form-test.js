@@ -220,6 +220,27 @@ function fill(ctx, values) {
     );
   }
 
+  console.log("[a stored list with wrong-shaped elements keeps only the VMs]");
+  {
+    const stored = JSON.stringify([
+      null,
+      "text",
+      7,
+      [1],
+      { "VM Name": "keep-me", "CPU Count": "2", "Memory (GB)": "4" },
+    ]);
+    const { ctx: c4 } = buildContext({
+      seedStorage: { cloudInstanceRecommenderManualVMs: stored },
+    });
+    c4.toggleManualEntry();
+    check(
+      "only the object element survives, and the form still renders",
+      vm.runInContext("manualVMs.length", c4) === 1 &&
+        vm.runInContext('manualVMs[0]["VM Name"]', c4) === "keep-me",
+      vm.runInContext("JSON.stringify(manualVMs)", c4),
+    );
+  }
+
   console.log("[clear all]");
   ctx.manualClearVMs();
   check("cleared", vm.runInContext("manualVMs.length", ctx) === 0);
