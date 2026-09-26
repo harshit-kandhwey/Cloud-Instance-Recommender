@@ -91,8 +91,10 @@ function showDataPreview() {
 function toggleCloudProvider(provider) {
   const checkbox = document.getElementById(provider);
 
+  // Once only: a repeated change event must not list a provider twice, which
+  // would run it twice and double its counts in the results summary.
   if (checkbox.checked) {
-    selectedProviders.push(provider);
+    if (!selectedProviders.includes(provider)) selectedProviders.push(provider);
   } else {
     selectedProviders = selectedProviders.filter((p) => p !== provider);
   }

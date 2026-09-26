@@ -332,6 +332,8 @@ const DATA_READY_FLAGS = {
   gcp: "GCP_DATA_READY",
 };
 let _generateQueued = false;
+const DATA_POLL_MS = 500;
+const DATA_LOAD_GIVE_UP_TICKS = 60; // 30 seconds
 
 // Cached pre-warmed selector instances — shared with instance-selector-factory.js via window
 window._prewarmedSelectors = window._prewarmedSelectors || {};
@@ -665,11 +667,27 @@ function watchForDataThenRun(providers = getPageProviders()) {
     return;
   }
 
+  // Without a limit a manifest that never loads (a failed script, an offline first
+  // visit) leaves "still loading" on screen forever and the queued run never
+  // starts, with nothing to say why.
+  let ticks = 0;
   const timer = setInterval(() => {
-    if (!allDataReady(providers)) return;
+    if (!allDataReady(providers)) {
+      if (++ticks < DATA_LOAD_GIVE_UP_TICKS) return;
+      clearInterval(timer);
+      _watcherStarted = false;
+      _generateQueued = false;
+      hideDataToast();
+      showToast(
+        "The instance data did not finish loading. Reload the page to try again.",
+        "error",
+        0,
+      );
+      return;
+    }
     clearInterval(timer);
     onDataReady();
-  }, 500);
+  }, DATA_POLL_MS);
 }
 
 function escapeHtml(value) {
@@ -994,6 +1012,11 @@ const RELAX_CONTROLS = {
   "exclude types": { id: "excludeTypes", toggle: "toggleExcludeTypes" },
 };
 
+// The label is text parsed from a result cell, and an input column can carry a
+// cell like it through to the results, so an inherited name must not match.
+const hasRelaxControl = (label) =>
+  Object.prototype.hasOwnProperty.call(RELAX_CONTROLS, label);
+
 // "m7i.large (2 vCPU / 8 GB) — relax: current-generation only, exclude types"
 // → ["current-generation only", "exclude types"]. The format is ours (see
 // formatNearestMiss in instance-selector-factory.js), so parsing it back is safe.
@@ -1034,7 +1057,7 @@ function computeRelaxSuggestion(results) {
 
   let best = null;
   rescues.forEach((count, label) => {
-    if (RELAX_CONTROLS[label] && (!best || count > best.count)) {
+    if (hasRelaxControl(label) && (!best || count > best.count)) {
       best = { label, count };
     }
   });
