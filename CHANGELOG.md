@@ -18,11 +18,17 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 
 ## Version map
 
+### 3.19 — Function hardening (2026-09-26 → )
+
+| Version | Commit | Date | Change |
+| --- | --- | --- | --- |
+| 3.19.0 | _this commit_ | 2026-09-26 | **Open the 3.19 line: `### 3.19` version-map heading and ROADMAP Now/Next/Later rotation (3.18 to Shipped, 3.19 to Now).** Scope is the scheduled function-hardening sweep — every `src/` and `scripts/` function read against one malformed-input checklist, plus the `tests/suites/` categorization, mutation-testing scope, type-safety and dead-code items folded in from the repo-optimization list, and the items 3.18's audit deliberately deferred. Documentation only, no behaviour change. |
+
 ### 3.18 — Filter reachability cleanup (2026-09-21 → 2026-09-22)
 
 | Version | Commit | Date | Change |
 | --- | --- | --- | --- |
-| 3.18.13 | _this commit_ | 2026-09-22 | **Record that the visual baselines needed no change.** A manual `ci.yml` run on the pushed `release/3.18` with `update_baselines=true` passed all six jobs, and the eight regenerated Linux PNGs are byte-identical to the committed set: the new family-name and series panels sit inside the collapsed Advanced Filtering section, so no captured screenshot moved. Last commit of the 3.18 line. |
+| 3.18.13 | 413fefb | 2026-09-22 | **Record that the visual baselines needed no change.** A manual `ci.yml` run on the pushed `release/3.18` with `update_baselines=true` passed all six jobs, and the eight regenerated Linux PNGs are byte-identical to the committed set: the new family-name and series panels sit inside the collapsed Advanced Filtering section, so no captured screenshot moved. Last commit of the 3.18 line. |
 | 3.18.12 | 48daad8 | 2026-09-22 | **Close the 3.18 line: set the end date on the `### 3.18` version-map heading and write its Release notes section.** Closes the feature and review work of the 3.18 line; the visual baselines were then regenerated in CI on the pushed branch and needed no change (see 3.18.13). |
 | 3.18.11 | bad50e7 | 2026-09-22 | **Document the family-name filter for all three tool pages, found by 3.18's doc-divergence pass.** `user-guide.html` described "Instance Family Names" only in the AWS table, with a category list that did not match the real names and no mention that the control was unreachable everywhere. The AWS row now lists the real names and says the options come from the catalogue; Azure and GCP gain their own rows; and the AWS row notes that the multi-cloud page uses its Instance Category filter instead. |
 | 3.18.10 | 0d163ab | 2026-09-22 | **Regenerate the coverage inventory** for the line numbers and the one new suite the preceding commits moved. Generated file, no behaviour change. |
