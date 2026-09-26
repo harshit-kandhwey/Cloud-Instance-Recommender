@@ -90,9 +90,9 @@ jobs:
       matrix:
         provider: [aws, azure, gcp]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
 
@@ -104,7 +104,7 @@ jobs:
           GCP_BILLING_API_KEY: ${{ secrets.GCP_BILLING_API_KEY }}
         run: node scripts/data/fetch-official-${{ matrix.provider }}.js --out ".refresh-cache/${{ matrix.provider }}-pricing.json"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: pricing-${{ matrix.provider }}
           path: .refresh-cache/${{ matrix.provider }}-pricing.json
@@ -126,11 +126,11 @@ jobs:
       # PAT, not the default GITHUB_TOKEN. A branch pushed and a PR opened under the
       # PAT DO trigger the six CI checks; a GITHUB_TOKEN push would not (by design,
       # to avoid workflow recursion).
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.DATA_REFRESH_PAT }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20
 
@@ -139,7 +139,7 @@ jobs:
       # from each artifact into the one directory reconcile-data.js reads.
       - name: Download official pricing
         if: ${{ needs.scope.outputs.refresh_pricing == 'true' }}
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: pricing-*
           path: .refresh-cache
@@ -225,7 +225,7 @@ jobs:
       # Dry-run stops here, before touching git; a real run continues to open the PR.
       - name: Upload diff report
         if: ${{ steps.diff.outputs.changed == 'true' }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: data-diff-report
           path: |

@@ -39,6 +39,44 @@ check(
   unbounded.join(", "),
 );
 
+// A tag is a moving pointer: whoever controls the action's repo can re-point v7 at
+// different code, and every job that names it runs that code with this repo's
+// token. A full commit SHA cannot move; the trailing comment keeps it readable.
+for (const file of ["ci.yml", "data-refresh.yml"]) {
+  const src = fs
+    .readFileSync(path.join(REPO, ".github", "workflows", file), "utf8")
+    .split("\r\n")
+    .join("\n");
+  // Any spacing after the sequence dash is valid YAML, and a value may be quoted.
+  const uses = [...src.matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm)].map((m) =>
+    m[1].replace(/^(["'])(.*?)\1/, "$2"),
+  );
+  check(
+    `${file}: the scan found its action references`,
+    uses.length > 0,
+    `found ${uses.length}`,
+  );
+  // A line the extractor cannot read would otherwise vanish from the pin check
+  // below while the others keep it green.
+  const mentioned = (src.match(/^[^#\n]*\buses:/gm) || []).length;
+  check(
+    `${file}: no uses: line escapes the scan`,
+    mentioned === uses.length,
+    `${mentioned} uses: line(s), ${uses.length} read`,
+  );
+  // A local action or a docker:// image has no commit to pin.
+  const unpinned = uses.filter(
+    (u) =>
+      !/^(\.\/|docker:\/\/)/.test(u) &&
+      !/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # \S+$/.test(u),
+  );
+  check(
+    `${file}: every action is pinned to a full commit SHA with a version comment`,
+    unpinned.length === 0,
+    unpinned.join("; "),
+  );
+}
+
 if (state.failures) {
   console.error(`\nworkflow-hardening: ${state.failures} check(s) FAILED`);
   process.exitCode = 1;
