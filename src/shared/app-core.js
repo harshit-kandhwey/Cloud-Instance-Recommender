@@ -7,6 +7,23 @@ let columnHeaders = [];
 let selectedProviders = [];
 let processedResults = null;
 
+// The toString tag, not instanceof, so an object made in another realm counts.
+function isPlainObject(v) {
+  return Object.prototype.toString.call(v) === "[object Object]";
+}
+
+// A persisted JSON object, or {} when the key is absent, unparseable, or holds
+// anything else. A stored string, array or number is truthy, so `|| {}` alone
+// returns it, and writing a key onto it is dropped while the save reports success.
+function readStoredObject(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key));
+    return isPlainObject(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 // Enhanced exclude types data - now references provider-specific data
 const excludeTypesData = {
   aws: [], // Will be populated from aws-specific.js

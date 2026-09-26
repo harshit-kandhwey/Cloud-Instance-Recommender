@@ -989,13 +989,7 @@ function headerSignature(headers) {
 // globally (not per-file) so the same app prefills its workload on later
 // uploads. Consumed at generation time via options.appWorkloadMap.
 function loadAppWorkloadMap() {
-  try {
-    return (
-      JSON.parse(localStorage.getItem("cloudInstanceRecommenderAppMap")) || {}
-    );
-  } catch {
-    return {};
-  }
+  return readStoredObject("cloudInstanceRecommenderAppMap");
 }
 
 // Returns false if storage is unavailable (quota, private-browsing) so callers
@@ -1272,14 +1266,7 @@ function detectSizeUnits(mapping) {
 const SAVED_MAPPING_VERSION = 2;
 
 function loadColumnMappings() {
-  try {
-    return (
-      JSON.parse(localStorage.getItem("cloudInstanceRecommenderColumnMaps")) ||
-      {}
-    );
-  } catch {
-    return {};
-  }
+  return readStoredObject("cloudInstanceRecommenderColumnMaps");
 }
 
 function readSavedMapping(entry) {

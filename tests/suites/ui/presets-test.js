@@ -124,6 +124,17 @@ sandbox.FileReader = class {
 // app-core's `let selectedProviders` would shadow the sandbox array these tests
 // assert against. The real helper is covered by the suites that do load
 // app-core.js (nomatch-export, app-summary, portfolio).
+// Same for the persisted-object readers (real ones: ui/persisted-shape-test.js).
+sandbox.isPlainObject = (v) =>
+  Object.prototype.toString.call(v) === "[object Object]";
+sandbox.readStoredObject = (key) => {
+  try {
+    const parsed = JSON.parse(sandbox.localStorage.getItem(key));
+    return sandbox.isPlainObject(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+};
 sandbox.exportFilename = (base, extension) =>
   `${base}_${new Date().toISOString().slice(0, 10)}.${extension}`;
 

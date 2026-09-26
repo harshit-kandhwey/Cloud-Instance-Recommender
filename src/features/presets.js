@@ -82,11 +82,7 @@ function presetsPageKey() {
 }
 
 function loadPresetsStore() {
-  try {
-    return JSON.parse(localStorage.getItem(FILTER_PRESETS_KEY)) || {};
-  } catch {
-    return {};
-  }
+  return readStoredObject(FILTER_PRESETS_KEY);
 }
 
 function savePresetsStore(store) {
@@ -101,7 +97,8 @@ function savePresetsStore(store) {
 
 // Presets for the current page: { name: { savedAt, config } }.
 function presetsForPage() {
-  return loadPresetsStore()[presetsPageKey()] || {};
+  const forPage = loadPresetsStore()[presetsPageKey()];
+  return isPlainObject(forPage) ? forPage : {};
 }
 
 // ─── Capture / apply ──────────────────────────────────────────────────────────

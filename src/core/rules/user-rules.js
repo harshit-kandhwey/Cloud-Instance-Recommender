@@ -173,8 +173,7 @@ function userRulesPageKey() {
 
 function loadUserRules() {
   try {
-    const store = JSON.parse(localStorage.getItem(USER_RULES_KEY)) || {};
-    const list = store[userRulesPageKey()];
+    const list = readStoredObject(USER_RULES_KEY)[userRulesPageKey()];
     return Array.isArray(list)
       ? list.map(normalizeUserRule).filter(Boolean)
       : [];
@@ -188,7 +187,7 @@ function saveUserRules(rules) {
     const clean = (Array.isArray(rules) ? rules : [])
       .map(normalizeUserRule)
       .filter(Boolean);
-    const store = JSON.parse(localStorage.getItem(USER_RULES_KEY)) || {};
+    const store = readStoredObject(USER_RULES_KEY);
     store[userRulesPageKey()] = clean;
     localStorage.setItem(USER_RULES_KEY, JSON.stringify(store));
     return true;

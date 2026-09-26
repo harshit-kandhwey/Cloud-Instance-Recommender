@@ -275,20 +275,20 @@ function sectionKey(header) {
 }
 
 function loadSectionStates() {
-  try {
-    const all = JSON.parse(localStorage.getItem(SECTIONS_STORAGE_KEY)) || {};
-    return safeMapGet(all, currentSourcePage()) || {};
-  } catch {
-    return {};
-  }
+  const forPage = safeMapGet(
+    readStoredObject(SECTIONS_STORAGE_KEY),
+    currentSourcePage(),
+  );
+  return isPlainObject(forPage) ? forPage : {};
 }
 
 function saveSectionState(key, collapsed) {
   if (!key) return;
   try {
-    const all = JSON.parse(localStorage.getItem(SECTIONS_STORAGE_KEY)) || {};
+    const all = readStoredObject(SECTIONS_STORAGE_KEY);
     const page = currentSourcePage();
-    const forPage = safeMapGet(all, page) || {};
+    const stored = safeMapGet(all, page);
+    const forPage = isPlainObject(stored) ? stored : {};
     forPage[key] = collapsed ? "collapsed" : "open";
     all[page] = forPage;
     localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(all));
