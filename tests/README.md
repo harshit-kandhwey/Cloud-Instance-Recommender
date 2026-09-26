@@ -73,6 +73,7 @@ The catch with pixel baselines is that they are **OS- and engine-specific**: a s
 
 The coverage gate is a **tiered policy, not a percentage** — there is no line- or branch-coverage target anywhere in this repo, deliberately. The rule, enforced by `scripts/testing/build-coverage-inventory.js --check` and reported in [coverage-inventory.md](coverage-inventory.md):
 
+- **The build tools have their own tier.** Under `scripts/`, a tool's reachable set is its `main()` plus every function it exports. Each must be covered by a suite (children a suite spawns count, since they inherit the coverage collector) or waived in `coverage-waivers.json` under a `path::name` key with a reason; the gate fails otherwise. The ledger reports it as its own "Build tools" section.
 - **The surface** is every top-level `function NAME()` and `window.NAME =` across `src/` (plus `js/pwa-register.js`, the one first-party file the 3.16 tail's js/ -> src/ move left outside `src/`), excluding the generated region files and the `*-data.js` manifests. These are classic scripts, so every top-level function really is a window property that a page or the worker calls by name.
 - **Behavioral tier — must be covered or waived.** A name a user can reach: an `onclick=` on a real page element, a handler in generated markup, an `addEventListener` target, or a name the recommendation worker calls. A behavioral name with no suite and no waiver is a **gap**, and the gate fails.
 - **Internal tier — waivable in bulk.** A helper reached only through another function. Still never skipped by accident: every waiver carries a written reason in [coverage-waivers.json](coverage-waivers.json).
@@ -87,7 +88,8 @@ Why tiered: one suite per exported function, over the several hundred globals th
 
 Stated plainly, because a gate's silence reads as approval:
 
-- **`scripts/` is outside the coverage ledger entirely.** The surface scan walks `src/` only, so not one build-tool function appears among the names the gate counts. The tools _are_ tested — `suites/infra/` drives the fetchers, the reconciler, both diffs, the shared helpers and the splitter — but nothing _requires_ that, and nothing reports which tool function has no test. That gap is not theoretical: `scripts/data/split-data.js` rewrote every shipped data file for several releases with no suite of its own, and two build tools were found reading region records through private loops that no test named.
+- **A tool's private helpers.** The `scripts/` tier gates each tool's `main()` and exports; a helper reached only through them is listed in the ledger but may be uncovered without failing the gate.
+- **`scripts/testing/build-coverage-inventory.js` itself.** It runs on load, so no suite can import it, and the gate is its own check.
 - **Waived behavioral names.** Real, reachable code the gate accepts on a written reason rather than a test. The ledger lists each one with its waiver.
 - **Uncovered internal helpers.** Allowed by tier, unlisted by policy — the ledger names them all.
 - **A line that ran is not a line that was checked.** Coverage cannot tell a real assertion from a call with no oracle behind it. Only the mutation gate answers that, and it is scoped to two engine files.

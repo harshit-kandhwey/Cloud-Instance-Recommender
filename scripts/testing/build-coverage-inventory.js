@@ -18,9 +18,9 @@
 // mode also exits 1 (writing nothing) if a suite fails during the coverage pass
 // — a partial run can't produce a trustworthy inventory or gate.
 //
-// Scope note, deliberate and documented under "What is NOT covered": the surface
-// walk below reads src/ plus js/pwa-register.js ONLY. Nothing under scripts/ is
-// counted, so this gate makes no claim at all about build-tool coverage.
+// Two surfaces are walked: the app (src/ plus js/pwa-register.js) and the build
+// tools (scripts/). A tool's reachable set is its main() plus every function it
+// exports; the app's is the names a user reaches. Both must be covered or waived.
 "use strict";
 const fs = require("fs");
 const os = require("os");
@@ -54,6 +54,46 @@ const jsFiles = [
   path.join(REPO, "js", "pwa-register.js"),
 ].sort();
 const rel = (p) => path.relative(REPO, p).split(path.sep).join("/");
+
+// ── The build-tool surface (scripts/) ────────────────────────────────────────
+// Keyed "path::name", not bare name: every tool declares its own main(), and
+// several share helper names, so the app's name-keyed map would merge them.
+// build-coverage-inventory.js is this gate itself and runs on load, so no suite
+// can import it; it is left out rather than waived function by function.
+function listTools(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) listTools(full, out);
+    else if (
+      entry.name.endsWith(".js") &&
+      entry.name !== "build-coverage-inventory.js"
+    )
+      out.push(full);
+  }
+  return out;
+}
+const toolSurface = new Map(); // "path::name" -> { file, name, reachable }
+for (const file of listTools(path.join(REPO, "scripts")).sort()) {
+  const src = fs.readFileSync(file, "utf8");
+  const declared = [
+    ...src.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm),
+  ].map((m) => m[1]);
+  // Only exported names that are declared functions count; the exported
+  // constants (PROVIDERS, FIELD_ORDER, ...) have no body to execute.
+  const exported = new Set();
+  const block = /module\.exports\s*=\s*\{([^}]*)\}/.exec(src);
+  if (block)
+    for (const part of block[1].split(",")) {
+      const name = part.split(":")[0].trim();
+      if (name) exported.add(name);
+    }
+  for (const name of declared)
+    toolSurface.set(`${rel(file)}::${name}`, {
+      file: rel(file),
+      name,
+      reachable: exported.has(name) || name === "main",
+    });
+}
 
 // ── The global surface: top-level functions + window assignments ────────────
 // A top-level `function` is one declared at column 0 (not nested, not a method).
@@ -215,6 +255,18 @@ function collectExecuted(labels) {
         for (const script of cov.result || []) {
           if (!script.url) continue;
           const base = path.basename(script.url.replace(/\\/g, "/"));
+          // Tools are keyed by repo-relative path: basenames are only unique
+          // within scripts/, not against the whole repo.
+          let toolRel = "";
+          try {
+            const abs = script.url.startsWith("file:")
+              ? require("url").fileURLToPath(script.url)
+              : script.url;
+            const r = path.relative(REPO, abs).split(path.sep).join("/");
+            if (r.startsWith("scripts/")) toolRel = r;
+          } catch {
+            /* a non-file url is not a tool */
+          }
           for (const fn of script.functions || []) {
             if (!fn.functionName || !fn.ranges.some((r) => r.count > 0))
               continue;
@@ -224,6 +276,7 @@ function collectExecuted(labels) {
             // are bare names, so strip the leading `window.` to match both.
             const nm = fn.functionName.replace(/^window\./, "");
             executed.add(`${base}::${nm}`);
+            if (toolRel) executed.add(`${toolRel}::${nm}`);
           }
         }
       }
@@ -315,6 +368,22 @@ const gaps = rows.filter(
   (r) => r.tier === "behavioral" && r.status === "uncovered",
 );
 
+// Tool rows: same covered/waived/uncovered rule, waivers keyed "path::name".
+// A tool's reachable functions (main + exports) are gated; its private helpers
+// are listed but only reported.
+const toolRows = [...toolSurface.keys()].sort().map((key) => {
+  const t = toolSurface.get(key);
+  const suites = suiteLabels.filter((label) =>
+    executedBySuite.get(label).has(key),
+  );
+  const waiver = waivers[key];
+  const status = suites.length ? "covered" : waiver ? "waived" : "uncovered";
+  return { key, ...t, status, suites, waiver: waiver || "" };
+});
+const toolGaps = toolRows.filter(
+  (r) => r.reachable && r.status === "uncovered",
+);
+
 // ── Emit the report ──────────────────────────────────────────────────────────
 const n = (pred) => rows.filter(pred).length;
 const lines = [];
@@ -393,6 +462,50 @@ for (const r of rows) {
 }
 lines.push("");
 
+const tn = (pred) => toolRows.filter(pred).length;
+lines.push("## Build tools (scripts/)");
+lines.push("");
+lines.push(
+  "A tool's _reachable_ functions are its `main()` and every function it exports; the",
+);
+lines.push(
+  "gate fails on one with no suite and no waiver. Private helpers are listed for the",
+);
+lines.push(
+  "record. Waivers are keyed `path::name` in `tests/coverage-waivers.json`.",
+);
+lines.push("");
+lines.push("| | Reachable | Private | Total |");
+lines.push("| --- | ---: | ---: | ---: |");
+for (const st of ["covered", "waived", "uncovered"])
+  lines.push(
+    `| ${st[0].toUpperCase()}${st.slice(1)} | ${tn((r) => r.reachable && r.status === st)} | ${tn((r) => !r.reachable && r.status === st)} | ${tn((r) => r.status === st)} |`,
+  );
+lines.push(
+  `| **Total** | ${tn((r) => r.reachable)} | ${tn((r) => !r.reachable)} | ${toolRows.length} |`,
+);
+lines.push("");
+lines.push(
+  toolGaps.length
+    ? `**${toolGaps.length} reachable tool function(s) with no suite and no waiver.** The gate fails on these.`
+    : "**No reachable tool gaps.** Every tool's main and exports are covered or waived.",
+);
+lines.push("");
+lines.push("| Function | Tier | Status | Covered by / waiver |");
+lines.push("| --- | --- | --- | --- |");
+for (const r of toolRows) {
+  const last =
+    r.status === "covered"
+      ? r.suites.join(", ")
+      : r.status === "waived"
+        ? `_waived: ${r.waiver}_`
+        : "—";
+  lines.push(
+    `| \`${r.key}\` | ${r.reachable ? "reachable" : "private"} | ${r.status} | ${last} |`,
+  );
+}
+lines.push("");
+
 const outPath = path.join(REPO, "tests", "coverage-inventory.md");
 const report = lines.join("\n");
 // --check is a read-only gate: it must not mutate the working tree (a stray
@@ -414,11 +527,11 @@ const inventoryStale =
 if (!CHECK) {
   fs.writeFileSync(outPath, report);
   console.log(
-    `Wrote ${rel(outPath)} — ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
+    `Wrote ${rel(outPath)} — ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s); ${toolRows.length} tool functions, ${toolGaps.length} gap(s).`,
   );
 } else {
   console.log(
-    `Checked ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s).`,
+    `Checked ${rows.length} names, ${n((r) => r.tier === "behavioral")} behavioral, ${gaps.length} gap(s); ${toolRows.length} tool functions, ${toolGaps.length} gap(s).`,
   );
 }
 
@@ -436,6 +549,15 @@ if (CHECK && gaps.length) {
     "\nCover it with a suite, or add it to tests/coverage-waivers.json with a reason.",
   );
 }
-if (CHECK && (inventoryStale || gaps.length)) {
+if (CHECK && toolGaps.length) {
+  console.error(
+    `\nCoverage gate FAILED: ${toolGaps.length} reachable tool function(s) with no suite and no waiver:`,
+  );
+  for (const r of toolGaps) console.error(`  ${r.key}`);
+  console.error(
+    "\nCover it with a suite, or add its path::name key to tests/coverage-waivers.json with a reason.",
+  );
+}
+if (CHECK && (inventoryStale || gaps.length || toolGaps.length)) {
   process.exit(1);
 }
