@@ -22,7 +22,8 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 
 | Version | Commit | Date | Change |
 | --- | --- | --- | --- |
-| 3.19.0 | _this commit_ | 2026-09-26 | **Open the 3.19 line: `### 3.19` version-map heading and ROADMAP Now/Next/Later rotation (3.18 to Shipped, 3.19 to Now).** Scope is the scheduled function-hardening sweep — every `src/` and `scripts/` function read against one malformed-input checklist, plus the `tests/suites/` categorization, mutation-testing scope, type-safety and dead-code items folded in from the repo-optimization list, and the items 3.18's audit deliberately deferred. Documentation only, no behaviour change. |
+| 3.19.1 | _this commit_ | 2026-09-26 | **Cover the static file server the E2E rig depends on.** `scripts/testing/static-server.js` had no suite: a bad `--port` or `PORT` must fail at startup rather than bind an arbitrary port, and a request must never read outside the served root. The new suite pins argument parsing, the MIME fallback, and the traversal, NUL-byte, malformed-escape and symlink-escape refusals against a scratch root. The symlink case skips where symlink creation is not permitted. |
+| 3.19.0 | 52a857b | 2026-09-26 | **Open the 3.19 line: `### 3.19` version-map heading and ROADMAP Now/Next/Later rotation (3.18 to Shipped, 3.19 to Now).** Scope is the scheduled function-hardening sweep — every `src/` and `scripts/` function read against one malformed-input checklist, plus the `tests/suites/` categorization, mutation-testing scope, type-safety and dead-code items folded in from the repo-optimization list, and the items 3.18's audit deliberately deferred. Documentation only, no behaviour change. |
 
 ### 3.18 — Filter reachability cleanup (2026-09-21 → 2026-09-22)
 
