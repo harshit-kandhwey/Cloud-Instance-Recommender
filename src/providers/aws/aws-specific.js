@@ -139,75 +139,6 @@ function getMainFamilyDescription(family) {
   return descriptions[family] || "Specialized instance family";
 }
 
-// Toggle current generation filter
-function toggleCurrentGenerationFilter() {
-  const checkbox = document.getElementById("currentGenerationOnly");
-  console.log(
-    "Current generation filter:",
-    checkbox.checked ? "Enabled" : "Disabled",
-  );
-}
-
-// Toggle instance family name filter
-function toggleInstanceFamilyNameFilter() {
-  const controls = document.getElementById("instanceFamilyNameControls");
-  const checkbox = document.getElementById("restrictInstanceFamilyNames");
-
-  if (checkbox.checked) {
-    controls.classList.remove("hidden");
-  } else {
-    controls.classList.add("hidden");
-  }
-}
-
-// Toggle processor manufacturer filter
-function toggleProcessorManufacturerFilter() {
-  const controls = document.getElementById("processorManufacturerControls");
-  const checkbox = document.getElementById("restrictProcessorManufacturers");
-
-  if (checkbox.checked) {
-    controls.classList.remove("hidden");
-  } else {
-    controls.classList.add("hidden");
-  }
-}
-
-// Toggle main families filter
-function toggleMainFamiliesFilter() {
-  const controls = document.getElementById("mainFamiliesControls");
-  const checkbox = document.getElementById("restrictMainFamilies");
-
-  if (checkbox.checked) {
-    controls.classList.remove("hidden");
-  } else {
-    controls.classList.add("hidden");
-  }
-}
-
-// Get selected processor manufacturers
-function getSelectedProcessorManufacturers() {
-  const selected = [];
-  awsFilterData.processorManufacturers.forEach((processor, index) => {
-    const checkbox = document.getElementById(`processor_${index}`);
-    if (checkbox && checkbox.checked) {
-      selected.push(processor);
-    }
-  });
-  return selected;
-}
-
-// Get selected main families
-function getSelectedMainFamilies() {
-  const selected = [];
-  awsFilterData.mainFamilies.forEach((family, index) => {
-    const checkbox = document.getElementById(`mainFamily_${index}`);
-    if (checkbox && checkbox.checked) {
-      selected.push(family);
-    }
-  });
-  return selected;
-}
-
 // AWS-specific exclude type descriptions
 function getAWSExcludeTypeDescription(type) {
   const descriptions = {
@@ -235,24 +166,4 @@ worker-node-07,Analytics,8,16,85,75,us-west-2,Production,Linux,ML/AI,"current-ge
 frontend-08,Storefront,2,4,40,50,eu-west-1,Staging,Windows,Web Server,,,,,t3.medium`;
 
   downloadCsv(csvContent, "AWS_sample_instance_data.csv");
-}
-
-// Export AWS-specific functions and data
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = {
-    awsFilterData,
-    awsFamilyData,
-    awsExcludeTypesData,
-    initializeAWSFilters,
-    getProcessorDescription,
-    getMainFamilyDescription,
-    toggleCurrentGenerationFilter,
-    toggleInstanceFamilyNameFilter,
-    toggleProcessorManufacturerFilter,
-    toggleMainFamiliesFilter,
-    getSelectedProcessorManufacturers,
-    getSelectedMainFamilies,
-    getAWSExcludeTypeDescription,
-    downloadAWSSampleCSV,
-  };
 }
