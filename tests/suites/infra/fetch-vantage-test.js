@@ -701,8 +701,12 @@ console.log("[collectAzureGeneration reads the shipped Azure data]");
     fams.every((fam) =>
       types.some((t) => {
         const rec = shippedRecord(t);
+        // A type the feed knows but no shipped region carries is skipped, not a crash
+        // that aborts the whole suite before it can report a failed check.
         return (
-          (rec.family || "") === fam && rec.generation === gen.byFamily[fam]
+          Boolean(rec) &&
+          (rec.family || "") === fam &&
+          rec.generation === gen.byFamily[fam]
         );
       }),
     ),

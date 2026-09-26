@@ -46,7 +46,12 @@ for (const [tool, args, expected] of CASES) {
     [path.join(REPO, "scripts", "data", `${tool}.js`), ...args],
     { cwd: REPO, encoding: "utf8", timeout: 60000 },
   );
-  const out = `${res.stdout}${res.stderr}`;
+  // A failed spawn or the timeout sets res.error and can leave the streams null;
+  // reading them bare would throw and end the loop, so no later tool is checked.
+  const stdout = res.stdout || "";
+  const stderr = res.stderr || "";
+  check(`${tool} ran to completion`, !res.error, String(res.error));
+  const out = `${stdout}${stderr}`;
   check(
     `${tool} ${args.join(" ")} exits 1`,
     res.status === 1,
@@ -54,13 +59,13 @@ for (const [tool, args, expected] of CASES) {
   );
   check(
     `${tool} names the bad input`,
-    expected.test(res.stderr),
-    res.stderr.slice(0, 200),
+    expected.test(stderr),
+    stderr.slice(0, 200),
   );
   check(
     `${tool} reports the failure without a stack trace`,
-    !/\n\s+at /.test(res.stderr),
-    res.stderr.slice(0, 300),
+    !/\n\s+at /.test(stderr),
+    stderr.slice(0, 300),
   );
 }
 
