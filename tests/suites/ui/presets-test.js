@@ -1053,6 +1053,76 @@ console.log("[legacy Compliance presets are migrated, not dropped]");
   delete sandbox.showToast;
 }
 
+// An imported preset file is untrusted. Applying one must only ever write the
+// controls a preset captures, and a section of the wrong type must be ignored
+// rather than throw halfway through and leave the page half-applied.
+{
+  console.log("[applying an untrusted preset config]");
+  const fileInput = makeEl({ id: "csvFile", type: "file" });
+  let touchedFileInput = false;
+  Object.defineProperty(fileInput, "value", {
+    get: () => "",
+    set: () => {
+      touchedFileInput = true;
+      throw new Error("InvalidStateError");
+    },
+  });
+  els.cpuDownsizeMax.value = "40";
+  els.currentGenerationOnly.checked = false;
+
+  sandbox.__cfg = {
+    numbers: { csvFile: "C:\\fakepath\\x", cpuDownsizeMax: 55 },
+    checkboxes: { csvFile: true, currentGenerationOnly: true },
+    texts: { csvFile: "x" },
+    groupChecked: ["csvFile", "familyName_0", 7, null],
+  };
+  let threw = "";
+  try {
+    run("applyPresetConfig(__cfg)");
+  } catch (e) {
+    threw = String(e.message);
+  }
+  check(
+    "an id the preset never captures is not written (no throw, no touch)",
+    threw === "" && !touchedFileInput,
+    threw,
+  );
+  check(
+    "an id outside the preset groups is not checked through groupChecked",
+    fileInput.checked === false,
+  );
+  check(
+    "the known controls in the same config still apply",
+    els.cpuDownsizeMax.value === "55" &&
+      els.currentGenerationOnly.checked === true &&
+      els.familyName_0.checked === true,
+    JSON.stringify({
+      n: els.cpuDownsizeMax.value,
+      c: els.currentGenerationOnly.checked,
+      g: els.familyName_0.checked,
+    }),
+  );
+
+  sandbox.__cfg = {
+    numbers: "abc",
+    checkboxes: [1, 2],
+    texts: ["x"],
+    groupChecked: "familyName_1",
+    providers: "aws",
+  };
+  threw = "";
+  try {
+    run("applyPresetConfig(__cfg)");
+  } catch (e) {
+    threw = String(e.message);
+  }
+  check(
+    "sections of the wrong type are ignored, not thrown on",
+    threw === "",
+    threw,
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 if (failures) {

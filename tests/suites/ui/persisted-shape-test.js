@@ -86,6 +86,31 @@ console.log("[a wrong-shaped page entry is not treated as that page's data]");
   );
 }
 
+console.log("[saving a preset over a wrong-shaped page entry]");
+for (const bad of ['"abc"', "[1]", "7"]) {
+  const ctx = ctxWith({ [KEYS.presets]: `{"aws":${bad}}` });
+  vm.runInContext('writePreset("mine", "Saved")', ctx);
+  const names = Object.keys(run(ctx, "presetsForPage()"));
+  check(
+    `a preset saved over page entry ${bad} is read back`,
+    names.length === 1 && names[0] === "mine",
+    JSON.stringify(names),
+  );
+}
+{
+  const ctx = ctxWith({ [KEYS.presets]: '{"aws":"abc"}' });
+  vm.runInContext(
+    `applyPresetImportText(JSON.stringify({ page: "aws", presets: { imp: { config: {} } } }))`,
+    ctx,
+  );
+  const names = Object.keys(run(ctx, "presetsForPage()"));
+  check(
+    "an import over a string page entry keeps only the imported preset",
+    names.length === 1 && names[0] === "imp",
+    JSON.stringify(names),
+  );
+}
+
 console.log("[section states]");
 {
   const SECTIONS_KEY = vm.runInContext("SECTIONS_STORAGE_KEY", ctxWith({}));

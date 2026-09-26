@@ -97,7 +97,14 @@ function savePresetsStore(store) {
 
 // Presets for the current page: { name: { savedAt, config } }.
 function presetsForPage() {
-  const forPage = loadPresetsStore()[presetsPageKey()];
+  return pagePresets(loadPresetsStore());
+}
+
+// One page's map out of a whole store, or a fresh one when the stored entry is
+// not an object: writing a name onto a string or array is silently dropped
+// while the save reports success.
+function pagePresets(store) {
+  const forPage = store[presetsPageKey()];
   return isPlainObject(forPage) ? forPage : {};
 }
 
@@ -298,6 +305,18 @@ function migrateLegacyCompliance(cfg) {
 
 // Restore a captured config onto the live controls, cascading through the
 // existing UI handlers so derived/rendered state stays consistent.
+// An imported preset is untrusted: only the ids capturePresetConfig itself
+// records are ever written back, so a file cannot set an arbitrary element (a
+// file input throws on a non-empty value). A section of the wrong type has no
+// known ids among its keys, so it applies nothing.
+function applyKnownEntries(section, knownIds, apply) {
+  Object.entries(section || {}).forEach(([id, v]) => {
+    if (!knownIds.includes(id)) return;
+    const el = document.getElementById(id);
+    if (el) apply(el, v);
+  });
+}
+
 function applyPresetConfig(cfg) {
   if (!cfg) return;
   cfg = migrateLegacyCompliance(cfg);
@@ -333,15 +352,13 @@ function applyPresetConfig(cfg) {
 
   // Number inputs before toggleOptimizationMode so derived range fields
   // (keepMin/upsizeMin) recompute consistently.
-  Object.entries(cfg.numbers || {}).forEach(([id, v]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
+  applyKnownEntries(cfg.numbers, PRESET_NUMBERS, (el, v) => {
+    el.value = String(v ?? "");
   });
 
   // Simple checkboxes.
-  Object.entries(cfg.checkboxes || {}).forEach(([id, v]) => {
-    const el = document.getElementById(id);
-    if (el) el.checked = !!v;
+  applyKnownEntries(cfg.checkboxes, PRESET_CHECKBOXES, (el, v) => {
+    el.checked = !!v;
   });
 
   // Cascade the toggles that show/hide (and, for excludes, populate) controls.
@@ -355,9 +372,8 @@ function applyPresetConfig(cfg) {
 
   // Text (rule-engine) inputs + conflict re-check.
   const texts = migrateLegacyMinGen(cfg.texts || {});
-  Object.entries(texts).forEach(([id, v]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
+  applyKnownEntries(texts, PRESET_TEXTS, (el, v) => {
+    el.value = String(v ?? "");
   });
   callIfFn("checkRuleConflicts");
 
@@ -365,7 +381,8 @@ function applyPresetConfig(cfg) {
   document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
     if (cb.id && isPresetGroupId(cb.id)) cb.checked = false;
   });
-  (cfg.groupChecked || []).forEach((id) => {
+  (Array.isArray(cfg.groupChecked) ? cfg.groupChecked : []).forEach((id) => {
+    if (typeof id !== "string" || !isPresetGroupId(id)) return;
     const el = document.getElementById(id);
     if (el) el.checked = true;
   });
@@ -503,7 +520,7 @@ function applyPresetImportText(text) {
   const page = presetsPageKey();
   const store = loadPresetsStore();
   const { merged, added, renamed } = mergeImportedPresets(
-    store[page] || {},
+    pagePresets(store),
     v.presets,
     Date.now(),
   );
@@ -712,7 +729,7 @@ function confirmSavePreset() {
 function writePreset(name, verb) {
   const store = loadPresetsStore();
   const page = presetsPageKey();
-  store[page] = store[page] || {};
+  store[page] = pagePresets(store);
   store[page][name] = { savedAt: Date.now(), config: capturePresetConfig() };
 
   if (!savePresetsStore(store)) {
@@ -755,7 +772,7 @@ function updateSelectedPreset() {
     () => {
       const store = loadPresetsStore();
       const page = presetsPageKey();
-      store[page] = store[page] || {};
+      store[page] = pagePresets(store);
       store[page][name] = {
         savedAt: Date.now(),
         config: capturePresetConfig(),
