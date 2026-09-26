@@ -15,6 +15,7 @@ const {
   unmappedAzureAmdFamilies,
   AZURE_AMD_FAMILIES,
   mostCommonGeneration,
+  collectAzureGeneration,
   instanceRegionRecords,
 } = require("../../../scripts/data/fetch-vantage");
 const { loadCommittedRegions } = require("../../../scripts/lib/record-schema");
@@ -665,6 +666,46 @@ function splitDataParity(monolith) {
         return false;
       }
     })(),
+  );
+}
+
+// The carry-forward is only worth anything if it reads real shipped specs: an
+// empty result is a legitimate first-run value, so nothing else would flag a
+// loader that quietly found nothing.
+console.log("[collectAzureGeneration reads the shipped Azure data]");
+{
+  const gen = collectAzureGeneration();
+  const types = Object.keys(gen.byType);
+  check(
+    "finds generations for shipped Azure types",
+    types.length > 100,
+    String(types.length),
+  );
+  check(
+    "every byType value is a finite number",
+    types.every((t) => Number.isFinite(gen.byType[t])),
+  );
+  const regions = Object.values(loadCommittedRegions("azure"));
+  const shippedRecord = (type) => regions.map((r) => r[type]).find((r) => r);
+  const sample = types[0];
+  check(
+    "a byType entry equals the shipped record's generation",
+    Boolean(shippedRecord(sample)) &&
+      gen.byType[sample] === shippedRecord(sample).generation,
+    sample,
+  );
+  const fams = Object.keys(gen.byFamily);
+  check("yields a per-family generation", fams.length > 0, String(fams.length));
+  check(
+    "each family generation is one that family's types actually carry",
+    fams.every((fam) =>
+      types.some((t) => {
+        const rec = shippedRecord(t);
+        return (
+          (rec.family || "") === fam && rec.generation === gen.byFamily[fam]
+        );
+      }),
+    ),
   );
 }
 
