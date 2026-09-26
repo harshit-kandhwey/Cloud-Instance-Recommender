@@ -257,6 +257,96 @@ console.log("[the two version parsers agree]");
   }
 }
 
+// A Min Gen value the provider cannot read as a generation ("n4" on AWS, "v5" on
+// Azure) filters nothing. The Rules Applied column must say so, not report a
+// "MinGen: n4+" filter that removed no instance.
+console.log("[an unusable Min Gen is reported as not applied]");
+{
+  const applyMinGen = (pool, minGen, provider) =>
+    RE.apply(pool, { rowMinGen: minGen }, provider);
+  const pool = (specs) =>
+    specs.map(([instanceType, family]) => ({
+      instanceType,
+      family,
+      vCpus: 2,
+      price: 0.1,
+    }));
+  const cases = [
+    [
+      "aws",
+      "n4",
+      pool([
+        ["m5.large", "m5"],
+        ["m7i.large", "m7i"],
+      ]),
+    ],
+    [
+      "azure",
+      "v5",
+      pool([
+        ["d4sv3", "dsv3"],
+        ["d4sv5", "dsv5"],
+      ]),
+    ],
+    [
+      "gcp",
+      "zzz",
+      pool([
+        ["n2-standard-2", "n2"],
+        ["n4-standard-2", "n4"],
+      ]),
+    ],
+  ];
+  for (const [provider, bad, p] of cases) {
+    const r = applyMinGen(p, bad, provider);
+    check(
+      `${provider} "${bad}" keeps every instance and says it was not applied`,
+      r.instances.length === p.length &&
+        r.rules.some((x) => x.startsWith(`MinGen: ${bad} not applied`)) &&
+        !r.rules.some((x) => x.startsWith(`MinGen: ${bad}+`)),
+      JSON.stringify(r.rules),
+    );
+  }
+  const good = [
+    [
+      "aws",
+      "6",
+      pool([
+        ["m5.large", "m5"],
+        ["m7i.large", "m7i"],
+      ]),
+      1,
+    ],
+    [
+      "azure",
+      "5",
+      pool([
+        ["d4sv3", "dsv3"],
+        ["d4sv5", "dsv5"],
+      ]),
+      1,
+    ],
+    [
+      "gcp",
+      "n4",
+      pool([
+        ["n2-standard-2", "n2"],
+        ["n4-standard-2", "n4"],
+      ]),
+      1,
+    ],
+  ];
+  for (const [provider, val, p, kept] of good) {
+    const r = applyMinGen(p, val, provider);
+    check(
+      `${provider} "${val}" still filters and reports the removal`,
+      r.instances.length === kept &&
+        r.rules.some((x) => x.startsWith(`MinGen: ${val}+`)),
+      JSON.stringify(r.rules),
+    );
+  }
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = failures ? 1 : 0;

@@ -734,6 +734,21 @@ const RuleEngine = (() => {
   // minNum`, is why the Azure page's "v5+" quietly filtered to v3+; that scale is
   // gone. The one residual mapping is the GCP branch below, which still translates a
   // bare NUMBER from a legacy shared column for backward compatibility (see there).
+  // meetsMinGeneration reads an unparseable value as generation 0, which keeps
+  // every instance; apply() uses this to say so rather than report a filter.
+  /**
+   * @param {string} minGen
+   * @param {Provider} provider
+   */
+  function isUsableMinGen(minGen, provider) {
+    const raw = String(minGen).trim();
+    if (Number.isFinite(parseInt(raw))) return true;
+    return (
+      provider === "gcp" &&
+      Object.prototype.hasOwnProperty.call(GCP_GEN_ORDER, raw)
+    );
+  }
+
   /**
    * @param {Instance} inst
    * @param {string} minGen
@@ -1059,7 +1074,12 @@ const RuleEngine = (() => {
     }
 
     // ── Min Generation filter ───────────────────────────────────────────────
-    if (minGen) {
+    if (minGen && !isUsableMinGen(minGen, provider)) {
+      // Not "MinGen: x+": that label would claim a filter that removed nothing.
+      rules.push(
+        `MinGen: ${minGen} not applied (not a ${provider} generation)`,
+      );
+    } else if (minGen) {
       const before = filtered.length;
       const genFiltered = filtered.filter((i) =>
         meetsMinGeneration(i, minGen, provider),
