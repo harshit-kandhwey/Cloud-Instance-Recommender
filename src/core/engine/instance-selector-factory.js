@@ -372,14 +372,20 @@ window.getInstanceRecommendationWithSelector = async function (
           .join(" | ");
       };
 
-      if (!region || cpu === 0 || memory === 0) {
+      // `!(x > 0)`, not `=== 0`: a negative size is a requirement every instance
+      // meets, so it would silently size the row to the smallest one.
+      if (!region || !(cpu > 0) || !(memory > 0)) {
         const noMatchReason = !region
           ? `No ${providerUpper} region specified in CSV`
           : c2cUnresolvedType
             ? `Current Instance Type "${c2cUnresolvedType}" not recognised — provide CPU Count / Memory (GB)`
-            : cpu === 0
-              ? "CPU Count is 0 or missing"
-              : "Memory (GB) is 0 or missing";
+            : cpu < 0
+              ? "CPU Count is negative"
+              : cpu === 0
+                ? "CPU Count is 0 or missing"
+                : memory < 0
+                  ? "Memory (GB) is negative"
+                  : "Memory (GB) is 0 or missing";
         console.warn(
           `Missing data for ${provider} in row ${index + 1}: ${noMatchReason}`,
         );
