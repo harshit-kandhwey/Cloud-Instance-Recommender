@@ -1202,7 +1202,9 @@ function rewriteRowKeys(rows, mapping) {
   return rows.map((row) => {
     const out = {};
     Object.keys(row).forEach((key) => {
-      out[mapping[key] || key] = row[key];
+      // Own keys only: a header named "constructor" would otherwise be renamed
+      // to an inherited function's source text.
+      out[safeMapGet(mapping, key) || key] = row[key];
     });
     return out;
   });
@@ -1270,9 +1272,16 @@ function loadColumnMappings() {
 }
 
 function readSavedMapping(entry) {
-  if (!entry || entry.v !== SAVED_MAPPING_VERSION || !entry.mapping)
+  if (
+    !entry ||
+    entry.v !== SAVED_MAPPING_VERSION ||
+    !isPlainObject(entry.mapping)
+  )
     return null;
-  return { mapping: entry.mapping, units: entry.units || {} };
+  return {
+    mapping: entry.mapping,
+    units: isPlainObject(entry.units) ? entry.units : {},
+  };
 }
 
 function saveColumnMapping(signature, mapping, units) {
@@ -1500,7 +1509,7 @@ function presetUnits(preset, mapping) {
 
 // Applies a mapping and runs the normal post-upload pipeline
 function applyIngest(headers, rows, mapping, units = {}) {
-  const finalHeaders = headers.map((h) => mapping[h] || h);
+  const finalHeaders = headers.map((h) => safeMapGet(mapping, h) || h);
   columnHeaders = finalHeaders;
   csvData = rewriteRowKeys(rows, mapping);
 
@@ -1673,12 +1682,18 @@ const EOL_OS_RULES = [
   { re: /amazon\s*linux\s*2(?!\d)/i, suggest: "Amazon Linux 2023" },
 ];
 
+const MAX_OS_STRING_LENGTH = 200;
+
 // Return a suggested modern landing OS if `raw` names an OS past its standard
 // end-of-life, or null for anything current/unknown/blank. Some flagged releases
 // can still carry paid extended support (ESU/ESM), so the advisory asks the user
 // to verify coverage rather than assert unsupported. Pure — a table lookup.
 function classifyEolOs(raw) {
-  const s = String(raw == null ? "" : raw).trim();
+  // Capped: the lazy SUSE pattern is quadratic on a long run of word characters,
+  // and no real OS string comes near this length.
+  const s = String(raw == null ? "" : raw)
+    .trim()
+    .slice(0, MAX_OS_STRING_LENGTH);
   if (!s) return null;
   for (const rule of EOL_OS_RULES) {
     if (rule.re.test(s)) return rule.suggest;

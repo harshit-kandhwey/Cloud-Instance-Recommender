@@ -153,6 +153,24 @@ no-os,4,16,us-east-1`,
   );
 }
 
+// A cell is untrusted text. The SUSE pattern backtracks quadratically on a long
+// run of word characters, so an absurdly long OS value must not stall the tab.
+console.log("[classifyEolOs stays fast on a pathological cell]");
+{
+  const started = Date.now();
+  const result = eol("suse" + "a".repeat(100000));
+  const elapsed = Date.now() - started;
+  check(
+    "a 100,000-character SUSE-like cell classifies as not-EOL in well under a second",
+    result === null && elapsed < 500,
+    `${elapsed}ms, result=${result}`,
+  );
+  check(
+    "a real EOL string is still recognised",
+    eol("SUSE Linux Enterprise Server 11") === "SLES 15",
+  );
+}
+
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout on a
 // pipe (the CI case), dropping the FAIL: lines the run just wrote.
 process.exitCode = state.failures ? 1 : 0;
