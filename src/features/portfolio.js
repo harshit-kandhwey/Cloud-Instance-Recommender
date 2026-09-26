@@ -72,9 +72,20 @@ function loadPortfolioFromStorage() {
 // set. Idempotent: a postMessage delivery that duplicates the localStorage copy
 // simply re-renders the same data.
 function receivePortfolio(payload) {
-  if (!payload || !Array.isArray(payload.results) || !payload.results.length) {
-    return;
-  }
+  if (!payload || !Array.isArray(payload.results)) return;
+  // The payload arrives from storage or another window, so its shape is not
+  // trusted: a row that is not an object would throw the model builder, and
+  // providers must be a list of names.
+  const results = payload.results.filter(isPlainObject);
+  if (!results.length) return;
+  results.priceSavings = payload.results.priceSavings;
+  payload = {
+    ...payload,
+    results,
+    providers: Array.isArray(payload.providers)
+      ? payload.providers.filter((p) => typeof p === "string")
+      : [],
+  };
   portfolioData = payload;
   portfolioModel = buildPortfolioModel(payload);
   window._portfolioPayload = payload; // handy for later commits / debugging
@@ -100,8 +111,17 @@ function toNum(v, asInt) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function tally(map, key) {
-  map[key] = (map[key] || 0) + 1;
+// Keys are cells from the uploaded file. On a plain object "constructor" would
+// read an inherited function and "__proto__" would set the prototype, so the
+// count is read from own properties only and written with defineProperty.
+function tally(map, key, n = 1) {
+  const current = Object.prototype.hasOwnProperty.call(map, key) ? map[key] : 0;
+  Object.defineProperty(map, key, {
+    value: current + n,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
 }
 
 // Recommended-instance family prefix, per provider naming:
@@ -348,15 +368,11 @@ function buildPortfolioModel(payload) {
   estate.osMix = {};
   estate.shapeMix = {};
   allStats.forEach((a) => {
-    Object.entries(a.envMix).forEach(([k, n]) => {
-      estate.envMix[k] = (estate.envMix[k] || 0) + n;
-    });
-    Object.entries(a.osMix).forEach(([k, n]) => {
-      estate.osMix[k] = (estate.osMix[k] || 0) + n;
-    });
-    Object.entries(a.shapeMix).forEach(([k, n]) => {
-      estate.shapeMix[k] = (estate.shapeMix[k] || 0) + n;
-    });
+    Object.entries(a.envMix).forEach(([k, n]) => tally(estate.envMix, k, n));
+    Object.entries(a.osMix).forEach(([k, n]) => tally(estate.osMix, k, n));
+    Object.entries(a.shapeMix).forEach(([k, n]) =>
+      tally(estate.shapeMix, k, n),
+    );
   });
   // Right-sizing verdict distribution per provider, summed across every app —
   // only when the run carried Optimized picks (otherwise there is no verdict).
@@ -390,9 +406,9 @@ function buildPortfolioModel(payload) {
   // Workload totals across the estate.
   const workloadTotals = {};
   allStats.forEach((a) =>
-    Object.entries(a.workloadMix).forEach(([k, n]) => {
-      workloadTotals[k] = (workloadTotals[k] || 0) + n;
-    }),
+    Object.entries(a.workloadMix).forEach(([k, n]) =>
+      tally(workloadTotals, k, n),
+    ),
   );
 
   return {
@@ -489,16 +505,20 @@ const PF_PALETTE = [
   "#64748b",
   "#b45309",
 ];
-const _pfKeyColors = {};
+// Keys are cells from the uploaded file: an inherited name ("constructor") must
+// not read as an existing colour.
+const pfHas = (map, key) => Object.prototype.hasOwnProperty.call(map, key);
+const _pfKeyColors = new Map();
 function pfKeyColor(key) {
-  if (!(key in _pfKeyColors)) {
-    _pfKeyColors[key] =
-      PF_PALETTE[Object.keys(_pfKeyColors).length % PF_PALETTE.length];
+  if (!_pfKeyColors.has(key)) {
+    _pfKeyColors.set(key, PF_PALETTE[_pfKeyColors.size % PF_PALETTE.length]);
   }
-  return _pfKeyColors[key];
+  return _pfKeyColors.get(key);
 }
-const pfEnvColor = (k) => PF_ENV_COLORS[k] || pfKeyColor(k);
-const pfOsColor = (k) => PF_OS_COLORS[k] || pfKeyColor(k);
+const pfEnvColor = (k) =>
+  pfHas(PF_ENV_COLORS, k) ? PF_ENV_COLORS[k] : pfKeyColor(k);
+const pfOsColor = (k) =>
+  pfHas(PF_OS_COLORS, k) ? PF_OS_COLORS[k] : pfKeyColor(k);
 
 function fmtNum(n) {
   return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
