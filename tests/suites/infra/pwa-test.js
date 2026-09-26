@@ -319,6 +319,36 @@ process.exitCode = 1;
     e8.getResponse() === undefined,
   );
 
+  // ── a partial precache is reported, a complete one is not ─────────────────
+  {
+    const warnings = [];
+    sandbox.console.warn = (...args) => warnings.push(args.join(" "));
+    const precache = vm.runInContext("PRECACHE", sandbox);
+
+    const eIncomplete = makeEvent();
+    handlers.install(eIncomplete);
+    await Promise.all(eIncomplete.waits);
+    check(
+      "an incomplete precache is named in a warning",
+      warnings.length === 1 &&
+        /precache incomplete: \d+ of \d+ failed/.test(warnings[0]) &&
+        warnings[0].includes("src/core/rules/rule-engine.js"),
+      warnings.join(" | ").slice(0, 200),
+    );
+
+    for (const u of precache) serverFiles.add(absKey(u));
+    warnings.length = 0;
+    const eComplete = makeEvent();
+    handlers.install(eComplete);
+    await Promise.all(eComplete.waits);
+    check(
+      "a complete precache says nothing",
+      warnings.length === 0,
+      warnings.join(" | ").slice(0, 200),
+    );
+    sandbox.console.warn = () => {};
+  }
+
   // ── every page links the manifest + loads the shared registration script ──
   const pages = [
     "index.html",

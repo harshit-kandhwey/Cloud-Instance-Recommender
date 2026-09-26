@@ -94,7 +94,20 @@ self.addEventListener("install", (event) => {
       .open(CACHE)
       .then((cache) =>
         Promise.allSettled(PRECACHE.map((url) => cache.add(url))),
-      ),
+      )
+      .then((results) => {
+        // A failed add stays tolerated (runtime caching fills the gap on the next
+        // online visit), but a first offline visit depends on the precache, so an
+        // incomplete one is named rather than silent.
+        const failed = PRECACHE.filter(
+          (_, i) => results[i].status === "rejected",
+        );
+        if (failed.length) {
+          console.warn(
+            `[sw] precache incomplete: ${failed.length} of ${PRECACHE.length} failed: ${failed.join(", ")}`,
+          );
+        }
+      }),
   );
 });
 
