@@ -28,17 +28,6 @@ class BaseInstanceSelector {
     return [];
   }
 
-  // Pre-warms ALL regions from the data file in the background.
-  async preloadAllRegions() {
-    const regions = this.getAllAvailableRegionKeys();
-    if (!regions.length) return;
-    console.log(
-      `[PreWarm] ${this.getProviderName()}: loading ${regions.length} regions in background`,
-    );
-    await this.loadInstanceData(regions);
-    console.log(`[PreWarm] ${this.getProviderName()}: complete`);
-  }
-
   // Abstract methods to be implemented by provider-specific classes
   getProviderName() {
     throw new Error("getProviderName must be implemented by provider class");
@@ -465,6 +454,47 @@ class BaseInstanceSelector {
       location: region,
       originalData: instance,
     }));
+  }
+
+  // The report every provider's getFilteringStatistics builds on: totals, the
+  // current/previous generation split, and the processor and family-name
+  // breakdowns. A provider passes its own starting counters, a `visit` that adds
+  // to them per instance, and which counters get a percentage.
+  _buildFilteringStatistics(extra, visit, percentOf) {
+    const stats = {
+      totalInstances: 0,
+      currentGeneration: 0,
+      previousGeneration: 0,
+      processorBreakdown: {},
+      familyNameBreakdown: {},
+      ...extra,
+    };
+    const tally = (counts, key) => {
+      counts[key] = (counts[key] || 0) + 1;
+    };
+    Object.values(this.instanceData).forEach((regionData) => {
+      regionData.forEach((instance) => {
+        stats.totalInstances++;
+        if (instance.generation === 1.0 || instance.generation === "1.0") {
+          stats.currentGeneration++;
+        } else {
+          stats.previousGeneration++;
+        }
+        tally(stats.processorBreakdown, instance.processor || "Unknown");
+        tally(stats.familyNameBreakdown, instance.familyName || "Unknown");
+        visit(instance, stats, tally);
+      });
+    });
+    // Zero, not NaN, for an empty catalogue.
+    const pct = (n) =>
+      stats.totalInstances > 0
+        ? ((n / stats.totalInstances) * 100).toFixed(1)
+        : 0;
+    stats.currentGenerationPercentage = pct(stats.currentGeneration);
+    Object.entries(percentOf).forEach(([key, counter]) => {
+      stats[key] = pct(stats[counter]);
+    });
+    return stats;
   }
 
   logLoadingStatistics(instances, region) {

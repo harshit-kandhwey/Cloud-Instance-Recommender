@@ -794,78 +794,28 @@ class AWSInstanceSelector extends BaseInstanceSelector {
 
   // AWS-specific: Get comprehensive filtering statistics
   getFilteringStatistics() {
-    const stats = {
-      totalInstances: 0,
-      currentGeneration: 0,
-      previousGeneration: 0,
-      processorBreakdown: {},
-      familyNameBreakdown: {},
-      gravitonInstances: 0,
-      nitroInstances: 0,
-      filteringCapabilities: {
-        currentGenerationFilter: true,
-        instanceFamilyNameFilter: true,
-        processorManufacturerFilter: true,
-        gravitonFilter: true,
-        mainFamilyFilter: true,
-        nitroFilter: true,
+    return this._buildFilteringStatistics(
+      {
+        gravitonInstances: 0,
+        nitroInstances: 0,
+        filteringCapabilities: {
+          currentGenerationFilter: true,
+          instanceFamilyNameFilter: true,
+          processorManufacturerFilter: true,
+          gravitonFilter: true,
+          mainFamilyFilter: true,
+          nitroFilter: true,
+        },
       },
-    };
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        stats.totalInstances++;
-
-        // Generation breakdown
-        if (instance.generation === 1.0 || instance.generation === "1.0") {
-          stats.currentGeneration++;
-        } else {
-          stats.previousGeneration++;
-        }
-
-        // Processor breakdown
-        const processor = instance.processor || "Unknown";
-        stats.processorBreakdown[processor] =
-          (stats.processorBreakdown[processor] || 0) + 1;
-
-        // Family name breakdown
-        const familyName = instance.familyName || "Unknown";
-        stats.familyNameBreakdown[familyName] =
-          (stats.familyNameBreakdown[familyName] || 0) + 1;
-
-        // Graviton instances
-        if (this.isGravitonInstance(instance)) {
-          stats.gravitonInstances++;
-        }
-
-        // Nitro instances
-        if (this._flagTrue(instance.nitroSupport)) {
-          stats.nitroInstances++;
-        }
-      });
-    });
-
-    // Calculate percentages
-    if (stats.totalInstances > 0) {
-      stats.currentGenerationPercentage = (
-        (stats.currentGeneration / stats.totalInstances) *
-        100
-      ).toFixed(1);
-      stats.gravitonPercentage = (
-        (stats.gravitonInstances / stats.totalInstances) *
-        100
-      ).toFixed(1);
-      stats.nitroPercentage = (
-        (stats.nitroInstances / stats.totalInstances) *
-        100
-      ).toFixed(1);
-    } else {
-      stats.currentGenerationPercentage = 0;
-      stats.gravitonPercentage = 0;
-      stats.nitroPercentage = 0;
-    }
-
-    return stats;
+      (instance, stats) => {
+        if (this.isGravitonInstance(instance)) stats.gravitonInstances++;
+        if (this._flagTrue(instance.nitroSupport)) stats.nitroInstances++;
+      },
+      {
+        gravitonPercentage: "gravitonInstances",
+        nitroPercentage: "nitroInstances",
+      },
+    );
   }
 
   // AWS-specific: Create JS data structure from sample (AWS format)

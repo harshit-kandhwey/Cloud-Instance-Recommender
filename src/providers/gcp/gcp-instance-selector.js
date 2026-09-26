@@ -618,90 +618,36 @@ class GCPInstanceSelector extends BaseInstanceSelector {
 
   // GCP-specific: Get filtering statistics
   getFilteringStatistics() {
-    const stats = {
-      totalInstances: 0,
-      currentGeneration: 0,
-      previousGeneration: 0,
-      processorBreakdown: {},
-      familyNameBreakdown: {},
-      machineSeriesBreakdown: {},
-      machineCategoryBreakdown: {},
-      armInstances: 0,
-      sharedCoreInstances: 0,
-      filteringCapabilities: {
-        currentGenerationFilter: true,
-        instanceFamilyNameFilter: true,
-        processorPlatformFilter: true,
-        armFilter: true,
-        machineSeriesFilter: true,
-        machineCategoryFilter: true,
+    return this._buildFilteringStatistics(
+      {
+        machineSeriesBreakdown: {},
+        machineCategoryBreakdown: {},
+        armInstances: 0,
+        sharedCoreInstances: 0,
+        filteringCapabilities: {
+          currentGenerationFilter: true,
+          instanceFamilyNameFilter: true,
+          processorPlatformFilter: true,
+          armFilter: true,
+          machineSeriesFilter: true,
+          machineCategoryFilter: true,
+        },
       },
-    };
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        stats.totalInstances++;
-
-        // Generation breakdown
-        if (instance.generation === 1.0 || instance.generation === "1.0") {
-          stats.currentGeneration++;
-        } else {
-          stats.previousGeneration++;
-        }
-
-        // Processor breakdown
-        const processor = instance.processor || "Unknown";
-        stats.processorBreakdown[processor] =
-          (stats.processorBreakdown[processor] || 0) + 1;
-
-        // Family name breakdown
-        const familyName = instance.familyName || "Unknown";
-        stats.familyNameBreakdown[familyName] =
-          (stats.familyNameBreakdown[familyName] || 0) + 1;
-
-        // Machine Series breakdown
-        const machineSeries = this.getMachineSeries(instance.instanceType);
-        stats.machineSeriesBreakdown[machineSeries] =
-          (stats.machineSeriesBreakdown[machineSeries] || 0) + 1;
-
-        // Machine Category breakdown
+      (instance, stats, tally) => {
+        tally(
+          stats.machineSeriesBreakdown,
+          this.getMachineSeries(instance.instanceType),
+        );
         const category = this.getMachineTypeCategory(instance.instanceType);
-        stats.machineCategoryBreakdown[category] =
-          (stats.machineCategoryBreakdown[category] || 0) + 1;
-
-        // ARM instances
-        if (this.isARMInstance(instance)) {
-          stats.armInstances++;
-        }
-
-        // Shared-core instances
-        if (category === "shared-core") {
-          stats.sharedCoreInstances++;
-        }
-      });
-    });
-
-    // Calculate percentages
-    if (stats.totalInstances > 0) {
-      stats.currentGenerationPercentage = (
-        (stats.currentGeneration / stats.totalInstances) *
-        100
-      ).toFixed(1);
-      stats.armPercentage = (
-        (stats.armInstances / stats.totalInstances) *
-        100
-      ).toFixed(1);
-      stats.sharedCorePercentage = (
-        (stats.sharedCoreInstances / stats.totalInstances) *
-        100
-      ).toFixed(1);
-    } else {
-      stats.currentGenerationPercentage = 0;
-      stats.armPercentage = 0;
-      stats.sharedCorePercentage = 0;
-    }
-
-    return stats;
+        tally(stats.machineCategoryBreakdown, category);
+        if (this.isARMInstance(instance)) stats.armInstances++;
+        if (category === "shared-core") stats.sharedCoreInstances++;
+      },
+      {
+        armPercentage: "armInstances",
+        sharedCorePercentage: "sharedCoreInstances",
+      },
+    );
   }
 
   // GCP-specific: Create JS data structure from sample (GCP format)
@@ -716,56 +662,6 @@ class GCPInstanceSelector extends BaseInstanceSelector {
       memoryGiB: instance.memory,
       hourlyPrice: instance.price,
     };
-  }
-
-  // GCP-specific: Get available machine series
-  getAvailableMachineSeries() {
-    const series = new Set();
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        const machineSeries = this.getMachineSeries(instance.instanceType);
-        if (machineSeries) {
-          series.add(machineSeries);
-        }
-      });
-    });
-
-    if (series.size === 0) {
-      this.getSampleData().forEach((instance) => {
-        const machineSeries = this.getMachineSeries(instance.instanceType);
-        if (machineSeries) {
-          series.add(machineSeries);
-        }
-      });
-    }
-
-    return Array.from(series).sort();
-  }
-
-  // GCP-specific: Get available machine categories
-  getAvailableMachineCategories() {
-    const categories = new Set();
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        const category = this.getMachineTypeCategory(instance.instanceType);
-        if (category) {
-          categories.add(category);
-        }
-      });
-    });
-
-    if (categories.size === 0) {
-      this.getSampleData().forEach((instance) => {
-        const category = this.getMachineTypeCategory(instance.instanceType);
-        if (category) {
-          categories.add(category);
-        }
-      });
-    }
-
-    return Array.from(categories).sort();
   }
 }
 

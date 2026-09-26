@@ -373,7 +373,11 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       "US Gov Virginia": "usgovvirginia",
     };
 
-    return regionMappings[region] || region.toLowerCase().replace(/[\s-]/g, "");
+    // Own keys only: the region is a cell from the uploaded file, and "constructor"
+    // would otherwise resolve to an inherited function.
+    return Object.prototype.hasOwnProperty.call(regionMappings, region)
+      ? regionMappings[region]
+      : region.toLowerCase().replace(/[\s-]/g, "");
   }
 
   getAllAvailableRegionKeys() {
@@ -583,72 +587,24 @@ class AzureInstanceSelector extends BaseInstanceSelector {
 
   // Azure-specific: Get filtering statistics
   getFilteringStatistics() {
-    const stats = {
-      totalInstances: 0,
-      currentGeneration: 0,
-      previousGeneration: 0,
-      processorBreakdown: {},
-      familyNameBreakdown: {},
-      vmSeriesBreakdown: {},
-      armInstances: 0,
-      filteringCapabilities: {
-        currentGenerationFilter: true,
-        instanceFamilyNameFilter: true,
-        processorArchitectureFilter: true,
-        armFilter: true,
-        vmSeriesFilter: true,
+    return this._buildFilteringStatistics(
+      {
+        vmSeriesBreakdown: {},
+        armInstances: 0,
+        filteringCapabilities: {
+          currentGenerationFilter: true,
+          instanceFamilyNameFilter: true,
+          processorArchitectureFilter: true,
+          armFilter: true,
+          vmSeriesFilter: true,
+        },
       },
-    };
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        stats.totalInstances++;
-
-        // Generation breakdown
-        if (instance.generation === 1.0 || instance.generation === "1.0") {
-          stats.currentGeneration++;
-        } else {
-          stats.previousGeneration++;
-        }
-
-        // Processor breakdown
-        const processor = instance.processor || "Unknown";
-        stats.processorBreakdown[processor] =
-          (stats.processorBreakdown[processor] || 0) + 1;
-
-        // Family name breakdown
-        const familyName = instance.familyName || "Unknown";
-        stats.familyNameBreakdown[familyName] =
-          (stats.familyNameBreakdown[familyName] || 0) + 1;
-
-        // VM Series breakdown
-        const vmSeries = this.getVMSeries(instance.instanceType);
-        stats.vmSeriesBreakdown[vmSeries] =
-          (stats.vmSeriesBreakdown[vmSeries] || 0) + 1;
-
-        // ARM instances
-        if (this.isARMInstance(instance)) {
-          stats.armInstances++;
-        }
-      });
-    });
-
-    // Calculate percentages
-    if (stats.totalInstances > 0) {
-      stats.currentGenerationPercentage = (
-        (stats.currentGeneration / stats.totalInstances) *
-        100
-      ).toFixed(1);
-      stats.armPercentage = (
-        (stats.armInstances / stats.totalInstances) *
-        100
-      ).toFixed(1);
-    } else {
-      stats.currentGenerationPercentage = 0;
-      stats.armPercentage = 0;
-    }
-
-    return stats;
+      (instance, stats, tally) => {
+        tally(stats.vmSeriesBreakdown, this.getVMSeries(instance.instanceType));
+        if (this.isARMInstance(instance)) stats.armInstances++;
+      },
+      { armPercentage: "armInstances" },
+    );
   }
 
   // Azure-specific: Create JS data structure from sample (Azure format)
@@ -663,31 +619,6 @@ class AzureInstanceSelector extends BaseInstanceSelector {
       memoryGiB: instance.memory,
       linuxPrice: instance.price,
     };
-  }
-
-  // Azure-specific: Get available VM series
-  getAvailableVMSeries() {
-    const series = new Set();
-
-    Object.values(this.instanceData).forEach((regionData) => {
-      regionData.forEach((instance) => {
-        const vmSeries = this.getVMSeries(instance.instanceType);
-        if (vmSeries) {
-          series.add(vmSeries);
-        }
-      });
-    });
-
-    if (series.size === 0) {
-      this.getSampleData().forEach((instance) => {
-        const vmSeries = this.getVMSeries(instance.instanceType);
-        if (vmSeries) {
-          series.add(vmSeries);
-        }
-      });
-    }
-
-    return Array.from(series).sort();
   }
 }
 
