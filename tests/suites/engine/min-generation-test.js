@@ -297,6 +297,29 @@ console.log("[an unusable Min Gen is reported as not applied]");
       ]),
     ],
   ];
+  // Not a generation: parseInt used to read a prefix of these, so the label claimed a
+  // filter that removed nothing ("0", "-1"), or filtered on the wrong number
+  // ("6abc" as 6, "6.5" as 6, "1e2" as 1).
+  for (const bad of ["0", "-1", "1e2", "6abc", "5+", "6.5"]) {
+    cases.push(
+      [
+        "aws",
+        bad,
+        pool([
+          ["m5.large", "m5"],
+          ["m7i.large", "m7i"],
+        ]),
+      ],
+      [
+        "azure",
+        bad,
+        pool([
+          ["d4sv3", "dsv3"],
+          ["d4sv5", "dsv5"],
+        ]),
+      ],
+    );
+  }
   for (const [provider, bad, p] of cases) {
     const r = applyMinGen(p, bad, provider);
     check(
@@ -336,6 +359,27 @@ console.log("[an unusable Min Gen is reported as not applied]");
       1,
     ],
   ];
+  // The decimal-zero form a spreadsheet or pandas export writes still works.
+  good.push(
+    [
+      "aws",
+      "6.0",
+      pool([
+        ["m5.large", "m5"],
+        ["m7i.large", "m7i"],
+      ]),
+      1,
+    ],
+    [
+      "azure",
+      "5.0",
+      pool([
+        ["d4sv3", "dsv3"],
+        ["d4sv5", "dsv5"],
+      ]),
+      1,
+    ],
+  );
   for (const [provider, val, p, kept] of good) {
     const r = applyMinGen(p, val, provider);
     check(

@@ -734,7 +734,21 @@ const RuleEngine = (() => {
   // minNum`, is why the Azure page's "v5+" quietly filtered to v3+; that scale is
   // gone. The one residual mapping is the GCP branch below, which still translates a
   // bare NUMBER from a legacy shared column for backward compatibility (see there).
-  // meetsMinGeneration reads an unparseable value as generation 0, which keeps
+  // A numeric Min Gen is a whole number above zero ("6"), or its decimal-zero form
+  // ("6.0", what a spreadsheet or pandas export writes). Anything else ("0", "-1",
+  // "1e2", "6abc", "6.5") is not a generation. Both readers below go through here so
+  // the label that says a filter applied can never disagree with the filter.
+  /**
+   * @param {string} raw
+   * @returns {number | null}
+   */
+  function parseMinGenNumber(raw) {
+    const m = /^(\d+)(?:\.0+)?$/.exec(raw);
+    const n = m ? Number(m[1]) : 0;
+    return Number.isSafeInteger(n) && n > 0 ? n : null;
+  }
+
+  // meetsMinGeneration reads an unusable value as generation 0, which keeps
   // every instance; apply() uses this to say so rather than report a filter.
   /**
    * @param {string} minGen
@@ -742,7 +756,7 @@ const RuleEngine = (() => {
    */
   function isUsableMinGen(minGen, provider) {
     const raw = String(minGen).trim();
-    if (Number.isFinite(parseInt(raw))) return true;
+    if (parseMinGenNumber(raw) !== null) return true;
     return (
       provider === "gcp" &&
       Object.prototype.hasOwnProperty.call(GCP_GEN_ORDER, raw)
@@ -759,7 +773,7 @@ const RuleEngine = (() => {
     const type = (inst.instanceType || "").toLowerCase();
     const family = (inst.family || "").toLowerCase();
     const raw = String(minGen).trim();
-    const num = parseInt(raw) || 0;
+    const num = parseMinGenNumber(raw) || 0;
 
     if (provider === "aws") {
       // m5.xlarge→5, m6i.xlarge→6, r7a.large→7, t3.micro→3
