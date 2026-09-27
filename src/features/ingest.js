@@ -1568,7 +1568,6 @@ function applyIngest(headers, rows, mapping, units = {}) {
   if (!fileStatus) {
     if (missingColumns.length > 0) {
       console.warn("Missing required columns:", missingColumns);
-    } else {
     }
   } else if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";

@@ -1127,7 +1127,9 @@ function renderRightSizing(a, m) {
   const blocks = provs
     .map((p) => {
       const rs = a.rightSizing[p];
-      return `<div class="pf-fam"><span class="pf-fam-prov">${PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()}</span> <span class="pf-chip pf-chip-ok">▼ ${rs.downsize}</span> <span class="pf-chip">= ${rs.same}</span> <span class="pf-chip pf-chip-warn">▲ ${rs.upsize}</span></div>`;
+      // p comes from the handoff payload's providers list, sanitized only to a
+      // string type by receivePortfolio — not restricted to a known provider name.
+      return `<div class="pf-fam"><span class="pf-fam-prov">${esc(PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase())}</span> <span class="pf-chip pf-chip-ok">▼ ${rs.downsize}</span> <span class="pf-chip">= ${rs.same}</span> <span class="pf-chip pf-chip-warn">▲ ${rs.upsize}</span></div>`;
     })
     .join("");
   return `<div class="pf-block"><h4>📐 Right-sizing (Optimized, by vCPU)</h4>${blocks}<small class="pf-note">▼ downsize · = same · ▲ upsize vs. current vCPUs</small></div>`;

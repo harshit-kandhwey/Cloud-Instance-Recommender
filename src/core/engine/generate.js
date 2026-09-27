@@ -319,14 +319,6 @@ async function processRecommendations() {
 
     // Reveal the scenario-comparison bar so this run can be pinned/compared
     if (typeof updateScenarioCompare === "function") updateScenarioCompare();
-
-    // Log what was actually generated
-    if (processedResults.length > 0) {
-      const sampleResult = processedResults[0];
-      const generatedColumns = Object.keys(sampleResult).filter(
-        (key) => key.includes("Like-to-Like") || key.includes("Optimized"),
-      );
-    }
   } catch (error) {
     console.error("Error processing recommendations:", error);
     showToast(

@@ -139,6 +139,26 @@ console.log("[hostile keys get a real colour, not an inherited function]");
   );
 }
 
+console.log("[a hostile provider name in the handoff can't inject HTML]");
+{
+  // providers is sanitized only to a string type by receivePortfolio, not
+  // restricted to a known provider name — a hostile string reaching this far
+  // must still come out escaped, the same guarantee every other rendered value
+  // in this file has.
+  // Lower-case tag name: PORTFOLIO_PROVIDER_LABELS has no entry for this string,
+  // so the unescaped fallback is p.toUpperCase() — a naive "no <img" check would
+  // pass on the un-fixed code too, since toUpperCase renders it as "<IMG ...>".
+  const hostile = "<img src=x onerror=alert(1)>";
+  const html = run(
+    `renderRightSizing({ rightSizing: { ${JSON.stringify(hostile)}: { downsize: 1, same: 0, upsize: 0 } } }, { meta: { providers: [${JSON.stringify(hostile)}] } })`,
+  );
+  check(
+    "a hostile provider name is escaped, not injected as a tag",
+    typeof html === "string" && !/<img\b/i.test(html) && html.includes("&lt;"),
+    html,
+  );
+}
+
 console.log("[a handoff payload of the wrong shape is refused or cleaned]");
 {
   const good = { "App Name": "Z", "CPU Count": "1", "Memory (GB)": "1" };
@@ -155,11 +175,14 @@ console.log("[a handoff payload of the wrong shape is refused or cleaned]");
       m.meta.providers.length === 0,
     JSON.stringify(m && m.estate),
   );
-  vm.runInContext("window._portfolioModel = null; portfolioData = null", ctx);
+  // A payload with no usable rows must be a no-op on whatever the page already
+  // has — not merely leave a freshly-nulled model still null, which would pass
+  // even if receivePortfolio wrongly cleared a real, already-rendered model.
+  const before = run("window._portfolioModel");
   vm.runInContext("receivePortfolio({ results: [null, 3] })", ctx);
   check(
-    "a payload with no usable rows renders nothing",
-    run("window._portfolioModel") === null,
+    "a payload with no usable rows leaves the existing model untouched",
+    JSON.stringify(run("window._portfolioModel")) === JSON.stringify(before),
   );
 }
 

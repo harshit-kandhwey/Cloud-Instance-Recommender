@@ -125,8 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadProviderSpecificData();
 
   // Check if modular selector system is available
-  if (typeof InstanceSelectorFactory !== "undefined") {
-  } else {
+  if (typeof InstanceSelectorFactory === "undefined") {
     console.warn(
       "⚠️ Modular Instance Selector System not found. Please include the selector files.",
     );
