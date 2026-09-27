@@ -128,8 +128,34 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   if (new URL(req.url).origin !== self.location.origin) return;
-  event.respondWith(staleWhileRevalidate(event));
+  event.respondWith(
+    req.mode === "navigate" ? networkFirst(event) : staleWhileRevalidate(event),
+  );
 });
+
+// A page navigation (typing the URL, following a link) is network-first: a
+// returning user's FIRST load after a deploy must see the new HTML, not the
+// previous visit's cached shell. Stale-while-revalidate would serve the OLD page
+// here and only refresh the cache for the visit after this one — after a deploy,
+// every open tab and every fresh load keeps running the previous release until a
+// second navigation happens to land after the background refresh completes.
+// Falls back to a cached copy of this exact page when offline, then to the
+// precached index.html shell as a last resort (unchanged from before).
+async function networkFirst(event) {
+  const req = event.request;
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await fetch(req);
+    if (res && res.ok && res.type === "basic") cache.put(req, res.clone());
+    return res;
+  } catch {
+    return (
+      (await cache.match(req)) ||
+      (await cache.match("index.html")) ||
+      Response.error()
+    );
+  }
+}
 
 async function staleWhileRevalidate(event) {
   const req = event.request;
@@ -147,11 +173,8 @@ async function staleWhileRevalidate(event) {
     event.waitUntil(network); // refresh in the background
     return cached;
   }
-  const net = await network;
-  if (net) return net;
-  // Offline and uncached: give navigations a cached shell rather than an error.
-  if (req.mode === "navigate") {
-    return (await cache.match("index.html")) || Response.error();
-  }
-  return Response.error();
+  // Navigations never reach here — networkFirst above handles req.mode ===
+  // "navigate" — so there is no offline-shell fallback to give a non-navigation
+  // request; an uncached asset offline is a genuine miss.
+  return (await network) || Response.error();
 }

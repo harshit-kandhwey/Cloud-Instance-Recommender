@@ -1,9 +1,12 @@
 // PWA / offline verification:
 //   - manifest.json shape (installability essentials)
 //   - sw.js: install precaches the shell, activate purges old caches,
-//     fetch does stale-while-revalidate (cache-first + background refresh,
-//     runtime-caches new same-origin GETs, offline navigation falls back to
-//     a cached shell), and non-GET / cross-origin requests are passed through
+//     fetch does network-first for page navigations (so a deploy is visible on
+//     the very next load, not the one after) and stale-while-revalidate for
+//     everything else (cache-first + background refresh), runtime-caches new
+//     same-origin GETs, offline navigation falls back to a cached copy of the
+//     same page or the shell, and non-GET / cross-origin requests are passed
+//     through
 //   - every HTML page links the manifest and registers the worker
 //   - the offline indicator banner appears on `offline`, flips to a
 //     self-hiding "back online" notice, and shows immediately when the
@@ -13,7 +16,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -240,18 +243,28 @@ process.exitCode = 1;
     [...cachesStore.keys()].join(","),
   );
 
-  // fetch cached shell → served from cache + background refresh scheduled
+  // fetch a navigation, online → network-first: the FRESH response wins over
+  // whatever the cache already holds, and nothing is deferred to a background
+  // refresh (unlike stale-while-revalidate below), so a deploy is visible on
+  // this very load.
+  const staleAws = makeRes("aws.html", true);
+  staleAws.stale = true;
+  cachesStore.get(CACHE_NAME).set(absKey("aws.html"), staleAws);
   const e3 = makeEvent(req("aws.html", { mode: "navigate" }));
   handlers.fetch(e3);
   const r3 = await e3.getResponse();
   check(
-    "cached request is served from cache",
-    r3 && r3.url === "aws.html",
+    "an online navigation is served the fresh network response, not the stale cache entry",
+    r3 && r3.url.endsWith("aws.html") && !r3.stale,
     JSON.stringify(r3),
   );
   check(
-    "stale-while-revalidate schedules a background refresh",
-    e3.waits.length === 1,
+    "network-first schedules no background refresh (the fetch already ran)",
+    e3.waits.length === 0,
+  );
+  check(
+    "the fresh response replaces the stale cache entry",
+    !cachesStore.get(CACHE_NAME).get(absKey("aws.html")).stale,
   );
 
   // fetch uncached same-origin GET (online) → network + runtime cache it
@@ -289,6 +302,18 @@ process.exitCode = 1;
     "offline uncached navigation falls back to a cached shell",
     r5 && r5.url === "index.html",
     JSON.stringify(r5),
+  );
+
+  // offline navigation to a page that DOES have a cached copy → that copy, not
+  // the generic index.html shell (network-first's cache.match(req) branch).
+  const e5b = makeEvent(req("aws.html", { mode: "navigate" }));
+  handlers.fetch(e5b);
+  const r5b = await e5b.getResponse();
+  await Promise.allSettled(e5b.waits);
+  check(
+    "offline navigation to a cached page is served that page, not the generic shell",
+    r5b && r5b.url.endsWith("aws.html"),
+    JSON.stringify(r5b),
   );
 
   // offline + uncached non-navigation → error response (not a wrong page)
