@@ -145,7 +145,7 @@ const apply = (pool, opts, provider = "aws") =>
   );
   check(
     "1d network tier: rule reported",
-    r.rules.some((s) => s.startsWith("1d: Network-tier preference (≥4 vCPUs)")),
+    r.rules.some((s) => s.startsWith("1d: Network-tier preference")),
     r.rules.join(" | "),
   );
 }
@@ -189,6 +189,37 @@ const apply = (pool, opts, provider = "aws") =>
     "MinGen 6+ (aws): rule reported",
     r.rules.some((x) => x.startsWith("MinGen:")),
     r.rules.join(" | "),
+  );
+}
+
+// parseMinGenNumber: only a whole number above zero (or its decimal-zero form,
+// "6.0") is a generation. "0", "-1" and "1e2" must NOT be read as applied — each
+// keeps every instance and reports "not applied", the exact bug this parser
+// replaced parseInt to fix.
+for (const bad of ["0", "-1", "1e2", "6abc", "5+", "6.5"]) {
+  const r = apply(
+    [inst({ instanceType: "m5.large" }), inst({ instanceType: "m7i.large" })],
+    { rowMinGen: bad },
+  );
+  check(
+    `MinGen "${bad}" (aws): not a generation, keeps every instance`,
+    r.instances.length === 2 &&
+      r.rules.some((x) => x.startsWith(`MinGen: ${bad} not applied`)),
+    r.rules.join(" | "),
+  );
+}
+{
+  const r = apply(
+    [
+      inst({ instanceType: "m5.large" }),
+      inst({ instanceType: "m7i.large", family: "m7i" }),
+    ],
+    { rowMinGen: "6.0" },
+  );
+  check(
+    'MinGen "6.0" (aws): the decimal-zero form still filters like "6"',
+    r.instances.length === 1 && r.instances[0].instanceType === "m7i.large",
+    JSON.stringify(r.instances.map((i) => i.instanceType)),
   );
 }
 
@@ -489,6 +520,42 @@ check(
   "meetsMinGeneration azure dsv3 < 5 (no)",
   call("RuleEngine.meetsMinGeneration", [{ family: "dsv3" }, "5", "azure"]) ===
     false,
+);
+// A missing instanceType/family falls back to "" (never crashes on
+// undefined.toLowerCase()); a type the AWS regex cannot even parse (no
+// letter-prefix, e.g. a malformed row) is read as no generation info and the
+// filter passes it through rather than rejecting a machine it cannot read.
+check(
+  "meetsMinGeneration aws missing instanceType (no crash, filter passes)",
+  call("RuleEngine.meetsMinGeneration", [{}, "6", "aws"]) === true,
+);
+check(
+  "meetsMinGeneration aws type with no letter-prefix (unparseable, passes)",
+  call("RuleEngine.meetsMinGeneration", [
+    { instanceType: "1m5.large" },
+    "6",
+    "aws",
+  ]) === true,
+);
+// The AWS regex's letter run must be `+` (one or more), not a single letter:
+// "mm75" has a two-letter family prefix before the digits.
+check(
+  "meetsMinGeneration aws multi-letter family prefix (mm75 < 76)",
+  call("RuleEngine.meetsMinGeneration", [
+    { instanceType: "mm75.large" },
+    "76",
+    "aws",
+  ]) === false,
+);
+// The digit run must be `+` (one or more), not a single digit: m75 must read
+// as generation 75, not 7.
+check(
+  "meetsMinGeneration aws multi-digit generation (m75 >= 8)",
+  call("RuleEngine.meetsMinGeneration", [
+    { instanceType: "m75.large" },
+    "8",
+    "aws",
+  ]) === true,
 );
 check(
   "meetsMinGeneration gcp n4 ≥ n2",
@@ -813,7 +880,16 @@ void path;
 // no-match branch fires, the multi-cloud family column is written) rather than
 // pinning exact instance names — the goldens already lock exact output.
 // ─────────────────────────────────────────────────────────────────────────────
+// The specs/prices split (3.15) moved vCPU/memory/family out of the region files
+// into {P}_SPECS.compute; loadRegionData's _mergeSpecs reads that global to
+// rebuild a full record. A region file loaded without its specs blob merges to
+// price-only records, isValidInstance drops all of them for missing vCPU/memory,
+// and every "rec:" check below fails with "No data available" — this predates
+// the region files below on purpose.
 for (const rel of [
+  "src/providers/aws/aws-data.js",
+  "src/providers/azure/azure-data.js",
+  "src/providers/gcp/gcp-data.js",
   "src/providers/aws/regions/us_east_1.js",
   "src/providers/azure/regions/eastus.js",
   "src/providers/gcp/regions/us_central1.js",
