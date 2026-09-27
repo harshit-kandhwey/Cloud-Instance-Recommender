@@ -72,6 +72,46 @@ function listTools(dir, out = []) {
   }
   return out;
 }
+// Finds the exports object by brace depth, not a non-greedy regex — a nested
+// object literal in the block (e.g. a re-exported namespace) would otherwise
+// truncate the scan at its own closing brace and silently drop every name
+// declared after it: the "guard built from a source-text regex" trap
+// .claude/rules/coding.md §2 names, in a coverage GATE of all places.
+function extractExportsBlock(src) {
+  const start = src.search(/module\.exports\s*=\s*\{/);
+  if (start === -1) return null;
+  const open = src.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}") {
+      depth--;
+      if (depth === 0) return src.slice(open + 1, i);
+    }
+  }
+  return null; // unbalanced — treat as no exports rather than guess
+}
+
+// Comma-splits only at depth 0, so a nested value's own commas don't
+// fragment its key into extra, wrong "exported" names.
+function splitTopLevel(block) {
+  const parts = [];
+  let depth = 0;
+  let cur = "";
+  for (const ch of block) {
+    if (ch === "{") depth++;
+    else if (ch === "}") depth--;
+    if (ch === "," && depth === 0) {
+      parts.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) parts.push(cur);
+  return parts;
+}
+
 const toolSurface = new Map(); // "path::name" -> { file, name, reachable }
 for (const file of listTools(path.join(REPO, "scripts")).sort()) {
   const src = fs.readFileSync(file, "utf8");
@@ -81,9 +121,9 @@ for (const file of listTools(path.join(REPO, "scripts")).sort()) {
   // Only exported names that are declared functions count; the exported
   // constants (PROVIDERS, FIELD_ORDER, ...) have no body to execute.
   const exported = new Set();
-  const block = /module\.exports\s*=\s*\{([^}]*)\}/.exec(src);
+  const block = extractExportsBlock(src);
   if (block)
-    for (const part of block[1].split(",")) {
+    for (const part of splitTopLevel(block)) {
       const name = part.split(":")[0].trim();
       if (name) exported.add(name);
     }
