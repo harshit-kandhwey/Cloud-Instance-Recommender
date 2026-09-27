@@ -125,11 +125,6 @@ window.getInstanceRecommendationWithSelector = async function (
       initPromises.push(
         selector.initialize(csvData, regions).then(() => {
           selectors[provider] = selector;
-
-          // Log provider-specific statistics
-          if (selector.getFilteringStatistics) {
-            const stats = selector.getFilteringStatistics();
-          }
         }),
       );
     } catch (error) {

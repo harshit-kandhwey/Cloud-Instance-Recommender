@@ -571,16 +571,6 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     return filteredInstances;
   }
 
-  // Azure-specific: Log enhanced loading statistics
-  logLoadingStatistics(instances, region) {
-    super.logLoadingStatistics(instances, region);
-
-    const armCount = instances.filter((i) => this.isARMInstance(i)).length;
-    const vmSeries = new Set(
-      instances.map((i) => this.getVMSeries(i.instanceType)),
-    ).size;
-  }
-
   // Azure-specific: Get filtering statistics
   getFilteringStatistics() {
     return this._buildFilteringStatistics(

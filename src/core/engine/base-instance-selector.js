@@ -117,7 +117,6 @@ class BaseInstanceSelector {
           `${this.getProviderName().toLowerCase()}-${region}`,
         );
       }
-      this.logLoadingStatistics(instances, region);
     } catch (error) {
       console.error(
         `Failed to load data for ${this.getProviderName()} ${region}:`,
@@ -484,13 +483,6 @@ class BaseInstanceSelector {
       stats[key] = pct(stats[counter]);
     });
     return stats;
-  }
-
-  logLoadingStatistics(instances, region) {
-    const currentGenCount = instances.filter(
-      (i) => i.generation === 1.0 || i.generation === "1.0",
-    ).length;
-    const familyTypes = new Set(instances.map((i) => i.familyName)).size;
   }
 
   // Reverse spec lookup for cloud-to-cloud sizing: given the type a VM runs on TODAY,

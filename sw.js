@@ -146,7 +146,11 @@ async function networkFirst(event) {
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(req);
-    if (res && res.ok && res.type === "basic") cache.put(req, res.clone());
+    // waitUntil, not awaited here: the worker must not be recycled mid-write, but the
+    // response should reach the page immediately rather than wait on the cache put.
+    if (res && res.ok && res.type === "basic") {
+      event.waitUntil(cache.put(req, res.clone()).catch(() => {}));
+    }
     return res;
   } catch {
     return (

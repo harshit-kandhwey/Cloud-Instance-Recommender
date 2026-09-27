@@ -259,9 +259,10 @@ process.exitCode = 1;
     JSON.stringify(r3),
   );
   check(
-    "network-first schedules no background refresh (the fetch already ran)",
-    e3.waits.length === 0,
+    "network-first backgrounds the cache write via waitUntil, not a second fetch",
+    e3.waits.length === 1,
   );
+  await Promise.all(e3.waits);
   check(
     "the fresh response replaces the stale cache entry",
     !cachesStore.get(CACHE_NAME).get(absKey("aws.html")).stale,

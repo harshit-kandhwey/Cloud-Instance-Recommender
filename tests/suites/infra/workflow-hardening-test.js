@@ -47,9 +47,10 @@ for (const file of ["ci.yml", "data-refresh.yml"]) {
     .readFileSync(path.join(REPO, ".github", "workflows", file), "utf8")
     .split("\r\n")
     .join("\n");
-  // Any spacing after the sequence dash is valid YAML, and a value may be quoted.
-  const uses = [...src.matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm)].map((m) =>
-    m[1].replace(/^(["'])(.*?)\1/, "$2"),
+  // Any spacing after the sequence dash is valid YAML, the key may be quoted
+  // ("uses":), and a value may be quoted too.
+  const uses = [...src.matchAll(/^\s*(?:-\s+)?["']?uses["']?:\s*(.+)$/gm)].map(
+    (m) => m[1].replace(/^(["'])(.*?)\1/, "$2"),
   );
   check(
     `${file}: the scan found its action references`,
@@ -57,8 +58,10 @@ for (const file of ["ci.yml", "data-refresh.yml"]) {
     `found ${uses.length}`,
   );
   // A line the extractor cannot read would otherwise vanish from the pin check
-  // below while the others keep it green.
-  const mentioned = (src.match(/^[^#\n]*\buses:/gm) || []).length;
+  // below while the others keep it green. Same quoted-key allowance as above —
+  // otherwise this cross-check shares the extractor's own blind spot and can
+  // never catch it.
+  const mentioned = (src.match(/^[^#\n]*\buses["']?:/gm) || []).length;
   check(
     `${file}: no uses: line escapes the scan`,
     mentioned === uses.length,

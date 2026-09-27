@@ -429,8 +429,10 @@ vm.runInContext(
   check(
     "the spec-less row was sized inside the worker from its Current Instance Type",
     !!c2cRow &&
-      c2cRow["AWS Like-to-Like Instance"] !== "Missing data" &&
-      !!c2cRow["AWS Like-to-Like Instance"],
+      !!c2cRow["AWS Like-to-Like Instance"] &&
+      !["Missing data", "No data available"].includes(
+        c2cRow["AWS Like-to-Like Instance"],
+      ),
     c2cRow && c2cRow["AWS Like-to-Like Instance"],
   );
   check(
@@ -461,9 +463,11 @@ vm.runInContext(
     );
     check(
       "collectRegionDataForWorker forwards {P}_SPECS to the worker",
-      /flags\[`\$\{prefix\}_SPECS`\]\s*=/.test(fn),
+      /flags\[`\$\{prefix\}_SPECS`\]\s*=\s*window\[`\$\{prefix\}_SPECS`\]/.test(
+        fn,
+      ),
       fn.includes("_SPECS")
-        ? "mentions _SPECS but does not assign it"
+        ? "mentions _SPECS but does not assign the window global to it"
         : "no _SPECS",
     );
   }

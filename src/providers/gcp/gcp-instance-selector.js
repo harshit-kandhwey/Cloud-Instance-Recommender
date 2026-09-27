@@ -598,19 +598,6 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     return filteredInstances;
   }
 
-  // GCP-specific: Log enhanced loading statistics
-  logLoadingStatistics(instances, region) {
-    super.logLoadingStatistics(instances, region);
-
-    const armCount = instances.filter((i) => this.isARMInstance(i)).length;
-    const machineSeries = new Set(
-      instances.map((i) => this.getMachineSeries(i.instanceType)),
-    ).size;
-    const sharedCoreCount = instances.filter(
-      (i) => this.getMachineTypeCategory(i.instanceType) === "shared-core",
-    ).length;
-  }
-
   // GCP-specific: Get filtering statistics
   getFilteringStatistics() {
     return this._buildFilteringStatistics(

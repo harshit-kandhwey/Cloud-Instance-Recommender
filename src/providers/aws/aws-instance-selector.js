@@ -777,18 +777,6 @@ class AWSInstanceSelector extends BaseInstanceSelector {
     return filteredInstances;
   }
 
-  // AWS-specific: Log enhanced loading statistics
-  logLoadingStatistics(instances, region) {
-    super.logLoadingStatistics(instances, region);
-
-    const gravitonCount = instances.filter((i) =>
-      this.isGravitonInstance(i),
-    ).length;
-    const nitroCount = instances.filter((i) =>
-      this._flagTrue(i.nitroSupport),
-    ).length;
-  }
-
   // AWS-specific: Get comprehensive filtering statistics
   getFilteringStatistics() {
     return this._buildFilteringStatistics(
