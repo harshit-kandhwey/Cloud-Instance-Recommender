@@ -99,8 +99,6 @@ function toggleCloudProvider(provider) {
     selectedProviders = selectedProviders.filter((p) => p !== provider);
   }
 
-  console.log("Selected providers:", selectedProviders);
-
   // Validate providers if modular system is available
   if (typeof validateProviderSupport !== "undefined") {
     const isValid = validateProviderSupport(selectedProviders);
@@ -131,8 +129,6 @@ function handleRecommendationTypeChange() {
 
   if (!selectedType) return;
 
-  console.log("Recommendation type changed to:", selectedType.value);
-
   // Show/hide optimization controls based on recommendation type
   if (selectedType.value === "optimized" || selectedType.value === "both") {
     optimizationControls.classList.remove("hidden");
@@ -145,11 +141,6 @@ function handleRecommendationTypeChange() {
     selectedType.value === "like-to-like" || selectedType.value === "both";
   const willGenerateOptimized =
     selectedType.value === "optimized" || selectedType.value === "both";
-
-  console.log("Recommendation generation plan:", {
-    likeToLike: willGenerateLikeToLike,
-    optimized: willGenerateOptimized,
-  });
 }
 
 // Toggle optimization mode
@@ -248,10 +239,6 @@ function updateMemoryRanges() {
 function toggleCurrentGenerationFilter() {
   const checkbox = document.getElementById("currentGenerationOnly");
   checkRuleConflicts();
-  console.log(
-    "Current generation filter:",
-    checkbox.checked ? "Enabled" : "Disabled",
-  );
 }
 
 // ─── Rule Engine UI helpers ────────────────────────────────────────────────
@@ -516,10 +503,6 @@ function toggleInstanceFamilyNameFilter() {
     } else {
       controls.classList.add("hidden");
     }
-    console.log(
-      "Instance family name filter:",
-      checkbox.checked ? "Enabled" : "Disabled",
-    );
   }
 }
 
@@ -534,10 +517,6 @@ function toggleProcessorManufacturerFilter() {
     } else {
       controls.classList.add("hidden");
     }
-    console.log(
-      "Processor manufacturer filter:",
-      checkbox.checked ? "Enabled" : "Disabled",
-    );
   }
 }
 
@@ -552,16 +531,11 @@ function toggleMainFamiliesFilter() {
     } else {
       controls.classList.add("hidden");
     }
-    console.log(
-      "Main families filter:",
-      checkbox.checked ? "Enabled" : "Disabled",
-    );
   }
 }
 
 // Toggle exclude types
 function toggleExcludeTypes() {
-  console.log("toggleExcludeTypes called");
   const excludeControls = document.getElementById("excludeControls");
   const checkbox = document.getElementById("excludeTypes");
 
@@ -573,8 +547,6 @@ function toggleExcludeTypes() {
     return;
   }
 
-  console.log("Exclude checkbox checked:", checkbox.checked);
-
   if (checkbox.checked) {
     excludeControls.classList.remove("hidden");
     updateExcludeControls();
@@ -585,11 +557,7 @@ function toggleExcludeTypes() {
 
 // Enhanced exclude controls with debugging
 function updateExcludeControls() {
-  console.log("updateExcludeControls called");
-  console.log("Selected providers:", selectedProviders);
-
   const excludeControls = document.getElementById("excludeTypeControls");
-  console.log("excludeTypeControls element:", excludeControls);
 
   if (!excludeControls) {
     console.error("excludeTypeControls element not found!");
@@ -599,18 +567,12 @@ function updateExcludeControls() {
   excludeControls.innerHTML = "";
 
   if (selectedProviders.length === 0) {
-    console.log("No providers selected, showing message");
     excludeControls.innerHTML =
       "<p style='color: var(--text-muted); font-style: italic; padding: 15px;'>Please select cloud providers first to see exclusion options.</p>";
     return;
   }
 
-  console.log("Processing providers:", selectedProviders);
-  console.log("Exclude types data:", excludeTypesData);
-
   selectedProviders.forEach((provider) => {
-    console.log(`Creating exclude options for ${provider}`);
-
     if (
       !excludeTypesData[provider] ||
       excludeTypesData[provider].length === 0
@@ -644,10 +606,7 @@ function updateExcludeControls() {
       </div>
     `;
     excludeControls.appendChild(div);
-    console.log(`Added exclude options for ${provider}`);
   });
-
-  console.log("updateExcludeControls completed");
 }
 
 // Get exclude type descriptions - now routes to provider-specific functions

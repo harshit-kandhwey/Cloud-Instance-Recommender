@@ -787,9 +787,6 @@ class AWSInstanceSelector extends BaseInstanceSelector {
     const nitroCount = instances.filter((i) =>
       this._flagTrue(i.nitroSupport),
     ).length;
-
-    console.log(`  - Graviton: ${gravitonCount} instances`);
-    console.log(`  - Nitro Support: ${nitroCount} instances`);
   }
 
   // AWS-specific: Get comprehensive filtering statistics

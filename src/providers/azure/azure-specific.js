@@ -63,8 +63,6 @@ const azureFamilyData = azureAdvancedFilterData.vmFamilies;
 
 // Initialize Azure filter controls with advanced capabilities
 function initializeAzureFilters() {
-  console.log("Azure filters initialized with advanced capabilities");
-
   initializeInstanceFamilyNameFilter(
     distinctSpecValues(window.AZURE_SPECS, "familyName"),
   );

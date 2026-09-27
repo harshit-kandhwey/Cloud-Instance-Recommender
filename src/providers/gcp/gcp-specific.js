@@ -62,8 +62,6 @@ const gcpFamilyData = gcpAdvancedFilterData.machineFamilies;
 
 // Initialize GCP filter controls with advanced capabilities
 function initializeGCPFilters() {
-  console.log("GCP filters initialized with advanced capabilities");
-
   initializeInstanceFamilyNameFilter(
     distinctSpecValues(window.GCP_SPECS, "seriesName"),
   );

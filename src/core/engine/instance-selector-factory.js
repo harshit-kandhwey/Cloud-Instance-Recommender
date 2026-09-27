@@ -102,18 +102,9 @@ window.getInstanceRecommendationWithSelector = async function (
   options,
   hooks,
 ) {
-  console.log("Starting recommendation generation with multi-provider support");
-  console.log("Selected providers:", selectedProviders);
-  console.log("Applied options:", options);
-
   // Extract recommendation type preferences
   const generateLikeToLike = options.generateLikeToLike !== false; // Default to true
   const generateOptimized = options.generateOptimized === true; // Default to false
-
-  console.log("Recommendation types:", {
-    likeToLike: generateLikeToLike,
-    optimized: generateOptimized,
-  });
 
   // Create selectors for each provider
   const selectors = {};
@@ -121,7 +112,6 @@ window.getInstanceRecommendationWithSelector = async function (
 
   for (const provider of selectedProviders) {
     try {
-      console.log(`Creating ${provider.toUpperCase()} selector`);
       // Reuse a pre-warmed selector if available — all regions already parsed in background
       const selector =
         (window._prewarmedSelectors && window._prewarmedSelectors[provider]) ||
@@ -132,8 +122,6 @@ window.getInstanceRecommendationWithSelector = async function (
         InstanceSelectorFactory.getProviderRegionColumn(provider);
       const regions = extractUniqueRegions(csvData, regionColumn, provider);
 
-      console.log(`${provider.toUpperCase()} regions:`, Array.from(regions));
-
       initPromises.push(
         selector.initialize(csvData, regions).then(() => {
           selectors[provider] = selector;
@@ -141,12 +129,6 @@ window.getInstanceRecommendationWithSelector = async function (
           // Log provider-specific statistics
           if (selector.getFilteringStatistics) {
             const stats = selector.getFilteringStatistics();
-            console.log(`${provider.toUpperCase()} Statistics:`, {
-              total: stats.totalInstances,
-              currentGen: `${stats.currentGeneration} (${stats.currentGenerationPercentage}%)`,
-              processors: Object.keys(stats.processorBreakdown),
-              families: Object.keys(stats.familyNameBreakdown).length,
-            });
           }
         }),
       );
@@ -157,8 +139,6 @@ window.getInstanceRecommendationWithSelector = async function (
 
   // Wait for all selectors to initialize
   await Promise.all(initPromises);
-
-  console.log("All selectors initialized. Processing CSV data...");
 
   const onProgress =
     hooks && typeof hooks.onProgress === "function" ? hooks.onProgress : null;
@@ -616,8 +596,6 @@ window.getInstanceRecommendationWithSelector = async function (
     }
   }
 
-  console.log("Recommendation generation completed successfully");
-
   // Finished here, once, rather than left as raw totals for a caller to divide —
   // one definition of the percentage (CANONICAL-SOURCES.md), not a formula
   // hand-copied into every place that displays it. Attached to the ARRAY, never
@@ -816,9 +794,6 @@ function extractUniqueRegions(csvData, regionColumn, provider) {
     const defaultRegion =
       InstanceSelectorFactory.getProviderDefaultRegion(provider);
     regions.add(defaultRegion);
-    console.log(
-      `No regions found for ${provider}, using default: ${defaultRegion}`,
-    );
   }
 
   return regions;
@@ -856,18 +831,9 @@ window.validateProviderSupport = function (providers) {
 
   if (unsupported.length > 0) {
     console.warn(`Unsupported providers: ${unsupported.join(", ")}`);
-    console.log(`Supported providers: ${supported.join(", ")}`);
   }
 
   return unsupported.length === 0;
 };
 
 window.InstanceSelectorFactory = InstanceSelectorFactory;
-
-console.log(
-  "Instance Selector Factory initialized with multi-provider support",
-);
-console.log(
-  "Supported providers:",
-  InstanceSelectorFactory.getSupportedProviders(),
-);

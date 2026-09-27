@@ -21,7 +21,6 @@ function handleFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  console.log("File upload started:", file.name);
   ingestFile(file);
 }
 
@@ -436,7 +435,6 @@ function selectSheet(name) {
 // (which owns column mapping and everything downstream — the xlsx path
 // feeds ingestRows directly)
 function parseCSV(csvText) {
-  console.log("Parsing CSV data");
   const { headers, rows, unterminatedQuote } = parseDelimitedText(csvText);
   if (unterminatedQuote) warnUnterminatedQuote();
   ingestRows(headers, rows);
@@ -1440,8 +1438,6 @@ function forgetAllColumnMappings() {
 // mapping silently when unambiguous; otherwise defers the whole pipeline
 // (csvData stays empty) until the user confirms in the mapping panel.
 function ingestRows(headers, rows) {
-  console.log(`Parsed ${rows.length} rows with ${headers.length} columns`);
-
   // The signature identifies the FILE, so it's taken from the headers the file
   // actually has, before anything is derived — signing derived headers saves a
   // mapping under a key no later upload can reproduce. Kept on window because every
@@ -1462,7 +1458,6 @@ function ingestRows(headers, rows) {
   // A mapping the user previously confirmed for this exact file wins
   const saved = readSavedMapping(loadColumnMappings()[signature]);
   if (saved && Object.keys(saved.mapping).every((s) => headers.includes(s))) {
-    console.log("Applying saved column mapping");
     applyIngest(headers, rows, saved.mapping, saved.units);
     return;
   }
@@ -1574,7 +1569,6 @@ function applyIngest(headers, rows, mapping, units = {}) {
     if (missingColumns.length > 0) {
       console.warn("Missing required columns:", missingColumns);
     } else {
-      console.log("File validation successful");
     }
   } else if (missingColumns.length > 0) {
     fileStatus.className = "alert alert-warning";
@@ -1587,7 +1581,6 @@ function applyIngest(headers, rows, mapping, units = {}) {
   } else {
     fileStatus.className = "alert alert-success";
     fileStatus.innerHTML = `✅ ${okLabel}: ${csvData.length} rows, ${finalHeaders.length} columns${renameNote}${uploadNote}${sizeNote}${editBtn}`;
-    console.log("File validation successful");
   }
   if (fileStatus) fileStatus.classList.remove("hidden");
 

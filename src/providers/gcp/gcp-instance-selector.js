@@ -548,7 +548,6 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     if (options.excludeARM) {
       filteredInstances = filteredInstances.filter((instance) => {
         if (this.isARMInstance(instance)) {
-          console.log(`Excluding ARM: ${instance.instanceType}`);
           return false;
         }
         return true;
@@ -610,10 +609,6 @@ class GCPInstanceSelector extends BaseInstanceSelector {
     const sharedCoreCount = instances.filter(
       (i) => this.getMachineTypeCategory(i.instanceType) === "shared-core",
     ).length;
-
-    console.log(`  - ARM-based (T2A): ${armCount} instances`);
-    console.log(`  - Machine Series: ${machineSeries} different series`);
-    console.log(`  - Shared-core: ${sharedCoreCount} instances`);
   }
 
   // GCP-specific: Get filtering statistics

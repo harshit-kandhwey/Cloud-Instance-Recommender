@@ -10,8 +10,6 @@ function downloadResults() {
     return;
   }
 
-  console.log("Downloading results with", processedResults.length, "rows");
-
   // Every row, in the order the preview is currently sorted by
   const rows = resultsInPreviewOrder(processedResults);
   const headers = Object.keys(rows[0]);
@@ -23,8 +21,6 @@ function downloadResults() {
   ].join("\n");
 
   downloadCsv(csvContent, exportFilename("instance_recommendations", "csv"));
-
-  console.log("CSV download completed");
 }
 
 // getInstanceColumns / isNoMatchValue are defined in app-core.js (shared with
@@ -69,8 +65,6 @@ function downloadNoMatchRows() {
   ].join("\n");
 
   downloadCsv(csvContent, exportFilename("no_match_rows", "csv"));
-
-  console.log(`No-match export completed: ${noMatch.length} rows`);
 }
 
 // ─── CSV multiselect dropdown ─────────────────────────────────────────────────
@@ -277,8 +271,6 @@ function downloadAppSummary() {
   ].join("\n");
 
   downloadCsv(csvContent, exportFilename("app_summary", "csv"));
-
-  console.log(`App summary export completed: ${summary.length} apps`);
 }
 
 // ─── App Portfolio handoff ────────────────────────────────────────────────────
@@ -556,8 +548,6 @@ function downloadAWSBulkTemplate(type) {
     exportFilename(`aws_pricing_calculator_bulk_${suffix}`, "csv"),
     { bom: false },
   );
-
-  console.log(`AWS bulk template exported: ${rows.length} rows`);
 }
 
 // Enhanced usage statistics management
@@ -592,7 +582,6 @@ function loadUsageStatistics() {
         usageStats = merged;
       }
       updateUsageCounters();
-      console.log("Loaded usage statistics:", usageStats);
     }
   } catch (e) {
     console.error("Error loading statistics:", e);
@@ -608,8 +597,6 @@ function saveUsageStatistics() {
       "cloudInstanceRecommenderStats",
       JSON.stringify(usageStats),
     );
-
-    console.log("Saved usage statistics:", usageStats);
   } catch (e) {
     console.error("Error saving statistics:", e);
   }
@@ -622,10 +609,6 @@ function updateUsageStatistics(vmCount) {
 
   updateUsageCounters();
   saveUsageStatistics();
-
-  console.log(
-    `Updated statistics: ${usageStats.toolUses} tool uses, ${usageStats.totalVMs} total VMs processed`,
-  );
 }
 
 function updateUsageCounters() {

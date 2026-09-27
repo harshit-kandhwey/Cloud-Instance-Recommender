@@ -502,7 +502,6 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     if (options.excludeARM) {
       filteredInstances = filteredInstances.filter((instance) => {
         if (this.isARMInstance(instance)) {
-          console.log(`Excluding ARM: ${instance.instanceType}`);
           return false;
         }
         return true;
@@ -580,9 +579,6 @@ class AzureInstanceSelector extends BaseInstanceSelector {
     const vmSeries = new Set(
       instances.map((i) => this.getVMSeries(i.instanceType)),
     ).size;
-
-    console.log(`  - ARM-based: ${armCount} instances`);
-    console.log(`  - VM Series: ${vmSeries} different series`);
   }
 
   // Azure-specific: Get filtering statistics

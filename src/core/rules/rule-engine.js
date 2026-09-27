@@ -1314,4 +1314,3 @@ const RuleEngine = (() => {
 })();
 
 window.RuleEngine = RuleEngine;
-console.log("RuleEngine loaded — ENV/OS/Workload/Compliance rules ready");

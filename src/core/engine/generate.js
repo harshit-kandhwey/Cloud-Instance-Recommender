@@ -3,10 +3,6 @@
 
 // Generate recommendations
 function generateRecommendations() {
-  console.log(
-    "Starting recommendation generation with modular selector system",
-  );
-
   // If the provider data files haven't finished parsing yet, queue this run
   // and auto-execute it the moment they are ready — no blocking, no alert.
   if (!allDataReady(selectedProviders)) {
@@ -100,11 +96,6 @@ function generateRecommendations() {
     return;
   }
 
-  console.log(
-    "Validation passed, starting processing with type:",
-    recommendationType.value,
-  );
-
   // Show processing status — progress is now driven by the batch runner
   // (worker messages, or the chunked main-thread fallback)
   const processingStatus = document.getElementById("processingStatus");
@@ -130,10 +121,6 @@ function updateProgressBar(done, total) {
 
 // Enhanced process recommendations with modular system and recommendation type control
 async function processRecommendations() {
-  console.log(
-    "Processing recommendations with modular selector system and N/2, N, N+1 optimization strategy",
-  );
-
   // Pin what this run describes — the selection, the token, AND the rows — for its
   // whole duration. The batch below is awaited, so a mid-run upload/paste/sample/
   // manual-apply that reassigns csvData would otherwise let buildDerivedSpecs and
@@ -154,12 +141,6 @@ async function processRecommendations() {
     recommendationType === "like-to-like" || recommendationType === "both";
   const generateOptimized =
     recommendationType === "optimized" || recommendationType === "both";
-
-  console.log("Recommendation generation plan:", {
-    type: recommendationType,
-    generateLikeToLike,
-    generateOptimized,
-  });
 
   // Read the persisted app→workload map once (used in the options spread below)
   const appWorkloadMap = loadAppWorkloadMap();
@@ -279,30 +260,6 @@ async function processRecommendations() {
     ...(userRules.length ? { userRules } : {}),
   };
 
-  console.log("Processing options:", {
-    recommendationTypes: { generateLikeToLike, generateOptimized },
-    filtering: {
-      currentGenOnly: options.currentGenerationOnly,
-      familyNames: options.selectedInstanceFamilyNames.length,
-      processors: options.selectedProcessorManufacturers.length,
-      mainFamilies: options.selectedMainFamilies.length,
-      excludeTypes: options.excludeTypes.length,
-      // Azure options
-      azureSeries: options.selectedAzureSeries.length,
-      azureProcessors: options.selectedAzureProcessors.length,
-      azureVMFamilies: options.selectedAzureVMFamilies.length,
-      // GCP options
-      gcpFamilies: options.selectedGCPFamilies.length,
-      gcpProcessors: options.selectedGCPProcessors.length,
-      gcpMachineTypes: options.selectedGCPMachineTypes.length,
-    },
-    optimization: {
-      cpuBased: options.cpuBased,
-      memoryBased: options.memoryBased,
-      ranges: `CPU(${options.cpuDownsizeMax}-${options.cpuUpsizeMin}), Memory(${options.memoryDownsizeMax}-${options.memoryUpsizeMin})`,
-    },
-  });
-
   try {
     // Cloud-to-cloud: resolve the source specs on the MAIN thread, where region
     // scripts can be injected (the worker can't fetch), and pass them as
@@ -315,19 +272,11 @@ async function processRecommendations() {
     }
 
     // Use the modular instance selector system (worker when possible)
-    console.log("Running recommendation batch (worker with fallback)");
     processedResults = await runRecommendationBatch(
       rowsForRun,
       providersForRun,
       options,
     );
-
-    console.log("Recommendations processed successfully:", {
-      totalRows: processedResults.length,
-      sampleColumns: Object.keys(processedResults[0] || {}).filter(
-        (key) => key.includes("Like-to-Like") || key.includes("Optimized"),
-      ),
-    });
 
     // What these results describe: the selection they ran with and the ingest they ran
     // against. Both are compared with live state to warn on drift
@@ -377,7 +326,6 @@ async function processRecommendations() {
       const generatedColumns = Object.keys(sampleResult).filter(
         (key) => key.includes("Like-to-Like") || key.includes("Optimized"),
       );
-      console.log("Generated columns:", generatedColumns);
     }
   } catch (error) {
     console.error("Error processing recommendations:", error);
@@ -603,7 +551,6 @@ async function runRecommendationBatch(rows, providers, options) {
           flags: payload.flags,
         });
       });
-      console.log("[Worker] batch completed in worker");
       return results;
     } catch (e) {
       console.warn("[Worker] failed — falling back to main thread:", e);
@@ -621,8 +568,6 @@ async function runRecommendationBatch(rows, providers, options) {
 
 // Get Graviton exclusion setting from the new exclude types UI
 function getExcludeGravitonSetting() {
-  console.log("getExcludeGravitonSetting called");
-
   // Check if Graviton exclusion is selected in the new exclude types section
   const gravitonCheckboxes = [
     document.getElementById("exclude_aws_Graviton"),
@@ -630,14 +575,8 @@ function getExcludeGravitonSetting() {
     document.getElementById("exclude_gcp_ARM"),
   ].filter((cb) => cb !== null);
 
-  console.log(
-    "Found graviton checkboxes:",
-    gravitonCheckboxes.map((cb) => (cb ? cb.id : "null")),
-  );
-
   // Return true if ANY Graviton exclusion checkbox is checked
   const isExcluded = gravitonCheckboxes.some((checkbox) => checkbox.checked);
-  console.log("Graviton exclusion setting:", isExcluded);
 
   return isExcluded;
 }
@@ -658,6 +597,5 @@ function getExcludedTypes() {
     });
   });
 
-  console.log("Excluded types:", excludedTypes);
   return excludedTypes;
 }

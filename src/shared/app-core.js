@@ -461,7 +461,6 @@ function preWarmSelectors() {
     try {
       window._prewarmedSelectors[provider] =
         InstanceSelectorFactory.createSelector(provider);
-      console.log(`[PreWarm] ${provider} selector cached`);
     } catch (e) {
       console.warn(`[PreWarm] ${provider} failed:`, e);
     }

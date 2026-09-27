@@ -102,8 +102,6 @@ function renderDataFreshness() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Initializing Cloud Instance Recommender with Modular Selectors");
-
   // Surface the loaded data's vintage in the header
   renderDataFreshness();
 
@@ -128,11 +126,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Check if modular selector system is available
   if (typeof InstanceSelectorFactory !== "undefined") {
-    console.log("✅ Modular Instance Selector System detected");
-    console.log(
-      "Supported providers:",
-      InstanceSelectorFactory.getSupportedProviders(),
-    );
   } else {
     console.warn(
       "⚠️ Modular Instance Selector System not found. Please include the selector files.",
@@ -175,13 +168,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Initialize all provider filter controls
 function initializeAllProviderFilters() {
-  console.log("Initializing all provider filter controls");
-
   // Initialize AWS filter controls (if AWS-specific functions are available)
   if (typeof initializeAWSFilters !== "undefined") {
     try {
       initializeAWSFilters();
-      console.log("✅ AWS filters initialized");
     } catch (error) {
       console.error("❌ Error initializing AWS filters:", error);
     }
@@ -191,7 +181,6 @@ function initializeAllProviderFilters() {
   if (typeof initializeAzureFilters !== "undefined") {
     try {
       initializeAzureFilters();
-      console.log("✅ Azure filters initialized");
     } catch (error) {
       console.error("❌ Error initializing Azure filters:", error);
     }
@@ -201,7 +190,6 @@ function initializeAllProviderFilters() {
   if (typeof initializeGCPFilters !== "undefined") {
     try {
       initializeGCPFilters();
-      console.log("✅ GCP filters initialized");
     } catch (error) {
       console.error("❌ Error initializing GCP filters:", error);
     }
@@ -233,12 +221,6 @@ function loadProviderSpecificData() {
   if (typeof gcpFamilyData !== "undefined") {
     familyData.gcp = gcpFamilyData;
   }
-
-  console.log("Loaded provider-specific data:", {
-    aws: excludeTypesData.aws.length + " exclude types",
-    azure: excludeTypesData.azure.length + " exclude types",
-    gcp: excludeTypesData.gcp.length + " exclude types",
-  });
 }
 
 // Initialize recommendation type handlers

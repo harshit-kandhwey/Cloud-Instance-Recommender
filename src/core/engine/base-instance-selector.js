@@ -15,11 +15,9 @@ class BaseInstanceSelector {
 
   async initialize(csvData, regions) {
     this.isInitialized = false;
-    console.log(`Initializing ${this.getProviderName()} InstanceSelector`);
 
     await this.loadInstanceData(regions);
     this.isInitialized = true;
-    console.log(`${this.getProviderName()} InstanceSelector initialized`);
   }
 
   // Returns all region name strings (CSV-format) available in window globals.
@@ -63,8 +61,6 @@ class BaseInstanceSelector {
 
   // Common data loading orchestration
   async loadInstanceData(regions) {
-    console.log(`Loading instance data for ${this.getProviderName()}`);
-
     const loadPromises = [];
     regions.forEach((region) => {
       const regionKey = `${this.getProviderName().toLowerCase()}-${region}`;
@@ -79,17 +75,12 @@ class BaseInstanceSelector {
   // Load data for specific region
   async loadRegionData(region) {
     try {
-      console.log(`Loading data for ${this.getProviderName()} ${region}`);
-
       const normalizedRegion = this.normalizeRegionForJS(region);
       let regionData;
 
       let usedFallback = false;
       try {
         regionData = this.getRegionDataFromGlobal(normalizedRegion);
-        console.log(
-          `Successfully retrieved ${normalizedRegion} data from global object`,
-        );
       } catch {
         try {
           const manifestKey =
@@ -101,7 +92,6 @@ class BaseInstanceSelector {
           }
           await this._injectRegionScript(manifestKey);
           regionData = this.getRegionDataFromGlobal(manifestKey);
-          console.log(`Lazily loaded ${manifestKey} data via region script`);
         } catch {
           console.warn(
             `${this.getProviderName()} ${normalizedRegion} not in global scope yet — using fallback`,
@@ -322,7 +312,6 @@ class BaseInstanceSelector {
     });
 
     instances.sort((a, b) => a.price - b.price);
-    console.log(`Parsed ${instances.length} valid instances`);
     return instances;
   }
 
@@ -502,14 +491,6 @@ class BaseInstanceSelector {
       (i) => i.generation === 1.0 || i.generation === "1.0",
     ).length;
     const familyTypes = new Set(instances.map((i) => i.familyName)).size;
-
-    console.log(
-      `Loaded ${
-        instances.length
-      } instances for ${this.getProviderName()} ${region}`,
-    );
-    console.log(`  - Current Generation: ${currentGenCount} instances`);
-    console.log(`  - Family Types: ${familyTypes} categories`);
   }
 
   // Reverse spec lookup for cloud-to-cloud sizing: given the type a VM runs on TODAY,
@@ -549,10 +530,6 @@ class BaseInstanceSelector {
 
   // Common like-to-like instance selection
   getLikeToLikeInstance(region, currentCpu, currentMemory, options = {}) {
-    console.log(
-      `Getting like-to-like for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB`,
-    );
-
     this._lastRulesApplied = [];
 
     const hasExactRegion = Object.prototype.hasOwnProperty.call(
@@ -623,10 +600,6 @@ class BaseInstanceSelector {
     // filteredInstances[0] is cheapest (price-sorted by parseData)
     // or cheapest-within-preferred-workload-family when rule engine re-sorted
     const bestInstance = filteredInstances[0];
-
-    console.log(
-      `Selected ${bestInstance.instanceType} for ${this.getProviderName()} ${region}`,
-    );
 
     const result = this.createInstanceResult(
       bestInstance,
@@ -1073,11 +1046,6 @@ class BaseInstanceSelector {
     memoryUtil,
     options = {},
   ) {
-    console.log(
-      `Getting optimized for ${this.getProviderName()} ${region}: ${currentCpu}vCPU, ${currentMemory}GB, CPU:${cpuUtil}%, Mem:${memoryUtil}%`,
-    );
-    console.log("Using N/2, N, N+1 optimization strategy");
-
     let targetCpu = currentCpu;
     let targetMemory = currentMemory;
 
@@ -1085,26 +1053,16 @@ class BaseInstanceSelector {
     if (options.cpuBased && cpuUtil > 0) {
       if (cpuUtil <= options.cpuDownsizeMax) {
         targetCpu = Math.max(1, Math.ceil(currentCpu / 2));
-        console.log(
-          `CPU Downsizing (N/2): ${currentCpu} -> ${targetCpu} vCPUs`,
-        );
       } else if (cpuUtil > options.cpuUpsizeMin) {
         targetCpu = currentCpu + 1;
-        console.log(`CPU Upsizing (N+1): ${currentCpu} -> ${targetCpu} vCPUs`);
       }
     }
 
     if (options.memoryBased && memoryUtil > 0) {
       if (memoryUtil <= options.memoryDownsizeMax) {
         targetMemory = Math.max(1, Math.ceil(currentMemory / 2));
-        console.log(
-          `Memory Downsizing (N/2): ${currentMemory} -> ${targetMemory} GB`,
-        );
       } else if (memoryUtil > options.memoryUpsizeMin) {
         targetMemory = currentMemory + 1;
-        console.log(
-          `Memory Upsizing (N+1): ${currentMemory} -> ${targetMemory} GB`,
-        );
       }
     }
 
