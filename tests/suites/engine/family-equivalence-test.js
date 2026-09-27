@@ -11,9 +11,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-const { buildContext, makeChecker } = require("../harness");
-
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { buildContext, makeChecker, REPO } = require("../harness");
 const { check, state } = makeChecker();
 
 // ── normalizeFamilyClass: only accelerator names fold; the rest pass through ──

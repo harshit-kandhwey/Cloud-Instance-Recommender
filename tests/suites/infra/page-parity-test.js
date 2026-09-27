@@ -11,7 +11,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 const PAGES = ["aws.html", "azure.html", "gcp.html", "multicloud.html"];
 
 let failures = 0;

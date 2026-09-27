@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 const GOLD = path.join(__dirname, "..", "..", "golden", "goldens");
 
 // The SAME rows golden-run.js uses — this suite compares its output against

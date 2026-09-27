@@ -11,7 +11,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 const VENDOR_DIR = path.join(REPO, "js", "vendor");
 
 let failures = 0;

@@ -12,7 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 
 const els = {};
 function fakeEl(id) {

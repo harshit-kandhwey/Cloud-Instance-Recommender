@@ -4,10 +4,9 @@
 // it exits non-zero with a message that names the bad input.
 const path = require("path");
 const { spawnSync } = require("child_process");
-const { makeChecker } = require("../harness");
+const { makeChecker, REPO } = require("../harness");
 
 const { check, state } = makeChecker();
-const REPO = path.resolve(__dirname, "..", "..", "..");
 
 const CASES = [
   ["data-diff", ["--provider", "nope"], /unknown --provider nope/],

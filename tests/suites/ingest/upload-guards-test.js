@@ -1,9 +1,7 @@
 // Verification of the xlsx/CSV upload hardening: multi-sheet UI note,
 // size/empty guards, and reader.onerror.
 const path = require("path");
-const { buildContext } = require("../harness");
-
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { buildContext, REPO } = require("../harness");
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
 
 function makeXlsx(sheets) {

@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { REPO } = require("../harness");
 let failures = 0;
 function check(name, cond, detail) {
   if (cond) console.log(`  ok: ${name}`);

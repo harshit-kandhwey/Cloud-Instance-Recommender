@@ -3,9 +3,7 @@
 // ingestFile() in the simulated-DOM context (including lazy script load).
 const path = require("path");
 const vm = require("vm");
-const { buildContext } = require("../harness");
-
-const REPO = path.resolve(__dirname, "..", "..", "..");
+const { buildContext, REPO } = require("../harness");
 const XLSX = require(path.join(REPO, "js/vendor/xlsx.full.min.js"));
 
 function makeXlsx(sheets) {
