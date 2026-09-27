@@ -297,9 +297,8 @@ console.log("[an unusable Min Gen is reported as not applied]");
       ]),
     ],
   ];
-  // Not a generation: parseInt used to read a prefix of these, so the label claimed a
-  // filter that removed nothing ("0", "-1"), or filtered on the wrong number
-  // ("6abc" as 6, "6.5" as 6, "1e2" as 1).
+  // None of these is a generation: each must read as "not applied," never as
+  // 0, a negative number, or a truncated prefix of itself.
   for (const bad of ["0", "-1", "1e2", "6abc", "5+", "6.5"]) {
     cases.push(
       [

@@ -1,7 +1,7 @@
-// A file's header text is attacker-controlled. Looking a header up in a plain
-// mapping object finds inherited members, so a column called "constructor" or
-// "toString" used to be renamed to that function's source text. And a saved
-// mapping of the wrong shape must be ignored like an old-version one.
+// A file's header text is attacker-controlled. A column named "constructor" or
+// "toString" must be renamed by the mapping, not resolved to an inherited
+// object member, and a saved mapping of the wrong shape must be ignored like
+// an old-version one.
 const { buildContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();

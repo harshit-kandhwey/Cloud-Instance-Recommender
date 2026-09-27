@@ -170,7 +170,7 @@ After a run, **🖨️ Print Report** opens a print-ready (or save-as-PDF) one-p
 
 ### 📲 Install & Offline (PWA)
 
-The site is an installable Progressive Web App. A service worker precaches the app shell and keeps everything you've used — pages, scripts, region data — cached with a stale-while-revalidate policy, so after the first visit the tool works offline for the regions you've already loaded and silently picks up updates on the next online visit.
+The site is an installable Progressive Web App. A service worker precaches the app shell and keeps everything you've used — pages, scripts, region data — so after the first visit the tool works offline for the regions you've already loaded. A page you navigate to while online always loads the current version; scripts and region data refresh in the background and apply on your next visit.
 
 ### 🌓 Dark Mode & Accessibility
 

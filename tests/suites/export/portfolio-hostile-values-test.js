@@ -157,6 +157,30 @@ console.log("[a hostile provider name in the handoff can't inject HTML]");
     typeof html === "string" && !/<img\b/i.test(html) && html.includes("&lt;"),
     html,
   );
+
+  // Same fix, same untrusted providers list, two more render functions that
+  // read PORTFOLIO_PROVIDER_LABELS the same way — the first pass here only
+  // covered renderRightSizing and missed these two.
+  const estateHtml = run(
+    `pfEstateRightSizing({ estate: { rightSizing: { ${JSON.stringify(hostile)}: { downsize: 1, same: 0, upsize: 0 } } }, meta: { providers: [${JSON.stringify(hostile)}] } })`,
+  );
+  check(
+    "pfEstateRightSizing escapes a hostile provider name too",
+    typeof estateHtml === "string" &&
+      !/<img\b/i.test(estateHtml) &&
+      estateHtml.includes("&lt;"),
+    estateHtml,
+  );
+  const familiesHtml = run(
+    `renderFamilies({ families: { ${JSON.stringify(hostile)}: { "m5.xlarge": 1 } } }, { meta: { providers: [${JSON.stringify(hostile)}] } })`,
+  );
+  check(
+    "renderFamilies escapes a hostile provider name too",
+    typeof familiesHtml === "string" &&
+      !/<img\b/i.test(familiesHtml) &&
+      familiesHtml.includes("&lt;"),
+    familiesHtml,
+  );
 }
 
 console.log("[a handoff payload of the wrong shape is refused or cleaned]");

@@ -670,7 +670,9 @@ function pfEstateRightSizing(m) {
       const aria = PF_RIGHTSIZE_SEGS.map((s) => `${s.label} ${v[s.key]}`).join(
         ", ",
       );
-      return `<div class="pf-fam"><span class="pf-fam-prov">${PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()}</span><div class="pf-bar" role="img" aria-label="${esc((PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()) + " right-sizing — " + aria)}">${segs}</div></div>`;
+      // p comes from the handoff payload's providers list, sanitized only to a
+      // string type by receivePortfolio — not restricted to a known provider name.
+      return `<div class="pf-fam"><span class="pf-fam-prov">${esc(PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase())}</span><div class="pf-bar" role="img" aria-label="${esc((PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()) + " right-sizing — " + aria)}">${segs}</div></div>`;
     })
     .join("");
 
@@ -1106,7 +1108,8 @@ function renderFamilies(a, m) {
           .sort((x, y) => y[1] - x[1])
           .map(([f, n]) => `${f} ×${n}`),
       );
-      return `<div class="pf-fam"><span class="pf-fam-prov">${PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase()}</span> ${chips}</div>`;
+      // Same untrusted providers list as pfEstateRightSizing/renderRightSizing.
+      return `<div class="pf-fam"><span class="pf-fam-prov">${esc(PORTFOLIO_PROVIDER_LABELS[p] || p.toUpperCase())}</span> ${chips}</div>`;
     })
     .join("");
   return `<div class="pf-block"><h4>🧬 Recommended families</h4>${blocks}</div>`;
