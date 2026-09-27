@@ -325,7 +325,7 @@ waiver still records the reason.
 | `parseRelaxLabels` | src/shared/app-core.js | function | internal | covered | preview/preview-search-test.js, ui/app-core-hardening-test.js |
 | `pct` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `pfBar` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js |
-| `pfChips` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
+| `pfChips` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js |
 | `pfDoughnut` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js |
 | `pfEscapeHtml` | src/features/portfolio.js | function | internal | uncovered | — |
 | `pfEstateRightSizing` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js |
