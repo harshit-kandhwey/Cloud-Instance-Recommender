@@ -112,20 +112,41 @@ function splitTopLevel(block) {
   return parts;
 }
 
+// A tool's callable surface, not just its `function name()` declarations: an
+// arrow or function-expression export (`const transform = () => {}`) is just
+// as reachable, and missing it means the gate never even lists it, covered or
+// not — the "guard that doesn't guard" trap .claude/rules/coding.md §2 names.
+const DECLARED_NAME_PATTERNS = [
+  /^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm,
+  /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/gm,
+  /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?function\b/gm,
+];
+function declaredNames(src) {
+  const names = new Set();
+  for (const re of DECLARED_NAME_PATTERNS)
+    for (const m of src.matchAll(re)) names.add(m[1]);
+  return names;
+}
+
 const toolSurface = new Map(); // "path::name" -> { file, name, reachable }
 for (const file of listTools(path.join(REPO, "scripts")).sort()) {
   const src = fs.readFileSync(file, "utf8");
-  const declared = [
-    ...src.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm),
-  ].map((m) => m[1]);
+  const declared = declaredNames(src);
   // Only exported names that are declared functions count; the exported
-  // constants (PROVIDERS, FIELD_ORDER, ...) have no body to execute.
+  // constants (PROVIDERS, FIELD_ORDER, ...) have no body to execute. A
+  // renamed export (`{ publicName: transform }`) binds the LOCAL identifier
+  // on the right of the colon — the key on the left is never a name declared
+  // anywhere in this file, so matching on the key would mark `transform`
+  // private even though it is the tool's actual exported surface.
   const exported = new Set();
   const block = extractExportsBlock(src);
   if (block)
     for (const part of splitTopLevel(block)) {
-      const name = part.split(":")[0].trim();
-      if (name) exported.add(name);
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      const colon = trimmed.indexOf(":");
+      const local = colon === -1 ? trimmed : trimmed.slice(colon + 1).trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(local)) exported.add(local);
     }
   for (const name of declared)
     toolSurface.set(`${rel(file)}::${name}`, {

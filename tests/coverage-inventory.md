@@ -109,7 +109,7 @@ waiver still records the reason.
 | `azureMatchesSeriesToken` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `azureMatchesVmFamily` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
 | `azureParseFamilyFilter` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js |
-| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/filtering-statistics-test.js, engine/include-only-test.js, engine/worker-protocol-test.js, infra/lazy-test.js, ui/region-validation-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
+| `azureSeriesParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/family-column-test.js, engine/filtering-statistics-test.js, engine/include-only-test.js, engine/worker-protocol-test.js |
 | `azureTokenParts` | src/providers/azure/azure-instance-selector.js | function | internal | covered | engine/include-only-test.js |
 | `buildAboutSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildAppCsv` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js |
@@ -498,36 +498,43 @@ record. Waivers are keyed `path::name` in `tests/coverage-waivers.json`.
 
 | | Reachable | Private | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 68 | 5 | 73 |
+| Covered | 77 | 13 | 90 |
 | Waived | 1 | 0 | 1 |
-| Uncovered | 0 | 14 | 14 |
-| **Total** | 69 | 19 | 88 |
+| Uncovered | 0 | 15 | 15 |
+| **Total** | 78 | 28 | 106 |
 
 **No reachable tool gaps.** Every tool's main and exports are covered or waived.
 
 | Function | Tier | Status | Covered by / waiver |
 | --- | --- | --- | --- |
+| `scripts/data/data-diff.js::byType` | private | uncovered | — |
 | `scripts/data/data-diff.js::diffProvider` | reachable | covered | infra/data-diff-test.js |
+| `scripts/data/data-diff.js::fmtPct` | private | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::hasChanges` | reachable | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::indexTypes` | private | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::loadNewRegions` | private | uncovered | — |
 | `scripts/data/data-diff.js::main` | reachable | covered | infra/tool-cli-test.js |
+| `scripts/data/data-diff.js::regionSpan` | private | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::regionsFromMonolith` | reachable | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::renderProvider` | reachable | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::renderReport` | reachable | covered | infra/data-diff-test.js |
 | `scripts/data/data-diff.js::renderUnpriced` | reachable | covered | infra/data-diff-test.js |
+| `scripts/data/data-diff.js::unpricedCount` | private | covered | infra/data-diff-test.js |
 | `scripts/data/fetch-official-aws.js::awsMemoryGiB` | reachable | covered | infra/fetch-official-aws-test.js |
 | `scripts/data/fetch-official-aws.js::fetchAwsPricing` | private | uncovered | — |
 | `scripts/data/fetch-official-aws.js::getJson` | private | uncovered | — |
+| `scripts/data/fetch-official-aws.js::keyToRegionCode` | reachable | covered | infra/fetch-official-aws-test.js |
 | `scripts/data/fetch-official-aws.js::main` | reachable | covered | infra/tool-cli-test.js |
 | `scripts/data/fetch-official-aws.js::onDemandUsdHr` | reachable | covered | infra/fetch-official-aws-test.js |
 | `scripts/data/fetch-official-aws.js::parseAwsRegion` | reachable | covered | infra/fetch-official-aws-test.js |
+| `scripts/data/fetch-official-aws.js::regionCodeToKey` | reachable | covered | infra/fetch-official-aws-test.js, infra/tool-cli-test.js |
 | `scripts/data/fetch-official-aws.js::regionOfferUrls` | private | uncovered | — |
 | `scripts/data/fetch-official-aws.js::resolveRegionKeys` | reachable | covered | infra/fetch-official-aws-test.js, infra/tool-cli-test.js |
 | `scripts/data/fetch-official-azure.js::azureFilter` | reachable | covered | infra/fetch-official-azure-test.js |
 | `scripts/data/fetch-official-azure.js::azureTypeKey` | reachable | covered | infra/fetch-official-azure-test.js |
 | `scripts/data/fetch-official-azure.js::fetchAzurePricing` | private | uncovered | — |
 | `scripts/data/fetch-official-azure.js::fetchRegionItems` | private | uncovered | — |
+| `scripts/data/fetch-official-azure.js::isSpotOrLowPriority` | reachable | covered | infra/fetch-official-azure-test.js |
 | `scripts/data/fetch-official-azure.js::main` | reachable | covered | infra/tool-cli-test.js |
 | `scripts/data/fetch-official-azure.js::parseAzureItems` | reachable | covered | infra/fetch-official-azure-test.js |
 | `scripts/data/fetch-official-azure.js::resolveRegionKeys` | reachable | covered | infra/fetch-official-azure-test.js, infra/tool-cli-test.js |
@@ -540,21 +547,28 @@ record. Waivers are keyed `path::name` in `tests/coverage-waivers.json`.
 | `scripts/data/fetch-official-gcp.js::parseCoreRamSkus` | reachable | covered | infra/fetch-official-gcp-test.js |
 | `scripts/data/fetch-official-gcp.js::parseLocalSsdSkus` | reachable | covered | infra/fetch-official-gcp-test.js |
 | `scripts/data/fetch-official-gcp.js::readShippedRecords` | private | covered | infra/tool-cli-test.js |
+| `scripts/data/fetch-official-gcp.js::regionKeyFromServiceRegion` | private | covered | infra/fetch-official-gcp-test.js |
 | `scripts/data/fetch-official-gcp.js::skuUsd` | reachable | covered | infra/fetch-official-gcp-test.js |
 | `scripts/data/fetch-official-gcp.js::windowsPerVCpuHr` | reachable | covered | infra/fetch-official-gcp-test.js |
 | `scripts/data/fetch-vantage.js::awsProcessor` | reachable | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::azureFamilyName` | reachable | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::azureProcessor` | reachable | covered | infra/data-integrity-test.js, infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::azureRegionKey` | reachable | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::buildMonolith` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::collectAzureGeneration` | reachable | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::fetchBulk` | private | uncovered | — |
 | `scripts/data/fetch-vantage.js::gcpPlatform` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::instanceRegionRecords` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::isMappedGcpSeries` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::looksAzureAmd` | private | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::main` | reachable | covered | infra/tool-cli-test.js |
 | `scripts/data/fetch-vantage.js::mostCommonGeneration` | reachable | covered | infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::num` | private | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::orUnreported` | private | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::parseAzureGpuCount` | private | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::resolveAzureGeneration` | private | covered | infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::serializeMonolith` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
+| `scripts/data/fetch-vantage.js::underscoreKey` | private | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js |
 | `scripts/data/fetch-vantage.js::unmappedAzureAmdFamilies` | reachable | covered | infra/fetch-vantage-test.js |
 | `scripts/data/recommendation-diff.js::diffScenario` | reachable | covered | infra/recommendation-diff-test.js |
 | `scripts/data/recommendation-diff.js::engineContext` | private | uncovered | — |
@@ -577,6 +591,7 @@ record. Waivers are keyed `path::name` in `tests/coverage-waivers.json`.
 | `scripts/data/refresh-local.js::parseEnv` | reachable | covered | infra/refresh-local-test.js |
 | `scripts/data/refresh-local.js::planSteps` | reachable | covered | infra/docs-currency-test.js, infra/refresh-local-test.js |
 | `scripts/data/refresh-local.js::runStep` | private | uncovered | — |
+| `scripts/data/refresh-local.js::skipNotice` | reachable | covered | infra/refresh-local-test.js |
 | `scripts/data/split-data.js::evaluate` | private | covered | infra/split-data-test.js |
 | `scripts/data/split-data.js::main` | reachable | waived | _waived: Splits every provider's monolith into the committed region files under src/providers/, so running it from a suite would rewrite the working tree. The per-provider work (splitProvider, verifyRoundTrip) is covered by infra/split-data-test.js against scratch copies; what is left is the loop and the process.exitCode assignment that lets a piped stdout flush._ |
 | `scripts/data/split-data.js::splitProvider` | reachable | covered | infra/split-data-test.js |
@@ -588,10 +603,13 @@ record. Waivers are keyed `path::name` in `tests/coverage-waivers.json`.
 | `scripts/lib/build-env.js::resolveDataDate` | reachable | covered | infra/build-env-test.js, infra/tool-cli-test.js |
 | `scripts/lib/build-env.js::runFiles` | reachable | covered | infra/data-integrity-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js, infra/tool-cli-test.js |
 | `scripts/lib/build-env.js::writeFileAtomic` | reachable | covered | infra/build-env-test.js, infra/split-data-test.js |
+| `scripts/lib/record-schema.js::emitRecordBody` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js, infra/split-data-test.js |
+| `scripts/lib/record-schema.js::emitValue` | reachable | covered | infra/data-diff-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js, infra/split-data-test.js |
 | `scripts/lib/record-schema.js::loadCommittedRegions` | reachable | covered | infra/data-integrity-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js, infra/tool-cli-test.js |
 | `scripts/lib/record-schema.js::priceFields` | reachable | covered | infra/data-diff-test.js, infra/data-integrity-test.js, infra/fetch-vantage-test.js, infra/recommendation-diff-test.js, infra/reconcile-data-test.js, infra/record-schema-test.js, infra/split-data-test.js, infra/tool-cli-test.js |
 | `scripts/lib/record-schema.js::readShippedRegionKeys` | reachable | covered | infra/record-schema-test.js, infra/tool-cli-test.js |
 | `scripts/lib/record-schema.js::readShippedSpecs` | reachable | covered | infra/data-integrity-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js, infra/tool-cli-test.js |
+| `scripts/lib/record-schema.js::round8` | reachable | covered | infra/data-diff-test.js, infra/fetch-official-aws-test.js, infra/fetch-official-azure-test.js, infra/fetch-official-gcp-test.js, infra/fetch-vantage-test.js, infra/record-schema-test.js |
 | `scripts/lib/record-schema.js::specFields` | reachable | covered | infra/data-diff-test.js, infra/data-integrity-test.js, infra/fetch-vantage-test.js, infra/recommendation-diff-test.js, infra/reconcile-data-test.js, infra/record-schema-test.js, infra/split-data-test.js, infra/tool-cli-test.js |
 | `scripts/testing/static-server.js::createServer` | reachable | covered | infra/static-server-test.js |
 | `scripts/testing/static-server.js::parseArgs` | reachable | covered | infra/static-server-test.js |
