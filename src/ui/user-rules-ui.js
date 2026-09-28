@@ -1,11 +1,15 @@
 // User-defined rules — the authoring UI (companion to user-rules.js, which holds
-// the model/evaluator/storage). A small panel in the Generate section lets the
-// user add, list and delete conditional rules ("if Workload = database, Include
-// only r5"); the rules are stored per page and picked up on the next Generate.
+// the model/evaluator/storage). Its own top-level "Custom Rules" section (3.20:
+// promoted out of the Generate section, one of this project's two primary
+// interactions rather than a secondary control) lets the user add, list and
+// delete conditional rules ("if Workload = database, Include only r5"); the
+// rules are stored per page and picked up on the next Generate.
 //
 // Page-only: this file touches the DOM and is NOT loaded in the worker. It leans
 // on user-rules.js (normalizeUserRule / userRuleLabel / load- / saveUserRules /
 // userRuleDimensionOptions / userRuleActionOptions) and on escapeHtml (app-core.js).
+// Renders into the host page's own section-content, so it carries no header or
+// border of its own — the surrounding <section> already provides both.
 
 function renderUserRulesPanel() {
   const host = document.getElementById("userRulesPanel");
@@ -36,30 +40,27 @@ function renderUserRulesPanel() {
     : `<li style="padding:3px 0;color:var(--text-soft);font-size:0.9em;">No custom rules yet.</li>`;
 
   host.innerHTML = `
-    <div style="margin:10px 0;padding:10px 14px;border:1px solid var(--border-slate-light);border-radius:8px;background:var(--surface-alt);">
-      <label style="font-weight:600;display:block;margin-bottom:2px;">🧩 Custom rules</label>
-      <p style="margin:0 0 8px;font-size:0.82em;color:var(--text-soft);">Apply an Exclude or Include Only to every row whose ENV / OS / Workload / Compliance matches a value — for example, if Workload = database, Include only r5, r6. Rules apply on the next Generate.</p>
-      <ul style="list-style:none;margin:0 0 8px;padding:0;">${items}</ul>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-        <span style="font-size:0.9em;color:var(--text-soft);">If</span>
-        <label class="sr-only" for="urDimension">Dimension</label>
-        <select id="urDimension" class="form-control" style="width:auto;">${dimOptions}</select>
-        <span style="font-size:0.9em;color:var(--text-soft);">=</span>
-        <label class="sr-only" for="urEquals">Value to match</label>
-        <input id="urEquals" class="form-control" style="width:auto;" type="text" placeholder="e.g. database" maxlength="60" />
-        <label class="sr-only" for="urAction">Action</label>
-        <select id="urAction" class="form-control" style="width:auto;">${actionOptions}</select>
-        <label class="sr-only" for="urTokens">Families or types</label>
-        <input id="urTokens" class="form-control" style="width:auto;flex:1;min-width:140px;" type="text" placeholder="families/types, e.g. r5, r6 or burstable" maxlength="120" />
-        <button type="button" class="btn btn-secondary" onclick="addUserRuleFromForm()">Add rule</button>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
-        <button type="button" class="btn btn-secondary" onclick="exportUserRules()" title="Download this page's custom rules as a JSON file">📤 Export rules</button>
-        <button type="button" class="btn btn-secondary" onclick="importUserRules()" title="Import custom rules from a JSON export file">📥 Import rules</button>
-        <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;" onchange="handleUserRulesImportFile(event)" />
-      </div>
-      <span id="userRulesStatus" role="status" aria-live="polite" style="display:block;margin-top:6px;font-size:0.85em;"></span>
-    </div>`;
+    <p style="margin:0 0 8px;font-size:0.92em;color:var(--text-soft);">Apply an Exclude or Include Only to every row whose ENV / OS / Workload / Compliance matches a value — for example, if Workload = database, Include only r5, r6. Rules apply on the next Generate.</p>
+    <ul style="list-style:none;margin:0 0 8px;padding:0;">${items}</ul>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+      <span style="font-size:0.9em;color:var(--text-soft);">If</span>
+      <label class="sr-only" for="urDimension">Dimension</label>
+      <select id="urDimension" class="form-control" style="width:auto;">${dimOptions}</select>
+      <span style="font-size:0.9em;color:var(--text-soft);">=</span>
+      <label class="sr-only" for="urEquals">Value to match</label>
+      <input id="urEquals" class="form-control" style="width:auto;" type="text" placeholder="e.g. database" maxlength="60" />
+      <label class="sr-only" for="urAction">Action</label>
+      <select id="urAction" class="form-control" style="width:auto;">${actionOptions}</select>
+      <label class="sr-only" for="urTokens">Families or types</label>
+      <input id="urTokens" class="form-control" style="width:auto;flex:1;min-width:140px;" type="text" placeholder="families/types, e.g. r5, r6 or burstable" maxlength="120" />
+      <button type="button" class="btn btn-secondary" onclick="addUserRuleFromForm()">Add rule</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+      <button type="button" class="btn btn-secondary" onclick="exportUserRules()" title="Download this page's custom rules as a JSON file">📤 Export rules</button>
+      <button type="button" class="btn btn-secondary" onclick="importUserRules()" title="Import custom rules from a JSON export file">📥 Import rules</button>
+      <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;" onchange="handleUserRulesImportFile(event)" />
+    </div>
+    <span id="userRulesStatus" role="status" aria-live="polite" style="display:block;margin-top:6px;font-size:0.85em;"></span>`;
 }
 
 function setUserRulesStatus(msg, ok) {

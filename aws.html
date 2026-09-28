@@ -120,6 +120,7 @@
           <a href="gcp.html">GCP</a>
           <a href="multicloud.html">Multi Cloud</a>
           <a href="app-portfolio.html">App Portfolio</a>
+          <a href="#customRulesSection">🧩 Rules</a>
           <button
             id="themeToggle"
             class="theme-toggle"
@@ -134,6 +135,17 @@
       </header>
 
       <main class="main-content" id="main">
+        <!-- Custom Rules Section -->
+        <section class="section" id="customRulesSection">
+          <div class="section-header">
+            <span class="section-icon">🧩</span>
+            <h2 class="section-title">Custom Rules</h2>
+          </div>
+          <div class="section-content">
+            <div id="userRulesPanel"></div>
+          </div>
+        </section>
+
         <!-- Sample CSV Template Section -->
         <section class="section">
           <div
@@ -1457,7 +1469,6 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
           </div>
           <div class="section-content">
             <div id="filterPresetsBar"></div>
-            <div id="userRulesPanel"></div>
             <button
               class="btn btn-primary generate-btn"
               onclick="generateRecommendations()"
