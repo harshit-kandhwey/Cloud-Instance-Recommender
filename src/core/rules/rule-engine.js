@@ -1286,7 +1286,15 @@ const RuleEngine = (() => {
     return 0;
   }
 
+  // Versions the SHAPE of this module's public return object, documented in
+  // docs/data/RULE-ENGINE-API.md — bump it, and add a row to that doc's API
+  // changelog, whenever a member below is added, removed, or its contract
+  // changes; NOT on every behavior tweak inside apply()'s own rules (those
+  // are covered by the app's own CHANGELOG.md, a separate concern).
+  const API_VERSION = "1.0.0";
+
   return {
+    apiVersion: API_VERSION,
     apply,
     getPreferredFamilies,
     isAccelerator,

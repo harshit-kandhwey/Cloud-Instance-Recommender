@@ -470,7 +470,7 @@ The application uses a modular, class-based architecture:
 
 - **`BaseInstanceSelector`** — Abstract base with common region loading, data parsing, and filtering
 - **`AWSInstanceSelector` / `AzureInstanceSelector` / `GCPInstanceSelector`** — Provider-specific field mappings, region normalization, and generation detection
-- **`RuleEngine`** — Pure function that applies ENV/OS/Workload/Compliance/MinGen rules to the filtered candidate list
+- **`RuleEngine`** — Pure function that applies ENV/OS/Workload/Compliance/MinGen rules to the filtered candidate list; its published API surface is documented in [`docs/data/RULE-ENGINE-API.md`](docs/data/RULE-ENGINE-API.md)
 - **`InstanceSelectorFactory`** — Creates the right selector per provider and orchestrates per-row processing
 - **`src/{core,features,ui,shared}/**/*.js`** — The page controller, split by concern rather than one file: `app-core.js` (shared state, loads first), `ingest.js` (upload/mapping), `generate.js` (option gathering + worker runs), `preview.js` / `downloads.js` (results + exports), `ui-shell.js` (page chrome, accessibility)
 
