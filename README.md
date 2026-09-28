@@ -1,12 +1,14 @@
 # 🌐 Cloud Instance Recommender
 
-A comprehensive web-based tool for generating optimal cloud instance recommendations across AWS, Azure, and Google Cloud Platform (GCP). Upload a VM inventory CSV and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
+A client-side, auditable rule-evaluation engine for cloud infrastructure decisions — sizing across AWS, Azure, and Google Cloud Platform (GCP) is its first and most developed policy set. Upload a VM inventory CSV, apply ENV/OS/Workload/Compliance rules, and get right-sized instance recommendations — all processing happens entirely in your browser, no data is ever sent to a server.
 
 ![Cloud Instance Recommender](https://img.shields.io/badge/Cloud-Instance%20Recommender-blue) ![License](https://img.shields.io/badge/License-PolyForm_Noncommercial-orange)
 
 > **🌐 Live Demo**: [https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/](https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/)
 
 **Why not just use AWS Migration Evaluator, Azure Migrate, or GCP's Migration Center?** Each of those is free, but single-provider. This tool does all three side by side from one file, and — unlike a vendor's own hosted tool — nothing you upload is ever sent anywhere: it's read and processed entirely in your own browser.
+
+**Built for teams that can't send inventory data to a vendor.** Regulated-industry infra teams, government contractors, air-gapped or data-residency-constrained shops, and MSPs handling client data all hit the same wall with CloudHealth, Densify, and Turbonomic: those platforms' business models require a telemetry connection back to the vendor. This tool never asks for one — your compliance-relevant inventory data never leaves your browser, and every recommendation carries an audit trail of the rules that produced it.
 
 ---
 

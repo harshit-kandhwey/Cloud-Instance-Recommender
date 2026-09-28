@@ -22,7 +22,8 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 
 | Version | Commit | Date | Change |
 | --- | --- | --- | --- |
-| 3.20.0 | _this commit_ | 2026-09-28 | **Open the 3.20 line.** Branch cut off `main` at `7b9b934` (v3.19.40). Charter: reposition the product's own description from a "cloud instance sizing calculator" to a client-side, auditable rule-evaluation engine with sizing as its first policy set; name the buyer this architecture already serves; promote the existing User-Defined Rules panel to a first-class entry point on all four tool pages; publish a versioned, documented module boundary for the rule engine's core logic. Plan: `ROADMAP.md`'s `### 3.20` section. |
+| 3.20.1 | _this commit_ | 2026-09-28 | **Reposition README, `index.html`, and `user-guide.html` as a rule-evaluation engine.** Stops describing the tool as a "cloud instance sizing calculator" and describes what the architecture already is: a client-side, auditable rule-evaluation engine with sizing as its first policy set. Each of the three now also names the buyer this architecture already serves and no competing platform can: regulated-industry infra teams, government contractors, air-gapped/data-residency-constrained shops, and MSPs who cannot send client inventory to a vendor. Documentation and copy only, no behavior change. |
+| 3.20.0 | 0cc9a1e | 2026-09-28 | **Open the 3.20 line.** Branch cut off `main` at `7b9b934` (v3.19.40). Charter: reposition the product's own description from a "cloud instance sizing calculator" to a client-side, auditable rule-evaluation engine with sizing as its first policy set; name the buyer this architecture already serves; promote the existing User-Defined Rules panel to a first-class entry point on all four tool pages; publish a versioned, documented module boundary for the rule engine's core logic. Plan: `ROADMAP.md`'s `### 3.20` section. |
 
 ### 3.19 — Function hardening (2026-09-26 → 2026-09-27)
 
