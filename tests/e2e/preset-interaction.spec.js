@@ -71,8 +71,13 @@ test.describe("aws.html: filter-preset interaction", () => {
   }) => {
     // Clicking 📥 Import must call importPresets, which triggers the hidden
     // <input type=file>.click(); catching the filechooser proves that wiring.
+    // EXACT text match, not :has-text's substring match — 3.20 added a
+    // "📥 Import rules" button (Custom Rules panel) that :has-text("📥 Import")
+    // also matches; a substring locator picked whichever button happened to
+    // come first in DOM order, and 3.20.2 put Custom Rules ABOVE the presets
+    // bar, so this test started clicking the wrong button's file input.
     const chooserPromise = page.waitForEvent("filechooser");
-    await page.click('button:has-text("📥 Import")');
+    await page.getByRole("button", { name: "📥 Import", exact: true }).click();
     const chooser = await chooserPromise;
 
     // Setting files fires the input's change → handlePresetImportFile →
