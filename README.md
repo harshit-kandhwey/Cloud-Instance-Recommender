@@ -8,7 +8,7 @@ A client-side, auditable rule-evaluation engine for cloud infrastructure decisio
 
 **Why not just use AWS Migration Evaluator, Azure Migrate, or GCP's Migration Center?** Each of those is free, but single-provider. This tool does all three side by side from one file, and — unlike a vendor's own hosted tool — nothing you upload is ever sent anywhere: it's read and processed entirely in your own browser.
 
-**Built for teams that can't send inventory data to a vendor.** Regulated-industry infra teams, government contractors, air-gapped or data-residency-constrained shops, and MSPs handling client data all hit the same wall with CloudHealth, Densify, and Turbonomic: those platforms' business models require a telemetry connection back to the vendor. This tool never asks for one — your compliance-relevant inventory data never leaves your browser, and every recommendation carries an audit trail of the rules that produced it.
+**Built for teams that can't send inventory data to a vendor.** Regulated-industry infra teams, government contractors, air-gapped or data-residency-constrained shops, and MSPs handling client data often hit this wall with mainstream cloud-cost platforms like CloudHealth, Densify, and Turbonomic: their default deployment is a SaaS connection back to the vendor, even where a self-hosted tier exists elsewhere in that platform's lineup. This tool has no such connection to disable or negotiate around — your compliance-relevant inventory data never leaves your browser, and every recommendation carries an audit trail of the rules that produced it.
 
 ---
 

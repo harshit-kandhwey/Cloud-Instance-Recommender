@@ -2,9 +2,10 @@
 // is a hand-written document describing RuleEngine's returned object — exactly
 // the kind of second copy of a fact CANONICAL-SOURCES.md exists to catch when it
 // drifts. This suite is what keeps the doc honest: every key RuleEngine actually
-// returns must be mentioned in the doc (backtick-wrapped, not just anywhere in
-// prose), and the version the doc's changelog claims as current must match what
-// the module reports at runtime.
+// returns must be backtick-documented within the doc's Stable/Internal surface
+// sections specifically (not just mentioned anywhere in the file — see the
+// surfaceText scoping below), and the version the doc's changelog claims as
+// current must match what the module reports at runtime.
 const fs = require("fs");
 const path = require("path");
 const { REPO, buildEngineContext, makeChecker } = require("../harness");
@@ -19,15 +20,47 @@ const { check, state } = makeChecker();
 const specPath = path.join(REPO, "docs", "data", "RULE-ENGINE-API.md");
 const spec = fs.readFileSync(specPath, "utf8");
 
-// Matches the name as a whole word inside SOME backtick-delimited code span —
-// a bare `` `name` ``, a function heading `` `name(...)` ``, or a qualified
-// reference `` `RuleEngine.name` `` — not a bare mention in running prose,
-// which would let a removed export's old text description count as "still
-// documented."
+// Scoped to ONLY each member's own listing — a "### `name...`" heading (every
+// Stable-surface member is one of these) or the Internal-surface's own
+// comma-separated list line — not the surface sections' full prose. Matching
+// the WHOLE document let a removed member still "pass" via an unrelated
+// mention elsewhere (e.g. Data-shapes prose) — CodeRabbit caught this:
+// removing the `RECOGNIZED` entry still passed because "Data shapes"
+// mentions `RECOGNIZED.workload`. Scoping to just the two surface SECTIONS
+// closes that, but not a narrower case one level in: `RECOGNIZED` is also
+// name-dropped inside `WORKLOAD_FAMILIES`'s own paragraph, so scoping to
+// "somewhere in the Stable surface section" alone would still miss removing
+// `RECOGNIZED`'s own heading. Requiring the name to appear in a HEADING (or
+// the internal list) closes that too — a sibling entry mentioning another
+// member in passing no longer counts as documenting it.
+const surfaceStart = spec.indexOf("## Stable surface");
+const internalStart = spec.indexOf("## Internal surface");
+const dataShapesStart = spec.indexOf("## Data shapes");
+if (surfaceStart === -1 || internalStart === -1 || dataShapesStart === -1) {
+  throw new Error(
+    "rule-engine-api-spec-test: could not locate the Stable/Internal surface section boundaries in RULE-ENGINE-API.md — has a heading been renamed?",
+  );
+}
+const stableSection = spec.slice(surfaceStart, internalStart);
+const internalSection = spec.slice(internalStart, dataShapesStart);
+const stableHeadings = [...stableSection.matchAll(/^###\s+(.+)$/gm)]
+  .map((m) => m[1])
+  .join("\n");
+// The internal list is the one line in its section that OPENS with a
+// backtick name (as opposed to the section's prose paragraphs).
+const internalListLine =
+  internalSection.split("\n").find((line) => /^`[^`]+`/.test(line)) || "";
+const documentedText = stableHeadings + "\n" + internalListLine;
+
+// Matches the name as a whole word inside SOME backtick-delimited code span
+// within documentedText — a bare `` `name` ``, a function heading
+// `` `name(...)` ``, or a qualified reference `` `RuleEngine.name` `` — not a
+// bare mention in running prose, which would let a removed export's old text
+// description count as "still documented."
 function isBacktickDocumented(name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp("`[^`]*\\b" + escaped + "\\b[^`]*`");
-  return re.test(spec);
+  return re.test(documentedText);
 }
 
 console.log("[every key RuleEngine actually returns is documented]");

@@ -18,15 +18,19 @@ Current: **1.0.0**
 
 These are the members a consumer should treat as a real contract — signature and behavior change only with a version bump and a changelog entry.
 
+### `apiVersion`
+
+A SemVer string. See [Version](#version) above and the [API changelog](#api-changelog) below — documented there in full; listed here too so this section enumerates every member of the returned object.
+
 ### `apply(instances, options, provider)`
 
 The main entry point. Filters and sorts a candidate `Instance[]` against one row's resolved rule inputs (`RuleOptions`), for one `Provider` (`"aws" | "azure" | "gcp"`). Returns `{ instances: Instance[], rules: string[] }` — the surviving/reordered candidates, plus a human-readable audit trail of which rules fired and how many candidates each one removed (or why a rule reports "not applied"). Every rule this file implements is described in the file's own header comment block (Rule 1a–1d, OS, MinGen, Workload preference, GPU, SQL, Burstable preference) — that comment block is the rule reference; this document is the API boundary around it, not a restatement of the rules themselves.
 
-Never throws on malformed input: an unrecognised ENV/OS/Workload/Compliance/MinGen value is treated as "no rule fires for this value" and reported as such in the `rules` array, never silently guessed into a different value (`.claude/rules/coding.md` §1 — never a plausible wrong answer).
+Never throws on a malformed VALUE within `options`: an unrecognised ENV/OS/Workload/Compliance/MinGen string is treated as "no rule fires for this value" and reported as such in the `rules` array, never silently guessed into a different value (`.claude/rules/coding.md` §1 — never a plausible wrong answer). This guarantee assumes `options` itself is an object — `apply(instances, null, provider)` throws immediately on the first property read, the same as any other function called with a missing required argument; it is not part of the malformed-VALUE contract above.
 
 ### `RECOGNIZED`
 
-`{ env: string[], os: string[], workload: string[], compliance: string[] }` — the exact vocabularies `apply()` matches against, lowercase. This is the canonical source for "what values does the engine actually read" (see `docs/data/CANONICAL-SOURCES.md`'s "Recognised ENV / OS / Workload / Compliance values" row) — read live by the upload-time hygiene check and the XLSX template, never copied. A value not in the relevant list is not a rule input the engine recognises; for OS specifically, anything not matching `os` falls through to the Linux default rather than being flagged (real inventories carry many distro strings that are correctly "not Windows/macOS," not user error).
+`{ env: string[], os: string[], workload: string[], compliance: string[] }` — the exact vocabularies the upload-time hygiene check and the XLSX template use to say "this value is recognised," read live, never copied (see `docs/data/CANONICAL-SOURCES.md`'s "Recognised ENV / OS / Workload / Compliance values" row). `RECOGNIZED.os` is intentionally an exact-match list for the hygiene check's own purposes (flagging nothing but the two real "not Linux" cases so real distro strings like "Ubuntu Linux (64-bit)" are never wrongly flagged); it is **not** the test `apply()` itself runs. The actual OS branch in `apply()` is `isWindowsOS()` — a case-insensitive PREFIX match (`/^windows/i`) — so a value like `"Windows Server 2022"`, absent from `RECOGNIZED.os`'s exact strings, is still correctly treated as Windows by `apply()`. `RECOGNIZED` answers "what should the hygiene check flag," not "what will `apply()` do with this string" — read `isWindowsOS` (exposed separately below) for the latter.
 
 ### `WORKLOAD_FAMILIES`
 
@@ -38,7 +42,7 @@ Never throws on malformed input: an unrecognised ENV/OS/Workload/Compliance/MinG
 
 ### `meetsMinGeneration(inst, minGen, provider)`
 
-`(Instance, string, Provider) => boolean`. The single generation-comparison parser both the MinGen filter and the Newest-Generation alternative-pick strategy (`generationRank`, below) use — see the source file's `azureVersion`/`azureRank`/`GCP_GEN_ORDER` for why one parser exists rather than two. `minGen` is always native to the given provider (an AWS family number, an Azure v-number, or a GCP family name) — this function does not translate between clouds.
+`(Instance, string, Provider) => boolean`. The single generation-comparison parser both the MinGen filter and the Newest-Generation alternative-pick strategy (`generationRank`, below) use — see the source file's `azureVersion`/`azureRank`/`GCP_GEN_ORDER` for why one parser exists rather than two. `minGen` is native to the given provider for every current caller (an AWS family number, an Azure v-number, or a GCP family name). One documented exception: on the GCP branch, a bare NUMBER (rather than a GCP family name) is read as a value from the legacy pre-per-provider shared "Min Gen" scale and translated (`num - 3`, floored at 0) — kept only for backward compatibility with that retired scale, not a general cross-provider translation. No current UI sends this form to the GCP branch; a caller that does should treat the result as a comparison against that legacy scale, not a native GCP generation.
 
 ### `generationRank(inst, provider)`
 
