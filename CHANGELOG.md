@@ -18,6 +18,12 @@ The newest row uses `_this commit_` in place of a SHA because a commit cannot co
 
 ## Version map
 
+### 3.21 — Fleet history & drift, client-side only (2026-10-03 → )
+
+| Version | Commit | Date | Change |
+| --- | --- | --- | --- |
+| 3.21.0 | _this commit_ | 2026-10-03 | **Open the 3.21 line.** Branch cut off `main` at `1e4ac02` (v3.20.9). Charter: let the tool remember a fleet and show drift, with nothing stored anywhere except the browser that already holds presets, saved mappings and manual VM entries. Plan: `PLAN-3.21.md` in the maintainer's plans directory, with the storage manager (never built, though 3.11's roadmap section names it as a dependency) as phase 1. |
+
 ### 3.20 — Rule engine as the product surface (2026-09-28 → 2026-10-03)
 
 | Version | Commit | Date | Change |
