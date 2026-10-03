@@ -79,9 +79,104 @@ function handleStoragePanelClick(event) {
       target === "all" ? "All app data cleared." : "Cleared.";
 }
 
+let fleetPendingDelete = null;
+
+function renderFleetSnapshotRows(entries) {
+  return entries
+    .map((e) => {
+      const id = escapeHtml(e.id);
+      const armed = fleetPendingDelete === e.id;
+      return `<li>
+          <strong>${escapeHtml(e.name)}</strong>
+          <span>${escapeHtml(String(e.rows.length))} VMs, saved ${escapeHtml(e.takenAt)}</span>
+          <button type="button" class="btn btn-secondary" data-snapshot-delete="${id}">${armed ? "Confirm delete" : "Delete"}</button>
+        </li>`;
+    })
+    .join("");
+}
+
+function renderFleetSnapshotsPanel(status) {
+  const host = document.getElementById("fleetSnapshotsPanel");
+  if (!host) return;
+  const entries = FleetSnapshots.list();
+  const typed = document.getElementById("fleetSnapshotName");
+  const typedValue = typed ? typed.value : "";
+  host.innerHTML = `
+        <p>Save the results of the last run as a named snapshot in this browser. A snapshot holds per-VM results, the providers and the rules the run used, never the inventory.</p>
+        <form id="fleetSnapshotForm">
+          <label for="fleetSnapshotName">Snapshot name</label>
+          <input id="fleetSnapshotName" type="text" maxlength="60" autocomplete="off" value="${escapeHtml(typedValue)}">
+          <button type="submit" class="btn btn-secondary">Save snapshot</button>
+        </form>
+        <p role="status" aria-live="polite" id="fleetSnapshotStatus">${escapeHtml(status || "")}</p>
+        <ul>${entries.length ? renderFleetSnapshotRows(entries) : "<li>No snapshots saved.</li>"}</ul>`;
+}
+
+function handleFleetSnapshotSubmit(event) {
+  if (!event.target.matches("#fleetSnapshotForm")) return;
+  event.preventDefault();
+  const name = document.getElementById("fleetSnapshotName").value;
+  if (typeof processedResults === "undefined" || !processedResults) {
+    renderFleetSnapshotsPanel("Generate a run before saving a snapshot.");
+    return;
+  }
+  const built = FleetSnapshots.build({
+    name,
+    rows: processedResults,
+    providers: window._resultsProviders || [],
+    rules: typeof loadUserRules === "function" ? loadUserRules() : [],
+  });
+  if (!built.ok) {
+    const why = {
+      empty: "Enter a name for the snapshot.",
+      "too-long": "Keep the name to 60 characters.",
+    };
+    renderFleetSnapshotsPanel(
+      why[built.reason] || "The snapshot could not be built.",
+    );
+    return;
+  }
+  const saved = FleetSnapshots.save(built.entry);
+  if (saved.ok) {
+    renderFleetSnapshotsPanel(`Saved "${built.entry.name}".`);
+    return;
+  }
+  const why = {
+    duplicate: `A snapshot named "${built.entry.name}" already exists.`,
+    quota:
+      "This browser has no room for another snapshot. Delete one or clear app data first.",
+  };
+  renderFleetSnapshotsPanel(
+    why[saved.reason] || "The snapshot could not be saved.",
+  );
+}
+
+function handleFleetSnapshotDelete(event) {
+  const button = event.target.closest("[data-snapshot-delete]");
+  if (!button) return;
+  const id = button.getAttribute("data-snapshot-delete");
+  if (fleetPendingDelete !== id) {
+    fleetPendingDelete = id;
+    renderFleetSnapshotsPanel();
+    return;
+  }
+  fleetPendingDelete = null;
+  const removed = FleetSnapshots.remove(id);
+  renderFleetSnapshotsPanel(
+    removed.ok ? "Snapshot deleted." : "The snapshot could not be deleted.",
+  );
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const host = document.getElementById("storageManagerPanel");
-  if (!host) return;
-  host.addEventListener("click", handleStoragePanelClick);
-  renderStorageManagerPanel();
+  if (host) {
+    host.addEventListener("click", handleStoragePanelClick);
+    renderStorageManagerPanel();
+  }
+  const fleet = document.getElementById("fleetSnapshotsPanel");
+  if (fleet) {
+    fleet.addEventListener("submit", handleFleetSnapshotSubmit);
+    fleet.addEventListener("click", handleFleetSnapshotDelete);
+    renderFleetSnapshotsPanel();
+  }
 });

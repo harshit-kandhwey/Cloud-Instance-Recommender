@@ -19,6 +19,7 @@ ctx.ctx.document = {
     return null;
   },
 };
+ctx.load("src/features/fleet-snapshots.js");
 ctx.load("src/ui/storage-manager-ui.js");
 
 const { check, state } = makeChecker();
@@ -84,6 +85,28 @@ check(
   "emits no inline event handler attributes on any tag",
   !inTagHandler.test(attrNamesOnly(html)) &&
     !inTagHandler.test(attrNamesOnly(hostile)),
+);
+
+const snapshotHtml = run("renderFleetSnapshotRows")([
+  {
+    id: 'a"><img src=x onerror=alert(3)>',
+    name: "<img src=x onerror=alert(4)>",
+    takenAt: "2026-10-04T00:00:00Z",
+    rows: [{ VM: "a" }, { VM: "b" }],
+  },
+]);
+check(
+  "a hostile snapshot name is escaped before it reaches the markup",
+  !snapshotHtml.includes("<img") && snapshotHtml.includes("&lt;img"),
+);
+check(
+  "a hostile snapshot id cannot break out of its attribute",
+  !/data-snapshot-delete="[^"]*"><img/.test(snapshotHtml),
+);
+check("a snapshot row reports its VM count", snapshotHtml.includes("2 VMs"));
+check(
+  "snapshot rows emit no inline event handler attributes",
+  !inTagHandler.test(attrNamesOnly(snapshotHtml)),
 );
 
 if (state.failures > 0) {
