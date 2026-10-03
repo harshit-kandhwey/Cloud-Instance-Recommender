@@ -84,5 +84,36 @@ const FleetSnapshots = (() => {
     return result.ok ? { ok: true } : { ok: false, reason: result.reason };
   }
 
-  return Object.freeze({ SCHEMA_VERSION, build, list, save, remove });
+  // Same fleet means the same VM names. Below this share of the larger side, the two
+  // runs are different estates and a diff between them would pair unrelated VMs.
+  const MIN_OVERLAP = 0.9;
+
+  function compareFleet(entry, freshResults) {
+    const before = scenarioRowKeys(entry.rows);
+    const after = scenarioRowKeys(freshResults);
+    if (before === null || after === null) {
+      return { ok: false, reason: "not-keyed" };
+    }
+    const afterSet = new Set(after);
+    const beforeSet = new Set(before);
+    const shared = before.filter((n) => afterSet.has(n));
+    const larger = Math.max(before.length, after.length);
+    const overlap = larger === 0 ? 0 : shared.length / larger;
+    const added = after.filter((n) => !beforeSet.has(n));
+    const removed = before.filter((n) => !afterSet.has(n));
+    if (overlap < MIN_OVERLAP) {
+      return { ok: false, reason: "low-overlap", overlap, added, removed };
+    }
+    return { ok: true, overlap, added, removed };
+  }
+
+  return Object.freeze({
+    SCHEMA_VERSION,
+    MIN_OVERLAP,
+    build,
+    list,
+    save,
+    remove,
+    compareFleet,
+  });
 })();
