@@ -41,6 +41,19 @@ for (const { name, file, ready } of PAGES) {
       ready,
     );
 
+    // #_stickyGenerateBar (position:fixed, toggled by an IntersectionObserver
+    // watching the real Generate button) and #_backToTop (position:fixed,
+    // toggled by scroll) are both meaningless in a fullPage capture — the page
+    // is already entirely visible, so "scroll to see this" has nothing to show.
+    // Worse: a fullPage screenshot scrolls-and-stitches, so a scroll-dependent
+    // fixed element can get frozen mid-capture at the wrong Y position (seen
+    // live in 3.20 once the page grew tall enough to change the sticky bar's
+    // intersection timing). Hidden here so no fullPage baseline ever depends
+    // on exactly how tall the page happens to be.
+    await page.addStyleTag({
+      content: "#_stickyGenerateBar,#_backToTop{display:none!important}",
+    });
+
     // A clean base name (no ".html", which the path template would mistake for
     // an extension); the config's snapshotPathTemplate adds the -linux suffix so
     // the ubuntu baselines never collide with a locally generated set.

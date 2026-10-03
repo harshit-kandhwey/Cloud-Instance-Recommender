@@ -46,6 +46,12 @@ test("aws.html: dark-theme empty-state visual baseline", async ({ page }) => {
   await page.evaluate(() => {
     document.documentElement.dataset.theme = "dark";
   });
+  // Same fullPage/fixed-element hazard as pages.visual.spec.js — see there for
+  // why these two are hidden rather than left to whatever a scroll-stitched
+  // capture happens to freeze them at.
+  await page.addStyleTag({
+    content: "#_stickyGenerateBar,#_backToTop{display:none!important}",
+  });
   await expect(page).toHaveScreenshot("aws-dark.png", {
     fullPage: true,
     animations: "disabled",
