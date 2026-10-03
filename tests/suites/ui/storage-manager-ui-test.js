@@ -109,6 +109,50 @@ check(
   !inTagHandler.test(attrNamesOnly(snapshotHtml)),
 );
 
+const sameMsg = run("fleetCompareMessage")({
+  ok: true,
+  overlap: 1,
+  added: [],
+  removed: [],
+});
+check(
+  "a matching estate reports its overlap and changes",
+  sameMsg === "Same estate (100% of VMs in common): 0 added, 0 removed.",
+  sameMsg,
+);
+const diffMsg = run("fleetCompareMessage")({
+  ok: false,
+  reason: "low-overlap",
+  overlap: 0.5,
+  added: [],
+  removed: ["vm-a", "vm-b"],
+});
+check(
+  "a different estate names what went missing and suggests saving the run",
+  diffMsg.includes("Removed: vm-a, vm-b.") &&
+    diffMsg.includes("Save this run as a new snapshot to keep it."),
+  diffMsg,
+);
+const longRemoved = Array.from({ length: 12 }, (_, i) => `vm-${i}`);
+const longMsg = run("fleetCompareMessage")({
+  ok: false,
+  reason: "low-overlap",
+  overlap: 0.2,
+  added: [],
+  removed: longRemoved,
+});
+check(
+  "a long removed list is cut to ten names with a count of the rest",
+  longMsg.includes("and 2 more.") && !longMsg.includes("vm-11"),
+  longMsg,
+);
+check(
+  "an unkeyed comparison asks for unique VM names",
+  run("fleetCompareMessage")({ ok: false, reason: "not-keyed" }).includes(
+    "unique, non-blank VM Name",
+  ),
+);
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;

@@ -89,6 +89,7 @@ function renderFleetSnapshotRows(entries) {
       return `<li>
           <strong>${escapeHtml(e.name)}</strong>
           <span>${escapeHtml(String(e.rows.length))} VMs, saved ${escapeHtml(e.takenAt)}</span>
+          <button type="button" class="btn btn-secondary" data-snapshot-compare="${id}">Compare with last run</button>
           <button type="button" class="btn btn-secondary" data-snapshot-delete="${id}">${armed ? "Confirm delete" : "Delete"}</button>
         </li>`;
     })
@@ -151,7 +152,53 @@ function handleFleetSnapshotSubmit(event) {
   );
 }
 
+const COMPARE_NAME_LIST_LIMIT = 10;
+
+function vmList(names) {
+  const shown = names.slice(0, COMPARE_NAME_LIST_LIMIT).join(", ");
+  const rest = names.length - COMPARE_NAME_LIST_LIMIT;
+  return rest > 0 ? `${shown} and ${rest} more` : shown;
+}
+
+function fleetCompareMessage(result) {
+  const pct = Math.round(result.overlap * 100);
+  if (result.ok) {
+    return `Same estate (${pct}% of VMs in common): ${result.added.length} added, ${result.removed.length} removed.`;
+  }
+  if (result.reason === "not-keyed") {
+    return "This comparison needs every VM to have a unique, non-blank VM Name.";
+  }
+  const parts = [
+    `Different estate (${pct}% of VMs in common, below ${Math.round(FleetSnapshots.MIN_OVERLAP * 100)}%), so no comparison was made.`,
+  ];
+  if (result.added.length) parts.push(`Added: ${vmList(result.added)}.`);
+  if (result.removed.length) parts.push(`Removed: ${vmList(result.removed)}.`);
+  parts.push("Save this run as a new snapshot to keep it.");
+
+  return parts.join(" ");
+}
+
+function handleFleetSnapshotCompare(event) {
+  const button = event.target.closest("[data-snapshot-compare]");
+  if (!button) return false;
+  const id = button.getAttribute("data-snapshot-compare");
+  if (typeof processedResults === "undefined" || !processedResults) {
+    renderFleetSnapshotsPanel("Generate a run to compare against.");
+    return true;
+  }
+  const entry = FleetSnapshots.list().find((e) => e.id === id);
+  if (!entry) {
+    renderFleetSnapshotsPanel("That snapshot no longer exists.");
+    return true;
+  }
+  renderFleetSnapshotsPanel(
+    fleetCompareMessage(FleetSnapshots.compareFleet(entry, processedResults)),
+  );
+  return true;
+}
+
 function handleFleetSnapshotDelete(event) {
+  if (handleFleetSnapshotCompare(event)) return;
   const button = event.target.closest("[data-snapshot-delete]");
   if (!button) return;
   const id = button.getAttribute("data-snapshot-delete");
