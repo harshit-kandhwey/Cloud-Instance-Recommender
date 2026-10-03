@@ -120,6 +120,7 @@ npm run typecheck
     │   ├── charts.js            # Inline-SVG result charts, no library
     │   ├── form-controls.js     # Filters + option readers
     │   ├── ui-shell.js          # Page init + accessibility
+    │   ├── storage-manager-ui.js # Browser storage panel (measure, clear)
     │   └── user-rules-ui.js     # User-defined rules panel (add/list/delete)
     └── shared/
         ├── app-core.js          # State, mapping tables, readiness, regions

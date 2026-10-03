@@ -293,6 +293,7 @@ Cloud-Instance-Recommender/
     │   ├── charts.js                       # Inline-SVG result charts (match rate, family mix, before→after)
     │   ├── form-controls.js                # Filters, rule engine UI, option readers
     │   ├── ui-shell.js                     # Page init, sticky button, accessibility
+    │   ├── storage-manager-ui.js          # Browser storage panel (measure, clear)
     │   └── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │
     └── shared/

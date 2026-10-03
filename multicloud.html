@@ -95,6 +95,8 @@
     <script defer src="src/ui/user-rules-ui.js"></script>
     <script defer src="src/features/xlsx-export.js"></script>
     <script defer src="src/features/scenario-compare.js"></script>
+    <script defer src="src/shared/storage-manager.js"></script>
+    <script defer src="src/ui/storage-manager-ui.js"></script>
   </head>
 
   <body>
@@ -1651,6 +1653,15 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <div class="counter-subtitle">Total VM instances analyzed</div>
               </div>
             </div>
+          </div>
+        </section>
+        <section class="section" id="storageSection">
+          <div class="section-header">
+            <span class="section-icon">💾</span>
+            <h2 class="section-title">Browser Storage</h2>
+          </div>
+          <div class="section-content">
+            <div id="storageManagerPanel"></div>
           </div>
         </section>
       </main>
