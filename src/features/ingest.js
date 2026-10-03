@@ -987,14 +987,14 @@ function headerSignature(headers) {
 // globally (not per-file) so the same app prefills its workload on later
 // uploads. Consumed at generation time via options.appWorkloadMap.
 function loadAppWorkloadMap() {
-  return readStoredObject("cloudInstanceRecommenderAppMap");
+  return readStoredObject(STORAGE_KEYS.appMap);
 }
 
 // Returns false if storage is unavailable (quota, private-browsing) so callers
 // can tell the user rather than claim a save that was discarded.
 function saveAppWorkloadMap(map) {
   try {
-    localStorage.setItem("cloudInstanceRecommenderAppMap", JSON.stringify(map));
+    localStorage.setItem(STORAGE_KEYS.appMap, JSON.stringify(map));
     return true;
   } catch (e) {
     console.warn("Could not persist app→workload map:", e);
@@ -1266,7 +1266,7 @@ function detectSizeUnits(mapping) {
 const SAVED_MAPPING_VERSION = 2;
 
 function loadColumnMappings() {
-  return readStoredObject("cloudInstanceRecommenderColumnMaps");
+  return readStoredObject(STORAGE_KEYS.columnMaps);
 }
 
 function readSavedMapping(entry) {
@@ -1302,7 +1302,7 @@ function saveColumnMapping(signature, mapping, units) {
 function writeColumnMappings(all) {
   try {
     localStorage.setItem(
-      "cloudInstanceRecommenderColumnMaps",
+      STORAGE_KEYS.columnMaps,
       JSON.stringify(all),
     );
     return true;

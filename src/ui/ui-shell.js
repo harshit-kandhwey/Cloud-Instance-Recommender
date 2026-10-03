@@ -239,7 +239,7 @@ function initializeRecommendationTypeHandlers() {
 // Rarely-used sections start collapsed; each then remembers the user's last
 // choice. Keyed by `data-section-id`, NOT heading text — keying off rendered copy
 // would discard saved state (and drop the default) whenever a heading is renamed.
-const SECTIONS_STORAGE_KEY = "cloudInstanceRecommenderSections";
+const SECTIONS_STORAGE_KEY = STORAGE_KEYS.sections;
 
 // The ids of the sections that start collapsed. Only headers carrying
 // `onclick="toggleSection(this)"` are collapsible at all — currently the sample

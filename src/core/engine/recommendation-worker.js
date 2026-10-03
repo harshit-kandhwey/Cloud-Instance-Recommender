@@ -17,6 +17,7 @@ self.window = self;
 // the page's) — kept in sync by hand with wherever core/rules and
 // providers/* actually live after the 3.16-tail js/ -> src/ move.
 importScripts(
+  "../../shared/storage-keys.js",
   "../rules/rule-engine.js",
   "../rules/user-rules.js",
   "base-instance-selector.js",

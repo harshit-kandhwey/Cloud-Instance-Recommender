@@ -9,7 +9,7 @@ let manualVMs = [];
 
 function loadManualVMs() {
   try {
-    const stored = localStorage.getItem("cloudInstanceRecommenderManualVMs");
+    const stored = localStorage.getItem(STORAGE_KEYS.manualVMs);
     const parsed = stored ? JSON.parse(stored) : [];
     // Elements too: a null or a string in the list would throw when the table
     // reads its fields, or be copied into a row.
@@ -22,7 +22,7 @@ function loadManualVMs() {
 function saveManualVMs() {
   try {
     localStorage.setItem(
-      "cloudInstanceRecommenderManualVMs",
+      STORAGE_KEYS.manualVMs,
       JSON.stringify(manualVMs),
     );
   } catch (e) {

@@ -122,7 +122,8 @@ npm run typecheck
     │   ├── ui-shell.js          # Page init + accessibility
     │   └── user-rules-ui.js     # User-defined rules panel (add/list/delete)
     └── shared/
-        └── app-core.js          # State, mapping tables, readiness, regions
+        ├── app-core.js          # State, mapping tables, readiness, regions
+        └── storage-keys.js      # Every localStorage key the app owns
 ```
 
 ## Updating Instance Data

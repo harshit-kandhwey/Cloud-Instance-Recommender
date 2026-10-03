@@ -14,6 +14,7 @@ const vm = require("vm");
 const REPO = path.resolve(__dirname, "..", "..");
 
 const APP_SCRIPTS = [
+  "src/shared/storage-keys.js",
   "src/core/rules/rule-engine.js",
   "src/core/rules/user-rules.js",
   "src/core/engine/base-instance-selector.js",

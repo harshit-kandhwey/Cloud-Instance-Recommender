@@ -39,6 +39,7 @@ const CODE_FILES = [
   "src/providers/azure/azure-instance-selector.js",
   "src/providers/gcp/gcp-instance-selector.js",
   "src/core/engine/instance-selector-factory.js",
+  "src/shared/storage-keys.js",
   "src/shared/app-core.js",
 ];
 

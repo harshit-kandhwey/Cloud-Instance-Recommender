@@ -17,7 +17,7 @@
 const USER_RULE_DIMENSIONS = ["workload", "env", "os", "compliance"];
 // exclude → drop the tokens; includeOnly → keep only the tokens (allow-list).
 const USER_RULE_ACTIONS = ["exclude", "includeOnly"];
-const USER_RULES_KEY = "cloudInstanceRecommenderUserRules";
+const USER_RULES_KEY = STORAGE_KEYS.userRules;
 
 const _USER_RULE_DIM_LABELS = {
   env: "ENV",

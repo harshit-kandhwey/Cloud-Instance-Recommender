@@ -39,7 +39,11 @@ sandbox.document = {
   body: { appendChild() {} },
 };
 const ctx = vm.createContext(sandbox);
-for (const rel of ["src/shared/app-core.js", "src/features/portfolio.js"]) {
+for (const rel of [
+  "src/shared/storage-keys.js",
+  "src/shared/app-core.js",
+  "src/features/portfolio.js",
+]) {
   vm.runInContext(fs.readFileSync(path.join(REPO, rel), "utf8"), ctx, {
     filename: rel,
   });

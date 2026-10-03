@@ -45,6 +45,7 @@ ctx.AZURE_DATA_READY = true;
 // (AWS_REGION_KEYS / AZURE_REGION_KEYS intentionally absent)
 
 for (const f of [
+  "src/shared/storage-keys.js",
   "src/core/rules/rule-engine.js",
   "src/core/engine/base-instance-selector.js",
   "src/providers/aws/aws-instance-selector.js",

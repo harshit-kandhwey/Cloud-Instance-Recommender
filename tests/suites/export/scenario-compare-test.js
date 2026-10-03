@@ -32,6 +32,7 @@ const load = (rel) =>
 const run = (expr) =>
   vm.runInContext(expr, ctx, { filename: "scenario-compare-test" });
 
+load("src/shared/storage-keys.js");
 load("src/shared/app-core.js");
 load("src/features/scenario-compare.js");
 

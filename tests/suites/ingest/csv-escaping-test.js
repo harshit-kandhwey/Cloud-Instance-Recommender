@@ -21,6 +21,13 @@ const sandbox = { console: { log() {}, warn() {}, error() {} } };
 sandbox.window = sandbox;
 const ctx = vm.createContext(sandbox);
 vm.runInContext(
+  fs.readFileSync(path.join(REPO, "src/shared/storage-keys.js"), "utf8"),
+  ctx,
+  {
+    filename: "storage-keys.js",
+  },
+);
+vm.runInContext(
   fs.readFileSync(path.join(REPO, "src/shared/app-core.js"), "utf8"),
   ctx,
   {

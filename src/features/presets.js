@@ -13,7 +13,7 @@
 // ingest.js (localStorage, try/catch so private mode never breaks the flow).
 // A JSON export/import moves a page's presets between browsers/machines.
 
-const FILTER_PRESETS_KEY = "cloudInstanceRecommenderFilterPresets";
+const FILTER_PRESETS_KEY = STORAGE_KEYS.filterPresets;
 
 // Preset names land as plain-object keys (store[page][name] = …), and
 // assigning "__proto__" that way mutates the object's prototype instead of

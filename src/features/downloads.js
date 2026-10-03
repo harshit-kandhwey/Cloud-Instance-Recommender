@@ -563,7 +563,7 @@ let usageStats = {
 // Load usage statistics from localStorage
 function loadUsageStatistics() {
   try {
-    const stored = localStorage.getItem("cloudInstanceRecommenderStats");
+    const stored = localStorage.getItem(STORAGE_KEYS.stats);
     if (stored) {
       const parsed = JSON.parse(stored);
       // Spreading a string or array would inject character/index keys.
@@ -594,7 +594,7 @@ function saveUsageStatistics() {
     usageStats.lastUpdated = new Date().toISOString();
 
     localStorage.setItem(
-      "cloudInstanceRecommenderStats",
+      STORAGE_KEYS.stats,
       JSON.stringify(usageStats),
     );
   } catch (e) {

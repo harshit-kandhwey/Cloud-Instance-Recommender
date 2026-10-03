@@ -142,6 +142,11 @@ const ctx = vm.createContext(sandbox);
 const run = (expr) => vm.runInContext(expr, ctx, { filename: "presets-test" });
 
 vm.runInContext(
+  fs.readFileSync(path.join(REPO, "src/shared/storage-keys.js"), "utf8"),
+  ctx,
+  { filename: "src/shared/storage-keys.js" },
+);
+vm.runInContext(
   fs.readFileSync(path.join(REPO, "src/features/presets.js"), "utf8"),
   ctx,
   { filename: "src/features/presets.js" },

@@ -1072,4 +1072,4 @@ function computeRelaxSuggestion(results) {
 
 // localStorage key for the App Portfolio handoff copy (written by
 // downloads.js#openAppPortfolio, read by portfolio.js).
-const PORTFOLIO_STORAGE_KEY = "cloudInstanceRecommenderPortfolioData";
+const PORTFOLIO_STORAGE_KEY = STORAGE_KEYS.portfolioData;

@@ -296,7 +296,8 @@ Cloud-Instance-Recommender/
     │   └── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │
     └── shared/
-        └── app-core.js                     # Shared state, mapping tables, data readiness, region validation
+        ├── app-core.js                     # Shared state, mapping tables, data readiness, region validation
+        └── storage-keys.js                 # Every localStorage key the app owns
 ```
 
 ### Instance data layout

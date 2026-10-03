@@ -303,6 +303,7 @@ vm.runInContext(
     // Mirrors the worker's importScripts order (recommendation-worker.js): the
     // factory reads user-rules' _matchUserRules / normalizeUserRules, so the
     // fallback context must load it too or a userRules run would ReferenceError.
+    "src/shared/storage-keys.js",
     "src/core/rules/user-rules.js",
     "src/core/engine/base-instance-selector.js",
     "src/providers/aws/aws-instance-selector.js",
