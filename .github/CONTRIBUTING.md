@@ -123,7 +123,8 @@ npm run typecheck
     │   └── user-rules-ui.js     # User-defined rules panel (add/list/delete)
     └── shared/
         ├── app-core.js          # State, mapping tables, readiness, regions
-        └── storage-keys.js      # Every localStorage key the app owns
+        ├── storage-keys.js      # Every localStorage key the app owns
+        └── storage-manager.js   # Measures, writes and clears the app's own localStorage keys
 ```
 
 ## Updating Instance Data
