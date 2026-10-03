@@ -96,7 +96,7 @@ function renderFleetSnapshotRows(entries) {
     .join("");
 }
 
-function renderFleetSnapshotsPanel(status) {
+function renderFleetSnapshotsPanel(status, detailHtml) {
   const host = document.getElementById("fleetSnapshotsPanel");
   if (!host) return;
   const entries = FleetSnapshots.list();
@@ -110,6 +110,7 @@ function renderFleetSnapshotsPanel(status) {
           <button type="submit" class="btn btn-secondary">Save snapshot</button>
         </form>
         <p role="status" aria-live="polite" id="fleetSnapshotStatus">${escapeHtml(status || "")}</p>
+        ${detailHtml || ""}
         <ul>${entries.length ? renderFleetSnapshotRows(entries) : "<li>No snapshots saved.</li>"}</ul>`;
 }
 
@@ -152,6 +153,37 @@ function handleFleetSnapshotSubmit(event) {
   );
 }
 
+const DIFF_ROW_LIMIT = 50;
+
+function renderSnapshotDiffHtml(diff) {
+  const changedCount = diff.changedRows.length;
+  const summary = `<p>${changedCount} VM${changedCount === 1 ? "" : "s"} changed, ${diff.summary.changedCells} cell${diff.summary.changedCells === 1 ? "" : "s"} across ${diff.cols.length} compared column${diff.cols.length === 1 ? "" : "s"}.${diff.note ? " " + escapeHtml(diff.note) : ""}</p>`;
+  if (changedCount === 0) return `${summary}<p>No compared cell changed.</p>`;
+  const body = diff.changedRows
+    .slice(0, DIFF_ROW_LIMIT)
+    .flatMap((row) =>
+      row.cells
+        .filter((cell) => cell.changed)
+        .map(
+          (cell) => `<tr>
+            <th scope="row">${escapeHtml(row.key)}</th>
+            <td>${escapeHtml(cell.col)}</td>
+            <td>${escapeHtml(String(cell.a))}</td>
+            <td>${escapeHtml(String(cell.b))}</td>
+          </tr>`,
+        ),
+    )
+    .join("");
+  const more =
+    changedCount > DIFF_ROW_LIMIT
+      ? `<p>Showing the first ${DIFF_ROW_LIMIT} of ${changedCount} changed VMs.</p>`
+      : "";
+  return `${summary}<div class="table-wrapper"><table>
+          <thead><tr><th scope="col">VM</th><th scope="col">Column</th><th scope="col">Last snapshot</th><th scope="col">Last run</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table></div>${more}`;
+}
+
 const COMPARE_NAME_LIST_LIMIT = 10;
 
 function vmList(names) {
@@ -191,9 +223,20 @@ function handleFleetSnapshotCompare(event) {
     renderFleetSnapshotsPanel("That snapshot no longer exists.");
     return true;
   }
-  renderFleetSnapshotsPanel(
-    fleetCompareMessage(FleetSnapshots.compareFleet(entry, processedResults)),
-  );
+  const identity = FleetSnapshots.compareFleet(entry, processedResults);
+  const detail = identity.ok
+    ? renderSnapshotDiffHtml(
+        diffScenarios(
+          { results: entry.rows, providers: entry.providers, config: null },
+          {
+            results: processedResults,
+            providers: window._resultsProviders || [],
+            config: null,
+          },
+        ),
+      )
+    : "";
+  renderFleetSnapshotsPanel(fleetCompareMessage(identity), detail);
   return true;
 }
 

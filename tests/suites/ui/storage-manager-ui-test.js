@@ -153,6 +153,66 @@ check(
   ),
 );
 
+const diffFixture = {
+  cols: ["Recommended Instance"],
+  note: "",
+  summary: { changedCells: 1 },
+  changedRows: [
+    {
+      key: "<img src=x onerror=alert(5)>",
+      cells: [
+        {
+          col: "Recommended Instance",
+          a: "m5.large",
+          b: "<b>r5</b>",
+          changed: true,
+        },
+        { col: "ENV", a: "Prod", b: "Prod", changed: false },
+      ],
+    },
+  ],
+};
+const diffHtml = run("renderSnapshotDiffHtml")(diffFixture);
+check(
+  "a diff escapes VM names and values before they reach the markup",
+  !diffHtml.includes("<img") &&
+    !diffHtml.includes("<b>") &&
+    diffHtml.includes("&lt;b&gt;r5&lt;/b&gt;"),
+);
+check(
+  "a diff shows only the changed cells",
+  !diffHtml.includes("Prod") && diffHtml.includes("m5.large"),
+);
+check(
+  "a diff summary counts changed VMs and cells",
+  diffHtml.includes("1 VM changed, 1 cell across 1 compared column."),
+  diffHtml.slice(0, 120),
+);
+check(
+  "a diff with no change says so",
+  run("renderSnapshotDiffHtml")({
+    cols: ["X"],
+    note: "",
+    summary: { changedCells: 0 },
+    changedRows: [],
+  }).includes("No compared cell changed."),
+);
+const manyRows = Array.from({ length: 60 }, (_, i) => ({
+  key: `vm-${i}`,
+  cells: [{ col: "X", a: "1", b: "2", changed: true }],
+}));
+const capped = run("renderSnapshotDiffHtml")({
+  cols: ["X"],
+  note: "",
+  summary: { changedCells: 60 },
+  changedRows: manyRows,
+});
+check(
+  "a long diff shows fifty rows and says how many changed",
+  (capped.match(/<th scope="row">vm-/g) || []).length === 50 &&
+    capped.includes("Showing the first 50 of 60 changed VMs."),
+);
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;
