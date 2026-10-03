@@ -470,6 +470,8 @@ const results = await getInstanceRecommendationWithSelector(
 
 ## 🛠️ Architecture
 
+The module map, load order, worker protocol and stored-data schema are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 The application uses a modular, class-based architecture:
 
 - **`BaseInstanceSelector`** — Abstract base with common region loading, data parsing, and filtering

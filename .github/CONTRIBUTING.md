@@ -32,6 +32,8 @@ npm run typecheck
 
 ## Project Structure
 
+The module map, load order, worker protocol and stored-data schema are in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+
 ```
 ├── index.html              # Landing page
 ├── aws.html                # AWS recommender
