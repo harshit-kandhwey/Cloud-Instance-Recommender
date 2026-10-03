@@ -400,6 +400,30 @@ function confirmMapping(ctx, choices) {
   ctx.applyColumnMapping();
 }
 
+// A localStorage stand-in that throws a QuotaExceededError once the stored
+// code units would pass `limitUnits`, the way a browser does at its quota.
+// Lets quota-pressure paths run without a real browser.
+function fakeLocalStorage({ limitUnits = Infinity } = {}) {
+  const map = new Map();
+  const units = () =>
+    [...map].reduce((n, [k, v]) => n + k.length + v.length, 0);
+  return {
+    getItem: (k) => (map.has(k) ? map.get(k) : null),
+    setItem(k, v) {
+      const next = units() - (map.has(k) ? map.get(k).length + k.length : 0);
+      if (next + k.length + String(v).length > limitUnits) {
+        const e = new Error("quota exceeded");
+        e.name = "QuotaExceededError";
+        throw e;
+      }
+      map.set(k, String(v));
+    },
+    removeItem: (k) => void map.delete(k),
+    clear: () => map.clear(),
+    keys: () => [...map.keys()],
+  };
+}
+
 module.exports = {
   REPO,
   buildContext,
@@ -409,4 +433,5 @@ module.exports = {
   headersOf,
   parse,
   confirmMapping,
+  fakeLocalStorage,
 };
