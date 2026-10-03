@@ -113,6 +113,7 @@ npm run typecheck
     │   ├── portfolio.js         # App Portfolio (loaded only on app-portfolio.html)
     │   ├── xlsx-export.js       # Styled results .xlsx export
     │   ├── downloads.js         # + App Portfolio handoff
+    │   ├── fleet-snapshots.js   # Named, versioned snapshots of a run's per-VM outputs
     │   ├── scenario-compare.js  # Pin + diff two generation runs
     │   ├── manual-entry.js
     │   └── presets.js           # Filter presets (save/apply, localStorage)

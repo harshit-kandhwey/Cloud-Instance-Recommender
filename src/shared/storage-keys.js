@@ -4,6 +4,7 @@ const STORAGE_KEYS = Object.freeze({
   appMap: "cloudInstanceRecommenderAppMap",
   columnMaps: "cloudInstanceRecommenderColumnMaps",
   filterPresets: "cloudInstanceRecommenderFilterPresets",
+  fleetSnapshots: "cloudInstanceRecommenderFleetSnapshots",
   manualVMs: "cloudInstanceRecommenderManualVMs",
   portfolioData: "cloudInstanceRecommenderPortfolioData",
   sections: "cloudInstanceRecommenderSections",

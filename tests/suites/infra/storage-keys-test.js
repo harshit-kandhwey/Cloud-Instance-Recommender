@@ -19,8 +19,8 @@ const names = Object.keys(keys);
 const values = names.map((n) => keys[n]);
 
 check(
-  "registry lists the eight app keys",
-  names.length === 8,
+  "registry lists the nine app keys",
+  names.length === 9,
   `found ${names.length}: ${names.join(", ")}`,
 );
 check(
