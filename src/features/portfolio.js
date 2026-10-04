@@ -628,8 +628,8 @@ function pfDoughnut(counts, colorFn, opts) {
   return `<figure class="pf-doughnut-fig" role="img" aria-label="${esc(aria)}">
     <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" class="pf-doughnut" aria-hidden="true" focusable="false">
       ${arcs}
-      <text x="${c}" y="${c - 3}" text-anchor="middle" style="fill:var(--text);font-size:26px;font-weight:800;">${total}</text>
-      <text x="${c}" y="${c + 16}" text-anchor="middle" style="fill:var(--text-soft);font-size:11px;">${esc(opts.centerLabel || "")}</text>
+      <text class="inl-56fcee84" x="${c}" y="${c - 3}" text-anchor="middle">${total}</text>
+      <text class="inl-088f15fb" x="${c}" y="${c + 16}" text-anchor="middle">${esc(opts.centerLabel || "")}</text>
     </svg>
     <figcaption class="pf-legend pf-doughnut-legend">${legend}</figcaption>
   </figure>`;
@@ -1088,7 +1088,7 @@ function renderAppPanel(a, m, idx) {
     renderRightSizing(a, m);
 
   return `<div class="pf-app-head">
-      <h3 style="margin:0;color:var(--heading-indigo)">${esc(title)}</h3>
+      <h3 class="inl-d7d7043c">${esc(title)}</h3>
       <button class="btn btn-secondary pf-mini-btn"${actionAttrs("click", "downloadAppCsv", [idx])} title="Download this application's VM rows as CSV">⬇️ App CSV</button>
     </div>
     ${kpis}${mixes}<div class="pf-blocks">${blocks}</div>${renderVmTable(a, m)}`;

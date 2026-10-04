@@ -421,8 +421,8 @@ function renderToasts() {
       return `
         <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border-soft);border-left:4px solid ${tone.color};border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);font-size:0.9rem;line-height:1.4;">
           <span aria-hidden="true">${tone.icon}</span>
-          <span style="flex:1;">${escapeHtml(toast.message)}</span>
-          <button type="button"${actionAttrs("click", "dismissToast", [toast.id])} aria-label="Dismiss notification" style="border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:0 2px;">×</button>
+          <span class="inl-7623f055">${escapeHtml(toast.message)}</span>
+          <button class="inl-dec8f300" type="button"${actionAttrs("click", "dismissToast", [toast.id])} aria-label="Dismiss notification">×</button>
         </div>`;
     })
     .join("");
@@ -618,12 +618,12 @@ function renderRegionValidation(validation, section) {
           }">${label}</span>`;
         })
         .join("");
-      return `<p style="margin: 4px 0;"><strong>${PROVIDER_LABELS[provider] || provider}:</strong> ${chips}</p>`;
+      return `<p class="inl-eb1458a5"><strong>${PROVIDER_LABELS[provider] || provider}:</strong> ${chips}</p>`;
     })
     .join("");
 
   const warning = unknownCount
-    ? `<p style="margin: 6px 0 0; color: var(--danger-text);">❗ ${unknownCount} region name(s) not recognized — rows using them will get built-in sample data, not real instance data.</p>`
+    ? `<p class="inl-cd48d0ef">❗ ${unknownCount} region name(s) not recognized — rows using them will get built-in sample data, not real instance data.</p>`
     : "";
 
   section.innerHTML = `

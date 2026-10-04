@@ -484,6 +484,10 @@ console.log("[no library, no literal colours]");
   // Colours must come from theme.css tokens for both themes to be deliberate,
   // so the guard matches hex AND rgb()/hsl() literals — either bypasses the
   // tokens just as completely.
+  const chartCss = fs.readFileSync(
+    path.join(REPO, "styles", "inline-utilities.css"),
+    "utf8",
+  );
   const literals =
     src.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgb|hsl)a?\([^)]*\)/g) || [];
   check(
@@ -495,10 +499,10 @@ console.log("[no library, no literal colours]");
     "the marks use the chart tokens",
     // Assert the dedicated chart tokens the name actually claims (not only the
     // shared status tokens), so the check tests what it says it does.
-    /var\(--chart-bar\)/.test(src) &&
-      /var\(--chart-context\)/.test(src) &&
-      /var\(--good-strong\)/.test(src) &&
-      /var\(--success-bg\)/.test(src),
+    /var\(--chart-bar\)/.test(src + chartCss) &&
+      /var\(--chart-context\)/.test(src + chartCss) &&
+      /var\(--good-strong\)/.test(src + chartCss) &&
+      /var\(--success-bg\)/.test(src + chartCss),
     "expected --chart-bar, --chart-context, --good-strong and --success-bg",
   );
 }

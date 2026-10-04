@@ -27,38 +27,36 @@ function renderUserRulesPanel() {
     ? rules
         .map(
           (r) => `
-        <li style="display:flex;align-items:center;gap:8px;padding:3px 0;">
-          <span style="flex:1;font-size:0.9em;color:var(--text-body);">${escapeHtml(
-            userRuleLabel(r),
-          )}</span>
-          <button type="button" class="btn btn-secondary" style="padding:2px 8px;font-size:0.8em;"${actionAttrs("click", "deleteUserRule", [r.id])} aria-label="Delete rule: ${escapeHtml(userRuleLabel(r))}">✕</button>
+        <li class="inl-97c8f6f8">
+          <span class="inl-31cce5e6">${escapeHtml(userRuleLabel(r))}</span>
+          <button type="button" class="btn btn-secondary inl-ab4b4465"${actionAttrs("click", "deleteUserRule", [r.id])} aria-label="Delete rule: ${escapeHtml(userRuleLabel(r))}">✕</button>
         </li>`,
         )
         .join("")
-    : `<li style="padding:3px 0;color:var(--text-soft);font-size:0.9em;">No custom rules yet.</li>`;
+    : `<li class="inl-c1aa636e">No custom rules yet.</li>`;
 
   host.innerHTML = `
-    <p style="margin:0 0 8px;font-size:0.92em;color:var(--text-soft);">Apply an Exclude or Include Only to every row whose ENV / OS / Workload / Compliance matches a value — for example, if Workload = database, Include only r5, r6. Rules apply on the next Generate.</p>
-    <ul style="list-style:none;margin:0 0 8px;padding:0;">${items}</ul>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-      <span style="font-size:0.9em;color:var(--text-soft);">If</span>
+    <p class="inl-9e383735">Apply an Exclude or Include Only to every row whose ENV / OS / Workload / Compliance matches a value — for example, if Workload = database, Include only r5, r6. Rules apply on the next Generate.</p>
+    <ul class="inl-c424ebd5">${items}</ul>
+    <div class="inl-ee52c370">
+      <span class="inl-c4b7970d">If</span>
       <label class="sr-only" for="urDimension">Dimension</label>
-      <select id="urDimension" class="form-control" style="width:auto;">${dimOptions}</select>
-      <span style="font-size:0.9em;color:var(--text-soft);">=</span>
+      <select id="urDimension" class="form-control inl-2f8e8ab1">${dimOptions}</select>
+      <span class="inl-c4b7970d">=</span>
       <label class="sr-only" for="urEquals">Value to match</label>
-      <input id="urEquals" class="form-control" style="width:auto;" type="text" placeholder="e.g. database" maxlength="60" />
+      <input id="urEquals" class="form-control inl-2f8e8ab1" type="text" placeholder="e.g. database" maxlength="60" />
       <label class="sr-only" for="urAction">Action</label>
-      <select id="urAction" class="form-control" style="width:auto;">${actionOptions}</select>
+      <select id="urAction" class="form-control inl-2f8e8ab1">${actionOptions}</select>
       <label class="sr-only" for="urTokens">Families or types</label>
-      <input id="urTokens" class="form-control" style="width:auto;flex:1;min-width:140px;" type="text" placeholder="families/types, e.g. r5, r6 or burstable" maxlength="120" />
+      <input id="urTokens" class="form-control inl-e83becd1" type="text" placeholder="families/types, e.g. r5, r6 or burstable" maxlength="120" />
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "addUserRuleFromForm")}>Add rule</button>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+    <div class="inl-02efed96">
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "exportUserRules")} title="Download this page's custom rules as a JSON file">📤 Export rules</button>
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "importUserRules")} title="Import custom rules from a JSON export file">📥 Import rules</button>
-      <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;"${actionAttrs("change", "handleUserRulesImportFile", [{ $: "event" }])} />
+      <input class="inl-c8be1ccb" type="file" id="userRulesImportInput" accept=".json,application/json"${actionAttrs("change", "handleUserRulesImportFile", [{ $: "event" }])} />
     </div>
-    <span id="userRulesStatus" role="status" aria-live="polite" style="display:block;margin-top:6px;font-size:0.85em;"></span>`;
+    <span class="inl-59fa21c5" id="userRulesStatus" role="status" aria-live="polite"></span>`;
 }
 
 function setUserRulesStatus(msg, ok) {

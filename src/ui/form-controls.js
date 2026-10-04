@@ -50,15 +50,12 @@ function showDataPreview() {
 
   let tableHTML = `
     <p><strong>👁️ Data Preview (first 5 rows):</strong></p>
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+    <div class="inl-42d4450c">
+      <table class="inl-f4a5d74f">
         <thead>
-          <tr style="background: var(--surface-alt);">
+          <tr class="inl-4f6c6800">
             ${headers
-              .map(
-                (h) =>
-                  `<th style="padding: 8px; border: 1px solid var(--border-mid); text-align: left;">${escapeHtml(h)}</th>`,
-              )
+              .map((h) => `<th class="inl-c3ef4b88">${escapeHtml(h)}</th>`)
               .join("")}
           </tr>
         </thead>
@@ -72,7 +69,7 @@ function showDataPreview() {
       const value = row[header] || "";
       const displayValue =
         value.length > 20 ? value.substring(0, 20) + "..." : value;
-      tableHTML += `<td style="padding: 8px; border: 1px solid var(--border-mid);">${escapeHtml(displayValue)}</td>`;
+      tableHTML += `<td class="inl-5103b040">${escapeHtml(displayValue)}</td>`;
     });
     tableHTML += `</tr>`;
   });

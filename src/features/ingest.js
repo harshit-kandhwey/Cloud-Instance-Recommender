@@ -414,7 +414,7 @@ function renderSheetPicker(sheets, activeName) {
   el.innerHTML = `
     <div class="alert alert-info">
       <label for="sheetPicker"><strong>📑 Sheet to read:</strong></label>
-      <select id="sheetPicker"${actionAttrs("change", "selectSheet", [{ $: "value" }])} aria-label="Which sheet of the workbook to read" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);">${options}</select>
+      <select class="inl-aed02bd7" id="sheetPicker"${actionAttrs("change", "selectSheet", [{ $: "value" }])} aria-label="Which sheet of the workbook to read">${options}</select>
       <br>This workbook has ${sheets.length} sheets. “${escapeHtml(activeName)}” best matches the expected columns — switch if that is the wrong one.
     </div>`;
   el.classList.remove("hidden");
@@ -867,16 +867,16 @@ function renderSampleGallery() {
 
   const cards = SAMPLE_DATASETS.map(
     (dataset, index) => `
-      <li style="margin-bottom: 8px;">
-        <button${actionAttrs("click", "loadSampleDataset", [index])} class="btn btn-secondary" style="font-size: 13px; padding: 6px 14px;">▶️ Load ${escapeHtml(dataset.label)}</button>
-        <span style="margin-left: 8px; font-size: 13px; color: var(--text-muted);">${escapeHtml(dataset.blurb)}</span>
+      <li class="inl-7f3cbaf6">
+        <button${actionAttrs("click", "loadSampleDataset", [index])} class="btn btn-secondary inl-34f06abd">▶️ Load ${escapeHtml(dataset.label)}</button>
+        <span class="inl-7336e6fb">${escapeHtml(dataset.blurb)}</span>
       </li>`,
   ).join("");
 
   el.innerHTML = `
-    <div style="margin-top: 14px;">
-      <strong style="font-size: 14px;">Or try one of these</strong>
-      <ul style="margin: 8px 0 0 0; padding: 0; list-style: none;">${cards}</ul>
+    <div class="inl-b26aeceb">
+      <strong class="inl-df67104f">Or try one of these</strong>
+      <ul class="inl-40a750d8">${cards}</ul>
     </div>`;
 }
 
@@ -905,17 +905,17 @@ function renderPasteControl() {
   const el = document.getElementById("pasteDataSection");
   if (!el) return;
   el.innerHTML = `
-    <button type="button" class="btn btn-secondary"${actionAttrs("click", "togglePastePanel")} style="font-size: 13px; padding: 8px 16px;">📋 Or paste rows from a spreadsheet</button>
-    <div id="pastePanel" class="hidden" style="margin-top: 10px;">
-      <label for="pasteInput" style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted);">
+    <button type="button" class="btn btn-secondary inl-7bd0fed1"${actionAttrs("click", "togglePastePanel")}>📋 Or paste rows from a spreadsheet</button>
+    <div id="pastePanel" class="hidden inl-54d32d80">
+      <label class="inl-ac8066ef" for="pasteInput">
         Copy the rows from Excel, Google Sheets, or a CSV — <strong>including the header row</strong> — and paste them here.
       </label>
-      <textarea id="pasteInput" rows="8" aria-label="Paste inventory rows, including the header row"
+      <textarea class="inl-7e3a4144" id="pasteInput" rows="8" aria-label="Paste inventory rows, including the header row"
         placeholder="VM Name&#9;CPU Count&#9;Memory (GB)&#10;web-01&#9;4&#9;16"
-        style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);"></textarea>
-      <div style="margin-top: 8px;">
-        <button type="button" class="btn btn-primary"${actionAttrs("click", "ingestPastedData")} style="font-size: 13px; padding: 8px 16px;">Use this data</button>
-        <button type="button" class="btn btn-secondary"${actionAttrs("click", "togglePastePanel")} style="font-size: 13px; padding: 8px 16px; margin-left: 8px;">Cancel</button>
+       ></textarea>
+      <div class="inl-36ca0aff">
+        <button type="button" class="btn btn-primary inl-7bd0fed1"${actionAttrs("click", "ingestPastedData")}>Use this data</button>
+        <button type="button" class="btn btn-secondary inl-5eb82a15"${actionAttrs("click", "togglePastePanel")}>Cancel</button>
       </div>
     </div>`;
 }
@@ -1370,18 +1370,18 @@ function renderSavedMappings() {
       const columnCount = signature.split(SIGNATURE_SEPARATOR).length;
 
       return `
-        <li style="margin-bottom: 8px;">
-          <div style="font-size: 13px;">
+        <li class="inl-7f3cbaf6">
+          <div class="inl-eefff2f8">
             <strong>${columnCount} columns</strong>${escapeHtml(unitNote)}<br>
-            <span style="color: var(--text-muted);">${
+            <span class="inl-bf4b6787">${
               renames.length
                 ? renames.join(", ")
                 : "no columns renamed — the headers already matched"
             }</span>
           </div>
-          <button${actionAttrs("click", "forgetColumnMapping", [index])}
+          <button class="inl-99a9770f"${actionAttrs("click", "forgetColumnMapping", [index])}
             title="Forget this mapping — the next file with these headers will ask again"
-            style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">🗑️ Forget</button>
+           >🗑️ Forget</button>
         </li>`;
     })
     .join("");
@@ -1389,9 +1389,9 @@ function renderSavedMappings() {
   el.className = "alert alert-info";
   el.innerHTML = `
     <strong>💾 Remembered column mappings (${signatures.length})</strong><br>
-    <span style="font-size: 13px; color: var(--text-muted);">A file whose headers match one of these is mapped this way without asking.</span>
-    <ul style="margin: 8px 0 0 18px; list-style: none; padding: 0;">${entries}</ul>
-    <button${actionAttrs("click", "forgetAllColumnMappings")} style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">Forget all</button>`;
+    <span class="inl-4cd01e56">A file whose headers match one of these is mapped this way without asking.</span>
+    <ul class="inl-eac39f5b">${entries}</ul>
+    <button class="inl-99a9770f"${actionAttrs("click", "forgetAllColumnMappings")}>Forget all</button>`;
   el.classList.remove("hidden");
 }
 
@@ -1557,7 +1557,7 @@ function applyIngest(headers, rows, mapping, units = {}) {
   const sizeNote = convertedCols.length
     ? `<br>📐 ${convertedCols.join(" and ")} values converted from MB to GB`
     : "";
-  const editBtn = ` <button${actionAttrs("click", "editColumnMapping")} title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
+  const editBtn = ` <button class="inl-c85beeb7"${actionAttrs("click", "editColumnMapping")} title="Change which of your columns map to the CPU, memory, name, and region fields">✏️ Edit mapping</button>`;
   const okLabel = window._ingestLabel || "File loaded successfully";
   // Guarded like every other status write in this file (showUploadError, the
   // reader error handler, showColumnMappingPanel) — a page missing #fileStatus
@@ -1984,26 +1984,26 @@ function reportInputHygiene() {
         ? `<li>…and ${report.duplicates.length - 5} more repeated names</li>`
         : "";
     dupBlock = `
-      <p style="margin-top: 10px;"><strong>🔁 ${report.duplicates.length} VM name${
+      <p class="inl-54d32d80"><strong>🔁 ${report.duplicates.length} VM name${
         report.duplicates.length === 1 ? " is" : "s are"
       } used more than once</strong> (${total} extra row${total === 1 ? "" : "s"}).
       Are these the same VM listed twice, or different VMs that share a name?</p>
-      <ul style="margin: 6px 0 10px 18px;">${examples}${more}</ul>
+      <ul class="inl-4e824bb5">${examples}${more}</ul>
       <button${actionAttrs("click", "mergeDuplicateVmNames")} title="Keep the first row for each repeated name and drop the rest">🔗 Same VM — keep the first of each</button>
-      <button${actionAttrs("click", "keepDuplicateVmNames")} title="Leave every row in place" style="margin-left: 8px;">↔️ Different VMs — keep them all</button>`;
+      <button class="inl-c937f3b8"${actionAttrs("click", "keepDuplicateVmNames")} title="Leave every row in place">↔️ Different VMs — keep them all</button>`;
   }
 
   let unitBlock = "";
   if (report.memoryUnit) {
     const median = report.memoryUnit.median;
     unitBlock = `
-      <p style="margin-top: 10px;"><strong>📐 Is the memory column in MB?</strong>
+      <p class="inl-54d32d80"><strong>📐 Is the memory column in MB?</strong>
       The typical VM here reports ${escapeHtml(String(median))}, which is a lot of gigabytes
       but an ordinary number of mebibytes. Some inventory tools report memory in MiB without
       saying so in the header. If yours does, convert; if these really are ${escapeHtml(String(median))} GB
       machines, leave them.</p>
       <button${actionAttrs("click", "convertMemoryToGb")} title="Divide the memory column by 1024">📐 They are MB — convert to GB</button>
-      <button${actionAttrs("click", "keepMemoryAsGb")} title="Leave the memory values exactly as they are" style="margin-left: 8px;">✔️ They are GB — leave them</button>`;
+      <button class="inl-c937f3b8"${actionAttrs("click", "keepMemoryAsGb")} title="Leave the memory values exactly as they are">✔️ They are GB — leave them</button>`;
   }
 
   el.className = `alert alert-${errors.length ? "warning" : "info"}`;
@@ -2014,7 +2014,7 @@ function reportInputHygiene() {
         : "the file loaded. One thing is worth confirming."
     }
     ${errors.length ? "Rows with a ❌ will not size sensibly." : ""}
-    ${lines ? `<ul style="margin: 6px 0 0 18px;">${lines}</ul>` : ""}
+    ${lines ? `<ul class="inl-8c01764b">${lines}</ul>` : ""}
     ${unitBlock}
     ${dupBlock}`;
   el.classList.remove("hidden");
@@ -2141,42 +2141,42 @@ function showColumnMappingPanel(headers, match, opts = {}) {
         }),
       ].join("");
       const reqMark = required.includes(canonical)
-        ? ' <span style="color: var(--red-badge);">*</span>'
+        ? ' <span class="inl-69092d65">*</span>'
         : "";
       const ambiguousNote = ambiguousByCanonical[canonical]
-        ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
+        ? `<span class="inl-0fd07c97"> (several columns could match — please pick one)</span>`
         : "";
       const syncAttr = isSize
         ? `${actionAttrs("change", "_syncSizeUnit", [unitId, { $: "this" }])}`
         : "";
       const unitSelect = isSize
-        ? ` <select id="${unitId}" class="form-control" style="max-width: 190px;" aria-label="Unit of the ${sizeNoun} values in your file" title="RVTools-style exports list ${sizeNoun} in MB — pick MB to convert to GB automatically">
+        ? ` <select id="${unitId}" class="form-control inl-19e54f47" aria-label="Unit of the ${sizeNoun} values in your file" title="RVTools-style exports list ${sizeNoun} in MB — pick MB to convert to GB automatically">
             <option value="GB"${unitFor(canonical) === "GB" ? " selected" : ""}>values are GB</option>
             <option value="MB"${unitFor(canonical) === "MB" ? " selected" : ""}>values are MB → ÷1024</option>
           </select>`
         : "";
       return `
-        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap;">
-          <label for="colmap_${idx}" style="min-width: 180px; font-weight: 500;">${escapeHtml(canonical)}${reqMark}${ambiguousNote}</label>
-          <select id="colmap_${idx}" data-canonical="${escapeHtml(canonical)}"${syncAttr} class="form-control" style="max-width: 260px;">${options}</select>${unitSelect}
+        <div class="inl-fbd145b5">
+          <label class="inl-75946f8f" for="colmap_${idx}">${escapeHtml(canonical)}${reqMark}${ambiguousNote}</label>
+          <select id="colmap_${idx}" data-canonical="${escapeHtml(canonical)}"${syncAttr} class="form-control inl-28217ba5">${options}</select>${unitSelect}
         </div>`;
     })
     .join("");
 
   const intro = opts.isEdit
-    ? `Adjust which of your columns maps to each field, then confirm to re-apply (<span style="color: var(--red-badge);">*</span> = required). Nothing changes until you confirm.`
-    : `Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: var(--red-badge);">*</span> = required).`;
+    ? `Adjust which of your columns maps to each field, then confirm to re-apply (<span class="inl-69092d65">*</span> = required). Nothing changes until you confirm.`
+    : `Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span class="inl-69092d65">*</span> = required).`;
   const cancelBtn = opts.isEdit
-    ? ` <button class="btn btn-secondary"${actionAttrs("click", "cancelColumnMapping")} style="margin-top: 8px;">Cancel</button>`
+    ? ` <button class="btn btn-secondary inl-36ca0aff"${actionAttrs("click", "cancelColumnMapping")}>Cancel</button>`
     : "";
 
   panel.innerHTML = `
     <div class="stats-info">
       <p><strong>🔗 Map Your Columns</strong></p>
-      <p style="font-size: 13px;">${intro}</p>
+      <p class="inl-eefff2f8">${intro}</p>
       ${selectRows}
-      <p style="font-size: 12px; margin-top: 8px;">Compliance, Exclude, and Include Only accept comma-separated values (e.g. "m5,m6"). Min Gen is native per provider: AWS Min Gen, Azure Min Gen, GCP Min Gen.</p>
-      <button class="btn btn-primary"${actionAttrs("click", "applyColumnMapping")} style="margin-top: 8px;">✔️ Confirm Mapping</button>${cancelBtn}
+      <p class="inl-16c5fe6f">Compliance, Exclude, and Include Only accept comma-separated values (e.g. "m5,m6"). Min Gen is native per provider: AWS Min Gen, Azure Min Gen, GCP Min Gen.</p>
+      <button class="btn btn-primary inl-36ca0aff"${actionAttrs("click", "applyColumnMapping")}>✔️ Confirm Mapping</button>${cancelBtn}
     </div>
   `;
   panel.classList.remove("hidden");
@@ -2351,20 +2351,20 @@ function maybeShowAppMappingPanel() {
         ),
       ].join("");
       return `
-        <div style="display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap;">
-          <label for="appmap_${idx}" style="min-width: 200px; font-weight: 500;">${escapeHtml(app)}</label>
-          <select id="appmap_${idx}" data-app="${escapeHtml(app)}" class="form-control" style="max-width: 220px;">${opts}</select>
+        <div class="inl-fbd145b5">
+          <label class="inl-6ffc2fb3" for="appmap_${idx}">${escapeHtml(app)}</label>
+          <select id="appmap_${idx}" data-app="${escapeHtml(app)}" class="form-control inl-b746efa1">${opts}</select>
         </div>`;
     })
     .join("");
 
   panel.innerHTML = `
     <div class="stats-info">
-      <p><strong>🧩 Map Applications to Workloads</strong> <span style="font-size: 12px; color: var(--text-soft);">(optional)</span></p>
-      <p style="font-size: 13px;">Your file has an <strong>App Name</strong> column but no <strong>Workload</strong> column. Assign a workload per application and every VM in it inherits that workload when you generate. Precedence: a row's own Workload cell → this map → page default → General.</p>
+      <p><strong>🧩 Map Applications to Workloads</strong> <span class="inl-1a752b01">(optional)</span></p>
+      <p class="inl-eefff2f8">Your file has an <strong>App Name</strong> column but no <strong>Workload</strong> column. Assign a workload per application and every VM in it inherits that workload when you generate. Precedence: a row's own Workload cell → this map → page default → General.</p>
       ${rows}
-      <button class="btn btn-primary"${actionAttrs("click", "applyAppMapping")} style="margin-top: 8px;">💾 Save App Workloads</button>
-      <span id="appMappingStatus" role="status" style="margin-left: 10px; font-size: 13px; color: var(--good-strong);"></span>
+      <button class="btn btn-primary inl-36ca0aff"${actionAttrs("click", "applyAppMapping")}>💾 Save App Workloads</button>
+      <span class="inl-619fe476" id="appMappingStatus" role="status"></span>
     </div>`;
   panel.classList.remove("hidden");
 }

@@ -31,19 +31,19 @@ function _matchRateMeter(results) {
   const pct = _matchRatePct(matched, total);
 
   return `
-    <figure style="margin:0 0 14px 0;">
-      <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:6px;">Match rate</figcaption>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div role="img" aria-label="${matched} of ${total} rows matched an instance, ${pct} percent"
-             style="flex:1;min-width:120px;height:10px;border-radius:5px;background:var(--success-bg);overflow:hidden;">
+    <figure class="inl-60a0e059">
+      <figcaption class="inl-1701c555">Match rate</figcaption>
+      <div class="inl-7e30d285">
+        <div class="inl-bcfb6f24" role="img" aria-label="${matched} of ${total} rows matched an instance, ${pct} percent"
+            >
           <div style="width:${pct}%;height:100%;background:var(--good-strong);border-radius:5px;"></div>
         </div>
-        <span style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;">${pct}%</span>
+        <span class="inl-d38962e9">${pct}%</span>
       </div>
-      <p style="margin:4px 0 0 0;font-size:11px;color:var(--text-soft);">
-        <span style="color:var(--good-strong);">✓</span> ${matched} matched${
+      <p class="inl-4de65731">
+        <span class="inl-16bd8c6c">✓</span> ${matched} matched${
           unmatched > 0
-            ? ` · <span style="color:var(--red-strong);">✗</span> ${unmatched} no match`
+            ? ` · <span class="inl-f584079b">✗</span> ${unmatched} no match`
             : ""
         } · ${total} rows
       </p>
@@ -98,20 +98,20 @@ function _familyDistribution(results) {
           const pct = Math.round((n / max) * 100);
           const label = escapeHtml(family);
           return `
-        <div role="listitem" style="display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px;">
-          <span style="flex:0 0 120px;color:var(--text-body);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</span>
-          <span style="flex:1;min-width:60px;height:14px;background:var(--success-bg);border-radius:4px;overflow:hidden;">
+        <div class="inl-98ea3165" role="listitem">
+          <span class="inl-020325ee" title="${label}">${label}</span>
+          <span class="inl-f9523076">
             <span style="display:block;width:${pct}%;height:100%;background:var(--chart-bar);border-radius:4px;"></span>
           </span>
-          <span style="flex:0 0 auto;font-weight:700;color:var(--text);min-width:20px;">${n}</span>
+          <span class="inl-621e9189">${n}</span>
         </div>`;
         })
         .join("");
 
       const heading =
         providers.length > 1
-          ? `<div style="font-size:11px;font-weight:700;color:var(--text-soft);margin:8px 0 2px 0;">${escapeHtml(provider)}<span style="font-weight:400;"> · ${kind.toLowerCase()}</span></div>`
-          : `<p style="margin:0 0 4px 0;font-size:11px;color:var(--text-soft);">${matched} matched, by ${kind.toLowerCase()} recommendation</p>`;
+          ? `<div class="inl-0aac8bf0">${escapeHtml(provider)}<span class="inl-f5628769"> · ${kind.toLowerCase()}</span></div>`
+          : `<p class="inl-61a663d1">${matched} matched, by ${kind.toLowerCase()} recommendation</p>`;
 
       return `${heading}<div role="list">${rows}</div>`;
     })
@@ -121,8 +121,8 @@ function _familyDistribution(results) {
   if (!blocks) return "";
 
   return `
-    <figure style="margin:14px 0 0 0;">
-      <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:6px;">Recommended families</figcaption>
+    <figure class="inl-161b6503">
+      <figcaption class="inl-1701c555">Recommended families</figcaption>
       ${blocks}
     </figure>`;
 }
@@ -170,18 +170,18 @@ function _beforeAfter(results) {
           const bar = (label, value, color) => {
             const pct = Math.round((value / scale) * 100);
             return `
-        <div style="display:flex;align-items:center;gap:8px;margin:2px 0;font-size:12px;">
-          <span style="flex:0 0 52px;color:var(--text-soft);text-align:right;">${label}</span>
-          <span style="flex:1;min-width:60px;height:14px;background:var(--success-bg);border-radius:4px;overflow:hidden;">
+        <div class="inl-21957246">
+          <span class="inl-926de76e">${label}</span>
+          <span class="inl-f9523076">
             <span style="display:block;width:${pct}%;height:100%;background:${color};border-radius:4px;"></span>
           </span>
-          <span style="flex:0 0 auto;font-weight:700;color:var(--text);min-width:28px;">${value}</span>
+          <span class="inl-22e75d37">${value}</span>
         </div>`;
           };
 
           const heading =
             savings.length > 1
-              ? `<div style="font-size:11px;font-weight:700;color:var(--text-soft);margin:6px 0 1px 0;">${escapeHtml(s.provider)}</div>`
+              ? `<div class="inl-592c35f1">${escapeHtml(s.provider)}</div>`
               : "";
 
           return `${heading}
@@ -199,8 +199,8 @@ function _beforeAfter(results) {
         .join("; ");
 
       return `
-      <figure style="margin:14px 0 0 0;" role="img" aria-label="${escapeHtml(caption)}. ${escapeHtml(summary)}">
-        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:2px;">${caption}</figcaption>
+      <figure class="inl-161b6503" role="img" aria-label="${escapeHtml(caption)}. ${escapeHtml(summary)}">
+        <figcaption class="inl-0b13cea0">${caption}</figcaption>
         ${providerBlocks}
       </figure>`;
     })
@@ -237,7 +237,7 @@ function renderResultsCharts(results) {
   }
 
   el.innerHTML = `
-    <div style="padding:12px 16px;background:var(--surface);border:1px solid var(--border-slate-light);border-radius:8px;">
+    <div class="inl-28b46c42">
       ${charts}
     </div>`;
   el.classList.remove("hidden");
@@ -272,16 +272,16 @@ function _reportHeadline(results) {
     : 0;
 
   const tile = (label, value, accent) => `
-      <div style="flex:1 1 130px;min-width:130px;border:1px solid var(--border-slate-light);border-radius:8px;padding:10px 12px;background:var(--surface-tint);">
+      <div class="inl-c6716b80">
         <div style="font-size:22px;font-weight:800;line-height:1.1;color:${accent || "var(--text)"};">${value}</div>
-        <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-soft);margin-top:3px;">${label}</div>
+        <div class="inl-1283cbed">${label}</div>
       </div>`;
 
   const tiles = [
     tile("VMs assessed", total.toLocaleString()),
     tile(
       "Matched",
-      `${matched.toLocaleString()} <span style="font-size:13px;font-weight:600;">(${pct}%)</span>`,
+      `${matched.toLocaleString()} <span class="inl-e378797d">(${pct}%)</span>`,
       "var(--good-strong)",
     ),
     unmatched > 0
@@ -309,18 +309,18 @@ function _reportHeadline(results) {
       const win = s.vcpus >= 0 && s.memory >= 0;
       const color = win ? "var(--good-strong)" : "var(--amber-strong)";
       return `
-        <div style="font-size:12px;margin:2px 0;color:var(--text-body);">
-          <strong style="color:var(--text);">${escapeHtml(s.provider)}</strong>
+        <div class="inl-cc77be06">
+          <strong class="inl-e0b98047">${escapeHtml(s.provider)}</strong>
           <span style="color:${color};font-weight:700;"> ${parts.join(" · ")}</span>
-          <span style="color:var(--text-soft);"> vs ${escapeHtml(s.baseline)}</span>
+          <span class="inl-a2aae0fb"> vs ${escapeHtml(s.baseline)}</span>
         </div>`;
     })
     .filter(Boolean)
     .join("");
 
   const savingsBlock = savingsLines
-    ? `<figure style="margin:14px 0 0 0;">
-        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:4px;">Right-sizing</figcaption>
+    ? `<figure class="inl-161b6503">
+        <figcaption class="inl-87ca09c7">Right-sizing</figcaption>
         ${savingsLines}
       </figure>`
     : "";
@@ -332,23 +332,23 @@ function _reportHeadline(results) {
   const priceLines = Object.entries(results.priceSavings || {})
     .map(
       ([provider, s]) => `
-        <div style="font-size:12px;margin:2px 0;color:var(--text-body);">
-          <strong style="color:var(--text);">${escapeHtml(provider)}</strong>
-          <span style="font-weight:700;"> ${s.pct === 0 ? "same" : (s.pct > 0 ? "−" : "+") + Math.abs(s.pct) + "%"}</span>
-          <span style="color:var(--text-soft);"> ranked cost, Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</span>
+        <div class="inl-cc77be06">
+          <strong class="inl-e0b98047">${escapeHtml(provider)}</strong>
+          <span class="inl-758a8873"> ${s.pct === 0 ? "same" : (s.pct > 0 ? "−" : "+") + Math.abs(s.pct) + "%"}</span>
+          <span class="inl-a2aae0fb"> ranked cost, Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</span>
         </div>`,
     )
     .join("");
   const priceBlock = priceLines
-    ? `<figure style="margin:14px 0 0 0;">
-        <figcaption style="font-size:12px;font-weight:600;color:var(--text-body);margin-bottom:4px;">Relative cost</figcaption>
+    ? `<figure class="inl-161b6503">
+        <figcaption class="inl-87ca09c7">Relative cost</figcaption>
         ${priceLines}
-        <p style="font-size:10px;color:var(--text-soft);margin:4px 0 0 0;">Relative ranking only, not a quote — use your provider's pricing calculator for actual cost.</p>
+        <p class="inl-ef3d4d96">Relative ranking only, not a quote — use your provider's pricing calculator for actual cost.</p>
       </figure>`
     : "";
 
   return `
-    <div style="display:flex;flex-wrap:wrap;gap:10px;">${tiles}</div>
+    <div class="inl-760171c6">${tiles}</div>
     ${savingsBlock}
     ${priceBlock}`;
 }
@@ -382,11 +382,11 @@ function buildExecutiveReport(results) {
     .join("");
 
   return `
-    <section style="max-width:760px;margin:0 auto;padding:20px 24px;color:var(--text);background:var(--surface);font-family:inherit;">
-      <header style="border-bottom:2px solid var(--border-slate-light);padding-bottom:10px;margin-bottom:16px;">
-        <h1 style="margin:0;font-size:20px;font-weight:800;color:var(--heading-indigo);">Executive summary</h1>
-        <p style="margin:2px 0 0 0;font-size:13px;color:var(--text-body);">Cloud instance recommendations</p>
-        <p style="margin:6px 0 0 0;font-size:11px;color:var(--text-soft);">Generated ${escapeHtml(generated)}${asOf}</p>
+    <section class="inl-b6dc36cb">
+      <header class="inl-683c6083">
+        <h1 class="inl-7472b8d4">Executive summary</h1>
+        <p class="inl-6640434a">Cloud instance recommendations</p>
+        <p class="inl-dce6870b">Generated ${escapeHtml(generated)}${asOf}</p>
       </header>
       ${_reportHeadline(results)}
       ${charts}

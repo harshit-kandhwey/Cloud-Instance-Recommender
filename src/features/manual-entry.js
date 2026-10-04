@@ -115,9 +115,9 @@ function renderManualEntry() {
       const listAttr = d.list ? ` list="${d.list}"` : "";
       const valueAttr = d.value ? ` value="${escapeHtml(d.value)}"` : "";
       return `
-      <div style="display: flex; flex-direction: column; gap: 2px;">
-        <label for="manual_${i}" style="font-size: 11px; font-weight: 600; color: var(--text-body);">${escapeHtml(d.label)}</label>
-        <input id="manual_${i}" type="${d.type}"${listAttr}${valueAttr} placeholder="${escapeHtml(d.placeholder || "")}" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 140px;" />
+      <div class="inl-32bee059">
+        <label class="inl-bd856761" for="manual_${i}">${escapeHtml(d.label)}</label>
+        <input id="manual_${i}" type="${d.type}"${listAttr}${valueAttr} placeholder="${escapeHtml(d.placeholder || "")}" class="form-control inl-5e7cdbf3" />
       </div>`;
     })
     .join("");
@@ -146,33 +146,28 @@ function renderManualEntry() {
   );
   const listCols = ["VM Name", "CPU Count", "Memory (GB)", ...regionCols];
   const listHtml = manualVMs.length
-    ? `<div style="overflow-x: auto; margin-top: 10px;">
-        <table style="border-collapse: collapse; font-size: 12px;">
+    ? `<div class="inl-753c7492">
+        <table class="inl-1cf2b7de">
           <thead><tr>${listCols
-            .map(
-              (c) =>
-                `<th style="padding: 4px 10px; text-align: left; border-bottom: 1px solid var(--border-slate);">${escapeHtml(c)}</th>`,
-            )
+            .map((c) => `<th class="inl-50920e1c">${escapeHtml(c)}</th>`)
             .join("")}<th></th></tr></thead>
-          <tbody>${manualVMs
+          <tbody class="inl-f99adf42">${manualVMs
             .map((vm, i) => {
               const beingEdited = i === window._manualEditIndex;
-              const rowStyle = beingEdited
-                ? ' style="background: var(--info-bg);"'
-                : "";
+              const rowStyle = beingEdited ? "" : "";
               return `<tr${rowStyle}>${listCols
                 .map(
                   (c) =>
-                    `<td style="padding: 3px 10px; border-bottom: 1px solid var(--border-lighter);">${escapeHtml(vm[c] || "")}</td>`,
+                    `<td class="inl-525a655e">${escapeHtml(vm[c] || "")}</td>`,
                 )
                 .join(
                   "",
-                )}<td style="padding: 3px 6px; border-bottom: 1px solid var(--border-lighter); white-space: nowrap;"><button${actionAttrs("click", "manualEditVM", [i])} aria-label="Edit VM ${i + 1}" title="Edit this row in the form above" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️</button> <button${actionAttrs("click", "manualRemoveVM", [i])} aria-label="Remove VM ${i + 1}" title="Remove" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--red-strong); cursor: pointer;">✕</button></td></tr>`;
+                )}<td class="inl-97161940"><button class="inl-da56a434"${actionAttrs("click", "manualEditVM", [i])} aria-label="Edit VM ${i + 1}" title="Edit this row in the form above">✏️</button> <button class="inl-7cdc38ea"${actionAttrs("click", "manualRemoveVM", [i])} aria-label="Remove VM ${i + 1}" title="Remove">✕</button></td></tr>`;
             })
             .join("")}</tbody>
         </table>
       </div>`
-    : `<p style="font-size: 12px; color: var(--text-soft); margin-top: 10px;">No VMs added yet — fill the fields and click Add VM.</p>`;
+    : `<p class="inl-7fdb9de7">No VMs added yet — fill the fields and click Add VM.</p>`;
 
   const editing = manualEditingRow();
 
@@ -180,38 +175,38 @@ function renderManualEntry() {
   const copiesField = editing
     ? ""
     : `
-      <div style="display: flex; flex-direction: column; gap: 2px;">
-        <label for="manualCopies" style="font-size: 11px; font-weight: 600; color: var(--text-body);">Copies</label>
-        <input id="manualCopies" type="number" min="1" max="${MANUAL_MAX_COPIES}" value="1" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 80px;" title="Add this many VMs at once, numbered from the name above" />
+      <div class="inl-32bee059">
+        <label class="inl-bd856761" for="manualCopies">Copies</label>
+        <input id="manualCopies" type="number" min="1" max="${MANUAL_MAX_COPIES}" value="1" class="form-control inl-81e4a011" title="Add this many VMs at once, numbered from the name above" />
       </div>`;
 
   const formButtons = editing
-    ? `<button class="btn btn-primary"${actionAttrs("click", "manualSaveEdit")} style="padding: 8px 16px; font-size: 13px;">💾 Save changes</button>
-       <button class="btn btn-secondary"${actionAttrs("click", "manualCancelEdit")} style="padding: 8px 16px; font-size: 13px;">Cancel</button>`
-    : `<button class="btn btn-secondary"${actionAttrs("click", "manualAddVM")} style="padding: 8px 16px; font-size: 13px;">➕ Add VM</button>`;
+    ? `<button class="btn btn-primary inl-b38eac4a"${actionAttrs("click", "manualSaveEdit")}>💾 Save changes</button>
+       <button class="btn btn-secondary inl-b38eac4a"${actionAttrs("click", "manualCancelEdit")}>Cancel</button>`
+    : `<button class="btn btn-secondary inl-b38eac4a"${actionAttrs("click", "manualAddVM")}>➕ Add VM</button>`;
 
   const clearButton = window._manualConfirmClear
-    ? `<button class="btn btn-secondary"${actionAttrs("click", "manualClearVMs")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px; color: var(--red-strong);">🗑️ Really remove all ${manualVMs.length}?</button>
-       <button class="btn btn-secondary"${actionAttrs("click", "manualCancelClear")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">Keep them</button>`
-    : `<button class="btn btn-secondary"${actionAttrs("click", "manualConfirmClear")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`;
+    ? `<button class="btn btn-secondary inl-cf141049"${actionAttrs("click", "manualClearVMs")}>🗑️ Really remove all ${manualVMs.length}?</button>
+       <button class="btn btn-secondary inl-398932ea"${actionAttrs("click", "manualCancelClear")}>Keep them</button>`
+    : `<button class="btn btn-secondary inl-398932ea"${actionAttrs("click", "manualConfirmClear")}>🗑️ Clear all</button>`;
 
   // Apply is withheld mid-edit: it reads the saved list, so an unsaved edit would
   // ingest the row's OLD values. Save or Cancel first.
   const applyButtons =
     manualVMs.length && !editing
-      ? `<button class="btn btn-primary"${actionAttrs("click", "manualApplyVMs")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
+      ? `<button class="btn btn-primary inl-398932ea"${actionAttrs("click", "manualApplyVMs")}>✅ Use these ${manualVMs.length} VM(s)</button>
        ${clearButton}`
       : "";
 
   section.innerHTML = `
     <div class="stats-info">
       <p><strong>✍️ Manual VM Entry</strong></p>
-      <p style="font-size: 12px; color: var(--text-soft);">${
+      <p class="inl-1a752b01">${
         editing
           ? "Editing the highlighted row — change the fields and save."
           : "Handy for a few VMs — for large inventories use the file upload above. ENV/OS/Workload/Compliance defaults from Advanced Filtering apply to all rows."
       }</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+      <div class="inl-c8893f69">
         ${inputs}
         ${copiesField}
         ${formButtons}

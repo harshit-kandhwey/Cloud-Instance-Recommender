@@ -8,7 +8,7 @@ function setupStickyGenerate() {
 
   const bar = document.createElement("div");
   bar.id = "_stickyGenerateBar";
-  bar.innerHTML = `<button class="btn btn-primary"${actionAttrs("click", "generateRecommendations")} style="padding:10px 32px;font-size:1rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);">🔄 Generate Recommendations</button>`;
+  bar.innerHTML = `<button class="btn btn-primary inl-c18bacbd"${actionAttrs("click", "generateRecommendations")}>🔄 Generate Recommendations</button>`;
   Object.assign(bar.style, {
     position: "fixed",
     bottom: "20px",

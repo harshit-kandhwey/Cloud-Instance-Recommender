@@ -172,7 +172,7 @@ function _buildStatsHtml(results) {
   // and the disclaimer belongs next to it, not assumed understood.
   const priceEntries = Object.entries(results.priceSavings || {});
   const priceSummary = priceEntries.length
-    ? `<span style="color:var(--text-body);" title="Relative ranking only, not a quote — use your provider's pricing calculator for actual cost">💲 ${priceEntries
+    ? `<span class="inl-6efaeb5e" title="Relative ranking only, not a quote — use your provider's pricing calculator for actual cost">💲 ${priceEntries
         .map(
           ([provider, s]) =>
             `${escapeHtml(provider)} Optimized ranks <strong>${s.pct === 0 ? "the same as" : s.pct > 0 ? "~" + s.pct + "% lower than" : "~" + Math.abs(s.pct) + "% higher than"}</strong> Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})`,
@@ -189,23 +189,23 @@ function _buildStatsHtml(results) {
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i);
   const freshnessNote = dates.length
-    ? `<span style="color:var(--text-faint);font-size:0.8em;">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
+    ? `<span class="inl-0fe8a2e1">· Data as of ${escapeHtml(dates.join(" / "))}</span>`
     : "";
 
   const html = `
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;margin-bottom:12px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:8px;font-size:0.875em;">
-      <span style="font-weight:700;color:var(--good-strong);">✅ Generation complete</span>
-      <span style="color:var(--text-body);">📊 <strong>${results.length}</strong> rows</span>
+    <div class="inl-14aa00f3">
+      <span class="inl-561361a9">✅ Generation complete</span>
+      <span class="inl-6efaeb5e">📊 <strong>${results.length}</strong> rows</span>
       ${
         hasRecommendations
-          ? `<span style="color:var(--good-strong);">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
-      ${noMatchRows > 0 ? `<span style="color:var(--red-strong);">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}`
-          : `<span style="color:var(--text-soft);" title="These results carry no Like-to-Like or Optimized Instance column, so there is no match rate to report">No recommendation columns</span>`
+          ? `<span class="inl-16bd8c6c">✓ <strong>${matchedRows}</strong> matched (${pct}%)</span>
+      ${noMatchRows > 0 ? `<span class="inl-f584079b">✗ <strong>${noMatchRows}</strong> no match</span>` : ""}`
+          : `<span class="inl-a2aae0fb" title="These results carry no Like-to-Like or Optimized Instance column, so there is no match rate to report">No recommendation columns</span>`
       }
-      ${appCount > 0 ? `<span style="color:var(--text-body);">🧩 <strong>${appCount}</strong> apps</span>` : ""}
+      ${appCount > 0 ? `<span class="inl-6efaeb5e">🧩 <strong>${appCount}</strong> apps</span>` : ""}
       ${savingsChips}
       ${priceSummary}
-      ${rulesSummary ? `<span style="color:var(--text-soft);">Rules fired: ${rulesSummary}</span>` : ""}
+      ${rulesSummary ? `<span class="inl-a2aae0fb">Rules fired: ${rulesSummary}</span>` : ""}
       ${freshnessNote}
     </div>`;
 
@@ -435,7 +435,7 @@ function _renderPreviewTable(
   });
 
   function rulesHtml(val) {
-    if (!val) return '<span style="color:var(--text-disabled)">—</span>';
+    if (!val) return '<span class="inl-ad85eba4">—</span>';
     return val
       .split("|")
       .map((p) => p.trim())
@@ -463,11 +463,10 @@ function _renderPreviewTable(
   const previewRows = rows.slice(pageStart, pageEnd);
 
   const sortArrow = (i) => {
-    if (sortCol !== i)
-      return `<span style="opacity:0.35;margin-left:4px;">⇅</span>`;
+    if (sortCol !== i) return `<span class="inl-f98e5c8c">⇅</span>`;
     return sortDir === 1
-      ? `<span style="margin-left:4px;">▲</span>`
-      : `<span style="margin-left:4px;">▼</span>`;
+      ? `<span class="inl-ee820015">▲</span>`
+      : `<span class="inl-ee820015">▼</span>`;
   };
 
   const rangeLabel = `${pageStart + 1}–${pageEnd} of ${totalRows}`;
@@ -479,9 +478,9 @@ function _renderPreviewTable(
     : `${rangeLabel} rows`;
 
   const pageSizeSelect = `
-    <label style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Rows
-      <select id="previewPageSize" aria-label="Rows per page"${actionAttrs("change", "_previewSetPageSize", [{ $: "value" }])}
-        style="margin-left:4px;padding:4px 6px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);">
+    <label class="inl-3f2c0da8">Rows
+      <select class="inl-3a32899f" id="previewPageSize" aria-label="Rows per page"${actionAttrs("change", "_previewSetPageSize", [{ $: "value" }])}
+       >
         ${PAGE_SIZE_OPTIONS.map(
           (s) =>
             `<option value="${s === Infinity ? "all" : s}"${s === pageSize ? " selected" : ""}>${pageSizeLabel(s)}</option>`,
@@ -494,13 +493,13 @@ function _renderPreviewTable(
   // carries the column's INDEX, never its name.
   const hiddenCount = displayCols.length - visibleCols.length;
   const columnsMenu = `
-    <details id="previewColsMenu"${colsMenuOpen ? " open" : ""} ontoggle="window._previewColsMenuState(this.open)" style="position:relative;">
-      <summary style="list-style:none;cursor:pointer;font-size:12px;color:var(--text-soft);border:1px solid var(--border-slate);border-radius:6px;padding:4px 8px;background:var(--surface);white-space:nowrap;user-select:none;">🧬 Columns${hiddenCount ? ` (${hiddenCount} hidden)` : ""}</summary>
-      <div style="position:absolute;z-index:3;margin-top:4px;right:0;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--border-slate);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.18);padding:6px 4px;min-width:180px;">
+    <details class="inl-87db2275" id="previewColsMenu"${colsMenuOpen ? " open" : ""} ontoggle="window._previewColsMenuState(this.open)">
+      <summary class="inl-8182ead2">🧬 Columns${hiddenCount ? ` (${hiddenCount} hidden)` : ""}</summary>
+      <div class="inl-03e7ae88">
         ${displayCols
           .map(
             (c, i) =>
-              `<label style="display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:12px;color:var(--text-body);white-space:nowrap;cursor:pointer;">
+              `<label class="inl-8b99e677">
                 <input type="checkbox" id="previewColToggle_${i}"${hidden.has(c) ? "" : " checked"}${actionAttrs("change", "_previewToggleColumn", [i, { $: "checked" }])} aria-label="Show column ${escapeHtml(c)}" />
                 ${escapeHtml(c)}
               </label>`,
@@ -517,57 +516,57 @@ function _renderPreviewTable(
       style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
   const paginationNav =
     pageCount > 1
-      ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap;">
+      ? `<div class="inl-72b39352">
           ${navBtn("‹ Prev", pageIndex - 1, pageIndex === 0, "Previous page", "previewNavPrev")}
-          <span style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Page ${pageIndex + 1} of ${pageCount}</span>
+          <span class="inl-3f2c0da8">Page ${pageIndex + 1} of ${pageCount}</span>
           ${navBtn("Next ›", pageIndex + 1, pageIndex >= pageCount - 1, "Next page", "previewNavNext")}
         </div>`
       : "";
 
   let html = _buildStatsHtml(results);
   html += `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-      <p style="font-weight:600;margin:0;">📋 Results Preview (${countLabel})</p>
-      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div class="inl-5fd9db3d">
+      <p class="inl-7beecbb1">📋 Results Preview (${countLabel})</p>
+      <span class="inl-6b6f9f12">
         ${pageSizeSelect}
         ${columnsMenu}
-        <label style="font-size:12px;color:var(--text-soft);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;">
+        <label class="inl-41528f40">
           <input type="checkbox" id="previewNoMatchOnly"${noMatchOnly ? " checked" : ""}${actionAttrs("change", "_previewToggleNoMatch", [{ $: "checked" }])} aria-label="Show only rows with no matching instance" />
           No-match only
         </label>
-        <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
+        <input class="inl-da860153" id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
          ${actionAttrs("input", "_previewFilterChanged", [{ $: "value" }])}
-          style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
-        <button type="button"${actionAttrs("click", "copyPreviewToClipboard")}
+          />
+        <button class="inl-87a378ac" type="button"${actionAttrs("click", "copyPreviewToClipboard")}
           title="Copy every matching row (all ${rows.length}, not just this page) as tab-separated text, ready to paste into a spreadsheet"
-          style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:pointer;white-space:nowrap;">📋 Copy</button>
+         >📋 Copy</button>
       </span>
     </div>
     ${paginationNav}
-    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;border:1px solid var(--border-slate-light);border-radius:6px;">
-      <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px;" id="_previewTable">
+    <div class="inl-553ef2e1">
+      <table class="inl-98c1aa9e" id="_previewTable">
         <thead>
-          <tr style="position:sticky;top:0;z-index:1;background:var(--table-head-bg);color:var(--table-head-text);">
-            <th style="padding:6px 8px;white-space:nowrap;cursor:default;"></th>
+          <tr class="inl-6df5ed6c">
+            <th class="inl-a2bdb3c1"></th>
             ${displayCols
               .map((c, i) =>
                 hidden.has(c)
                   ? ""
-                  : `<th scope="col" id="previewSortTh_${i}" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}"${actionAttrs("click", "_sortPreview", [i])}${actionAttrs("keydown", "_sortPreview", [i], { keys: ["Enter", " "], prevent: true })} style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+                  : `<th class="inl-e3934feb" scope="col" id="previewSortTh_${i}" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}"${actionAttrs("click", "_sortPreview", [i])}${actionAttrs("keydown", "_sortPreview", [i], { keys: ["Enter", " "], prevent: true })}>${escapeHtml(c)}${sortArrow(i)}</th>`,
               )
               .join("")}
           </tr>
-          <tr style="background:var(--surface-alt);">
-            <th style="padding:2px 4px;text-align:center;">${
+          <tr class="inl-82fb5ad3">
+            <th class="inl-04b437d1">${
               colFilterActive
-                ? `<button type="button"${actionAttrs("click", "_previewClearColumnFilters")} title="Clear all column filters" aria-label="Clear all column filters" style="font-size:10px;line-height:1;padding:2px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);color:var(--text-body);cursor:pointer;">✕</button>`
+                ? `<button class="inl-7fa47d10" type="button"${actionAttrs("click", "_previewClearColumnFilters")} title="Clear all column filters" aria-label="Clear all column filters">✕</button>`
                 : ""
             }</th>
             ${displayCols
               .map((c, i) =>
                 hidden.has(c)
                   ? ""
-                  : `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…"${actionAttrs("input", "_previewColumnFilterChanged", [i, { $: "value" }])} style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
+                  : `<th class="inl-b785aed8"><input class="inl-56b469dc" type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…"${actionAttrs("input", "_previewColumnFilterChanged", [i, { $: "value" }])} /></th>`,
               )
               .join("")}
           </tr>
@@ -590,10 +589,10 @@ function _renderPreviewTable(
 
     html += `<tr style="background:${bg};">`;
     // Copy button
-    html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
-      <button${actionAttrs("click", "copyTextToClipboard", [rowTsv, `Copied row ${absoluteRow} to the clipboard`])}
+    html += `<td class="inl-add0a10e">
+      <button class="inl-c10f30bd"${actionAttrs("click", "copyTextToClipboard", [rowTsv, `Copied row ${absoluteRow} to the clipboard`])}
         title="Copy this row" aria-label="Copy row ${absoluteRow}"
-        style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
+       >⎘</button>
     </td>`;
 
     displayCols.forEach((col) => {
@@ -605,8 +604,8 @@ function _renderPreviewTable(
         cellContent = rulesHtml(String(val));
       } else if (isReasonCol(col)) {
         cellContent = val
-          ? `<span style="color:var(--amber-deep);font-size:0.85em;">${escapeHtml(String(val))}</span>`
-          : '<span style="color:var(--text-disabled)">—</span>';
+          ? `<span class="inl-559ae1c3">${escapeHtml(String(val))}</span>`
+          : '<span class="inl-ad85eba4">—</span>';
       } else if (isInstanceCol(col)) {
         const bad = isNoMatch(val);
         const color = bad ? "var(--red-strong)" : "var(--ok-strong)";
@@ -617,7 +616,7 @@ function _renderPreviewTable(
         const verdict = bad ? "" : _rightsizeVerdictHtml(row, col);
         cellContent = val
           ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>${fit}${verdict}`
-          : '<span style="color:var(--text-disabled)">—</span>';
+          : '<span class="inl-ad85eba4">—</span>';
       } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
         // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
         const l2lVal = parseFloat(row[l2lVcpuColMap[col]]);
@@ -632,7 +631,7 @@ function _renderPreviewTable(
         cellContent =
           val !== "" && val !== undefined
             ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
-            : '<span style="color:var(--text-disabled)">—</span>';
+            : '<span class="inl-ad85eba4">—</span>';
       } else if (col === COLUMN_MAPPINGS.memory) {
         // The provisioned-memory input cell trails the workload-shape flag — it's
         // the numerator of the RAM-per-vCPU ratio the flag reports.
@@ -640,14 +639,14 @@ function _renderPreviewTable(
         cellContent =
           val !== "" && val !== undefined
             ? `${escapeHtml(String(val))}${shape}`
-            : '<span style="color:var(--text-disabled)">—</span>';
+            : '<span class="inl-ad85eba4">—</span>';
       } else {
         cellContent =
           val !== "" && val !== undefined
             ? escapeHtml(String(val))
-            : '<span style="color:var(--text-disabled)">—</span>';
+            : '<span class="inl-ad85eba4">—</span>';
       }
-      html += `<td style="padding:5px 10px;border-bottom:1px solid var(--border-lighter);vertical-align:top;">${cellContent}</td>`;
+      html += `<td class="inl-ad974039">${cellContent}</td>`;
     });
     html += `</tr>`;
   });
@@ -659,7 +658,7 @@ function _renderPreviewTable(
         : needle && !noMatchOnly && !colFilterActive
           ? `No rows match "${escapeHtml(needle)}"`
           : "No rows match the current filters.";
-    html += `<tr><td colspan="${visibleCols.length + 1}" style="padding:14px;text-align:center;color:var(--text-soft);">${emptyMsg}</td></tr>`;
+    html += `<tr><td class="inl-4ed3b064" colspan="${visibleCols.length + 1}">${emptyMsg}</td></tr>`;
   }
 
   html += `</tbody></table></div>`;
@@ -667,11 +666,11 @@ function _renderPreviewTable(
   // whenever a filter is active, including below 20 rows where the count line alone
   // would hide the difference.
   if (filtered) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Showing ${rows.length} of ${results.length} rows${noMatchOnly ? " (no-match only)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
+    html += `<p class="inl-ed27cab0">Showing ${rows.length} of ${results.length} rows${noMatchOnly ? " (no-match only)" : ""}. Downloads always contain the full ${results.length}-row dataset, in the sort order shown.</p>`;
   } else if (pageCount > 1) {
-    html += `<p style="font-size:0.82em;color:var(--text-soft);margin-top:4px;">Download the CSV for the full ${results.length}-row dataset in a single file.</p>`;
+    html += `<p class="inl-ed27cab0">Download the CSV for the full ${results.length}-row dataset in a single file.</p>`;
   }
-  html += `<p style="font-size:0.8em;color:var(--text-faint);margin-top:4px;">Click any column header to sort · <span style="color:var(--good-strong);">Green Optimized vCPUs</span> = rightsized down · <span style="color:var(--amber-strong);">Amber</span> = rightsized up · <span style="color:var(--amber-strong);">▲%</span> on a like-for-like match = over-provisioned by that much on its worst axis · Red rows = no match</p>`;
+  html += `<p class="inl-9658db4a">Click any column header to sort · <span class="inl-16bd8c6c">Green Optimized vCPUs</span> = rightsized down · <span class="inl-f8e319cf">Amber</span> = rightsized up · <span class="inl-f8e319cf">▲%</span> on a like-for-like match = over-provisioned by that much on its worst axis · Red rows = no match</p>`;
 
   container.innerHTML = html;
   container.classList.remove("hidden");
@@ -890,7 +889,7 @@ function updateRelaxSuggestion(results) {
   panel.className = "alert alert-info";
   panel.innerHTML = `
     💡 <strong>${rescues}</strong> of the ${unmatched} unmatched row(s) would match if you relaxed one filter: <strong>${escapeHtml(label)}</strong>.
-    <button type="button" class="btn btn-secondary"${actionAttrs("click", "applyRelaxSuggestion")} style="margin-left: 8px; padding: 4px 12px; font-size: 13px;">🔓 Relax it and regenerate</button>`;
+    <button type="button" class="btn btn-secondary inl-f4db7799"${actionAttrs("click", "applyRelaxSuggestion")}>🔓 Relax it and regenerate</button>`;
   panel.classList.remove("hidden");
 }
 

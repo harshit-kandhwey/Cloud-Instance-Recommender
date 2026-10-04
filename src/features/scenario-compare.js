@@ -697,7 +697,7 @@ function renderPairwiseComparison(result, A, B) {
   result.innerHTML = `
     <div class="scenario-result">
       <div class="scenario-legend">Comparing <b>A: ${sEsc(A.label)}</b> ↔ <b>B: ${sEsc(B.label)}</b> — showing only changed rows.
-        <button type="button" class="btn btn-secondary"${actionAttrs("click", "downloadScenarioComparison")} style="margin-left:8px;">⬇ Export comparison CSV</button>
+        <button type="button" class="btn btn-secondary inl-6170d94c"${actionAttrs("click", "downloadScenarioComparison")}>⬇ Export comparison CSV</button>
       </div>
       ${configBlock}${summary}${note}${body}
     </div>`;
@@ -789,7 +789,7 @@ function renderNWayComparison(result, list) {
   result.innerHTML = `
     <div class="scenario-result">
       <div class="scenario-legend">Comparing <b>${list.length} runs</b> (${runList}) — showing only rows that differ across them.
-        <button type="button" class="btn btn-secondary"${actionAttrs("click", "downloadScenarioComparison")} style="margin-left:8px;">⬇ Export comparison CSV</button>
+        <button type="button" class="btn btn-secondary inl-6170d94c"${actionAttrs("click", "downloadScenarioComparison")}>⬇ Export comparison CSV</button>
       </div>
       ${summary}${note}${body}
     </div>`;
