@@ -74,7 +74,7 @@ function colIndex(ctx, name) {
     );
     check(
       "a Clear-all control appears once a column filter is set",
-      /_previewClearColumnFilters\(\)/.test(html),
+      /data-on-click="_previewClearColumnFilters"/.test(html),
     );
   }
 

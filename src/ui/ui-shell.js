@@ -282,19 +282,21 @@ function saveSectionState(key, collapsed) {
 // A section the user has opened stays open even if it is a default-collapsed one.
 function restoreSectionStates() {
   const saved = loadSectionStates();
-  document.querySelectorAll(".section-header[onclick]").forEach((header) => {
-    const section = header.parentElement;
-    if (!section) return;
-    const key = sectionKey(header);
-    const remembered = key ? saved[key] : undefined;
-    const collapsed =
-      remembered !== undefined
-        ? remembered === "collapsed"
-        : DEFAULT_COLLAPSED_SECTIONS.includes(key);
+  document
+    .querySelectorAll('.section-header[data-on-click="toggleSection"]')
+    .forEach((header) => {
+      const section = header.parentElement;
+      if (!section) return;
+      const key = sectionKey(header);
+      const remembered = key ? saved[key] : undefined;
+      const collapsed =
+        remembered !== undefined
+          ? remembered === "collapsed"
+          : DEFAULT_COLLAPSED_SECTIONS.includes(key);
 
-    section.classList.toggle("collapsed", collapsed);
-    header.setAttribute("aria-expanded", collapsed ? "false" : "true");
-  });
+      section.classList.toggle("collapsed", collapsed);
+      header.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    });
 }
 
 // Toggle section collapse
@@ -309,21 +311,23 @@ function toggleSection(header) {
 // Makes the clickable-div section headers keyboard-operable and wires the
 // dynamic status areas as live regions. Runs once on DOMContentLoaded.
 function enhanceAccessibility() {
-  document.querySelectorAll(".section-header[onclick]").forEach((header) => {
-    header.setAttribute("role", "button");
-    header.setAttribute("tabindex", "0");
-    const section = header.parentElement;
-    header.setAttribute(
-      "aria-expanded",
-      section && section.classList.contains("collapsed") ? "false" : "true",
-    );
-    header.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        header.click();
-      }
+  document
+    .querySelectorAll('.section-header[data-on-click="toggleSection"]')
+    .forEach((header) => {
+      header.setAttribute("role", "button");
+      header.setAttribute("tabindex", "0");
+      const section = header.parentElement;
+      header.setAttribute(
+        "aria-expanded",
+        section && section.classList.contains("collapsed") ? "false" : "true",
+      );
+      header.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          header.click();
+        }
+      });
     });
-  });
 
   const fileStatus = document.getElementById("fileStatus");
   if (fileStatus) fileStatus.setAttribute("aria-live", "polite");

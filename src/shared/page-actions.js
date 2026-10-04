@@ -28,10 +28,17 @@
         var el =
           target && target.closest ? target.closest("[" + attr + "]") : null;
         if (!el) return;
+        var sfx = "-" + type;
+        if (el.hasAttribute("data-keys" + sfx)) {
+          var keys = JSON.parse(el.getAttribute("data-keys" + sfx));
+          if (keys.indexOf(event.key) === -1) return;
+        }
         var fn = window[el.getAttribute(attr)];
         if (typeof fn !== "function") return;
-        if (el.hasAttribute("data-args")) {
-          var list = JSON.parse(el.getAttribute("data-args"));
+        if (el.hasAttribute("data-prevent" + sfx)) event.preventDefault();
+        if (el.hasAttribute("data-stop" + sfx)) event.stopPropagation();
+        if (el.hasAttribute("data-args" + sfx)) {
+          var list = JSON.parse(el.getAttribute("data-args" + sfx));
           fn.apply(
             el,
             list.map(function (a) {
@@ -42,7 +49,7 @@
         else if (el.hasAttribute("data-arg"))
           fn.call(el, el.getAttribute("data-arg"));
         else fn.call(el);
-        var then = el.getAttribute("data-then");
+        var then = el.getAttribute("data-then" + sfx);
         if (then && typeof window[then] === "function") window[then]();
       },
       type === "blur",

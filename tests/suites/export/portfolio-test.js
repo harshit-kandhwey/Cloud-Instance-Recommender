@@ -662,8 +662,10 @@ console.log(
   // break out of the onclick attribute's own double quotes.
   run("__unassignedHtml = renderAppPanel(__m.unassigned, __m, 'unassigned');");
   check(
-    "the button calls downloadAppCsv('unassigned') with single quotes, not a broken attribute",
-    run("__unassignedHtml.includes(\"downloadAppCsv('unassigned')\")"),
+    "the button calls downloadAppCsv with the string 'unassigned', not a broken attribute",
+    run(
+      "__unassignedHtml.includes('data-on-click=\"downloadAppCsv\"') && __unassignedHtml.includes('data-args-click=\"[&quot;unassigned&quot;]\"')",
+    ),
     run("__unassignedHtml").match(/onclick="[^"]*"/)?.[0],
   );
   check(
@@ -679,7 +681,7 @@ console.log(
   const billingIdx = run("__billingIdx");
   check(
     "a numeric app index is emitted as a bare number",
-    run(`__billingHtml.includes("downloadAppCsv(${billingIdx})")`),
+    run(`__billingHtml.includes('data-args-click="[${billingIdx}]"')`),
     run("__billingHtml").match(/onclick="[^"]*"/)?.[0],
   );
 }

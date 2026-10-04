@@ -422,7 +422,7 @@ function renderToasts() {
         <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border-soft);border-left:4px solid ${tone.color};border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);font-size:0.9rem;line-height:1.4;">
           <span aria-hidden="true">${tone.icon}</span>
           <span style="flex:1;">${escapeHtml(toast.message)}</span>
-          <button type="button" onclick="dismissToast(${toast.id})" aria-label="Dismiss notification" style="border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:0 2px;">×</button>
+          <button type="button"${actionAttrs("click", "dismissToast", [toast.id])} aria-label="Dismiss notification" style="border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;line-height:1;padding:0 2px;">×</button>
         </div>`;
     })
     .join("");
@@ -702,9 +702,15 @@ function actionAttrs(type, fn, args, opts) {
   var o = opts || {};
   var list = (args || []).slice();
   if (o.self) list.unshift({ $: "this" });
-  var out = ' data-on-' + type + '="' + escapeHtml(fn) + '"';
-  if (list.length) out += ' data-args="' + escapeHtml(JSON.stringify(list)) + '"';
-  if (o.then) out += ' data-then="' + escapeHtml(o.then) + '"';
+  var t = "-" + type;
+  var out = " data-on" + t + '="' + escapeHtml(fn) + '"';
+  if (list.length)
+    out += " data-args" + t + '="' + escapeHtml(JSON.stringify(list)) + '"';
+  if (o.then) out += " data-then" + t + '="' + escapeHtml(o.then) + '"';
+  if (o.stop) out += " data-stop" + t;
+  if (o.prevent) out += " data-prevent" + t;
+  if (o.keys)
+    out += " data-keys" + t + '="' + escapeHtml(JSON.stringify(o.keys)) + '"';
   return out;
 }
 

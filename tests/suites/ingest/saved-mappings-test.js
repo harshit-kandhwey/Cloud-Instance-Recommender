@@ -96,7 +96,11 @@ console.log("[what is remembered is visible]");
     /VM → VM Name/.test(html) && /CPUs → CPU Count/.test(html),
     html,
   );
-  check("with a way to forget it", /forgetColumnMapping\(/.test(html), html);
+  check(
+    "with a way to forget it",
+    /data-on-click="forgetColumnMapping"/.test(html),
+    html,
+  );
 }
 
 console.log("[forgetting means the next file asks again]");
@@ -207,12 +211,14 @@ console.log("[a header cannot smuggle script into the Forget button]");
   });
 
   const html = panel(elements).innerHTML;
-  const handler = (html.match(/onclick="forgetColumnMapping\([^)]*\)"/) ||
+  const handler = (html.match(/data-on-click="forgetColumnMapping"[^>]*>/) ||
     [])[0];
   check("the mapping was still saved", Object.keys(saved(store)).length === 1);
   check(
     "the handler is given an index, never the header text",
-    /onclick="forgetColumnMapping\(\d+\)"/.test(html),
+    /data-on-click="forgetColumnMapping"[^>]*data-args-click="\[\d+\]"/.test(
+      html,
+    ),
     handler,
   );
   check(

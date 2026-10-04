@@ -120,7 +120,7 @@ check(
 );
 
 calls.length = 0;
-fire("change", makeEl({ "data-on-change": "fnA", "data-then": "fnC" }));
+fire("change", makeEl({ "data-on-change": "fnA", "data-then-change": "fnC" }));
 check(
   "a paired control runs the second function after the first",
   calls.length === 2 && calls[0][0] === "fnA" && calls[1][0] === "fnC",
@@ -131,16 +131,16 @@ calls.length = 0;
 fire("click", makeEl({ "data-on-click": "missingFunction" }));
 check("a control naming a missing function does nothing", calls.length === 0);
 
-// Generated markup (src/**) builds controls through actionAttrs (app-core.js). A
-// zero-argument handler left as an inline attribute would bypass the dispatcher.
-const srcNoZeroArgInline = walk(path.join(REPO, "src"))
+// Generated markup (src/**) builds controls through actionAttrs (app-core.js). Any
+// inline handler attribute left in src/ would bypass the dispatcher.
+const srcInlineHandlers = walk(path.join(REPO, "src"))
   .map((p) => fs.readFileSync(p, "utf8"))
   .join("\n")
-  .match(/ on(click|change|input|keydown|blur)="[A-Za-z_]\w*\(\)"/g);
+  .match(/ on(click|change|input|keydown|keyup|blur|submit|focus)="/g);
 check(
-  "no zero-argument inline handler remains in src/",
-  !srcNoZeroArgInline,
-  srcNoZeroArgInline ? srcNoZeroArgInline.join(", ") : "",
+  "no inline handler attribute remains in src/",
+  !srcInlineHandlers,
+  srcInlineHandlers ? srcInlineHandlers.join(", ") : "",
 );
 
 {
@@ -151,7 +151,7 @@ check(
   const out = appCore.run(
     `actionAttrs("click", "pick", [1, "x\\"y", { $: "value" }], { self: true })`,
   );
-  const dataArgs = /data-args="([^"]*)"/.exec(out);
+  const dataArgs = /data-args-click="([^"]*)"/.exec(out);
   const decoded = dataArgs
     ? JSON.parse(dataArgs[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&"))
     : null;

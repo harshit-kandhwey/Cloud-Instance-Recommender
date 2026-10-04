@@ -480,7 +480,7 @@ function _renderPreviewTable(
 
   const pageSizeSelect = `
     <label style="font-size:12px;color:var(--text-soft);white-space:nowrap;">Rows
-      <select id="previewPageSize" aria-label="Rows per page" onchange="window._previewSetPageSize(this.value)"
+      <select id="previewPageSize" aria-label="Rows per page"${actionAttrs("change", "_previewSetPageSize", [{ $: "value" }])}
         style="margin-left:4px;padding:4px 6px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);">
         ${PAGE_SIZE_OPTIONS.map(
           (s) =>
@@ -501,7 +501,7 @@ function _renderPreviewTable(
           .map(
             (c, i) =>
               `<label style="display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:12px;color:var(--text-body);white-space:nowrap;cursor:pointer;">
-                <input type="checkbox" id="previewColToggle_${i}"${hidden.has(c) ? "" : " checked"} onchange="window._previewToggleColumn(${i}, this.checked)" aria-label="Show column ${escapeHtml(c)}" />
+                <input type="checkbox" id="previewColToggle_${i}"${hidden.has(c) ? "" : " checked"}${actionAttrs("change", "_previewToggleColumn", [i, { $: "checked" }])} aria-label="Show column ${escapeHtml(c)}" />
                 ${escapeHtml(c)}
               </label>`,
           )
@@ -513,7 +513,7 @@ function _renderPreviewTable(
   // back to the pressed button — deliberately NOT prefixed "previewPage" (would
   // collide with the rows-per-page select when the focus restore tests for nav-ness).
   const navBtn = (label, target, disabled, aria, id) =>
-    `<button type="button" id="${id}" onclick="window._previewGoToPage(${target})"${disabled ? " disabled" : ""} aria-label="${aria}"
+    `<button type="button" id="${id}"${actionAttrs("click", "_previewGoToPage", [target])}${disabled ? " disabled" : ""} aria-label="${aria}"
       style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
   const paginationNav =
     pageCount > 1
@@ -532,11 +532,11 @@ function _renderPreviewTable(
         ${pageSizeSelect}
         ${columnsMenu}
         <label style="font-size:12px;color:var(--text-soft);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;">
-          <input type="checkbox" id="previewNoMatchOnly"${noMatchOnly ? " checked" : ""} onchange="window._previewToggleNoMatch(this.checked)" aria-label="Show only rows with no matching instance" />
+          <input type="checkbox" id="previewNoMatchOnly"${noMatchOnly ? " checked" : ""}${actionAttrs("change", "_previewToggleNoMatch", [{ $: "checked" }])} aria-label="Show only rows with no matching instance" />
           No-match only
         </label>
         <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
-          oninput="window._previewFilterChanged(this.value)"
+         ${actionAttrs("input", "_previewFilterChanged", [{ $: "value" }])}
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
         <button type="button"${actionAttrs("click", "copyPreviewToClipboard")}
           title="Copy every matching row (all ${rows.length}, not just this page) as tab-separated text, ready to paste into a spreadsheet"
@@ -553,21 +553,21 @@ function _renderPreviewTable(
               .map((c, i) =>
                 hidden.has(c)
                   ? ""
-                  : `<th scope="col" id="previewSortTh_${i}" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}" onclick="window._sortPreview(${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window._sortPreview(${i});}" style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
+                  : `<th scope="col" id="previewSortTh_${i}" tabindex="0" aria-sort="${sortCol === i ? (sortDir === 1 ? "ascending" : "descending") : "none"}"${actionAttrs("click", "_sortPreview", [i])}${actionAttrs("keydown", "_sortPreview", [i], { keys: ["Enter", " "], prevent: true })} style="padding:6px 10px;text-align:left;white-space:nowrap;font-weight:600;cursor:pointer;user-select:none;">${escapeHtml(c)}${sortArrow(i)}</th>`,
               )
               .join("")}
           </tr>
           <tr style="background:var(--surface-alt);">
             <th style="padding:2px 4px;text-align:center;">${
               colFilterActive
-                ? `<button type="button" onclick="window._previewClearColumnFilters()" title="Clear all column filters" aria-label="Clear all column filters" style="font-size:10px;line-height:1;padding:2px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);color:var(--text-body);cursor:pointer;">✕</button>`
+                ? `<button type="button"${actionAttrs("click", "_previewClearColumnFilters")} title="Clear all column filters" aria-label="Clear all column filters" style="font-size:10px;line-height:1;padding:2px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);color:var(--text-body);cursor:pointer;">✕</button>`
                 : ""
             }</th>
             ${displayCols
               .map((c, i) =>
                 hidden.has(c)
                   ? ""
-                  : `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…" oninput="window._previewColumnFilterChanged(${i}, this.value)" style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
+                  : `<th style="padding:2px 4px;"><input type="text" id="colfilter_${i}" aria-label="Filter by ${escapeHtml(c)}" placeholder="filter…"${actionAttrs("input", "_previewColumnFilterChanged", [i, { $: "value" }])} style="width:100%;box-sizing:border-box;padding:2px 4px;font-size:10px;font-weight:400;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface);color:var(--text);" /></th>`,
               )
               .join("")}
           </tr>
@@ -591,7 +591,7 @@ function _renderPreviewTable(
     html += `<tr style="background:${bg};">`;
     // Copy button
     html += `<td style="padding:4px 6px;border-bottom:1px solid var(--border-lighter);white-space:nowrap;">
-      <button onclick="copyTextToClipboard(${escapeHtml(JSON.stringify(rowTsv))}, 'Copied row ${absoluteRow} to the clipboard')"
+      <button${actionAttrs("click", "copyTextToClipboard", [rowTsv, `Copied row ${absoluteRow} to the clipboard`])}
         title="Copy this row" aria-label="Copy row ${absoluteRow}"
         style="font-size:10px;padding:1px 5px;border:1px solid var(--border-slate);border-radius:3px;background:var(--surface-alt-2);cursor:pointer;color:var(--text-body);">⎘</button>
     </td>`;
@@ -1111,10 +1111,10 @@ function updateDownloadButtons(results) {
 
   if (hasL2L && hasOpt) {
     row.innerHTML = `
-      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('l2l')" title="AWS Pricing Calculator Bulk Import — Like-to-Like instances only">
+      <button class="btn btn-secondary"${actionAttrs("click", "downloadAWSBulkTemplate", ["l2l"])} title="AWS Pricing Calculator Bulk Import — Like-to-Like instances only">
         🧾 Bulk Import (Like-to-Like)
       </button>
-      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate('optimized')" title="AWS Pricing Calculator Bulk Import — Optimized instances only">
+      <button class="btn btn-secondary"${actionAttrs("click", "downloadAWSBulkTemplate", ["optimized"])} title="AWS Pricing Calculator Bulk Import — Optimized instances only">
         🧾 Bulk Import (Optimized)
       </button>
     `;

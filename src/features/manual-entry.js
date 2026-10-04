@@ -21,10 +21,7 @@ function loadManualVMs() {
 
 function saveManualVMs() {
   try {
-    localStorage.setItem(
-      STORAGE_KEYS.manualVMs,
-      JSON.stringify(manualVMs),
-    );
+    localStorage.setItem(STORAGE_KEYS.manualVMs, JSON.stringify(manualVMs));
   } catch (e) {
     console.warn("Could not persist manual VM list:", e);
   }
@@ -170,7 +167,7 @@ function renderManualEntry() {
                 )
                 .join(
                   "",
-                )}<td style="padding: 3px 6px; border-bottom: 1px solid var(--border-lighter); white-space: nowrap;"><button onclick="manualEditVM(${i})" aria-label="Edit VM ${i + 1}" title="Edit this row in the form above" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️</button> <button onclick="manualRemoveVM(${i})" aria-label="Remove VM ${i + 1}" title="Remove" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--red-strong); cursor: pointer;">✕</button></td></tr>`;
+                )}<td style="padding: 3px 6px; border-bottom: 1px solid var(--border-lighter); white-space: nowrap;"><button${actionAttrs("click", "manualEditVM", [i])} aria-label="Edit VM ${i + 1}" title="Edit this row in the form above" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️</button> <button${actionAttrs("click", "manualRemoveVM", [i])} aria-label="Remove VM ${i + 1}" title="Remove" style="font-size: 11px; padding: 1px 7px; border: 1px solid var(--border-slate); border-radius: 4px; background: var(--surface-alt); color: var(--red-strong); cursor: pointer;">✕</button></td></tr>`;
             })
             .join("")}</tbody>
         </table>

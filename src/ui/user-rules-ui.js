@@ -31,9 +31,7 @@ function renderUserRulesPanel() {
           <span style="flex:1;font-size:0.9em;color:var(--text-body);">${escapeHtml(
             userRuleLabel(r),
           )}</span>
-          <button type="button" class="btn btn-secondary" style="padding:2px 8px;font-size:0.8em;" onclick="deleteUserRule('${escapeHtml(
-            r.id,
-          )}')" aria-label="Delete rule: ${escapeHtml(userRuleLabel(r))}">✕</button>
+          <button type="button" class="btn btn-secondary" style="padding:2px 8px;font-size:0.8em;"${actionAttrs("click", "deleteUserRule", [r.id])} aria-label="Delete rule: ${escapeHtml(userRuleLabel(r))}">✕</button>
         </li>`,
         )
         .join("")
@@ -58,7 +56,7 @@ function renderUserRulesPanel() {
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "exportUserRules")} title="Download this page's custom rules as a JSON file">📤 Export rules</button>
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "importUserRules")} title="Import custom rules from a JSON export file">📥 Import rules</button>
-      <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;" onchange="handleUserRulesImportFile(event)" />
+      <input type="file" id="userRulesImportInput" accept=".json,application/json" style="display:none;"${actionAttrs("change", "handleUserRulesImportFile", [{ $: "event" }])} />
     </div>
     <span id="userRulesStatus" role="status" aria-live="polite" style="display:block;margin-top:6px;font-size:0.85em;"></span>`;
 }

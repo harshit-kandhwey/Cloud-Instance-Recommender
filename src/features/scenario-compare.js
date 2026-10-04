@@ -555,10 +555,10 @@ function scenarioChip(s) {
   return `
       <span class="scenario-slot" data-id="${s.id}">
         <input class="scenario-name-input" type="text" value="${sEsc(s.label)}"
-               onchange="renameScenario(${s.id}, this.value)"
+              ${actionAttrs("change", "renameScenario", [s.id, { $: "value" }])}
                aria-label="Rename run ${sEsc(s.label)}" />
         <span class="scenario-at">${sEsc(s.at)}</span>
-        <button type="button" class="scenario-remove" onclick="removeScenario(${s.id})"
+        <button type="button" class="scenario-remove"${actionAttrs("click", "removeScenario", [s.id])}
                 title="Remove ${sEsc(s.label)}" aria-label="Remove ${sEsc(s.label)}">✕</button>
       </span>`;
 }
@@ -578,7 +578,7 @@ function renderScenarioBar() {
       <input id="scenarioNameInput" class="scenario-name-input scenario-name-new" type="text"
              placeholder="Name this run (optional)" aria-label="Name this run"
              ${atCap ? "disabled" : ""} />
-      <button type="button" class="btn btn-secondary" onclick="pinScenario(scenarioNewName())" ${atCap ? "disabled" : ""}>📌 Pin this run</button>
+      <button type="button" class="btn btn-secondary"${actionAttrs("click", "pinScenarioFromInput")} ${atCap ? "disabled" : ""}>📌 Pin this run</button>
       <span class="scenario-slots">${chips}</span>
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "compareScenarios")} ${canCompare ? "" : "disabled"}>${compareLabel}</button>
       <button type="button" class="btn btn-secondary"${actionAttrs("click", "clearScenarios")} ${scenarios.length ? "" : "disabled"}>Clear</button>
@@ -594,6 +594,10 @@ function scenarioNewName() {
   const v = input.value;
   input.value = "";
   return v;
+}
+
+function pinScenarioFromInput() {
+  pinScenario(scenarioNewName());
 }
 
 // Announce comparison outcomes to screen readers via the persistent live

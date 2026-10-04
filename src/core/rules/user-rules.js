@@ -79,7 +79,7 @@ function normalizeUserRule(raw) {
     .filter(Boolean);
   if (!tokens.length) return null;
   // Restrict the id to a safe charset. The UI renders it into an inline
-  // onclick="deleteUserRule('<id>')" handler; escapeHtml protects the HTML
+  // the delete control's data-args; actionAttrs JSON-escapes the id into the HTML
   // attribute context but NOT the nested JS-string context (the browser decodes
   // &#39; back to ' before the handler runs), so a crafted id from an imported
   // rules file could otherwise break out of the string literal — a stored XSS.

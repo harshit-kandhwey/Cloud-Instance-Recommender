@@ -414,7 +414,7 @@ function renderSheetPicker(sheets, activeName) {
   el.innerHTML = `
     <div class="alert alert-info">
       <label for="sheetPicker"><strong>📑 Sheet to read:</strong></label>
-      <select id="sheetPicker" onchange="selectSheet(this.value)" aria-label="Which sheet of the workbook to read" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);">${options}</select>
+      <select id="sheetPicker"${actionAttrs("change", "selectSheet", [{ $: "value" }])} aria-label="Which sheet of the workbook to read" style="margin-left: 8px; padding: 4px 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);">${options}</select>
       <br>This workbook has ${sheets.length} sheets. “${escapeHtml(activeName)}” best matches the expected columns — switch if that is the wrong one.
     </div>`;
   el.classList.remove("hidden");
@@ -868,7 +868,7 @@ function renderSampleGallery() {
   const cards = SAMPLE_DATASETS.map(
     (dataset, index) => `
       <li style="margin-bottom: 8px;">
-        <button onclick="loadSampleDataset(${index})" class="btn btn-secondary" style="font-size: 13px; padding: 6px 14px;">▶️ Load ${escapeHtml(dataset.label)}</button>
+        <button${actionAttrs("click", "loadSampleDataset", [index])} class="btn btn-secondary" style="font-size: 13px; padding: 6px 14px;">▶️ Load ${escapeHtml(dataset.label)}</button>
         <span style="margin-left: 8px; font-size: 13px; color: var(--text-muted);">${escapeHtml(dataset.blurb)}</span>
       </li>`,
   ).join("");
@@ -1301,10 +1301,7 @@ function saveColumnMapping(signature, mapping, units) {
 
 function writeColumnMappings(all) {
   try {
-    localStorage.setItem(
-      STORAGE_KEYS.columnMaps,
-      JSON.stringify(all),
-    );
+    localStorage.setItem(STORAGE_KEYS.columnMaps, JSON.stringify(all));
     return true;
   } catch (e) {
     console.warn("Could not persist column mappings:", e);
@@ -1382,7 +1379,7 @@ function renderSavedMappings() {
                 : "no columns renamed — the headers already matched"
             }</span>
           </div>
-          <button onclick="forgetColumnMapping(${index})"
+          <button${actionAttrs("click", "forgetColumnMapping", [index])}
             title="Forget this mapping — the next file with these headers will ask again"
             style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">🗑️ Forget</button>
         </li>`;
@@ -2150,7 +2147,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
         ? `<span style="color: var(--warning-text); font-size: 12px;"> (several columns could match — please pick one)</span>`
         : "";
       const syncAttr = isSize
-        ? ` onchange="window._syncSizeUnit('${unitId}', this)"`
+        ? `${actionAttrs("change", "_syncSizeUnit", [unitId, { $: "this" }])}`
         : "";
       const unitSelect = isSize
         ? ` <select id="${unitId}" class="form-control" style="max-width: 190px;" aria-label="Unit of the ${sizeNoun} values in your file" title="RVTools-style exports list ${sizeNoun} in MB — pick MB to convert to GB automatically">

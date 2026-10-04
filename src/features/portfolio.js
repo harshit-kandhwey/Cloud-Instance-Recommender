@@ -756,15 +756,15 @@ function renderPortfolio() {
     : "";
 
   const tabs = [
-    `<button class="pf-tab active" role="tab" aria-selected="true" aria-controls="pf-panel-overview" id="pf-tab-overview" data-tab="overview" onclick="switchPortfolioTab('overview')">📊 Overview</button>`,
+    `<button class="pf-tab active" role="tab" aria-selected="true" aria-controls="pf-panel-overview" id="pf-tab-overview" data-tab="overview"${actionAttrs("click", "switchPortfolioTab", ["overview"])}>📊 Overview</button>`,
     ...m.apps.map(
       (a, i) =>
-        `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-app-${i}" id="pf-tab-app-${i}" data-tab="app-${i}" onclick="switchPortfolioTab('app-${i}')">${esc(a.app)}</button>`,
+        `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-app-${i}" id="pf-tab-app-${i}" data-tab="app-${i}"${actionAttrs("click", "switchPortfolioTab", ["app-" + i])}>${esc(a.app)}</button>`,
     ),
   ];
   if (m.unassigned) {
     tabs.push(
-      `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-unassigned" id="pf-tab-unassigned" data-tab="unassigned" onclick="switchPortfolioTab('unassigned')">❓ Unassigned</button>`,
+      `<button class="pf-tab" role="tab" aria-selected="false" aria-controls="pf-panel-unassigned" id="pf-tab-unassigned" data-tab="unassigned"${actionAttrs("click", "switchPortfolioTab", ["unassigned"])}>❓ Unassigned</button>`,
     );
   }
 
@@ -819,7 +819,7 @@ function ariaSortFor(key) {
   return overviewState.dir === "asc" ? "ascending" : "descending";
 }
 function sortableTh(label, key) {
-  return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSortFor(key)}" onclick="sortPortfolioApps('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sortPortfolioApps('${key}');}" title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
+  return `<th class="pf-th-sort" scope="col" tabindex="0" data-sort="${key}" aria-sort="${ariaSortFor(key)}"${actionAttrs("click", "sortPortfolioApps", [key])}${actionAttrs("keydown", "sortPortfolioApps", [key], { keys: ["Enter", " "], prevent: true })} title="Sort by ${esc(label)}"><span>${esc(label)}</span><span class="pf-sort-ind" data-ind="${key}"></span></th>`;
 }
 
 // One aggregate relative-savings tile per provider that has one, appended after
@@ -858,12 +858,12 @@ function renderOverview(m) {
       <h3>Applications</h3>
       <div class="pf-filters">
         <input class="pf-search form-control" type="search" placeholder="Filter applications…"
-          value="${esc(overviewState.filter)}" oninput="filterPortfolioApps(this.value)"
+          value="${esc(overviewState.filter)}"${actionAttrs("input", "filterPortfolioApps", [{ $: "value" }])}
           aria-label="Filter applications by name" />
         <label class="pf-filter-toggle"><input type="checkbox" ${overviewState.noMatchOnly ? "checked" : ""}
-          onchange="togglePortfolioFilter('noMatchOnly', this.checked)" /> No-match only</label>
+         ${actionAttrs("change", "togglePortfolioFilter", ["noMatchOnly", { $: "checked" }])} /> No-match only</label>
         <label class="pf-filter-toggle"><input type="checkbox" ${overviewState.complianceOnly ? "checked" : ""}
-          onchange="togglePortfolioFilter('complianceOnly', this.checked)" /> Compliance only</label>
+         ${actionAttrs("change", "togglePortfolioFilter", ["complianceOnly", { $: "checked" }])} /> Compliance only</label>
       </div>
     </div>
     <div class="pf-scroll">
@@ -919,8 +919,8 @@ function renderAppTableBody() {
         const compCell = a.hasCompliance
           ? pfChips(Object.keys(a.compliance), "pf-chip-danger")
           : "—";
-        const main = `<tr class="pf-app-row" onclick="togglePortfolioAppRow(${i})">
-          <td><button type="button" class="pf-row-toggle" data-row="${i}" aria-expanded="${open}" aria-controls="pf-detail-${i}" onclick="event.stopPropagation();togglePortfolioAppRow(${i})"><span class="pf-caret" aria-hidden="true">${open ? "▾" : "▸"}</span> ${esc(a.app)}</button></td>
+        const main = `<tr class="pf-app-row"${actionAttrs("click", "togglePortfolioAppRow", [i])}>
+          <td><button type="button" class="pf-row-toggle" data-row="${i}" aria-expanded="${open}" aria-controls="pf-detail-${i}"${actionAttrs("click", "togglePortfolioAppRow", [i], { stop: true })}><span class="pf-caret" aria-hidden="true">${open ? "▾" : "▸"}</span> ${esc(a.app)}</button></td>
           <td>${a.vms}</td>
           <td>${a.vcpus}</td>
           <td>${fmtNum(a.memory)}</td>
@@ -967,7 +967,7 @@ function renderAppExpand(a, i) {
       ? `<div class="pf-muted">+${a.rows.length - 50} more — open the ${esc(a.app)} tab for the full list.</div>`
       : "";
   return `<div class="pf-expand">
-    <button class="btn btn-secondary pf-mini-btn" onclick="event.stopPropagation(); switchPortfolioTab('app-${i}')">Open ${esc(a.app)} tab →</button>
+    <button class="btn btn-secondary pf-mini-btn"${actionAttrs("click", "switchPortfolioTab", ["app-" + i], { stop: true })}>Open ${esc(a.app)} tab →</button>
     <div class="pf-scroll"><table class="pf-table pf-table-sm">
       <thead><tr><th>VM</th><th>CPU</th><th>Mem (GB)</th><th>ENV</th><th>Match</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -998,7 +998,7 @@ function renderCallouts(m) {
       <h4>❓ Unassigned VMs</h4>
       ${
         m.unassigned
-          ? `<div><b>${m.unassigned.vms}</b> VM(s) with no App Name — <a href="#" onclick="switchPortfolioTab('unassigned');return false;">review</a>.</div>`
+          ? `<div><b>${m.unassigned.vms}</b> VM(s) with no App Name — <a href="#"${actionAttrs("click", "switchPortfolioTab", ["unassigned"], { prevent: true })}>review</a>.</div>`
           : '<div class="pf-muted">None — every VM has an App Name 🎉</div>'
       }
     </div>
@@ -1089,9 +1089,7 @@ function renderAppPanel(a, m, idx) {
 
   return `<div class="pf-app-head">
       <h3 style="margin:0;color:var(--heading-indigo)">${esc(title)}</h3>
-      <button class="btn btn-secondary pf-mini-btn" onclick="downloadAppCsv(${
-        typeof idx === "number" ? idx : `'${esc(idx)}'`
-      })" title="Download this application's VM rows as CSV">⬇️ App CSV</button>
+      <button class="btn btn-secondary pf-mini-btn"${actionAttrs("click", "downloadAppCsv", [idx])} title="Download this application's VM rows as CSV">⬇️ App CSV</button>
     </div>
     ${kpis}${mixes}<div class="pf-blocks">${blocks}</div>${renderVmTable(a, m)}`;
 }

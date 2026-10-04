@@ -21,7 +21,11 @@ console.log("[the gallery offers all four samples]");
   // Not just four calls — four DISTINCT indexes. Four loadSampleDataset(0)
   // calls would pass a bare count while every gallery action loaded the same
   // sample, which is the exact defect this check exists to catch.
-  const indexes = [...html.matchAll(/loadSampleDataset\((\d+)\)/g)]
+  const indexes = [
+    ...html.matchAll(
+      /data-on-click="loadSampleDataset"[^>]*data-args-click="\[(\d+)\]"/g,
+    ),
+  ]
     .map((match) => match[1])
     .sort();
   check(

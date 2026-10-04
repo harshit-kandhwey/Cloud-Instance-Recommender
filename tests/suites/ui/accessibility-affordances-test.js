@@ -80,7 +80,9 @@ ctx.location = { pathname: "/aws.html" };
 // undefined, so any fall-through selector breaks if the harness qSA reads `this`.
 const baseQSA = ctx.document.querySelectorAll.bind(ctx.document);
 ctx.document.querySelectorAll = (sel) =>
-  sel === ".section-header[onclick]" ? sectionHeaders : baseQSA(sel);
+  sel === '.section-header[data-on-click="toggleSection"]'
+    ? sectionHeaders
+    : baseQSA(sel);
 
 // Wired now that ctx exists: enhanceAccessibility's keydown handler clicks the
 // header, and click() fires this onclick.
@@ -170,7 +172,10 @@ check(
   "th has tabindex + aria-sort=none initially",
   container.innerHTML.includes('tabindex="0" aria-sort="none"'),
 );
-check("th has keydown handler", container.innerHTML.includes("onkeydown="));
+check(
+  "th has keydown handler",
+  container.innerHTML.includes('data-on-keydown="'),
+);
 check(
   "search input labelled",
   container.innerHTML.includes('aria-label="Filter preview rows"'),

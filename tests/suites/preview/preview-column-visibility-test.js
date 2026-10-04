@@ -29,7 +29,9 @@ const colIndex = (ctx, name) => ctx._previewState.displayCols.indexOf(name);
 // as a capture group and silently fail to match the literal header.
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const headerShown = (html, ctx, name) =>
-  html.includes(`window._sortPreview(${colIndex(ctx, name)})`) &&
+  new RegExp(
+    `data-on-click="_sortPreview"[^>]*data-args-click="\\[${colIndex(ctx, name)}\\]"`,
+  ).test(html) &&
   new RegExp(`>${escapeRe(name)}(<|\\u21c5|\\u25b2|\\u25bc)`).test(html);
 
 const settle = () => new Promise((r) => setTimeout(r, 250));
@@ -42,14 +44,17 @@ const settle = () => new Promise((r) => setTimeout(r, 250));
     const html = elements.resultsPreviewSection.innerHTML;
     check(
       "the menu offers each column with a checkbox",
-      /_previewToggleColumn\(/.test(html) &&
+      /data-on-change="_previewToggleColumn"/.test(html) &&
         html.includes('aria-label="Show column ENV"'),
       "(no column menu)",
     );
     check(
       "every column starts checked (visible)",
-      (html.match(/_previewToggleColumn\(\d+, this\.checked\)/g) || [])
-        .length === ctx._previewState.displayCols.length &&
+      (
+        html.match(
+          /data-on-change="_previewToggleColumn"[^>]*data-args-change="\[\d+,\{&quot;\$&quot;:&quot;checked&quot;\}\]"/g,
+        ) || []
+      ).length === ctx._previewState.displayCols.length &&
         !/\(\d+ hidden\)/.test(html),
     );
   }
