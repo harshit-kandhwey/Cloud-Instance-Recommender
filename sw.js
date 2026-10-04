@@ -27,7 +27,7 @@
 // would keep the old keys around forever unused (activate only deletes whole
 // OTHER cache names, never prunes stale keys within one), so this forces a
 // clean re-precache instead of accumulating dead entries.
-const CACHE = "cir-cache-v6";
+const CACHE = "cir-cache-v7";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.
@@ -42,6 +42,7 @@ const CACHE = "cir-cache-v6";
 // re-check if a new page or module is added.
 const PRECACHE_SCRIPTS = [
   "src/shared/storage-keys.js",
+  "src/shared/theme-init.js",
   "src/core/rules/rule-engine.js",
   "src/core/rules/user-rules.js",
   "src/core/engine/base-instance-selector.js",

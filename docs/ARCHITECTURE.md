@@ -74,6 +74,7 @@ Every key the app owns is listed in `src/shared/storage-keys.js` and nowhere els
 | `portfolioData` | `cloudInstanceRecommenderPortfolioData` | `app-core.js`, `downloads.js` | The portfolio copy of the last run |
 | `sections` | `cloudInstanceRecommenderSections` | `ui-shell.js` | Which sections are collapsed |
 | `stats` | `cloudInstanceRecommenderStats` | `downloads.js` | Local usage counts |
+| `theme` | `cloudInstanceRecommenderTheme` | `theme-init.js` | The light or dark choice; absent means follow the OS |
 | `userRules` | `cloudInstanceRecommenderUserRules` | `user-rules.js` | User-defined rules, keyed by page |
 
 ### Storage manager

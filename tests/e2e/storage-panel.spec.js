@@ -9,10 +9,10 @@ const { test, expect } = require("@playwright/test");
 const MANUAL_KEY = "cloudInstanceRecommenderManualVMs";
 const FOREIGN_KEY = "someOtherAppsKey";
 
-test("the storage section lists all nine owned keys", async ({ page }) => {
+test("the storage section lists all ten owned keys", async ({ page }) => {
   await page.goto("/aws.html");
   await expect(page.locator("#storageSection")).toBeVisible();
-  await expect(page.locator("#storageManagerPanel tbody tr")).toHaveCount(9);
+  await expect(page.locator("#storageManagerPanel tbody tr")).toHaveCount(10);
 });
 
 test("clearing one key is two-step and touches only that key", async ({

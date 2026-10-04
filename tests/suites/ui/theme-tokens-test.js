@@ -125,15 +125,13 @@ console.log("[page wiring]");
     );
     check(
       `${f}: boot script + toggle present`,
-      c.includes("cloudInstanceRecommenderTheme") &&
-        c.includes('id="themeToggle"'),
+      c.includes("src/shared/theme-init.js") && c.includes('id="themeToggle"'),
     );
   }
   const g = read("user-guide.html");
   check(
     "user-guide: boot script + toggle present",
-    g.includes("cloudInstanceRecommenderTheme") &&
-      g.includes('id="themeToggle"'),
+    g.includes("src/shared/theme-init.js") && g.includes('id="themeToggle"'),
   );
   // Selector must appear inside the @media screen block, not merely after it.
   // A `[^}]*` regex only matches when the dark selector is the FIRST rule in the
@@ -165,18 +163,19 @@ console.log("[page wiring]");
 
 console.log("[boot script behavior]");
 {
-  const html = read("aws.html");
-  const m = html.match(
-    /<script>\s*\/\/ Set theme before first paint[\s\S]*?<\/script>/,
-  );
-  check("boot script extracted", !!m);
+  const bootSrc = [
+    read("src/shared/storage-keys.js"),
+    read("src/shared/theme-init.js"),
+  ].join("\n");
+  const m = [bootSrc];
+  check("boot script extracted", bootSrc.includes("window.toggleTheme"));
   // Bail cleanly if the marker changed: m[0] would throw and abort the whole
   // block — including the cross-page consistency check below — turning one
   // failure into a stack trace that hides the rest of the suite.
   if (!m) {
     console.error("  boot script not found — skipping behaviour checks");
   } else {
-    const src = m[0].replace(/<\/?script>/g, "");
+    const src = m[0];
 
     function runBoot({ stored, osDark, storageThrows }) {
       const listeners = [];
@@ -294,8 +293,10 @@ console.log("[boot scripts identical on all 6 pages]");
     // Compare content, not line-ending style (formatters vary CRLF/LF)
     const m = read(f)
       .replace(/\r\n/g, "\n")
-      .match(/<script>\s*\/\/ Set theme before first paint[\s\S]*?<\/script>/);
-    return m ? m[0] : null;
+      .match(
+        /<script src="src\/shared\/storage-keys\.js"><\/script>\s*<script src="src\/shared\/theme-init\.js"><\/script>/,
+      );
+    return m ? m[0].replace(/\s+/g, " ") : null;
   };
   const ref = extract("aws.html");
   let allSame = true;

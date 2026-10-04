@@ -9,5 +9,6 @@ const STORAGE_KEYS = Object.freeze({
   portfolioData: "cloudInstanceRecommenderPortfolioData",
   sections: "cloudInstanceRecommenderSections",
   stats: "cloudInstanceRecommenderStats",
+  theme: "cloudInstanceRecommenderTheme",
   userRules: "cloudInstanceRecommenderUserRules",
 });

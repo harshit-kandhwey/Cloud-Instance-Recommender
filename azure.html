@@ -12,56 +12,13 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
     <title>Cloud Instance Recommender</title>
-    <script>
-      // Set theme before first paint. A saved choice wins; otherwise follow
-      // the OS setting (and keep following it until the user picks manually).
-      (function () {
-        var stored = null;
-        try {
-          stored = localStorage.getItem("cloudInstanceRecommenderTheme");
-        } catch (e) {}
-        var mql =
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)");
-        document.documentElement.dataset.theme =
-          stored === "dark" || stored === "light"
-            ? stored
-            : mql && mql.matches
-              ? "dark"
-              : "light";
-        window.toggleTheme = function () {
-          var next =
-            document.documentElement.dataset.theme === "dark"
-              ? "light"
-              : "dark";
-          document.documentElement.dataset.theme = next;
-          try {
-            localStorage.setItem("cloudInstanceRecommenderTheme", next);
-          } catch (e) {}
-          var btn = document.getElementById("themeToggle");
-          if (btn) btn.setAttribute("aria-pressed", next === "dark");
-        };
-        if (mql && mql.addEventListener) {
-          mql.addEventListener("change", function (e) {
-            var saved = null;
-            try {
-              saved = localStorage.getItem("cloudInstanceRecommenderTheme");
-            } catch (err) {}
-            if (saved !== "dark" && saved !== "light") {
-              document.documentElement.dataset.theme = e.matches
-                ? "dark"
-                : "light";
-            }
-          });
-        }
-      })();
-    </script>
+    <script src="src/shared/storage-keys.js"></script>
+    <script src="src/shared/theme-init.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/style.css" />
     <!-- JavaScript Files in Correct Order -->
     <script defer src="src/providers/azure/azure-data.js"></script>
     <script defer src="src/core/rules/rule-engine.js"></script>
-    <script defer src="src/shared/storage-keys.js"></script>
     <script defer src="src/core/rules/user-rules.js"></script>
     <script defer src="src/core/engine/base-instance-selector.js"></script>
     <script defer src="src/providers/azure/azure-instance-selector.js"></script>
