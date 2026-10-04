@@ -16,6 +16,7 @@
     <script src="src/shared/theme-init.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/style.css" />
+    <link rel="stylesheet" href="styles/inline-utilities.css" />
     <link rel="stylesheet" href="styles/portfolio.css" />
     <!-- App Portfolio is self-contained: it receives a generated result set
          handed off from a tool page (postMessage, localStorage fallback),
@@ -32,19 +33,9 @@
     <!-- Toast notifications (see showToast in src/shared/app-core.js) -->
     <div
       id="toastStack"
-      class="hidden"
+      class="hidden inl-422030a3"
       role="status"
       aria-live="polite"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: min(420px, 90vw);
-      "
     ></div>
     <div class="container">
       <header class="header">

@@ -16,6 +16,7 @@
     <script src="src/shared/theme-init.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/style.css" />
+    <link rel="stylesheet" href="styles/inline-utilities.css" />
     <!-- JavaScript Files in Correct Order -->
 
     <script defer src="src/core/rules/rule-engine.js"></script>
@@ -64,19 +65,9 @@
     <!-- Toast notifications (see showToast in src/shared/app-core.js) -->
     <div
       id="toastStack"
-      class="hidden"
+      class="hidden inl-422030a3"
       role="status"
       aria-live="polite"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: min(420px, 90vw);
-      "
     ></div>
     <div class="container">
       <header class="header">
@@ -180,24 +171,23 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                   <div>
                     <strong>Click to upload CSV or Excel (.xlsx) file</strong>
                   </div>
-                  <div style="color: var(--text-muted); margin-top: 5px">
+                  <div class="inl-7e613283">
                     or drag and drop your file here
                   </div>
                 </label>
               </div>
             </div>
-            <div style="margin: 10px 0">
+            <div class="inl-09601dc1">
               <button
                 type="button"
-                class="btn btn-secondary"
+                class="btn btn-secondary inl-bfe4fc0b"
                 data-on-click="toggleManualEntry"
-                style="font-size: 13px; padding: 8px 16px"
               >
                 ✍️ Or enter VMs manually
               </button>
             </div>
             <div id="manualEntrySection" class="hidden"></div>
-            <div id="pasteDataSection" style="margin: 10px 0"></div>
+            <div class="inl-09601dc1" id="pasteDataSection"></div>
             <div id="savedMappingsSection" class="hidden"></div>
             <div id="fileStatus" class="hidden"></div>
             <div id="sheetPickerSection" class="hidden"></div>
@@ -523,7 +513,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <input type="checkbox" id="cloudToCloudMode" />
                 <label for="cloudToCloudMode">
                   <strong>🔀 Cloud-to-cloud sizing</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     Size a row from its Current Instance Type when it has no CPU
                     Count / Memory (GB). Explicit CPU and memory always take
                     precedence.
@@ -560,7 +550,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 />
                 <label for="currentGenerationOnly">
                   <strong>✨ Current Generation Only</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     Include only latest generation instances (recommended for
                     better performance)
                   </small>
@@ -574,7 +564,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 <input type="checkbox" id="sqlPhysicalCoreLicensing" />
                 <label for="sqlPhysicalCoreLicensing">
                   <strong>🗄️ Physical-Core Licensing (alternate floor)</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     SQL Server's 4-core licence floor counts physical cores
                     instead of vCPUs on AWS/Azure rows — off by default, which
                     counts vCPUs. No effect on GCP rows; no comparable field
@@ -595,7 +585,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 />
                 <label for="restrictProcessorManufacturers">
                   <strong>🔧 Restrict to specific processor types</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     Choose preferred processor architectures
                   </small>
                 </label>
@@ -650,7 +640,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 />
                 <label for="restrictMainFamilies">
                   <strong>📋 Restrict to specific instance categories</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     Filter by workload category across all providers
                   </small>
                 </label>
@@ -757,7 +747,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                 />
                 <label for="excludeTypes">
                   <strong>❌ Exclude specific instance types</strong>
-                  <small style="display: block; color: var(--text-muted)">
+                  <small class="inl-16991972">
                     Exclude certain categories of instances
                   </small>
                 </label>
@@ -771,168 +761,47 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
             </div>
 
             <!-- Rule Engine Controls -->
-            <div
-              id="ruleEnginePanel"
-              style="
-                margin-top: 24px;
-                padding: 16px 20px;
-                background: var(--surface-tint);
-                border: 1px solid var(--border-slate);
-                border-radius: 8px;
-              "
-            >
-              <p
-                style="
-                  margin: 0 0 4px;
-                  font-weight: 700;
-                  font-size: 0.95em;
-                  color: var(--heading-indigo);
-                "
-              >
-                🧠 Rule Engine Defaults
-              </p>
-              <p
-                style="
-                  margin: 0 0 12px;
-                  font-size: 0.81em;
-                  color: var(--text-body);
-                "
-              >
+            <div class="inl-59d18b96" id="ruleEnginePanel">
+              <p class="inl-162cec91">🧠 Rule Engine Defaults</p>
+              <p class="inl-43968393">
                 Set page-level defaults applied to all rows across all selected
                 providers. Per-row CSV columns override these. Conflicts with
                 filters above are flagged in red.
               </p>
-              <div
-                style="
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-                  gap: 10px;
-                  margin-bottom: 14px;
-                "
-              >
-                <div
-                  id="ruleGroupEnv"
-                  style="
-                    padding: 8px;
-                    border: 1.5px solid var(--border-slate);
-                    border-radius: 6px;
-                    background: white;
-                  "
-                >
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.8em;
-                      font-weight: 600;
-                      color: var(--text-body);
-                      margin-bottom: 4px;
-                    "
-                    >ENV</label
-                  >
+              <div class="inl-ca45ceac">
+                <div class="inl-32a8a59d" id="ruleGroupEnv">
+                  <label class="inl-c3cb6025">ENV</label>
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultEnv"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— none —</option>
                     <option value="Production">Production</option>
                     <option value="Staging">Staging</option>
                     <option value="Dev">Dev</option>
                   </select>
-                  <div
-                    id="conflictEnv"
-                    style="
-                      display: none;
-                      color: var(--red-strong);
-                      font-size: 0.74em;
-                      margin-top: 3px;
-                      line-height: 1.3;
-                    "
-                  ></div>
+                  <div class="inl-c0385465" id="conflictEnv"></div>
                 </div>
-                <div
-                  id="ruleGroupOS"
-                  style="
-                    padding: 8px;
-                    border: 1.5px solid var(--border-slate);
-                    border-radius: 6px;
-                    background: white;
-                  "
-                >
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.8em;
-                      font-weight: 600;
-                      color: var(--text-body);
-                      margin-bottom: 4px;
-                    "
-                    >OS</label
-                  >
+                <div class="inl-32a8a59d" id="ruleGroupOS">
+                  <label class="inl-c3cb6025">OS</label>
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultOS"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— none —</option>
                     <option value="Linux">Linux</option>
                     <option value="Windows">Windows</option>
                   </select>
-                  <div
-                    id="conflictOS"
-                    style="
-                      display: none;
-                      color: var(--red-strong);
-                      font-size: 0.74em;
-                      margin-top: 3px;
-                      line-height: 1.3;
-                    "
-                  ></div>
+                  <div class="inl-c0385465" id="conflictOS"></div>
                 </div>
-                <div
-                  id="ruleGroupWorkload"
-                  style="
-                    padding: 8px;
-                    border: 1.5px solid var(--border-slate);
-                    border-radius: 6px;
-                    background: white;
-                  "
-                >
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.8em;
-                      font-weight: 600;
-                      color: var(--text-body);
-                      margin-bottom: 4px;
-                    "
-                    >Workload</label
-                  >
+                <div class="inl-32a8a59d" id="ruleGroupWorkload">
+                  <label class="inl-c3cb6025">Workload</label>
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultWorkload"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— none —</option>
                     <option value="Web Server">Web Server</option>
@@ -955,45 +824,12 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       Domain Controller / Jump Box
                     </option>
                   </select>
-                  <div
-                    id="conflictWorkload"
-                    style="
-                      display: none;
-                      color: var(--red-strong);
-                      font-size: 0.74em;
-                      margin-top: 3px;
-                      line-height: 1.3;
-                    "
-                  ></div>
+                  <div class="inl-c0385465" id="conflictWorkload"></div>
                 </div>
-                <div
-                  id="ruleGroupCompliance"
-                  style="
-                    padding: 8px;
-                    border: 1.5px solid var(--border-slate);
-                    border-radius: 6px;
-                    background: white;
-                  "
-                >
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.8em;
-                      font-weight: 600;
-                      color: var(--text-body);
-                      margin-bottom: 4px;
-                    "
-                    >Compliance</label
-                  >
-                  <div
-                    style="
-                      display: flex;
-                      flex-direction: column;
-                      gap: 4px;
-                      font-size: 0.83em;
-                    "
-                  >
-                    <label style="font-weight: 400">
+                <div class="inl-32a8a59d" id="ruleGroupCompliance">
+                  <label class="inl-c3cb6025">Compliance</label>
+                  <div class="inl-7cb6736d">
+                    <label class="inl-7c8ebd94">
                       <input
                         type="checkbox"
                         id="ruleDefaultComplianceCurrentGen"
@@ -1002,7 +838,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       />
                       Current-Generation Hardware
                     </label>
-                    <label style="font-weight: 400">
+                    <label class="inl-7c8ebd94">
                       <input
                         type="checkbox"
                         id="ruleDefaultComplianceNitro"
@@ -1011,7 +847,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       />
                       AWS Nitro Enclaves
                     </label>
-                    <label style="font-weight: 400">
+                    <label class="inl-7c8ebd94">
                       <input
                         type="checkbox"
                         id="ruleDefaultComplianceConfidential"
@@ -1020,7 +856,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       />
                       Confidential Computing
                     </label>
-                    <label style="font-weight: 400">
+                    <label class="inl-7c8ebd94">
                       <input
                         type="checkbox"
                         id="ruleDefaultComplianceTrustedLaunch"
@@ -1030,294 +866,101 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       Azure Trusted Launch
                     </label>
                   </div>
-                  <div
-                    id="conflictCompliance"
-                    style="
-                      display: none;
-                      color: var(--red-strong);
-                      font-size: 0.74em;
-                      margin-top: 3px;
-                      line-height: 1.3;
-                    "
-                  ></div>
+                  <div class="inl-c0385465" id="conflictCompliance"></div>
                 </div>
-                <div
-                  id="ruleGroupMinGen"
-                  style="
-                    padding: 8px;
-                    border: 1.5px solid var(--border-slate);
-                    border-radius: 6px;
-                    background: white;
-                  "
-                >
-                  <label
-                    style="
-                      display: block;
-                      font-size: 0.8em;
-                      font-weight: 600;
-                      color: var(--text-body);
-                      margin-bottom: 4px;
-                    "
-                    >Min Instance Gen</label
-                  >
-                  <label
-                    for="ruleDefaultMinGenAws"
-                    style="
-                      display: block;
-                      font-size: 0.74em;
-                      color: var(--text-soft);
-                      margin: 6px 0 2px;
-                    "
+                <div class="inl-32a8a59d" id="ruleGroupMinGen">
+                  <label class="inl-c3cb6025">Min Instance Gen</label>
+                  <label class="inl-aa08e943" for="ruleDefaultMinGenAws"
                     >AWS</label
                   >
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultMinGenAws"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— any —</option>
                     <option value="5">Gen 5+ (m5, c5, r5…)</option>
                     <option value="6">Gen 6+ (m6i, c6a, r6g…)</option>
                     <option value="7">Gen 7+ (m7i, c7g, r7a…)</option>
                   </select>
-                  <label
-                    for="ruleDefaultMinGenAzure"
-                    style="
-                      display: block;
-                      font-size: 0.74em;
-                      color: var(--text-soft);
-                      margin: 6px 0 2px;
-                    "
+                  <label class="inl-aa08e943" for="ruleDefaultMinGenAzure"
                     >Azure</label
                   >
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultMinGenAzure"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— any —</option>
                     <option value="3">v3+ (Dsv3, Esv3…)</option>
                     <option value="4">v4+ (Dsv4, Esv4…)</option>
                     <option value="5">v5+ (Dsv5, Esv5…)</option>
                   </select>
-                  <label
-                    for="ruleDefaultMinGenGcp"
-                    style="
-                      display: block;
-                      font-size: 0.74em;
-                      color: var(--text-soft);
-                      margin: 6px 0 2px;
-                    "
+                  <label class="inl-aa08e943" for="ruleDefaultMinGenGcp"
                     >GCP</label
                   >
                   <select
+                    class="inl-7d7cbfc6"
                     id="ruleDefaultMinGenGcp"
                     data-on-change="onRuleChange"
-                    style="
-                      width: 100%;
-                      padding: 5px 6px;
-                      border: 1px solid var(--border-mid);
-                      border-radius: 4px;
-                      font-size: 0.83em;
-                      background: white;
-                    "
                   >
                     <option value="">— any —</option>
                     <option value="n2">N2 / C2 (2nd gen+)</option>
                     <option value="n2d">N2D / C2D+ (AMD)</option>
                     <option value="n4">N4 / C4 (4th gen+)</option>
                   </select>
-                  <div
-                    id="conflictMinGen"
-                    style="
-                      display: none;
-                      color: var(--red-strong);
-                      font-size: 0.74em;
-                      margin-top: 3px;
-                      line-height: 1.3;
-                    "
-                  ></div>
+                  <div class="inl-c0385465" id="conflictMinGen"></div>
                 </div>
               </div>
-              <details style="font-size: 0.82em">
-                <summary
-                  style="
-                    cursor: pointer;
-                    color: var(--heading-indigo);
-                    font-weight: 600;
-                    user-select: none;
-                  "
-                >
-                  Rule descriptions ▸
-                </summary>
-                <table
-                  style="
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 8px;
-                  "
-                >
+              <details class="inl-037a9c71">
+                <summary class="inl-436fdc37">Rule descriptions ▸</summary>
+                <table class="inl-a5ce6e24">
                   <thead>
-                    <tr style="background: var(--surface-tint-strong)">
-                      <th
-                        style="
-                          padding: 5px 8px;
-                          text-align: left;
-                          border: 1px solid var(--border-slate);
-                          white-space: nowrap;
-                        "
-                      >
-                        Rule
-                      </th>
-                      <th
-                        style="
-                          padding: 5px 8px;
-                          text-align: left;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
-                        Effect (all providers)
-                      </th>
+                    <tr class="inl-01ab9a1f">
+                      <th class="inl-7c5a8b88">Rule</th>
+                      <th class="inl-4afb4abe">Effect (all providers)</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        ENV=Production
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                      <td class="inl-7883f74a">ENV=Production</td>
+                      <td class="inl-2520cbd2">
                         Excludes burstable (t-family / B-series / e2-shared),
                         enforces current-gen, min 4 vCPU for web/DB. AWS also
                         requires Nitro under Compliance.
                       </td>
                     </tr>
-                    <tr style="background: var(--surface-tint)">
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        OS=Windows
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                    <tr class="inl-8afd308e">
+                      <td class="inl-7883f74a">OS=Windows</td>
+                      <td class="inl-2520cbd2">
                         De-prioritises ARM/Graviton families across all
                         providers; prefers Intel or AMD
                       </td>
                     </tr>
                     <tr>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        Workload=Database
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                      <td class="inl-7883f74a">Workload=Database</td>
+                      <td class="inl-2520cbd2">
                         AWS r-family first · Azure E/M-series first · GCP
                         n2-highmem/m1 first
                       </td>
                     </tr>
-                    <tr style="background: var(--surface-tint)">
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        Compliance=HIPAA/PCI
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                    <tr class="inl-8afd308e">
+                      <td class="inl-7883f74a">Compliance=HIPAA/PCI</td>
+                      <td class="inl-2520cbd2">
                         Excludes burstable; enforces current-gen. AWS: requires
                         Nitro-capable.
                       </td>
                     </tr>
                     <tr>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        Min Gen=m6/v4/N4
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                      <td class="inl-7883f74a">Min Gen=m6/v4/N4</td>
+                      <td class="inl-2520cbd2">
                         Excludes older generations: m5/r5 (AWS), Dsv3/Esv3
                         (Azure), N1 (GCP). Useful as m5 approaches EOL.
                       </td>
                     </tr>
-                    <tr style="background: var(--surface-tint)">
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        Workload=SQL Server
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                    <tr class="inl-8afd308e">
+                      <td class="inl-7883f74a">Workload=SQL Server</td>
+                      <td class="inl-2520cbd2">
                         Enforces a 4-vCPU licence floor when it can — SQL Server
                         is licensed per core (minimum four), so a smaller box
                         saves no licence cost. If no eligible candidate is that
@@ -1326,22 +969,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                       </td>
                     </tr>
                     <tr>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                          font-family: monospace;
-                          font-weight: 600;
-                        "
-                      >
-                        Workload=ML/AI (GPU)
-                      </td>
-                      <td
-                        style="
-                          padding: 5px 8px;
-                          border: 1px solid var(--border-slate);
-                        "
-                      >
+                      <td class="inl-7883f74a">Workload=ML/AI (GPU)</td>
+                      <td class="inl-2520cbd2">
                         Requires a GPU/accelerator instance; every other
                         workload excludes accelerators, so a GPU box is not
                         recommended by accident. If the pool has no accelerator
@@ -1438,48 +1067,19 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
               <div id="scenarioCompareSection" class="hidden"></div>
 
               <!-- Pricing Calculator Steps -->
-              <div
-                style="
-                  margin-top: 14px;
-                  display: grid;
-                  grid-template-columns: repeat(3, 1fr);
-                  gap: 10px;
-                  font-size: 0.82em;
-                  text-align: left;
-                "
-              >
-                <div
-                  style="
-                    background: var(--surface-tint);
-                    border: 1px solid var(--border-slate);
-                    border-radius: 8px;
-                    padding: 11px;
-                  "
-                >
-                  <div
-                    style="
-                      font-weight: 700;
-                      color: var(--heading-indigo);
-                      margin-bottom: 5px;
-                    "
-                  >
+              <div class="inl-fd516210">
+                <div class="inl-34cbf4cf">
+                  <div class="inl-4cc60e05">
                     🟠
                     <a
+                      class="inl-f01a3964"
                       href="https://calculator.aws/#/"
                       target="_blank"
                       rel="noopener"
-                      style="color: var(--heading-indigo)"
                       >AWS Pricing Calculator</a
                     >
                   </div>
-                  <ol
-                    style="
-                      margin: 0;
-                      padding-left: 16px;
-                      color: var(--text);
-                      line-height: 1.65;
-                    "
-                  >
+                  <ol class="inl-9b871053">
                     <li>Create estimate</li>
                     <li>
                       <strong>Bulk import</strong> (top-right) → select template
@@ -1490,38 +1090,18 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                     </li>
                   </ol>
                 </div>
-                <div
-                  style="
-                    background: var(--surface-tint);
-                    border: 1px solid var(--border-slate);
-                    border-radius: 8px;
-                    padding: 11px;
-                  "
-                >
-                  <div
-                    style="
-                      font-weight: 700;
-                      color: var(--heading-blue);
-                      margin-bottom: 5px;
-                    "
-                  >
+                <div class="inl-34cbf4cf">
+                  <div class="inl-7c412316">
                     🔵
                     <a
+                      class="inl-83d1f535"
                       href="https://azure.microsoft.com/en-in/pricing/calculator"
                       target="_blank"
                       rel="noopener"
-                      style="color: var(--heading-blue)"
                       >Azure Pricing Calculator</a
                     >
                   </div>
-                  <ol
-                    style="
-                      margin: 0;
-                      padding-left: 16px;
-                      color: var(--text);
-                      line-height: 1.65;
-                    "
-                  >
+                  <ol class="inl-9b871053">
                     <li>
                       Find <strong>Virtual Machines</strong> →
                       <strong>Add to estimate</strong>
@@ -1530,38 +1110,18 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
                     <li>Configure region, OS &amp; VM size → Save</li>
                   </ol>
                 </div>
-                <div
-                  style="
-                    background: var(--surface-tint);
-                    border: 1px solid var(--border-slate);
-                    border-radius: 8px;
-                    padding: 11px;
-                  "
-                >
-                  <div
-                    style="
-                      font-weight: 700;
-                      color: var(--heading-green);
-                      margin-bottom: 5px;
-                    "
-                  >
+                <div class="inl-34cbf4cf">
+                  <div class="inl-b4f87ea9">
                     🟢
                     <a
+                      class="inl-ded2115d"
                       href="https://cloud.google.com/products/calculator"
                       target="_blank"
                       rel="noopener"
-                      style="color: var(--heading-green)"
                       >GCP Pricing Calculator</a
                     >
                   </div>
-                  <ol
-                    style="
-                      margin: 0;
-                      padding-left: 16px;
-                      color: var(--text);
-                      line-height: 1.65;
-                    "
-                  >
+                  <ol class="inl-9b871053">
                     <li><strong>Add to estimate</strong></li>
                     <li>Select <strong>Compute Engine</strong></li>
                     <li>Configure machine type &amp; region → Save</li>
@@ -1573,17 +1133,9 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
             <div id="resultsStaleNotice" class="hidden" role="status"></div>
 
             <div id="relaxSuggestion" class="hidden" role="status"></div>
-            <div
-              id="resultsChartsSection"
-              class="hidden"
-              style="margin-top: 16px"
-            ></div>
+            <div id="resultsChartsSection" class="hidden inl-4c0544d5"></div>
 
-            <div
-              id="resultsPreviewSection"
-              class="hidden"
-              style="margin-top: 16px"
-            ></div>
+            <div id="resultsPreviewSection" class="hidden inl-4c0544d5"></div>
           </div>
         </section>
 

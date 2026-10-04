@@ -245,9 +245,18 @@ console.log("[floating controls]");
     /left: "20px"/.test(backToTop) && !/right: "20px"/.test(backToTop),
   );
   const toastStackMarkup = read("aws.html");
+  const toastTag =
+    toastStackMarkup.match(/<[^>]*id="toastStack"[^>]*>/)?.[0] || "";
+  const toastClass = (toastTag.match(/class="([^"]*)"/)?.[1] || "")
+    .split(/\s+/)
+    .find((c) => c.startsWith("inl-"));
   check(
     "the toast stack owns bottom-right",
-    /id="toastStack"[\s\S]{0,400}right: 20px/.test(toastStackMarkup),
+    !!toastClass &&
+      new RegExp(`\\.${toastClass} \\{[^}]*right: 20px`).test(
+        read("styles/inline-utilities.css"),
+      ),
+    toastTag,
   );
 }
 
