@@ -129,6 +129,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
         ├── app-core.js          # State, mapping tables, readiness, regions
         ├── storage-keys.js      # Every localStorage key the app owns
         ├── theme-init.js        # Sets the light/dark theme before first paint
+        ├── page-actions.js      # Delegated dispatch for the tool pages' controls
         └── storage-manager.js   # Measures, writes and clears the app's own localStorage keys
 ```
 

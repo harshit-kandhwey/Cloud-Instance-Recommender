@@ -208,16 +208,16 @@ console.log(
 }
 
 // ─── The shared feature surfaces exist everywhere ────────────────────────────
-// Named markers rather than ids, so this also covers buttons wired by onclick.
+// Named markers rather than ids, so this also covers buttons wired through data-on-click.
 console.log("[every page offers the same shared features]");
 {
   const MARKERS = {
     "Excel download (primary)": "downloadResultsXlsxBtn",
-    "Excel input template": "downloadInputTemplate()",
+    "Excel input template": 'data-on-click="downloadInputTemplate"',
     "Custom rules panel": 'id="userRulesPanel"',
     "Cloud-to-cloud toggle": "cloudToCloudMode",
     "CSV multiselect dropdown": 'id="csvMenu"',
-    "Print report": "printExecutiveReport()",
+    "Print report": 'data-on-click="printExecutiveReport"',
     "Executive report target": 'id="executiveReportSection"',
     "Results charts": 'id="resultsChartsSection"',
     "App Portfolio": "openAppPortfolioBtn",
@@ -226,7 +226,7 @@ console.log("[every page offers the same shared features]");
     "Column mapping panel": 'id="columnMappingSection"',
     "Results preview": 'id="resultsPreviewSection"',
     "Skip link": 'class="skip-link"',
-    "Theme toggle": "toggleTheme()",
+    "Theme toggle": 'data-on-click="toggleTheme"',
     "Sample CSV preview": 'class="sample-csv"',
   };
   // A bare id-shaped marker is routed through hasElementId, not a raw substring:

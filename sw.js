@@ -27,7 +27,7 @@
 // would keep the old keys around forever unused (activate only deletes whole
 // OTHER cache names, never prunes stale keys within one), so this forces a
 // clean re-precache instead of accumulating dead entries.
-const CACHE = "cir-cache-v7";
+const CACHE = "cir-cache-v8";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.
@@ -72,6 +72,7 @@ const PRECACHE_SCRIPTS = [
   "src/shared/storage-manager.js",
   "src/features/fleet-snapshots.js",
   "src/ui/storage-manager-ui.js",
+  "src/shared/page-actions.js",
   "src/features/portfolio.js",
 ];
 

@@ -315,8 +315,8 @@ console.log("[section collapse state]");
     const headers = [...read(page).matchAll(OPEN_DIV)]
       .map((m) => m[1])
       .filter((a) => hasClass(a, "section-header"));
-    const collapsible = headers.filter((a) =>
-      /\btoggleSection\s*\(/.test(attr(a, "onclick")),
+    const collapsible = headers.filter(
+      (a) => attr(a, "data-on-click") === "toggleSection",
     );
     const idless = collapsible.filter((a) => !attr(a, "data-section-id"));
     check(

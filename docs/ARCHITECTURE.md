@@ -16,6 +16,7 @@ src/
   shared/      app-core.js        state, mapping tables, readiness, region validation
                storage-keys.js    every localStorage key the app owns
                storage-manager.js measure, write and clear the app's own keys
+               page-actions.js    delegated dispatch for controls (data-on-click / data-on-change)
   core/
     rules/     rule-engine.js     ENV / OS / Workload / Compliance rules (window.RuleEngine)
                user-rules.js      user-defined rule model, evaluator and storage

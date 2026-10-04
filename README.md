@@ -303,6 +303,7 @@ Cloud-Instance-Recommender/
         ├── app-core.js                     # Shared state, mapping tables, data readiness, region validation
         ├── storage-keys.js                 # Every localStorage key the app owns
         ├── theme-init.js                   # Sets the light/dark theme before first paint
+        ├── page-actions.js                 # Delegated dispatch for the tool pages' controls
         └── storage-manager.js              # Measures, writes and clears the app's own localStorage keys
 ```
 

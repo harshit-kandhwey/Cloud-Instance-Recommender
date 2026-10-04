@@ -40,6 +40,7 @@
     <script defer src="src/shared/storage-manager.js"></script>
     <script defer src="src/features/fleet-snapshots.js"></script>
     <script defer src="src/ui/storage-manager-ui.js"></script>
+    <script defer src="src/shared/page-actions.js"></script>
   </head>
 
   <body>
@@ -85,7 +86,7 @@
           <button
             id="themeToggle"
             class="theme-toggle"
-            onclick="toggleTheme()"
+            data-on-click="toggleTheme"
             title="Toggle dark mode"
             aria-label="Toggle dark mode"
             aria-pressed="false"
@@ -112,7 +113,8 @@
           <div
             class="section-header"
             data-section-id="sample-template"
-            onclick="toggleSection(this)"
+            data-on-click="toggleSection"
+            data-this
           >
             <span class="section-icon">📄</span>
             <h2 class="section-title">Sample CSV Template</h2>
@@ -367,13 +369,16 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
               </div>
             </details>
 
-            <button class="btn btn-secondary" onclick="downloadAWSSampleCSV()">
+            <button
+              class="btn btn-secondary"
+              data-on-click="downloadAWSSampleCSV"
+            >
               📥 Download Sample CSV
             </button>
 
             <button
               class="btn btn-secondary"
-              onclick="downloadInputTemplate()"
+              data-on-click="downloadInputTemplate"
               id="downloadInputTemplateBtn"
             >
               📊 Download Excel Template
@@ -408,7 +413,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
               <button
                 type="button"
                 class="btn btn-secondary"
-                onclick="toggleManualEntry()"
+                data-on-click="toggleManualEntry"
                 style="font-size: 13px; padding: 8px 16px"
               >
                 ✍️ Or enter VMs manually
@@ -469,7 +474,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   id="likeToLike"
                   name="recommendationType"
                   value="like-to-like"
-                  onchange="handleRecommendationTypeChange()"
+                  data-on-change="handleRecommendationTypeChange"
                 />
                 <label for="likeToLike">
                   <strong>Like-to-Like Recommendation</strong><br />
@@ -485,7 +490,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   id="optimized"
                   name="recommendationType"
                   value="optimized"
-                  onchange="handleRecommendationTypeChange()"
+                  data-on-change="handleRecommendationTypeChange"
                 />
                 <label for="optimized">
                   <strong>Optimized Recommendation</strong><br />
@@ -501,7 +506,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   id="both"
                   name="recommendationType"
                   value="both"
-                  onchange="handleRecommendationTypeChange()"
+                  data-on-change="handleRecommendationTypeChange"
                   checked
                 />
                 <label for="both">
@@ -525,7 +530,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   id="utilizationStatistic"
                   class="form-control"
                   aria-describedby="utilizationStatisticHint"
-                  onchange="onUtilizationStatisticChange()"
+                  data-on-change="onUtilizationStatisticChange"
                 >
                   <option value="avg" selected>
                     Average utilization (default)
@@ -551,7 +556,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                       type="checkbox"
                       id="cpuBased"
                       value="cpu"
-                      onchange="toggleOptimizationMode()"
+                      data-on-change="toggleOptimizationMode"
                       checked
                     />
                     <label for="cpuBased">CPU-Based</label>
@@ -561,7 +566,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                       type="checkbox"
                       id="memoryBased"
                       value="memory"
-                      onchange="toggleOptimizationMode()"
+                      data-on-change="toggleOptimizationMode"
                       checked
                     />
                     <label for="memoryBased">Memory-Based</label>
@@ -594,7 +599,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     value="40"
                     min="0"
                     max="100"
-                    onchange="updateCpuRanges()"
+                    data-on-change="updateCpuRanges"
                   />
                   <span>%</span>
                 </div>
@@ -618,7 +623,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     value="80"
                     min="0"
                     max="100"
-                    onchange="updateCpuRanges()"
+                    data-on-change="updateCpuRanges"
                   />
                   <span>%</span>
                 </div>
@@ -663,7 +668,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     value="40"
                     min="0"
                     max="100"
-                    onchange="updateMemoryRanges()"
+                    data-on-change="updateMemoryRanges"
                   />
                   <span>%</span>
                 </div>
@@ -687,7 +692,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     value="80"
                     min="0"
                     max="100"
-                    onchange="updateMemoryRanges()"
+                    data-on-change="updateMemoryRanges"
                   />
                   <span>%</span>
                 </div>
@@ -738,7 +743,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
           <div
             class="section-header"
             data-section-id="advanced-filters"
-            onclick="toggleSection(this)"
+            data-on-click="toggleSection"
+            data-this
           >
             <span class="section-icon">🔧</span>
             <h2 class="section-title">
@@ -753,7 +759,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                 <input
                   type="checkbox"
                   id="currentGenerationOnly"
-                  onchange="toggleCurrentGenerationFilter()"
+                  data-on-change="toggleCurrentGenerationFilter"
                   checked
                 />
                 <label for="currentGenerationOnly">
@@ -787,10 +793,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                 <input
                   type="checkbox"
                   id="restrictInstanceFamilyNames"
-                  onchange="
-                    toggleInstanceFamilyNameFilter();
-                    checkRuleConflicts();
-                  "
+                  data-on-change="toggleInstanceFamilyNameFilter"
+                  data-then="checkRuleConflicts"
                 />
                 <label for="restrictInstanceFamilyNames">
                   <strong>🏷️ Restrict to specific instance family names</strong>
@@ -817,10 +821,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                 <input
                   type="checkbox"
                   id="restrictProcessorManufacturers"
-                  onchange="
-                    toggleProcessorManufacturerFilter();
-                    checkRuleConflicts();
-                  "
+                  data-on-change="toggleProcessorManufacturerFilter"
+                  data-then="checkRuleConflicts"
                 />
                 <label for="restrictProcessorManufacturers">
                   <strong>🔧 Restrict to specific processor types</strong>
@@ -846,10 +848,8 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                 <input
                   type="checkbox"
                   id="restrictMainFamilies"
-                  onchange="
-                    toggleMainFamiliesFilter();
-                    checkRuleConflicts();
-                  "
+                  data-on-change="toggleMainFamiliesFilter"
+                  data-then="checkRuleConflicts"
                 />
                 <label for="restrictMainFamilies">
                   <strong>📋 Restrict to specific instance families</strong>
@@ -875,7 +875,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                 <input
                   type="checkbox"
                   id="excludeTypes"
-                  onchange="toggleExcludeTypes()"
+                  data-on-change="toggleExcludeTypes"
                 />
                 <label for="excludeTypes">
                   <strong>❌ Exclude specific instance types</strong>
@@ -951,7 +951,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   >
                   <select
                     id="ruleDefaultEnv"
-                    onchange="onRuleChange()"
+                    data-on-change="onRuleChange"
                     style="
                       width: 100%;
                       padding: 5px 6px;
@@ -998,7 +998,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   >
                   <select
                     id="ruleDefaultOS"
-                    onchange="onRuleChange()"
+                    data-on-change="onRuleChange"
                     style="
                       width: 100%;
                       padding: 5px 6px;
@@ -1044,7 +1044,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   >
                   <select
                     id="ruleDefaultWorkload"
-                    onchange="onRuleChange()"
+                    data-on-change="onRuleChange"
                     style="
                       width: 100%;
                       padding: 5px 6px;
@@ -1118,7 +1118,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                         type="checkbox"
                         id="ruleDefaultComplianceCurrentGen"
                         value="Current-Generation Hardware"
-                        onchange="onRuleChange()"
+                        data-on-change="onRuleChange"
                       />
                       Current-Generation Hardware
                     </label>
@@ -1127,7 +1127,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                         type="checkbox"
                         id="ruleDefaultComplianceNitro"
                         value="AWS Nitro Enclaves"
-                        onchange="onRuleChange()"
+                        data-on-change="onRuleChange"
                       />
                       AWS Nitro Enclaves
                     </label>
@@ -1136,7 +1136,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                         type="checkbox"
                         id="ruleDefaultComplianceConfidential"
                         value="Confidential Computing"
-                        onchange="onRuleChange()"
+                        data-on-change="onRuleChange"
                       />
                       Confidential Computing
                     </label>
@@ -1173,7 +1173,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   >
                   <select
                     id="ruleDefaultMinGen"
-                    onchange="onRuleChange()"
+                    data-on-change="onRuleChange"
                     style="
                       width: 100%;
                       padding: 5px 6px;
@@ -1432,7 +1432,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
             <div id="filterPresetsBar"></div>
             <button
               class="btn btn-primary generate-btn"
-              onclick="generateRecommendations()"
+              data-on-click="generateRecommendations"
             >
               🔄 Generate Recommendations
             </button>
@@ -1456,7 +1456,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     <button
                       class="btn btn-primary"
                       id="downloadResultsXlsxBtn"
-                      onclick="downloadResultsXlsx()"
+                      data-on-click="downloadResultsXlsx"
                     >
                       📊 Download Results (Excel)
                     </button>
@@ -1466,7 +1466,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                         class="btn btn-secondary"
                         id="csvMenuBtn"
                         aria-expanded="false"
-                        onclick="toggleCsvMenu()"
+                        data-on-click="toggleCsvMenu"
                       >
                         ⬇️ CSV ▾
                       </button>
@@ -1479,7 +1479,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     </div>
                     <button
                       class="btn btn-secondary"
-                      onclick="printExecutiveReport()"
+                      data-on-click="printExecutiveReport"
                       title="Open a print-ready one-page executive summary (match rate, families, right-sizing) — print or save as PDF"
                     >
                       🖨️ Print Report
@@ -1492,7 +1492,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                   <div class="download-group-btns" id="downloadBtnsRow">
                     <button
                       class="btn btn-secondary"
-                      onclick="downloadAWSBulkTemplate()"
+                      data-on-click="downloadAWSBulkTemplate"
                       title="Generates a CSV pre-formatted for the AWS Pricing Calculator Bulk Import (EC2 Instances template)"
                     >
                       🧾 Bulk Import Template
@@ -1506,7 +1506,7 @@ app-server-03,Billing,2,8,35,45,eu-west-1,Dev,Linux,General,,,,,t3.large</pre>
                     <button
                       id="openAppPortfolioBtn"
                       class="btn btn-primary hidden"
-                      onclick="openAppPortfolio()"
+                      data-on-click="openAppPortfolio"
                     >
                       📊 Open App Portfolio
                     </button>
