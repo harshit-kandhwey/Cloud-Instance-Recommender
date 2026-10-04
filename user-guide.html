@@ -867,6 +867,7 @@
             <a href="#conflict-detect">Conflict Detection</a>
             <a href="#filter-presets">Filter Presets</a>
             <a href="#user-rules">User-Defined Rules</a>
+            <a href="#browser-storage">Browser Storage and Fleet Snapshots</a>
           </div>
         </div>
         <div class="toc-section">
@@ -3017,6 +3018,39 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           "always exclude burstable for Database regardless of ENV," or "for
           HIPAA rows, include only Nitro-supported families" — without
           hand-editing every row.
+        </p>
+      </div>
+
+      <div id="browser-storage">
+        <h3>💾 Browser Storage and Fleet Snapshots</h3>
+        <p>
+          Everything this tool keeps is kept in your browser, never sent
+          anywhere. The Browser Storage section on every tool page lists each
+          kind of data the tool stores, with its size, and lets you clear one of
+          them, or all of them. Clearing is two-step: the first press asks you
+          to confirm, the second clears.
+        </p>
+        <p>
+          A <strong>fleet snapshot</strong> saves the results of your last run
+          under a name you choose, so you can come back to it. A snapshot holds
+          the per-VM results, the providers and the custom rules that run used.
+          It does not hold your original inventory file. You need a completed
+          run to save one.
+        </p>
+        <p>
+          <strong>Compare with last run</strong> checks a saved snapshot against
+          your latest run. The two count as the same estate only when at least
+          90% of the VMs in the larger run appear in both, matched by VM Name.
+          For the same estate you see how many VMs and cells changed, and a
+          table of each changed cell (up to 50 rows). For a different estate the
+          comparison is refused, and the message lists the VMs that were added
+          and removed, so you can save the new run as its own snapshot instead.
+        </p>
+        <p>
+          Your browser sets how much it will store for this site, usually about
+          5 MB. If that is full, a save is refused with a message, and nothing
+          already stored is lost. Delete a snapshot or clear some data, then try
+          again.
         </p>
       </div>
 

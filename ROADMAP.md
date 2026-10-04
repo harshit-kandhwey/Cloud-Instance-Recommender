@@ -225,7 +225,9 @@ _New, 2026-09-14. The Contrarian's durability critique — a one-shot CSV upload
 - **Carried from 4.0:** a `Criticality` column; percentile statistics (`Peak CPU`, p90/p99); policy storage; the confidence report; the scale-out vs scale-up advisory; the validated multi-sheet `.xlsx` template; the performance-based right-sizing engine (explicit metric, ENV-capped performance-based policy, multi-metric safety veto). Predictive/ML sizing stays out: it needs a time-series input that does not exist.
 - **Gated, no code in this minor:** the record-shape decision for managed services, and the managed services themselves (their build starts only after that decision says go); the licensed-infrastructure candidate (needs an external embedder); team collaboration and continuous sync (needs its own review, not a silent build); the visual modernization build-system choice; the Azure Migrate preset and metadata enrichment (both blocked on external input).
 
-This makes 3.21 far larger than a normal minor. It also removes 4.0's separation from 3.x that the 4.0 section below was written to keep.
+This makes 3.21 far larger than a normal minor.
+
+**Progress, 2026-10-04.** Shipped in 3.21.1–3.21.14: a single key registry; a quota-aware storage manager with a Browser Storage section on all four tool pages; localStorage tamper tests; fleet snapshots (save, list, delete); a drift identity rule that refuses different estates; compare with the last run, with a per-VM diff for the same estate; an architecture document. Deferred at the maintainer's request: moving snapshots to IndexedDB. Still open: the styled-writer choice for exports (the vendored Apache-2.0 writer has no dropdown support; ExcelJS is MIT with documented validation, pending a bundle and security check), the remaining Phase 5 security and CSP work, and the later phases. It also removes 4.0's separation from 3.x that the 4.0 section below was written to keep.
 
 ### 3.22 — Closing out 3.x
 
