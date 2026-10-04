@@ -36,7 +36,7 @@ function _matchRateMeter(results) {
       <div class="inl-7e30d285">
         <div class="inl-bcfb6f24" role="img" aria-label="${matched} of ${total} rows matched an instance, ${pct} percent"
             >
-          <div style="width:${pct}%;height:100%;background:var(--good-strong);border-radius:5px;"></div>
+          <div${dataStyleAttr({ width: `${pct}%`, height: "100%", background: "var(--good-strong)", "border-radius": "5px" })}></div>
         </div>
         <span class="inl-d38962e9">${pct}%</span>
       </div>
@@ -101,7 +101,7 @@ function _familyDistribution(results) {
         <div class="inl-98ea3165" role="listitem">
           <span class="inl-020325ee" title="${label}">${label}</span>
           <span class="inl-f9523076">
-            <span style="display:block;width:${pct}%;height:100%;background:var(--chart-bar);border-radius:4px;"></span>
+            <span${dataStyleAttr({ display: "block", width: `${pct}%`, height: "100%", background: "var(--chart-bar)", "border-radius": "4px" })}></span>
           </span>
           <span class="inl-621e9189">${n}</span>
         </div>`;
@@ -173,7 +173,7 @@ function _beforeAfter(results) {
         <div class="inl-21957246">
           <span class="inl-926de76e">${label}</span>
           <span class="inl-f9523076">
-            <span style="display:block;width:${pct}%;height:100%;background:${color};border-radius:4px;"></span>
+            <span${dataStyleAttr({ display: "block", width: `${pct}%`, height: "100%", background: color, "border-radius": "4px" })}></span>
           </span>
           <span class="inl-22e75d37">${value}</span>
         </div>`;
@@ -273,7 +273,7 @@ function _reportHeadline(results) {
 
   const tile = (label, value, accent) => `
       <div class="inl-c6716b80">
-        <div style="font-size:22px;font-weight:800;line-height:1.1;color:${accent || "var(--text)"};">${value}</div>
+        <div${dataStyleAttr({ "font-size": "22px", "font-weight": "800", "line-height": "1.1", color: accent || "var(--text)" })}>${value}</div>
         <div class="inl-1283cbed">${label}</div>
       </div>`;
 
@@ -311,7 +311,7 @@ function _reportHeadline(results) {
       return `
         <div class="inl-cc77be06">
           <strong class="inl-e0b98047">${escapeHtml(s.provider)}</strong>
-          <span style="color:${color};font-weight:700;"> ${parts.join(" · ")}</span>
+          <span${dataStyleAttr({ color: color, "font-weight": "700" })}> ${parts.join(" · ")}</span>
           <span class="inl-a2aae0fb"> vs ${escapeHtml(s.baseline)}</span>
         </div>`;
     })

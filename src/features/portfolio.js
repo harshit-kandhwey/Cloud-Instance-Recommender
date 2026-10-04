@@ -536,13 +536,13 @@ function pfBar(counts, colorFn) {
   const segs = entries
     .map(
       ([k, n]) =>
-        `<span class="pf-bar-seg" style="width:${((n / total) * 100).toFixed(2)}%;background:${colorFn(k)}" title="${esc(k)}: ${n}"></span>`,
+        `<span class="pf-bar-seg" ${dataStyleAttr({ width: `${((n / total) * 100).toFixed(2)}%`, background: colorFn(k) })} title="${esc(k)}: ${n}"></span>`,
     )
     .join("");
   const legend = entries
     .map(
       ([k, n]) =>
-        `<span class="pf-legend-item"><span class="pf-swatch" style="background:${colorFn(k)}"></span>${esc(k)} <b>${n}</b></span>`,
+        `<span class="pf-legend-item"><span class="pf-swatch" ${dataStyleAttr({ background: colorFn(k) })}></span>${esc(k)} <b>${n}</b></span>`,
     )
     .join("");
   return `<div class="pf-bar">${segs}</div><div class="pf-legend">${legend}</div>`;
@@ -614,7 +614,7 @@ function pfDoughnut(counts, colorFn, opts) {
   const legend = entries
     .map(
       ([k, n]) =>
-        `<span class="pf-legend-item"><span class="pf-swatch" style="background:${colorFn(k)}"></span>${esc(k)} <b>${n}</b> <span class="pf-muted">${Math.round((n / total) * 100)}%</span></span>`,
+        `<span class="pf-legend-item"><span class="pf-swatch" ${dataStyleAttr({ background: colorFn(k) })}></span>${esc(k)} <b>${n}</b> <span class="pf-muted">${Math.round((n / total) * 100)}%</span></span>`,
     )
     .join("");
 
@@ -664,7 +664,7 @@ function pfEstateRightSizing(m) {
       const total = v.downsize + v.same + v.upsize;
       const segs = PF_RIGHTSIZE_SEGS.map((s) =>
         v[s.key] > 0
-          ? `<span class="pf-bar-seg" style="width:${((v[s.key] / total) * 100).toFixed(2)}%;background:${s.color}" title="${s.label}: ${v[s.key]}"></span>`
+          ? `<span class="pf-bar-seg" ${dataStyleAttr({ width: `${((v[s.key] / total) * 100).toFixed(2)}%`, background: s.color })} title="${s.label}: ${v[s.key]}"></span>`
           : "",
       ).join("");
       const aria = PF_RIGHTSIZE_SEGS.map((s) => `${s.label} ${v[s.key]}`).join(
@@ -678,7 +678,7 @@ function pfEstateRightSizing(m) {
 
   const legend = PF_RIGHTSIZE_SEGS.map(
     (s) =>
-      `<span class="pf-legend-item"><span class="pf-swatch" style="background:${s.color}"></span>${s.sym} ${s.label}</span>`,
+      `<span class="pf-legend-item"><span class="pf-swatch" ${dataStyleAttr({ background: s.color })}></span>${s.sym} ${s.label}</span>`,
   ).join("");
 
   return `<div class="pf-chart-card"><h4>📐 Right-sizing verdict</h4>${rows}<div class="pf-legend">${legend}</div><small class="pf-note">Optimized vs. current vCPUs, across every application.</small></div>`;

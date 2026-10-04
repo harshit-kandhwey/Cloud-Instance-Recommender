@@ -168,7 +168,7 @@ console.log("[the strong tier is drawn more emphatically than the mild one]");
   check(
     "the strong flag is the deeper amber and bold",
     spanOf(100).includes("var(--amber-deep)") &&
-      spanOf(100).includes("font-weight:700"),
+      spanOf(100).includes("&quot;font-weight&quot;:&quot;700&quot;"),
     spanOf(100),
   );
 }

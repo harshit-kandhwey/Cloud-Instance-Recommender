@@ -64,7 +64,7 @@ function showDataPreview() {
 
   previewData.forEach((row, i) => {
     const bgColor = i % 2 === 0 ? "var(--surface)" : "var(--surface-alt)";
-    tableHTML += `<tr style="background: ${bgColor};">`;
+    tableHTML += `<tr${dataStyleAttr({ background: bgColor })}>`;
     headers.forEach((header) => {
       const value = row[header] || "";
       const displayValue =

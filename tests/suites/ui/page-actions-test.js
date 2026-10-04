@@ -171,6 +171,44 @@ check(
   );
 }
 
+{
+  const set = [];
+  const makeNode = (attrs, kids) => {
+    const node = {
+      nodeType: 1,
+      style: { setProperty: (k, v) => set.push([k, v]) },
+      hasAttribute: (k) => k in attrs,
+      getAttribute: (k) => attrs[k],
+      querySelectorAll: () => kids,
+    };
+    return node;
+  };
+  const child = makeNode({ "data-style": '{"width":"75%"}' }, []);
+  const root = makeNode(
+    { "data-style": '{"background":"var(--good-strong)","height":"100%"}' },
+    [child],
+  );
+  const plain = makeNode({}, []);
+  const dsSandbox = { document: sandbox.document, window: {}, console };
+  dsSandbox.window = dsSandbox;
+  vm.runInContext(
+    read("src/shared/page-actions.js"),
+    vm.createContext(dsSandbox),
+  );
+  dsSandbox.applyDataStyles(root);
+  dsSandbox.applyDataStyles(plain);
+  check(
+    "data-style declarations are applied to the node and its descendants",
+    JSON.stringify(set) ===
+      JSON.stringify([
+        ["background", "var(--good-strong)"],
+        ["height", "100%"],
+        ["width", "75%"],
+      ]),
+    JSON.stringify(set),
+  );
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;

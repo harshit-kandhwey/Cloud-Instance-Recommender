@@ -7,6 +7,30 @@
 // data-this and data-arg forms are still read. data-then runs a second global after
 // the first. Inline handler attributes are not used, so the CSP can drop
 // 'unsafe-inline' for scripts.
+// Applies data-style declarations to a node and its descendants. A MutationObserver
+// runs it for every inserted node before the next paint, so no renderer has to call it.
+function applyDataStyles(node) {
+  if (!node || node.nodeType !== 1) return;
+  var targets = node.hasAttribute("data-style") ? [node] : [];
+  targets = targets.concat(
+    Array.prototype.slice.call(node.querySelectorAll("[data-style]")),
+  );
+  targets.forEach(function (el) {
+    var decls = JSON.parse(el.getAttribute("data-style"));
+    Object.keys(decls).forEach(function (k) {
+      el.style.setProperty(k, decls[k]);
+    });
+  });
+}
+
+if (typeof MutationObserver === "function") {
+  new MutationObserver(function (records) {
+    records.forEach(function (r) {
+      Array.prototype.forEach.call(r.addedNodes, applyDataStyles);
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+}
+
 (function () {
   function resolve(arg, el, event) {
     if (arg !== null && typeof arg === "object" && "$" in arg) {

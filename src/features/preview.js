@@ -28,11 +28,11 @@ function _fitBadgeHtml(row, col) {
   const pct = Math.round(h.worst * 100);
   const strong = h.worst >= FIT_FLAG_STRONG;
   const color = strong ? "var(--amber-deep)" : "var(--amber-strong)";
-  const weight = strong ? "font-weight:700;" : "";
+  const weight = strong ? { "font-weight": "700" } : {};
   const provided = h.axis === "vCPU" ? `${h.instCpu} vCPU` : `${h.instMem} GiB`;
   const required = h.axis === "vCPU" ? `${h.reqCpu} vCPU` : `${h.reqMem} GB`;
   const label = `Over-provisioned: provides ${provided} against ${required} required — ${pct}% ${h.axis} headroom`;
-  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};${weight}white-space:nowrap;">▲${pct}%</span>`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"${dataStyleAttr({ "font-size": "0.78em", color: color, ...weight, "white-space": "nowrap" })}>▲${pct}%</span>`;
 }
 
 // The right-sizing verdict trailing an OPTIMIZED instance name: did the
@@ -71,7 +71,7 @@ function _rightsizeVerdictHtml(row, col) {
   const arrow = down ? "▼" : "▲";
   const word = down ? "Downsized" : "Upsized";
   const label = `${word}: optimized to ${recCpu} vCPU / ${recMem} GiB from the provisioned ${srcCpu} vCPU / ${srcMem} GB`;
-  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${arrow} ${word}</span>`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"${dataStyleAttr({ "font-size": "0.78em", color: color, "font-weight": "600", "white-space": "nowrap" })}>${arrow} ${word}</span>`;
 }
 
 // The workload-shape flag trailing the provisioned Memory (GB) cell: RAM per vCPU,
@@ -94,7 +94,7 @@ function _workloadShapeHtml(row) {
   const word = memory ? "Memory-optimized" : "Compute-optimized";
   const perCpu = Math.round(s.ratio * 10) / 10;
   const label = `${word} shape: ${perCpu} GB RAM per vCPU — steers this row toward a ${memory ? "memory" : "compute"}-optimized family`;
-  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}" style="font-size:0.78em;color:${color};font-weight:600;white-space:nowrap;">${word}</span>`;
+  return ` <span title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"${dataStyleAttr({ "font-size": "0.78em", color: color, "font-weight": "600", "white-space": "nowrap" })}>${word}</span>`;
 }
 
 // The stats bar describes the whole result set, so it doesn't change on filter or
@@ -155,7 +155,7 @@ function _buildStatsHtml(results) {
         parts.push(`${s.memory > 0 ? "−" : "+"}${Math.abs(s.memory)} GB`);
       const saving = s.vcpus >= 0 && s.memory >= 0;
       const color = saving ? "var(--good-strong)" : "var(--amber-strong)";
-      return `<span style="color:${color};" title="Optimized sizing across ${s.rows} matched row(s), compared with the ${s.baseline} recommendation">⚡ ${escapeHtml(s.provider)} <strong>${parts.join(" · ")}</strong></span>`;
+      return `<span${dataStyleAttr({ color: color })} title="Optimized sizing across ${s.rows} matched row(s), compared with the ${s.baseline} recommendation">⚡ ${escapeHtml(s.provider)} <strong>${parts.join(" · ")}</strong></span>`;
     })
     .join("");
 
@@ -442,7 +442,7 @@ function _renderPreviewTable(
       .filter(Boolean)
       .map((p) => {
         const colour = p.startsWith("⚠") ? "#d97706" : "#1a56db";
-        return `<span style="display:inline-block;margin:1px 2px;padding:1px 6px;border-radius:10px;background:${colour}1a;border:1px solid ${colour}55;color:${colour};font-size:0.78em;white-space:nowrap;">${escapeHtml(p)}</span>`;
+        return `<span${dataStyleAttr({ display: "inline-block", margin: "1px 2px", padding: "1px 6px", "border-radius": "10px", background: colour + "1a", border: "1px solid " + colour + "55", color: colour, "font-size": "0.78em", "white-space": "nowrap" })}>${escapeHtml(p)}</span>`;
       })
       .join(" ");
   }
@@ -513,7 +513,7 @@ function _renderPreviewTable(
   // collide with the rows-per-page select when the focus restore tests for nav-ness).
   const navBtn = (label, target, disabled, aria, id) =>
     `<button type="button" id="${id}"${actionAttrs("click", "_previewGoToPage", [target])}${disabled ? " disabled" : ""} aria-label="${aria}"
-      style="padding:4px 9px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:${disabled ? "default" : "pointer"};opacity:${disabled ? "0.45" : "1"};white-space:nowrap;">${label}</button>`;
+      ${dataStyleAttr({ padding: "4px 9px", border: "1px solid var(--border-slate)", "border-radius": "6px", "font-size": "12px", background: "var(--surface-alt)", color: "var(--text-body)", cursor: disabled ? "default" : "pointer", opacity: disabled ? "0.45" : "1", "white-space": "nowrap" })}>${label}</button>`;
   const paginationNav =
     pageCount > 1
       ? `<div class="inl-72b39352">
@@ -587,7 +587,7 @@ function _renderPreviewTable(
     // cells. Visible columns only, matching what's on screen.
     const rowTsv = buildPreviewTsv([row], visibleCols).split("\n")[1];
 
-    html += `<tr style="background:${bg};">`;
+    html += `<tr${dataStyleAttr({ background: bg })}>`;
     // Copy button
     html += `<td class="inl-add0a10e">
       <button class="inl-c10f30bd"${actionAttrs("click", "copyTextToClipboard", [rowTsv, `Copied row ${absoluteRow} to the clipboard`])}
@@ -615,22 +615,22 @@ function _renderPreviewTable(
         const fit = bad ? "" : _fitBadgeHtml(row, col);
         const verdict = bad ? "" : _rightsizeVerdictHtml(row, col);
         cellContent = val
-          ? `<strong style="color:${color}">${escapeHtml(String(val))}</strong>${fit}${verdict}`
+          ? `<strong${dataStyleAttr({ color: color })}>${escapeHtml(String(val))}</strong>${fit}${verdict}`
           : '<span class="inl-ad85eba4">—</span>';
       } else if (isVcpuCol(col) && l2lVcpuColMap[col]) {
         // Diff view: compare Optimized vCPUs to Like-to-Like vCPUs
         const l2lVal = parseFloat(row[l2lVcpuColMap[col]]);
         const optVal = parseFloat(val);
-        let diffStyle = "";
+        let diffStyle = {};
         if (!isNaN(l2lVal) && !isNaN(optVal) && l2lVal > 0) {
           if (optVal < l2lVal)
-            diffStyle = "color:var(--good-strong);font-weight:600;";
+            diffStyle = { color: "var(--good-strong)", "font-weight": "600" };
           else if (optVal > l2lVal)
-            diffStyle = "color:var(--amber-strong);font-weight:600;";
+            diffStyle = { color: "var(--amber-strong)", "font-weight": "600" };
         }
         cellContent =
           val !== "" && val !== undefined
-            ? `<span style="${diffStyle}">${escapeHtml(String(val))}</span>`
+            ? `<span${dataStyleAttr(diffStyle)}>${escapeHtml(String(val))}</span>`
             : '<span class="inl-ad85eba4">—</span>';
       } else if (col === COLUMN_MAPPINGS.memory) {
         // The provisioned-memory input cell trails the workload-shape flag — it's

@@ -419,7 +419,7 @@ function renderToasts() {
     .map((toast) => {
       const tone = TOAST_TONES[toast.type] || TOAST_TONES.info;
       return `
-        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border-soft);border-left:4px solid ${tone.color};border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.18);font-size:0.9rem;line-height:1.4;">
+        <div${dataStyleAttr({ display: "flex", "align-items": "flex-start", gap: "10px", padding: "12px 14px", background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border-soft)", "border-left": `4px solid ${tone.color}`, "border-radius": "8px", "box-shadow": "0 4px 14px rgba(0,0,0,0.18)", "font-size": "0.9rem", "line-height": "1.4" })}>
           <span aria-hidden="true">${tone.icon}</span>
           <span class="inl-7623f055">${escapeHtml(toast.message)}</span>
           <button class="inl-dec8f300" type="button"${actionAttrs("click", "dismissToast", [toast.id])} aria-label="Dismiss notification">×</button>
@@ -586,14 +586,19 @@ function renderRegionValidation(validation, section) {
   }
 
   const CHIP_STYLES = {
-    exact: "background: var(--success-bg); color: var(--success-text);",
-    fuzzy: "background: var(--warning-bg); color: var(--warning-text);",
-    unknown: "background: var(--danger-bg); color: var(--danger-text);",
+    exact: { background: "var(--success-bg)", color: "var(--success-text)" },
+    fuzzy: { background: "var(--warning-bg)", color: "var(--warning-text)" },
+    unknown: { background: "var(--danger-bg)", color: "var(--danger-text)" },
   };
   const PROVIDER_LABELS = { aws: "AWS", azure: "Azure", gcp: "GCP" };
-  const chipBase =
-    "display: inline-block; padding: 2px 10px; margin: 2px 6px 2px 0; " +
-    "border-radius: 12px; font-size: 12px; font-weight: 500;";
+  const chipBase = {
+    display: "inline-block",
+    padding: "2px 10px",
+    margin: "2px 6px 2px 0",
+    "border-radius": "12px",
+    "font-size": "12px",
+    "font-weight": "500",
+  };
 
   let unknownCount = 0;
   const rows = providers
@@ -609,7 +614,7 @@ function renderRegionValidation(validation, section) {
             unknownCount++;
             label = `${escapeHtml(raw)} ✗`;
           }
-          return `<span style="${chipBase} ${CHIP_STYLES[res.status]}" title="${
+          return `<span${dataStyleAttr({ ...chipBase, ...CHIP_STYLES[res.status] })} title="${
             res.status === "unknown"
               ? "Region not recognized — rows using it will get sample data"
               : res.status === "fuzzy"
@@ -696,6 +701,12 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+// Data-driven styles (a computed width or colour) are set through the CSS object model by
+// page-actions.js, because a style attribute in inserted markup is blocked by the CSP.
+function dataStyleAttr(decls) {
+  return ' data-style="' + escapeHtml(JSON.stringify(decls)) + '"';
 }
 
 function actionAttrs(type, fn, args, opts) {

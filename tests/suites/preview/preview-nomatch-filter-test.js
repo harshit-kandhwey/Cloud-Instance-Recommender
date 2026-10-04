@@ -40,7 +40,10 @@ const namesShown = (html) =>
     html.includes(`>${n}<`),
   );
 const dangerRowCount = (html) =>
-  (html.match(/background:var\(--danger-bg-soft\)/g) || []).length;
+  (
+    html.match(/&quot;background&quot;:&quot;var\(--danger-bg-soft\)&quot;/g) ||
+    []
+  ).length;
 const renderedRowCount = (html) =>
   (html.match(/aria-label="Copy row \d+"/g) || []).length;
 

@@ -39,7 +39,7 @@ console.log("[the match rate is drawn, and stated]");
   check("the rate is stated as a number", html.includes("75%"), html);
   check(
     "the meter fill is drawn to that proportion",
-    /width:75%/.test(html),
+    /&quot;width&quot;:&quot;75%&quot;/.test(html),
     html.match(/width:\d+%/)?.[0],
   );
   check(
