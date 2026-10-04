@@ -620,10 +620,20 @@ const UTILIZATION_STATISTICS = {
     cpu: "CPU Utilization",
     memory: "Memory Utilization",
   },
+  p90: {
+    label: "p90",
+    cpu: "CPU Utilization p90",
+    memory: "Memory Utilization p90",
+  },
   p95: {
     label: "p95",
     cpu: "CPU Utilization p95",
     memory: "Memory Utilization p95",
+  },
+  p99: {
+    label: "p99",
+    cpu: "CPU Utilization p99",
+    memory: "Memory Utilization p99",
   },
   peak: {
     label: "Peak",
@@ -636,10 +646,14 @@ const UTILIZATION_STATISTICS = {
 // run: a fleet export often has p95 for monitored VMs and only an average for the
 // rest, and dropping those to "No utilization data" is worse than sizing on what they
 // have. Preferring the HIGHER statistic first is deliberate — sizing lower under-provisions.
+// Each chain lists every higher statistic (ascending) before any lower one (descending),
+// so the first reading found is never lower than the requested statistic when one exists.
 const UTILIZATION_FALLBACK = {
-  avg: ["avg", "p95", "peak"],
-  p95: ["p95", "peak", "avg"],
-  peak: ["peak", "p95", "avg"],
+  avg: ["avg", "p90", "p95", "p99", "peak"],
+  p90: ["p90", "p95", "p99", "peak", "avg"],
+  p95: ["p95", "p99", "peak", "p90", "avg"],
+  p99: ["p99", "peak", "p95", "p90", "avg"],
+  peak: ["peak", "p99", "p95", "p90", "avg"],
 };
 
 // Reads one dimension (cpu/memory) for a row, walking its OWN fallback chain from the

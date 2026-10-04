@@ -545,8 +545,8 @@
               <td><span class="col-pill">CPU Utilization</span></td>
               <td>
                 Average CPU utilisation % — used for Optimized recommendations
-                when available; a row can also be sized on its p95 or Peak
-                reading (see below)
+                when available; a row can also be sized on its p90, p95, p99 or
+                Peak reading (see below)
               </td>
               <td>45</td>
             </tr>
@@ -555,7 +555,7 @@
               <td>
                 Average memory utilisation % — used for Optimized
                 recommendations when available; a row can also be sized on its
-                p95 or Peak reading (see below)
+                p90, p95, p99 or Peak reading (see below)
               </td>
               <td>60</td>
             </tr>
@@ -571,6 +571,32 @@
                 downsize candidate its average suggests.
               </td>
               <td>85</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="col-pill">CPU Utilization p90</span>
+                <span class="col-pill">Memory Utilization p90</span>
+                <span class="col-pill">CPU Utilization p99</span>
+                <span class="col-pill">Memory Utilization p99</span>
+              </td>
+              <td>
+                Optional 90th- and 99th-percentile readings, used when
+                <strong>Size against</strong> is set to p90 or p99. Same
+                fallback rules as p95.
+              </td>
+              <td>78 / 93</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="col-pill">CPU Utilization p50</span>
+                <span class="col-pill">Memory Utilization p50</span>
+              </td>
+              <td>
+                Optional median readings. They map and are carried, but they
+                never size a row: a median sits below the average for a bursty
+                VM. Reserved for the scale-out advisory.
+              </td>
+              <td>12</td>
             </tr>
             <tr>
               <td>
@@ -591,11 +617,11 @@
         <p>
           <strong>Which statistic sizes a row.</strong> The
           <strong>Size against</strong> selector in Optimization Settings
-          chooses between Average (the default), p95 and Peak. A row that does
-          not carry the chosen statistic falls back to what it does have —
-          preferring the higher remaining one, since sizing against a lower
-          number than you asked for under-provisions — and every row reports the
-          basis actually used in a
+          chooses between Average (the default), p90, p95, p99 and Peak. A row
+          that does not carry the chosen statistic falls back to what it does
+          have — preferring the higher remaining one, since sizing against a
+          lower number than you asked for under-provisions — and every row
+          reports the basis actually used in a
           <span class="col-pill">Sized On</span> column, so a recommendation can
           always be traced to the number behind it.
         </p>

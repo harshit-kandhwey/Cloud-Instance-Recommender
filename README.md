@@ -350,7 +350,10 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 | `App Name` | Any text | Groups VMs by application for the App Summary CSV and the App Portfolio; enables app→workload inheritance |
 | `CPU Utilization` | 0–100 | Average CPU; drives N/2 / N / N+1 optimization |
 | `Memory Utilization` | 0–100 | Average memory; drives N/2 / N / N+1 optimization |
+| `CPU Utilization p90` `Memory Utilization p90` | 0–100 | p90 readings, used when the run sizes against p90 |
 | `CPU Utilization p95` `Memory Utilization p95` | 0–100 | p95 readings, used when the run sizes against p95 (see below) |
+| `CPU Utilization p99` `Memory Utilization p99` | 0–100 | p99 readings, used when the run sizes against p99 |
+| `CPU Utilization p50` `Memory Utilization p50` | 0–100 | Median readings; mapped and carried but never used for sizing (reserved for the scale-out advisory) |
 | `CPU Utilization Peak` `Memory Utilization Peak` | 0–100 | Peak/max readings, used when the run sizes against Peak |
 | `Disk (GB)` | Number (MB/MiB headers convert automatically) | Optional provisioned disk; carried through to the outputs after any MB/MiB→GB conversion, and rounded up to a whole GB for the AWS bulk template. Does not affect sizing |
 | `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |

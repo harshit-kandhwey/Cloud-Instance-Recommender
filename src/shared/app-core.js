@@ -47,8 +47,17 @@ const COLUMN_MAPPINGS = {
   // Percentile/peak utilization, optional and additive. An average undersizes a
   // bursty VM (20% avg / 85% p95 is not a downsize). Which statistic drives
   // sizing is a per-run choice (see UTILIZATION_STATISTICS).
+  cpuUtilizationP90: "CPU Utilization p90",
+  memoryUtilizationP90: "Memory Utilization p90",
   cpuUtilizationP95: "CPU Utilization p95",
   memoryUtilizationP95: "Memory Utilization p95",
+  cpuUtilizationP99: "CPU Utilization p99",
+  memoryUtilizationP99: "Memory Utilization p99",
+  // The median is mapped but is NOT a sizing statistic: it sits below the average
+  // for a bursty VM, so sizing on it would under-provision. Reserved for the
+  // scale-out advisory, which reads it next to Peak.
+  cpuUtilizationP50: "CPU Utilization p50",
+  memoryUtilizationP50: "Memory Utilization p50",
   cpuUtilizationPeak: "CPU Utilization Peak",
   memoryUtilizationPeak: "Memory Utilization Peak",
   vmName: "VM Name",
@@ -139,6 +148,15 @@ const COLUMN_SYNONYMS = {
     "meancpu",
     "cpumean",
   ],
+  "CPU Utilization p90": [
+    "cpup90",
+    "p90cpu",
+    "cpu90",
+    "90cpu",
+    "cpup90util",
+    "cpupercentile90",
+    "cpu90thpercentile",
+  ],
   "CPU Utilization p95": [
     "cpup95",
     "p95cpu",
@@ -147,6 +165,26 @@ const COLUMN_SYNONYMS = {
     "cpup95util",
     "cpupercentile95",
     "cpu95thpercentile",
+  ],
+  "CPU Utilization p99": [
+    "cpup99",
+    "p99cpu",
+    "cpu99",
+    "99cpu",
+    "cpup99util",
+    "cpupercentile99",
+    "cpu99thpercentile",
+  ],
+  "CPU Utilization p50": [
+    "cpup50",
+    "p50cpu",
+    "cpu50",
+    "50cpu",
+    "cpup50util",
+    "cpupercentile50",
+    "cpu50thpercentile",
+    "cpumedian",
+    "mediancpu",
   ],
   // "maxcpu" used to be a synonym for the AVERAGE column, so a peak reading
   // drove sizing while being labelled an average. It belongs here.
@@ -174,6 +212,15 @@ const COLUMN_SYNONYMS = {
     "meanmemory",
     "memorymean",
   ],
+  "Memory Utilization p90": [
+    "memp90",
+    "memoryp90",
+    "p90memory",
+    "p90mem",
+    "memory90",
+    "mem90",
+    "memorypercentile90",
+  ],
   "Memory Utilization p95": [
     "memp95",
     "memoryp95",
@@ -182,6 +229,27 @@ const COLUMN_SYNONYMS = {
     "memory95",
     "mem95",
     "memorypercentile95",
+  ],
+  "Memory Utilization p99": [
+    "memp99",
+    "memoryp99",
+    "p99memory",
+    "p99mem",
+    "memory99",
+    "mem99",
+    "memorypercentile99",
+  ],
+  "Memory Utilization p50": [
+    "memp50",
+    "memoryp50",
+    "p50memory",
+    "p50mem",
+    "memory50",
+    "mem50",
+    "memorypercentile50",
+    "memmedian",
+    "memorymedian",
+    "medianmemory",
   ],
   "Memory Utilization Peak": [
     "maxmemory",

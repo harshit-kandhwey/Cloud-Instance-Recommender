@@ -198,6 +198,152 @@ check(
   JSON.stringify(r6),
 );
 
+// p90 and p99 sit between Average and Peak. The chain rule is the same: a higher
+// statistic is tried before any lower one, so a fallback never lands below the
+// number the run asked for while a higher reading exists.
+console.log("[p90 and p99 resolve, and fall back upward before downward]");
+const ladder = {
+  "CPU Utilization": "20",
+  "CPU Utilization p90": "60",
+  "CPU Utilization p95": "70",
+  "CPU Utilization p99": "80",
+  "CPU Utilization Peak": "90",
+};
+const readOf = (want, drop) => {
+  const row = { ...ladder };
+  for (const k of drop) delete row[k];
+  return resolve(row, want);
+};
+check(
+  "p90 reads the p90 column",
+  readOf("p90", []).cpu === 60 && readOf("p90", []).cpuStatistic === "p90",
+  JSON.stringify(readOf("p90", [])),
+);
+check(
+  "p99 reads the p99 column",
+  readOf("p99", []).cpu === 80 && readOf("p99", []).cpuStatistic === "p99",
+  JSON.stringify(readOf("p99", [])),
+);
+check(
+  "p90 absent → the next HIGHER reading (p95), not the average",
+  readOf("p90", ["CPU Utilization p90"]).cpu === 70,
+  JSON.stringify(readOf("p90", ["CPU Utilization p90"])),
+);
+check(
+  "p99 absent → peak before p95",
+  readOf("p99", ["CPU Utilization p99"]).cpu === 90,
+  JSON.stringify(readOf("p99", ["CPU Utilization p99"])),
+);
+check(
+  "peak absent → p99, the highest remaining",
+  readOf("peak", ["CPU Utilization Peak"]).cpu === 80,
+  JSON.stringify(readOf("peak", ["CPU Utilization Peak"])),
+);
+check(
+  "p95 absent with p99 present → p99 (higher) before p90 (lower)",
+  readOf("p95", ["CPU Utilization p95", "CPU Utilization Peak"]).cpu === 80,
+  JSON.stringify(
+    readOf("p95", ["CPU Utilization p95", "CPU Utilization Peak"]),
+  ),
+);
+check(
+  "p95 with only p90 and the average → p90, the higher of the two",
+  resolve({ "CPU Utilization": "20", "CPU Utilization p90": "60" }, "p95")
+    .cpu === 60,
+);
+check(
+  "average absent → p90, the lowest percentile above it",
+  resolve({ "CPU Utilization p90": "60", "CPU Utilization p99": "80" }, "avg")
+    .cpu === 60,
+);
+check(
+  "a p90 fallback is marked as a fallback",
+  readOf("p99", [
+    "CPU Utilization p99",
+    "CPU Utilization Peak",
+    "CPU Utilization p95",
+  ]).cpuFellBack === true,
+);
+check(
+  "the Sized On label names p90 and p99",
+  run(
+    "describeSizedOn(resolveUtilization({'CPU Utilization p90':'5','Memory Utilization p90':'5'},'p90'))",
+  ) === "p90" &&
+    run(
+      "describeSizedOn(resolveUtilization({'CPU Utilization p99':'5','Memory Utilization p99':'5'},'p99'))",
+    ) === "p99",
+);
+
+// The median is mapped for the scale-out advisory and must never size a row, nor be
+// selectable: a median under-provisions a bursty VM.
+console.log("[p50 never sizes a row]");
+const medianOnly = {
+  "CPU Utilization p50": "10",
+  "Memory Utilization p50": "10",
+};
+check(
+  "a row carrying only p50 resolves to no utilization, for every statistic",
+  ["avg", "p90", "p95", "p99", "peak"].every((s) => {
+    const r = resolve(medianOnly, s);
+    return r.cpu === 0 && r.memory === 0;
+  }),
+);
+check(
+  "p50 is not a selectable sizing statistic",
+  run("Object.keys(UTILIZATION_STATISTICS).join(',')") ===
+    "avg,p90,p95,p99,peak" &&
+    resolve({ "CPU Utilization": "20", ...medianOnly }, "p50").cpuStatistic ===
+      "avg",
+  run("Object.keys(UTILIZATION_STATISTICS).join(',')"),
+);
+
+// Header auto-matching reaches the new columns through the real entry point.
+console.log("[the mapping panel recognises the new columns]");
+const matchOf = (headers) => {
+  ctx.__headers = headers;
+  return run("autoMatchHeaders(__headers, null)").mapping;
+};
+const mapped = matchOf([
+  "CPU p90",
+  "Mem p90",
+  "p99 CPU",
+  "Memory p99",
+  "Median CPU",
+  "Mem Median",
+  "CPU p95",
+]);
+check(
+  "p90, p99 and median headers auto-map to their canonicals",
+  mapped["CPU p90"] === "CPU Utilization p90" &&
+    mapped["Mem p90"] === "Memory Utilization p90" &&
+    mapped["p99 CPU"] === "CPU Utilization p99" &&
+    mapped["Memory p99"] === "Memory Utilization p99" &&
+    mapped["Median CPU"] === "CPU Utilization p50" &&
+    mapped["Mem Median"] === "Memory Utilization p50",
+  JSON.stringify(mapped),
+);
+check(
+  "an existing p95 header still maps to p95 and is not captured by a new entry",
+  mapped["CPU p95"] === "CPU Utilization p95",
+  JSON.stringify(mapped),
+);
+const synonymOwners = run(`(() => {
+  const owner = {};
+  const dupes = [];
+  for (const [canon, list] of Object.entries(COLUMN_SYNONYMS)) {
+    for (const s of list) {
+      if (owner[s] && owner[s] !== canon) dupes.push(s);
+      owner[s] = canon;
+    }
+  }
+  return dupes.join(",");
+})()`);
+check(
+  "no header synonym is claimed by two canonical columns",
+  synonymOwners === "",
+  synonymOwners,
+);
+
 // ── The behaviour that justifies the feature ─────────────────────────────────
 // One bursty VM: 8 vCPU, average 20% (a downsize candidate), p95 85% (not one).
 // Under avg the N/2 rule targets 4 vCPU; under p95 the N+1 rule targets 9.
