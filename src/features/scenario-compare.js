@@ -580,8 +580,8 @@ function renderScenarioBar() {
              ${atCap ? "disabled" : ""} />
       <button type="button" class="btn btn-secondary" onclick="pinScenario(scenarioNewName())" ${atCap ? "disabled" : ""}>📌 Pin this run</button>
       <span class="scenario-slots">${chips}</span>
-      <button type="button" class="btn btn-secondary" onclick="compareScenarios()" ${canCompare ? "" : "disabled"}>${compareLabel}</button>
-      <button type="button" class="btn btn-secondary" onclick="clearScenarios()" ${scenarios.length ? "" : "disabled"}>Clear</button>
+      <button type="button" class="btn btn-secondary"${actionAttrs("click", "compareScenarios")} ${canCompare ? "" : "disabled"}>${compareLabel}</button>
+      <button type="button" class="btn btn-secondary"${actionAttrs("click", "clearScenarios")} ${scenarios.length ? "" : "disabled"}>Clear</button>
     </div>
     <div id="scenarioCompareResult"></div>
     <div id="scenarioLiveStatus" class="sr-only" role="status" aria-live="polite"></div>`;
@@ -693,7 +693,7 @@ function renderPairwiseComparison(result, A, B) {
   result.innerHTML = `
     <div class="scenario-result">
       <div class="scenario-legend">Comparing <b>A: ${sEsc(A.label)}</b> ↔ <b>B: ${sEsc(B.label)}</b> — showing only changed rows.
-        <button type="button" class="btn btn-secondary" onclick="downloadScenarioComparison()" style="margin-left:8px;">⬇ Export comparison CSV</button>
+        <button type="button" class="btn btn-secondary"${actionAttrs("click", "downloadScenarioComparison")} style="margin-left:8px;">⬇ Export comparison CSV</button>
       </div>
       ${configBlock}${summary}${note}${body}
     </div>`;
@@ -785,7 +785,7 @@ function renderNWayComparison(result, list) {
   result.innerHTML = `
     <div class="scenario-result">
       <div class="scenario-legend">Comparing <b>${list.length} runs</b> (${runList}) — showing only rows that differ across them.
-        <button type="button" class="btn btn-secondary" onclick="downloadScenarioComparison()" style="margin-left:8px;">⬇ Export comparison CSV</button>
+        <button type="button" class="btn btn-secondary"${actionAttrs("click", "downloadScenarioComparison")} style="margin-left:8px;">⬇ Export comparison CSV</button>
       </div>
       ${summary}${note}${body}
     </div>`;

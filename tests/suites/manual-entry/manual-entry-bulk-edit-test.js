@@ -223,7 +223,7 @@ console.log("[an unsaved edit cannot be applied out from under the user]");
 
   check(
     "the Apply button is withheld while a row is being edited",
-    !elements.manualEntrySection.innerHTML.includes("manualApplyVMs()"),
+    !elements.manualEntrySection.innerHTML.includes('data-on-click="manualApplyVMs"'),
     elements.manualEntrySection.innerHTML.slice(0, 400),
   );
 

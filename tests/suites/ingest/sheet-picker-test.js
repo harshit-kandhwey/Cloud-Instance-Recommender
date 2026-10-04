@@ -738,7 +738,10 @@ const RVTOOLS = [
       "and the question is put to the user",
       /Is the memory column in MB\?/.test(
         elements.inputHygieneSection.innerHTML,
-      ) && /convertMemoryToGb\(\)/.test(elements.inputHygieneSection.innerHTML),
+      ) &&
+        /data-on-click="convertMemoryToGb"/.test(
+          elements.inputHygieneSection.innerHTML,
+        ),
       elements.inputHygieneSection.innerHTML,
     );
 

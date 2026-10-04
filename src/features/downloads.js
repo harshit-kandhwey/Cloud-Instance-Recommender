@@ -89,7 +89,7 @@ function renderCsvMenu(results) {
   if (apps > 0) {
     items.push(item("appsummary", `App Summary CSV (${apps})`, false));
   }
-  menu.innerHTML = `${items.join("")}<button type="button" class="btn btn-primary csv-menu-go" onclick="downloadSelectedCsvs()">Download selected</button>`;
+  menu.innerHTML = `${items.join("")}<button type="button" class="btn btn-primary csv-menu-go"${actionAttrs("click", "downloadSelectedCsvs")}>Download selected</button>`;
 }
 
 // Show/hide the checklist; an outside click closes it (registered only while open

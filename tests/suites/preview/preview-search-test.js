@@ -723,7 +723,7 @@ function check(name, cond, detail) {
       "panel offers the action",
       !panel.classes.has("hidden") &&
         panel.innerHTML.includes("current-generation only") &&
-        panel.innerHTML.includes("applyRelaxSuggestion()"),
+        panel.innerHTML.includes('data-on-click="applyRelaxSuggestion"'),
       panel.innerHTML,
     );
 

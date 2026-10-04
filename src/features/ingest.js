@@ -905,7 +905,7 @@ function renderPasteControl() {
   const el = document.getElementById("pasteDataSection");
   if (!el) return;
   el.innerHTML = `
-    <button type="button" class="btn btn-secondary" onclick="togglePastePanel()" style="font-size: 13px; padding: 8px 16px;">📋 Or paste rows from a spreadsheet</button>
+    <button type="button" class="btn btn-secondary"${actionAttrs("click", "togglePastePanel")} style="font-size: 13px; padding: 8px 16px;">📋 Or paste rows from a spreadsheet</button>
     <div id="pastePanel" class="hidden" style="margin-top: 10px;">
       <label for="pasteInput" style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted);">
         Copy the rows from Excel, Google Sheets, or a CSV — <strong>including the header row</strong> — and paste them here.
@@ -914,8 +914,8 @@ function renderPasteControl() {
         placeholder="VM Name&#9;CPU Count&#9;Memory (GB)&#10;web-01&#9;4&#9;16"
         style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface); color: var(--text-body);"></textarea>
       <div style="margin-top: 8px;">
-        <button type="button" class="btn btn-primary" onclick="ingestPastedData()" style="font-size: 13px; padding: 8px 16px;">Use this data</button>
-        <button type="button" class="btn btn-secondary" onclick="togglePastePanel()" style="font-size: 13px; padding: 8px 16px; margin-left: 8px;">Cancel</button>
+        <button type="button" class="btn btn-primary"${actionAttrs("click", "ingestPastedData")} style="font-size: 13px; padding: 8px 16px;">Use this data</button>
+        <button type="button" class="btn btn-secondary"${actionAttrs("click", "togglePastePanel")} style="font-size: 13px; padding: 8px 16px; margin-left: 8px;">Cancel</button>
       </div>
     </div>`;
 }
@@ -1394,7 +1394,7 @@ function renderSavedMappings() {
     <strong>💾 Remembered column mappings (${signatures.length})</strong><br>
     <span style="font-size: 13px; color: var(--text-muted);">A file whose headers match one of these is mapped this way without asking.</span>
     <ul style="margin: 8px 0 0 18px; list-style: none; padding: 0;">${entries}</ul>
-    <button onclick="forgetAllColumnMappings()" style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">Forget all</button>`;
+    <button${actionAttrs("click", "forgetAllColumnMappings")} style="margin-top: 4px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">Forget all</button>`;
   el.classList.remove("hidden");
 }
 
@@ -1560,7 +1560,7 @@ function applyIngest(headers, rows, mapping, units = {}) {
   const sizeNote = convertedCols.length
     ? `<br>📐 ${convertedCols.join(" and ")} values converted from MB to GB`
     : "";
-  const editBtn = ` <button onclick="editColumnMapping()" title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
+  const editBtn = ` <button${actionAttrs("click", "editColumnMapping")} title="Change which of your columns map to the CPU, memory, name, and region fields" style="margin-left: 8px; padding: 2px 10px; font-size: 12px; border: 1px solid var(--border-slate); border-radius: 6px; background: var(--surface-alt); color: var(--text-body); cursor: pointer;">✏️ Edit mapping</button>`;
   const okLabel = window._ingestLabel || "File loaded successfully";
   // Guarded like every other status write in this file (showUploadError, the
   // reader error handler, showColumnMappingPanel) — a page missing #fileStatus
@@ -1992,8 +1992,8 @@ function reportInputHygiene() {
       } used more than once</strong> (${total} extra row${total === 1 ? "" : "s"}).
       Are these the same VM listed twice, or different VMs that share a name?</p>
       <ul style="margin: 6px 0 10px 18px;">${examples}${more}</ul>
-      <button onclick="mergeDuplicateVmNames()" title="Keep the first row for each repeated name and drop the rest">🔗 Same VM — keep the first of each</button>
-      <button onclick="keepDuplicateVmNames()" title="Leave every row in place" style="margin-left: 8px;">↔️ Different VMs — keep them all</button>`;
+      <button${actionAttrs("click", "mergeDuplicateVmNames")} title="Keep the first row for each repeated name and drop the rest">🔗 Same VM — keep the first of each</button>
+      <button${actionAttrs("click", "keepDuplicateVmNames")} title="Leave every row in place" style="margin-left: 8px;">↔️ Different VMs — keep them all</button>`;
   }
 
   let unitBlock = "";
@@ -2005,8 +2005,8 @@ function reportInputHygiene() {
       but an ordinary number of mebibytes. Some inventory tools report memory in MiB without
       saying so in the header. If yours does, convert; if these really are ${escapeHtml(String(median))} GB
       machines, leave them.</p>
-      <button onclick="convertMemoryToGb()" title="Divide the memory column by 1024">📐 They are MB — convert to GB</button>
-      <button onclick="keepMemoryAsGb()" title="Leave the memory values exactly as they are" style="margin-left: 8px;">✔️ They are GB — leave them</button>`;
+      <button${actionAttrs("click", "convertMemoryToGb")} title="Divide the memory column by 1024">📐 They are MB — convert to GB</button>
+      <button${actionAttrs("click", "keepMemoryAsGb")} title="Leave the memory values exactly as they are" style="margin-left: 8px;">✔️ They are GB — leave them</button>`;
   }
 
   el.className = `alert alert-${errors.length ? "warning" : "info"}`;
@@ -2170,7 +2170,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
     ? `Adjust which of your columns maps to each field, then confirm to re-apply (<span style="color: var(--red-badge);">*</span> = required). Nothing changes until you confirm.`
     : `Some column names couldn't be matched automatically. Pick which of your columns corresponds to each field (<span style="color: var(--red-badge);">*</span> = required).`;
   const cancelBtn = opts.isEdit
-    ? ` <button class="btn btn-secondary" onclick="cancelColumnMapping()" style="margin-top: 8px;">Cancel</button>`
+    ? ` <button class="btn btn-secondary"${actionAttrs("click", "cancelColumnMapping")} style="margin-top: 8px;">Cancel</button>`
     : "";
 
   panel.innerHTML = `
@@ -2179,7 +2179,7 @@ function showColumnMappingPanel(headers, match, opts = {}) {
       <p style="font-size: 13px;">${intro}</p>
       ${selectRows}
       <p style="font-size: 12px; margin-top: 8px;">Compliance, Exclude, and Include Only accept comma-separated values (e.g. "m5,m6"). Min Gen is native per provider: AWS Min Gen, Azure Min Gen, GCP Min Gen.</p>
-      <button class="btn btn-primary" onclick="applyColumnMapping()" style="margin-top: 8px;">✔️ Confirm Mapping</button>${cancelBtn}
+      <button class="btn btn-primary"${actionAttrs("click", "applyColumnMapping")} style="margin-top: 8px;">✔️ Confirm Mapping</button>${cancelBtn}
     </div>
   `;
   panel.classList.remove("hidden");
@@ -2366,7 +2366,7 @@ function maybeShowAppMappingPanel() {
       <p><strong>🧩 Map Applications to Workloads</strong> <span style="font-size: 12px; color: var(--text-soft);">(optional)</span></p>
       <p style="font-size: 13px;">Your file has an <strong>App Name</strong> column but no <strong>Workload</strong> column. Assign a workload per application and every VM in it inherits that workload when you generate. Precedence: a row's own Workload cell → this map → page default → General.</p>
       ${rows}
-      <button class="btn btn-primary" onclick="applyAppMapping()" style="margin-top: 8px;">💾 Save App Workloads</button>
+      <button class="btn btn-primary"${actionAttrs("click", "applyAppMapping")} style="margin-top: 8px;">💾 Save App Workloads</button>
       <span id="appMappingStatus" role="status" style="margin-left: 10px; font-size: 13px; color: var(--good-strong);"></span>
     </div>`;
   panel.classList.remove("hidden");

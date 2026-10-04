@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-const { REPO, makeChecker } = require("../harness");
+const { REPO, buildEngineContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 const read = (f) => fs.readFileSync(path.join(REPO, f), "utf8");
@@ -130,6 +130,46 @@ check(
 calls.length = 0;
 fire("click", makeEl({ "data-on-click": "missingFunction" }));
 check("a control naming a missing function does nothing", calls.length === 0);
+
+// Generated markup (src/**) builds controls through actionAttrs (app-core.js). A
+// zero-argument handler left as an inline attribute would bypass the dispatcher.
+const srcNoZeroArgInline = walk(path.join(REPO, "src"))
+  .map((p) => fs.readFileSync(p, "utf8"))
+  .join("\n")
+  .match(/ on(click|change|input|keydown|blur)="[A-Za-z_]\w*\(\)"/g);
+check(
+  "no zero-argument inline handler remains in src/",
+  !srcNoZeroArgInline,
+  srcNoZeroArgInline ? srcNoZeroArgInline.join(", ") : "",
+);
+
+{
+  const appCore = buildEngineContext({
+    scripts: ["src/shared/storage-keys.js", "src/shared/app-core.js"],
+    label: "action-attrs",
+  });
+  const out = appCore.run(
+    `actionAttrs("click", "pick", [1, "x\\"y", { $: "value" }], { self: true })`,
+  );
+  const dataArgs = /data-args="([^"]*)"/.exec(out);
+  const decoded = dataArgs
+    ? JSON.parse(dataArgs[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&"))
+    : null;
+  check(
+    "actionAttrs emits the handler and escaped JSON arguments",
+    out.includes('data-on-click="pick"') &&
+      decoded !== null &&
+      decoded.length === 4 &&
+      decoded[1] === 1 &&
+      decoded[2] === 'x"y' &&
+      decoded[3].$ === "value",
+    out,
+  );
+  check(
+    "actionAttrs puts the element first when self is set",
+    decoded !== null && decoded[0].$ === "this",
+  );
+}
 
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);

@@ -87,7 +87,7 @@ function setSelects(ctx, values) {
   );
   check(
     "edit button present",
-    elements.fileStatus.innerHTML.includes("editColumnMapping()"),
+    elements.fileStatus.innerHTML.includes('data-on-click="editColumnMapping"'),
   );
 
   console.log("[edit prefill + cancel]");

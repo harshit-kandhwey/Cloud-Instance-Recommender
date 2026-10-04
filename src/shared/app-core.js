@@ -698,6 +698,16 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function actionAttrs(type, fn, args, opts) {
+  var o = opts || {};
+  var list = (args || []).slice();
+  if (o.self) list.unshift({ $: "this" });
+  var out = ' data-on-' + type + '="' + escapeHtml(fn) + '"';
+  if (list.length) out += ' data-args="' + escapeHtml(JSON.stringify(list)) + '"';
+  if (o.then) out += ' data-then="' + escapeHtml(o.then) + '"';
+  return out;
+}
+
 // ─── Export filenames ─────────────────────────────────────────────────────────
 // Downloads named `<base>_<YYYY-MM-DD>.<ext>` (LOCAL date, so an evening export in
 // a UTC+ zone isn't labelled tomorrow) so a folder sorts/dedupes. Sample

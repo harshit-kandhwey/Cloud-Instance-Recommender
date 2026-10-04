@@ -189,20 +189,20 @@ function renderManualEntry() {
       </div>`;
 
   const formButtons = editing
-    ? `<button class="btn btn-primary" onclick="manualSaveEdit()" style="padding: 8px 16px; font-size: 13px;">💾 Save changes</button>
-       <button class="btn btn-secondary" onclick="manualCancelEdit()" style="padding: 8px 16px; font-size: 13px;">Cancel</button>`
-    : `<button class="btn btn-secondary" onclick="manualAddVM()" style="padding: 8px 16px; font-size: 13px;">➕ Add VM</button>`;
+    ? `<button class="btn btn-primary"${actionAttrs("click", "manualSaveEdit")} style="padding: 8px 16px; font-size: 13px;">💾 Save changes</button>
+       <button class="btn btn-secondary"${actionAttrs("click", "manualCancelEdit")} style="padding: 8px 16px; font-size: 13px;">Cancel</button>`
+    : `<button class="btn btn-secondary"${actionAttrs("click", "manualAddVM")} style="padding: 8px 16px; font-size: 13px;">➕ Add VM</button>`;
 
   const clearButton = window._manualConfirmClear
-    ? `<button class="btn btn-secondary" onclick="manualClearVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px; color: var(--red-strong);">🗑️ Really remove all ${manualVMs.length}?</button>
-       <button class="btn btn-secondary" onclick="manualCancelClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">Keep them</button>`
-    : `<button class="btn btn-secondary" onclick="manualConfirmClear()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`;
+    ? `<button class="btn btn-secondary"${actionAttrs("click", "manualClearVMs")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px; color: var(--red-strong);">🗑️ Really remove all ${manualVMs.length}?</button>
+       <button class="btn btn-secondary"${actionAttrs("click", "manualCancelClear")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">Keep them</button>`
+    : `<button class="btn btn-secondary"${actionAttrs("click", "manualConfirmClear")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">🗑️ Clear all</button>`;
 
   // Apply is withheld mid-edit: it reads the saved list, so an unsaved edit would
   // ingest the row's OLD values. Save or Cancel first.
   const applyButtons =
     manualVMs.length && !editing
-      ? `<button class="btn btn-primary" onclick="manualApplyVMs()" style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
+      ? `<button class="btn btn-primary"${actionAttrs("click", "manualApplyVMs")} style="margin-top: 10px; font-size: 14px; padding: 10px 20px;">✅ Use these ${manualVMs.length} VM(s)</button>
        ${clearButton}`
       : "";
 

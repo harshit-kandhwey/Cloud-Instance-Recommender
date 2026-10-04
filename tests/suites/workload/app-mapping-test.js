@@ -134,7 +134,7 @@ check(
 );
 check(
   "panel has a Save button and a select per app",
-  elements.appMappingSection.innerHTML.includes("applyAppMapping()") &&
+  elements.appMappingSection.innerHTML.includes('data-on-click="applyAppMapping"') &&
     (elements.appMappingSection.innerHTML.match(/data-app=/g) || []).length ===
       2,
 );

@@ -618,21 +618,21 @@ function renderPresetsBar() {
   host.innerHTML = `
     <div class="preset-bar">
       <label class="preset-label" for="presetSelect">⭐ Filter presets</label>
-      <select id="presetSelect" class="form-control preset-select" onchange="onPresetSelectChange()">
+      <select id="presetSelect" class="form-control preset-select"${actionAttrs("change", "onPresetSelectChange")}>
         ${options}
       </select>
-      <button type="button" class="btn btn-secondary" id="presetApplyBtn" onclick="applySelectedPreset()" disabled>Apply</button>
-      <button type="button" class="btn btn-secondary" id="presetUpdateBtn" onclick="updateSelectedPreset()" onblur="disarmPresetButton('presetUpdateBtn')" disabled>Update</button>
-      <button type="button" class="btn btn-secondary" id="presetDeleteBtn" onclick="deleteSelectedPreset()" onblur="disarmPresetButton('presetDeleteBtn')" disabled>Delete</button>
-      <button type="button" class="btn btn-secondary" id="presetSaveAsBtn" onclick="savePresetAs()">💾 Save current as…</button>
+      <button type="button" class="btn btn-secondary" id="presetApplyBtn"${actionAttrs("click", "applySelectedPreset")} disabled>Apply</button>
+      <button type="button" class="btn btn-secondary" id="presetUpdateBtn"${actionAttrs("click", "updateSelectedPreset")} onblur="disarmPresetButton('presetUpdateBtn')" disabled>Update</button>
+      <button type="button" class="btn btn-secondary" id="presetDeleteBtn"${actionAttrs("click", "deleteSelectedPreset")} onblur="disarmPresetButton('presetDeleteBtn')" disabled>Delete</button>
+      <button type="button" class="btn btn-secondary" id="presetSaveAsBtn"${actionAttrs("click", "savePresetAs")}>💾 Save current as…</button>
       <span id="presetSaveForm" class="preset-save-form hidden">
         <label class="sr-only" for="presetNameInput">Preset name</label>
         <input id="presetNameInput" class="form-control preset-name-input" type="text" placeholder="Preset name" maxlength="60" onkeydown="onPresetNameKeydown(event)" oninput="disarmPresetButton('presetSaveConfirmBtn')" />
-        <button type="button" class="btn btn-primary" id="presetSaveConfirmBtn" onclick="confirmSavePreset()" onblur="disarmPresetButton('presetSaveConfirmBtn')">Save</button>
-        <button type="button" class="btn btn-secondary" onclick="cancelSavePreset()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="presetSaveConfirmBtn"${actionAttrs("click", "confirmSavePreset")} onblur="disarmPresetButton('presetSaveConfirmBtn')">Save</button>
+        <button type="button" class="btn btn-secondary"${actionAttrs("click", "cancelSavePreset")}>Cancel</button>
       </span>
-      <button type="button" class="btn btn-secondary" onclick="exportPresets()" title="Download this page's presets as a JSON file" ${names.length ? "" : "disabled"}>📤 Export</button>
-      <button type="button" class="btn btn-secondary" onclick="importPresets()" title="Import presets from a JSON export file">📥 Import</button>
+      <button type="button" class="btn btn-secondary"${actionAttrs("click", "exportPresets")} title="Download this page's presets as a JSON file" ${names.length ? "" : "disabled"}>📤 Export</button>
+      <button type="button" class="btn btn-secondary"${actionAttrs("click", "importPresets")} title="Import presets from a JSON export file">📥 Import</button>
       <input type="file" id="presetImportInput" accept=".json,application/json" class="hidden" onchange="handlePresetImportFile(event)" />
       <span id="presetStatus" class="preset-status" role="status" aria-live="polite"></span>
     </div>`;

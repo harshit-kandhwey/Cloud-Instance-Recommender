@@ -89,8 +89,8 @@ web-01,4,16,us-west-2`,
   );
   check(
     "both answers are offered rather than one being taken",
-    html.includes("mergeDuplicateVmNames()") &&
-      html.includes("keepDuplicateVmNames()"),
+    html.includes('data-on-click="mergeDuplicateVmNames"') &&
+      html.includes('data-on-click="keepDuplicateVmNames"'),
   );
   check("nothing is dropped until asked", rows(ctx).length === 3);
 
@@ -180,7 +180,7 @@ web-01,4,16,us-west-2`;
   check(
     "a fresh upload asks again",
     !panel(elements).classes.has("hidden") &&
-      panel(elements).innerHTML.includes("keepDuplicateVmNames()"),
+      panel(elements).innerHTML.includes('data-on-click="keepDuplicateVmNames"'),
     panel(elements).innerHTML,
   );
 }

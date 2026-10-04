@@ -538,7 +538,7 @@ function _renderPreviewTable(
         <input id="previewSearch" type="text" placeholder="🔍 Filter rows…" aria-label="Filter preview rows"
           oninput="window._previewFilterChanged(this.value)"
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;min-width:220px;background:var(--surface);color:var(--text);" />
-        <button type="button" onclick="copyPreviewToClipboard()"
+        <button type="button"${actionAttrs("click", "copyPreviewToClipboard")}
           title="Copy every matching row (all ${rows.length}, not just this page) as tab-separated text, ready to paste into a spreadsheet"
           style="padding:5px 10px;border:1px solid var(--border-slate);border-radius:6px;font-size:12px;background:var(--surface-alt);color:var(--text-body);cursor:pointer;white-space:nowrap;">📋 Copy</button>
       </span>
@@ -890,7 +890,7 @@ function updateRelaxSuggestion(results) {
   panel.className = "alert alert-info";
   panel.innerHTML = `
     💡 <strong>${rescues}</strong> of the ${unmatched} unmatched row(s) would match if you relaxed one filter: <strong>${escapeHtml(label)}</strong>.
-    <button type="button" class="btn btn-secondary" onclick="applyRelaxSuggestion()" style="margin-left: 8px; padding: 4px 12px; font-size: 13px;">🔓 Relax it and regenerate</button>`;
+    <button type="button" class="btn btn-secondary"${actionAttrs("click", "applyRelaxSuggestion")} style="margin-left: 8px; padding: 4px 12px; font-size: 13px;">🔓 Relax it and regenerate</button>`;
   panel.classList.remove("hidden");
 }
 
@@ -1121,7 +1121,7 @@ function updateDownloadButtons(results) {
   } else {
     // Single type: one bulk template button (auto-resolves to the present type)
     row.innerHTML = `
-      <button class="btn btn-secondary" onclick="downloadAWSBulkTemplate()" title="AWS Pricing Calculator Bulk Import (EC2 Instances template)">
+      <button class="btn btn-secondary"${actionAttrs("click", "downloadAWSBulkTemplate")} title="AWS Pricing Calculator Bulk Import (EC2 Instances template)">
         🧾 Bulk Import Template
       </button>
     `;

@@ -790,7 +790,7 @@ function renderPortfolio() {
             : ""
         }${generatedAt ? ` · ${esc(generatedAt)}` : ""}
       </div>
-      <button class="btn btn-primary" id="pfExportBtn" onclick="exportPortfolioWorkbook()">
+      <button class="btn btn-primary" id="pfExportBtn"${actionAttrs("click", "exportPortfolioWorkbook")}>
         ⬇️ Download Executive Excel
       </button>
     </div>

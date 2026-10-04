@@ -13,7 +13,7 @@ Nothing a user uploads leaves the browser. The only persisted data is preference
 ```
 aws.html, azure.html, gcp.html, multicloud.html   the four tool pages (one renderer each)
 src/
-  shared/      app-core.js        state, mapping tables, readiness, region validation
+  shared/      app-core.js        state, mapping tables, readiness, region validation, actionAttrs (control markup)
                storage-keys.js    every localStorage key the app owns
                storage-manager.js measure, write and clear the app's own keys
                page-actions.js    delegated dispatch for controls (data-on-click / data-on-change)
