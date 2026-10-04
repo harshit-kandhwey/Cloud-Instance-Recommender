@@ -220,7 +220,7 @@ check(
 );
 check(
   "user-guide has :focus-visible",
-  read("user-guide.html").includes(":focus-visible"),
+  read("styles/user-guide.css").includes(":focus-visible"),
 );
 
 // ─── Floating controls don't overlap ──────────────────────────────────────────

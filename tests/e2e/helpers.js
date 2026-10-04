@@ -70,4 +70,20 @@ async function exportResultsCsv(page) {
   return { filename: download.suggestedFilename(), rows: parseCsv(csv) };
 }
 
-module.exports = { NOT_SIZED, expectSized, parseCsv, exportResultsCsv };
+// Adds CSS through a constructed stylesheet rather than a <style> element: the
+// shipped CSP has no 'unsafe-inline', so an injected <style> would be refused.
+async function injectCss(target, css) {
+  await target.evaluate((text) => {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(text);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  }, css);
+}
+
+module.exports = {
+  NOT_SIZED,
+  expectSized,
+  parseCsv,
+  exportResultsCsv,
+  injectCss,
+};

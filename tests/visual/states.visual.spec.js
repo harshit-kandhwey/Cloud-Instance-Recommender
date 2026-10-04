@@ -19,6 +19,7 @@
 // Plant-confirm, like every guard in this minor: shift a token or a layout and the
 // matching snapshot must go RED.
 
+const { injectCss } = require("../e2e/helpers");
 const path = require("path");
 const { test, expect } = require("@playwright/test");
 
@@ -39,19 +40,20 @@ test("aws.html: dark-theme empty-state visual baseline", async ({ page }) => {
   await gotoAwsReady(page);
   // Freeze the theme transition so the screenshot is the settled dark state, not
   // a light→dark blend mid-fade (the same 0.3s fade that fooled the a11y scan).
-  await page.addStyleTag({
-    content:
-      "*,*::before,*::after{transition:none!important;animation:none!important}",
-  });
+  await injectCss(
+    page,
+    "*,*::before,*::after{transition:none!important;animation:none!important}",
+  );
   await page.evaluate(() => {
     document.documentElement.dataset.theme = "dark";
   });
   // Same fullPage/fixed-element hazard as pages.visual.spec.js — see there for
   // why these two are hidden rather than left to whatever a scroll-stitched
   // capture happens to freeze them at.
-  await page.addStyleTag({
-    content: "#_stickyGenerateBar,#_backToTop{display:none!important}",
-  });
+  await injectCss(
+    page,
+    "#_stickyGenerateBar,#_backToTop{display:none!important}",
+  );
   await expect(page).toHaveScreenshot("aws-dark.png", {
     fullPage: true,
     animations: "disabled",

@@ -9,11 +9,13 @@
     <script defer src="js/pwa-register.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
     <title>Cloud Instance Recommender</title>
     <script src="src/shared/storage-keys.js"></script>
     <script src="src/shared/theme-init.js"></script>
+    <script src="src/shared/provider-init.js"></script>
+    <script src="src/ui/multicloud-page.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="styles/inline-utilities.css" />
@@ -1181,144 +1183,6 @@ app-server-03,Billing,2,8,35,45,eu-west-1,North Europe,europe-west1-c,Dev,Linux,
     </div>
 
     <!-- Multi-Cloud Filter Logic -->
-    <script>
-      // ── Helper: collect checked IDs from a category→values map ───────────────
-      function _mcFromMap(map) {
-        const out = new Set();
-        Object.entries(map).forEach(([id, vals]) => {
-          if (document.getElementById(id)?.checked)
-            vals.forEach((v) => out.add(v));
-        });
-        return [...out];
-      }
-
-      // ── Unified processor getter (overrides provider-specific ones) ────────────
-      function _mcProcessors() {
-        const p = [];
-        if (document.getElementById("mc_proc_intel")?.checked) p.push("Intel");
-        if (document.getElementById("mc_proc_amd")?.checked) p.push("AMD");
-        if (document.getElementById("mc_proc_arm")?.checked) {
-          p.push("ARM"); // Azure + GCP
-          p.push("AWS"); // AWS Graviton
-        }
-        return p;
-      }
-
-      // ── Category → AWS main families ─────────────────────────────────────────
-      function _mcAWSFamilies() {
-        return _mcFromMap({
-          mc_cat_general: ["m", "a"],
-          mc_cat_burstable: ["t"],
-          mc_cat_memory: ["r", "x", "z"],
-          mc_cat_compute: ["c", "f"],
-          mc_cat_storage: ["i", "d"],
-          mc_cat_gpu: ["p", "g", "inf", "trn", "dl", "vt"],
-          mc_cat_hpc: ["h"],
-        });
-      }
-
-      // ── Category → Azure series ───────────────────────────────────────────────
-      function _mcAzureSeries() {
-        return _mcFromMap({
-          mc_cat_general: ["D-series", "A-series"],
-          mc_cat_burstable: ["B-series"],
-          mc_cat_memory: ["E-series", "M-series"],
-          mc_cat_compute: ["F-series"],
-          mc_cat_storage: ["L-series"],
-          mc_cat_gpu: ["N-series"],
-          mc_cat_hpc: ["H-series"],
-        });
-      }
-
-      // ── Category → Azure VM families ─────────────────────────────────────────
-      function _mcAzureVMFamilies() {
-        return _mcFromMap({
-          mc_cat_general: ["Standard_D", "Standard_DS", "Standard_A"],
-          mc_cat_burstable: ["Standard_B"],
-          mc_cat_memory: [
-            "Standard_E",
-            "Standard_ES",
-            "Standard_M",
-            "Standard_MS",
-          ],
-          mc_cat_compute: ["Standard_F", "Standard_FS"],
-          mc_cat_storage: ["Standard_L", "Standard_LS"],
-          mc_cat_gpu: [
-            "Standard_N",
-            "Standard_NC",
-            "Standard_ND",
-            "Standard_NV",
-          ],
-          mc_cat_hpc: ["Standard_H"],
-        });
-      }
-
-      // ── Category → GCP machine families ──────────────────────────────────────
-      function _mcGCPFamilies() {
-        return _mcFromMap({
-          mc_cat_general: ["E2", "N1", "N2", "N2D", "N4", "N4D"],
-          mc_cat_burstable: ["F1", "G1"],
-          mc_cat_memory: ["M3", "M4"],
-          mc_cat_compute: ["C2D", "C3", "C3D", "C4"],
-          mc_cat_storage: ["Z3"],
-          mc_cat_gpu: ["A2", "A3", "G2"],
-          mc_cat_hpc: ["H3"],
-        });
-      }
-
-      // ── Override provider-specific getters with unified multicloud versions ──
-      // This inline script runs at parse time, BEFORE the deferred modules, whose
-      // top-level function declarations of the same names would overwrite anything
-      // assigned now. DOMContentLoaded fires after every deferred script has run.
-      document.addEventListener("DOMContentLoaded", function () {
-        window.getSelectedProcessorManufacturers = _mcProcessors;
-        window.getSelectedAzureProcessors = _mcProcessors;
-        window.getSelectedGCPProcessors = _mcProcessors;
-        window.getSelectedMainFamilies = _mcAWSFamilies;
-        window.getSelectedAzureSeries = _mcAzureSeries;
-        window.getSelectedAzureVMFamilies = _mcAzureVMFamilies;
-        window.getSelectedGCPFamilies = _mcGCPFamilies;
-      });
-
-      // ── Exclude controls (still dynamic per-provider) ─────────────────────────
-      function updateMultiCloudFilters() {
-        const excludeCheckbox = document.getElementById("excludeTypes");
-        if (excludeCheckbox?.checked) updateExcludeControls();
-      }
-
-      // ── Init: reset checkboxes, hide panels, wire exclude ────────────────────
-      document.addEventListener("DOMContentLoaded", function () {
-        // Force-reset optional filter checkboxes (prevent browser state restoration)
-        [
-          "restrictProcessorManufacturers",
-          "restrictMainFamilies",
-          "excludeTypes",
-          "mc_proc_intel",
-          "mc_proc_amd",
-          "mc_proc_arm",
-          "mc_cat_general",
-          "mc_cat_burstable",
-          "mc_cat_memory",
-          "mc_cat_compute",
-          "mc_cat_storage",
-          "mc_cat_gpu",
-          "mc_cat_hpc",
-        ].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.checked = false;
-        });
-        [
-          "processorManufacturerControls",
-          "mainFamiliesControls",
-          "excludeControls",
-        ].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add("hidden");
-        });
-
-        setTimeout(updateMultiCloudFilters, 300);
-      });
-    </script>
     <!-- Executive print report: a direct child of <body> so the print
          stylesheet can hide every sibling and reveal only this. Filled in by
          src/ui/charts.js (renderExecutiveReport) after a run; hidden on screen. -->

@@ -112,6 +112,10 @@ Prices rank recommendations internally. The only price figure shown is the relat
 
 ## Security boundaries
 
+- The Content Security Policy allows scripts and styles only from the site itself. Pages
+  carry no inline script, no inline style block and no style attributes; data-driven
+  styles are set through the CSS object model (`data-style`), and controls dispatch through
+  `data-on-*` attributes. `unsafe-inline` is not used for scripts or styles.
 - Stored values are untrusted input. The stored-value loaders for presets, the app map, column mappings and user rules tolerate malformed and hostile values without throwing; `tests/suites/infra/storage-tamper-test.js` checks this.
 - User text reaches the page only through `escapeHtml`, and never through an inline event handler. New UI uses data attributes and a delegated listener.
 - Exports escape spreadsheet formula prefixes on every path.

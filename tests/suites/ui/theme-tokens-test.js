@@ -20,8 +20,8 @@ console.log("[token coverage]");
   const defined = new Set(
     [...themeCss.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((m) => m[1]),
   );
-  // user-guide defines its own tokens in its embedded style block
-  const guide = read("user-guide.html");
+  // user-guide defines its own tokens in its stylesheet
+  const guide = read("styles/user-guide.css");
   const guideDefined = new Set(
     [...guide.matchAll(/--([a-z0-9-]+)\s*:/gi)].map((m) => m[1]),
   );
@@ -128,11 +128,13 @@ console.log("[page wiring]");
       c.includes("src/shared/theme-init.js") && c.includes('id="themeToggle"'),
     );
   }
-  const g = read("user-guide.html");
+  const guideHtml = read("user-guide.html");
   check(
     "user-guide: boot script + toggle present",
-    g.includes("src/shared/theme-init.js") && g.includes('id="themeToggle"'),
+    guideHtml.includes("src/shared/theme-init.js") &&
+      guideHtml.includes('id="themeToggle"'),
   );
+  const g = read("styles/user-guide.css");
   // Selector must appear inside the @media screen block, not merely after it.
   // A `[^}]*` regex only matches when the dark selector is the FIRST rule in the
   // media block — reordering unrelated CSS before it would break this with a

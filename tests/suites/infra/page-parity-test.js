@@ -12,6 +12,9 @@ const fs = require("fs");
 const path = require("path");
 
 const { REPO } = require("../harness");
+
+// The one page-specific module: multicloud.html alone runs its own filter logic.
+const MULTICLOUD_ONLY = "src/ui/multicloud-page.js";
 const PAGES = ["aws.html", "azure.html", "gcp.html", "multicloud.html"];
 
 let failures = 0;
@@ -113,6 +116,9 @@ console.log("[shared modules find their elements on every page]");
       fs
         .readdirSync(baseDir)
         .filter((f) => f.endsWith(".js"))
+        .filter(
+          (f) => path.join(baseDir, f) !== path.join(REPO, MULTICLOUD_ONLY),
+        )
         .map((f) => fs.readFileSync(path.join(baseDir, f), "utf8")),
     )
     .join("\n");
@@ -190,8 +196,21 @@ console.log(
   const baseScripts = (p) =>
     [...noComments[p].matchAll(/<script[^>]+src="([^"]+)"/g)]
       .map((m) => m[1])
-      .filter((s) => s.startsWith("src/") && !s.includes("/providers/"));
+      .filter(
+        (s) =>
+          s.startsWith("src/") &&
+          !s.includes("/providers/") &&
+          s !== MULTICLOUD_ONLY,
+      );
   const ref = baseScripts(PAGES[0]);
+  const onlyMulticloud = PAGES.filter((p) =>
+    noComments[p].includes(MULTICLOUD_ONLY),
+  );
+  check(
+    "the multicloud-only page logic is on multicloud.html alone",
+    onlyMulticloud.length === 1 && onlyMulticloud[0] === "multicloud.html",
+    `found on: ${onlyMulticloud.join(", ")}`,
+  );
   check(
     "the reference page loads a full module set",
     ref.length > 10,

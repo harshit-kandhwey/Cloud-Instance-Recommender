@@ -12,6 +12,7 @@
 // colour token and this spec must go RED. A green visual run against a visibly
 // broken page is exactly the failure this gate exists to catch.
 
+const { injectCss } = require("../e2e/helpers");
 const { test, expect } = require("@playwright/test");
 
 // The empty initial state is deterministic: no upload has happened, and the
@@ -50,9 +51,10 @@ for (const { name, file, ready } of PAGES) {
     // live in 3.20 once the page grew tall enough to change the sticky bar's
     // intersection timing). Hidden here so no fullPage baseline ever depends
     // on exactly how tall the page happens to be.
-    await page.addStyleTag({
-      content: "#_stickyGenerateBar,#_backToTop{display:none!important}",
-    });
+    await injectCss(
+      page,
+      "#_stickyGenerateBar,#_backToTop{display:none!important}",
+    );
 
     // A clean base name (no ".html", which the path template would mistake for
     // an extension); the config's snapshotPathTemplate adds the -linux suffix so

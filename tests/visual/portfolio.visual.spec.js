@@ -18,6 +18,7 @@
 // Plant-confirm, like every guard in this minor: shift a chart token or the
 // panel layout and this snapshot must go RED.
 
+const { injectCss } = require("../e2e/helpers");
 const path = require("path");
 const { test, expect } = require("@playwright/test");
 
@@ -49,10 +50,10 @@ test("app-portfolio.html: overview dashboard visual baseline", async ({
   await popup.waitForLoadState();
 
   // Freeze any theme/tab transition so the shot is the settled state.
-  await popup.addStyleTag({
-    content:
-      "*,*::before,*::after{transition:none!important;animation:none!important}",
-  });
+  await injectCss(
+    popup,
+    "*,*::before,*::after{transition:none!important;animation:none!important}",
+  );
 
   const overview = popup.locator("#pf-panel-overview");
   await expect(overview).toBeVisible();

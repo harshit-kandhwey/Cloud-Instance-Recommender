@@ -295,6 +295,7 @@ Cloud-Instance-Recommender/
     ├── ui/
     │   ├── charts.js                       # Inline-SVG result charts (match rate, family mix, before→after)
     │   ├── form-controls.js                # Filters, rule engine UI, option readers
+    │   ├── multicloud-page.js              # Multicloud filter logic (multicloud.html only)
     │   ├── ui-shell.js                     # Page init, sticky button, accessibility
     │   ├── storage-manager-ui.js          # Browser storage panel (measure, clear)
     │   └── user-rules-ui.js                # User-defined rules panel (add/list/delete)
@@ -303,6 +304,7 @@ Cloud-Instance-Recommender/
         ├── app-core.js                     # Shared state, mapping tables, data readiness, region validation
         ├── storage-keys.js                 # Every localStorage key the app owns
         ├── theme-init.js                   # Sets the light/dark theme before first paint
+        ├── provider-init.js                # Runs the page's provider toggle on load
         ├── page-actions.js                 # Delegated dispatch for the tool pages' controls
         └── storage-manager.js              # Measures, writes and clears the app's own localStorage keys
 ```

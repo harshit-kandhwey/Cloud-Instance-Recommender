@@ -9,11 +9,12 @@
     <script defer src="js/pwa-register.js"></script>
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';"
     />
     <title>Cloud Instance Recommender</title>
     <script src="src/shared/storage-keys.js"></script>
     <script src="src/shared/theme-init.js"></script>
+    <script src="src/shared/provider-init.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/style.css" />
     <link rel="stylesheet" href="styles/inline-utilities.css" />
@@ -44,7 +45,7 @@
     <script defer src="src/shared/page-actions.js"></script>
   </head>
 
-  <body>
+  <body data-provider="azure">
     <a class="skip-link" href="#main">Skip to main content</a>
 
     <!-- Toast notifications (see showToast in src/shared/app-core.js) -->
@@ -306,11 +307,6 @@ app-server-03,Billing,2,8,35,45,North Europe,Dev,Linux,General,,,,,Standard_D2s_
           </div>
         </section>
         <!-- Trigger Azure by default -->
-        <script>
-          document.addEventListener("DOMContentLoaded", function () {
-            toggleCloudProvider("azure");
-          });
-        </script>
 
         <!-- Recommendation Type -->
         <section class="section">

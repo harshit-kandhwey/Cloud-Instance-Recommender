@@ -58,6 +58,22 @@ check(
   `${styleAttrsInSrc} style attributes`,
 );
 
+// The pages carry no inline script or style block, and the CSP allows neither
+// 'unsafe-inline' nor inline code (slice 5 of phase 5).
+const inlineCode = pages.filter((p) => {
+  const html = read(p);
+  return (
+    /<style[\s>]/.test(html) ||
+    /<script(?![^>]*\ssrc=)[^>]*>\s*\S/.test(html) ||
+    /'unsafe-inline'/.test(html)
+  );
+});
+check(
+  "no page has an inline script, an inline style block, or unsafe-inline",
+  inlineCode.length === 0,
+  inlineCode.join(", "),
+);
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;

@@ -122,6 +122,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
     ├── ui/
     │   ├── charts.js            # Inline-SVG result charts, no library
     │   ├── form-controls.js     # Filters + option readers
+    │   ├── multicloud-page.js  # Multicloud filter logic (multicloud.html only)
     │   ├── ui-shell.js          # Page init + accessibility
     │   ├── storage-manager-ui.js # Browser storage panel (measure, clear)
     │   └── user-rules-ui.js     # User-defined rules panel (add/list/delete)
@@ -129,6 +130,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
         ├── app-core.js          # State, mapping tables, readiness, regions
         ├── storage-keys.js      # Every localStorage key the app owns
         ├── theme-init.js        # Sets the light/dark theme before first paint
+        ├── provider-init.js     # Runs the page's provider toggle on load
         ├── page-actions.js      # Delegated dispatch for the tool pages' controls
         └── storage-manager.js   # Measures, writes and clears the app's own localStorage keys
 ```

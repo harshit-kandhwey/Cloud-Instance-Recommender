@@ -7,7 +7,7 @@
 //
 // CSP note (PLAN finding 4): @axe-core/playwright injects axe by EVALUATING its
 // source in the page, not via a <script> tag, so the page CSP
-// (`script-src 'self' 'unsafe-inline'`) does NOT block it and no `bypassCSP` is
+// (`script-src 'self'`) does NOT block it and no `bypassCSP` is
 // needed — the scan runs under the real, shipped policy. The CSP-integrity test
 // below asserts that policy is present and strict, so a future weakening (or a
 // switch to bypassCSP) can't quietly hollow the gate out.
@@ -16,6 +16,7 @@
 // INCLUDED — the dark test freezes CSS transitions before scanning so axe reads
 // the settled colors, not a mid-fade blend (see below).
 
+const { injectCss } = require("./helpers");
 const { test, expect } = require("@playwright/test");
 const { AxeBuilder } = require("@axe-core/playwright");
 
@@ -48,14 +49,13 @@ test.describe("accessibility", () => {
       await page.goto(`/${p}.html`);
       await page.waitForSelector("#cpuUtilizationRanges");
       // Freeze the 0.3s theme transition so axe reads the SETTLED dark colors,
-      // not a light→dark blend mid-fade (see file header). The injected <style>
-      // is inline; the shipped CSP allows it (style-src 'self' 'unsafe-inline'),
-      // so the scan still runs under the real policy — the CSP-integrity test
+      // not a light→dark blend mid-fade (see file header). The rule is a constructed
+      // stylesheet, which the strict style-src 'self' allows; the CSP-integrity test
       // below asserts that policy is intact.
-      await page.addStyleTag({
-        content:
-          "*,*::before,*::after{transition:none!important;animation:none!important}",
-      });
+      await injectCss(
+        page,
+        "*,*::before,*::after{transition:none!important;animation:none!important}",
+      );
       await page.evaluate(() => {
         document.documentElement.dataset.theme = "dark";
       });
@@ -95,7 +95,7 @@ test.describe("accessibility", () => {
     // A toContain check would also pass a BROADENED directive (e.g. a style-src
     // with an extra allowed host, or 'unsafe-eval' added to script-src) — which
     // is precisely the weakening this gate exists to catch. Exact values also
-    // force the future strict-CSP migration (which drops 'unsafe-inline') to
+    // force any future weakening of the policy to
     // update this scan deliberately rather than sliding past a substring match.
     const directives = Object.fromEntries(
       csp
@@ -109,9 +109,7 @@ test.describe("accessibility", () => {
     );
     expect(directives["default-src"]).toBe("'self'");
     expect(directives["connect-src"]).toBe("'none'");
-    expect(directives["script-src"]).toBe("'self' 'unsafe-inline'");
-    // style-src must allow 'unsafe-inline': the dark-mode scan injects an inline
-    // <style> to freeze transitions, and it must run under the real policy.
-    expect(directives["style-src"]).toBe("'self' 'unsafe-inline'");
+    expect(directives["script-src"]).toBe("'self'");
+    expect(directives["style-src"]).toBe("'self'");
   });
 });
