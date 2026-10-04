@@ -241,6 +241,7 @@ function showResultsPreview(results) {
     "OS",
     "Workload",
     "Compliance",
+    "Criticality",
     // Last input column, so it lands immediately left of the recommended instances
     // — the point is to read one against the other.
     "Current Instance Type",

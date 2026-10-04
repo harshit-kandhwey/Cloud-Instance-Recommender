@@ -1787,6 +1787,12 @@ function analyzeInputHygiene(rows) {
         allow: RECOGNIZED.env,
       },
       {
+        label: "Criticality",
+        rule: "criticality",
+        cols: ["Criticality"],
+        allow: RECOGNIZED.criticality,
+      },
+      {
         // Comma-separated, like Exclude/Include Only — a row can name more
         // than one real requirement at once (see rule-engine.js). Each
         // TOKEN is checked, not the whole cell, so "Confidential Computing,

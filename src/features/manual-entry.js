@@ -85,12 +85,32 @@ function manualFieldDefs() {
     });
   }
 
+  // After the regions so the existing field positions do not move. A closed list,
+  // so a typo is unselectable; the options are the engine's own vocabulary.
+  defs.push({
+    key: "Criticality",
+    label: "Criticality",
+    type: "select",
+    options: manualCriticalityOptions(),
+  });
+
   // Editing overrides every default, including the sticky region — the point is
   // to see the row as it is, not as a new row would start.
   if (editing) {
     for (const def of defs) def.value = editing[def.key] || "";
   }
   return defs;
+}
+
+// The engine's recognised Criticality values, capitalised for display. Read live so
+// the dropdown cannot offer a value the hygiene check would flag.
+function manualCriticalityOptions() {
+  const recognized =
+    (typeof RuleEngine !== "undefined" &&
+      RuleEngine.RECOGNIZED &&
+      RuleEngine.RECOGNIZED.criticality) ||
+    [];
+  return recognized.map((v) => v.charAt(0).toUpperCase() + v.slice(1));
 }
 
 function toggleManualEntry() {
@@ -114,10 +134,18 @@ function renderManualEntry() {
     .map((d, i) => {
       const listAttr = d.list ? ` list="${d.list}"` : "";
       const valueAttr = d.value ? ` value="${escapeHtml(d.value)}"` : "";
+      const control = d.options
+        ? `<select id="manual_${i}" class="form-control inl-5e7cdbf3"><option value="">—</option>${d.options
+            .map(
+              (o) =>
+                `<option value="${escapeHtml(o)}"${o === d.value ? " selected" : ""}>${escapeHtml(o)}</option>`,
+            )
+            .join("")}</select>`
+        : `<input id="manual_${i}" type="${d.type}"${listAttr}${valueAttr} placeholder="${escapeHtml(d.placeholder || "")}" class="form-control inl-5e7cdbf3" />`;
       return `
       <div class="inl-32bee059">
         <label class="inl-bd856761" for="manual_${i}">${escapeHtml(d.label)}</label>
-        <input id="manual_${i}" type="${d.type}"${listAttr}${valueAttr} placeholder="${escapeHtml(d.placeholder || "")}" class="form-control inl-5e7cdbf3" />
+        ${control}
       </div>`;
     })
     .join("");

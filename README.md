@@ -359,6 +359,7 @@ Download the sample CSV from any provider page and fill in your VM inventory. `.
 | `ENV` | Production / Staging / Dev / Test | Tightens burstable and generation rules |
 | `OS` | Linux / Windows / macOS | Selects which price the row is ranked on, and excludes machines the provider does not sell with that OS (ARM/Graviton included) |
 | `Workload` | General / Database / SQL Server / Web Server / Cache / ML/AI / Batch / HPC / SAP | Sorts preferred families first; `ML/AI` (or `GPU`) requires an accelerator, every other value excludes one; `SQL Server` enforces a 4-vCPU licence floor |
+| `Criticality` | Critical / High / Medium / Low | How costly an outage of this VM is. Checked at upload and shown in the preview; it does not change a recommendation yet (the performance-based policy will read it) |
 | `Compliance` | PCI / HIPAA / SOC2 / FIPS | Enforces current-gen; Nitro Enclaves for PCI/HIPAA (AWS) |
 | `Min Gen` | AWS: 5/6/7 · Azure: 3/4/5 · GCP: n2/n2d/n4 | Minimum instance generation to include (single-provider pages) |
 | `AWS Min Gen` `Azure Min Gen` `GCP Min Gen` | as above, per cloud | Multi-cloud sheets: one column per provider, each in that cloud's own scale |

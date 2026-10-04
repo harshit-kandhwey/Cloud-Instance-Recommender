@@ -307,6 +307,10 @@ const RuleEngine = (() => {
     }
     return tokens;
   }
+  // How much an outage of this VM costs the business. Read by the hygiene check so a
+  // typo is named at upload; no sizing rule reads it yet (the performance-based
+  // policy will), so a value changes nothing about a recommendation today.
+  const CRITICALITY_VALUES = ["critical", "high", "medium", "low"];
   const OS_WINDOWS = ["windows", "windows server"];
   const OS_MAC = ["macos", "mac"];
   const OS_VALUES = ["linux", ...OS_WINDOWS, ...OS_MAC];
@@ -341,6 +345,7 @@ const RuleEngine = (() => {
     os: OS_VALUES,
     workload: Object.keys(WORKLOAD_FAMILIES.aws),
     compliance: COMPLIANCE_VALUES,
+    criticality: CRITICALITY_VALUES,
   };
 
   // ─── Accelerator classification ───────────────────────────────────────────

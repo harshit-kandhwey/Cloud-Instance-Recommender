@@ -85,6 +85,7 @@ const COLUMN_MAPPINGS = {
   os: "OS",
   workload: "Workload",
   compliance: "Compliance",
+  criticality: "Criticality",
   minGenAws: "AWS Min Gen",
   minGenAzure: "Azure Min Gen",
   minGenGcp: "GCP Min Gen",
@@ -136,6 +137,15 @@ const COLUMN_SYNONYMS = {
     "rammb",
     "memorysizemb",
     "memorysizemib",
+  ],
+  // Qualified forms only: a bare "Priority" or "Tier" names other things in real
+  // inventories (ticket priority, storage tier) and would map silently.
+  Criticality: [
+    "businesscriticality",
+    "criticalitylevel",
+    "criticalityrating",
+    "servicecriticality",
+    "applicationcriticality",
   ],
   "CPU Utilization": [
     "cpuutil",
