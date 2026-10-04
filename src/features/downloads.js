@@ -551,14 +551,18 @@ function downloadAWSBulkTemplate(type) {
 }
 
 // Enhanced usage statistics management
-let usageStats = {
-  toolUses: 0,
-  totalVMs: 0,
-  lastUpdated: new Date().toISOString(),
-  gravitonRecommendations: 0,
-  intelRecommendations: 0,
-  averageCostSavings: 0,
-};
+function freshUsageStatistics() {
+  return {
+    toolUses: 0,
+    totalVMs: 0,
+    lastUpdated: new Date().toISOString(),
+    gravitonRecommendations: 0,
+    intelRecommendations: 0,
+    averageCostSavings: 0,
+  };
+}
+
+let usageStats = freshUsageStatistics();
 
 // Load usage statistics from localStorage
 function loadUsageStatistics() {
@@ -593,10 +597,7 @@ function saveUsageStatistics() {
   try {
     usageStats.lastUpdated = new Date().toISOString();
 
-    localStorage.setItem(
-      STORAGE_KEYS.stats,
-      JSON.stringify(usageStats),
-    );
+    localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(usageStats));
   } catch (e) {
     console.error("Error saving statistics:", e);
   }

@@ -69,14 +69,34 @@ function handleStoragePanelClick(event) {
     renderStorageManagerPanel();
     return;
   }
-  if (target === "all") StorageManager.clearAll();
-  else StorageManager.clear(target);
+  try {
+    applyStorageClear(target);
+  } catch {
+    storagePendingClear = null;
+    renderStorageManagerPanel();
+    const failed = document.getElementById("storageManagerStatus");
+    if (failed) failed.textContent = "This browser would not clear the data.";
+    return;
+  }
   storagePendingClear = null;
+  fleetPendingDelete = null;
   renderStorageManagerPanel();
+  renderFleetSnapshotsPanel();
   const status = document.getElementById("storageManagerStatus");
   if (status)
     status.textContent =
       target === "all" ? "All app data cleared." : "Cleared.";
+}
+
+// Storage is cleared and the in-memory copies that would write it back are reset
+// first, so a later save cannot restore the data the user just cleared.
+function applyStorageClear(target) {
+  if (target === "all") StorageManager.clearAll();
+  else StorageManager.clear(target);
+  if (target === "all" || target === "manualVMs") loadManualVMs();
+  if (target === "all" || target === "stats") {
+    usageStats = freshUsageStatistics();
+  }
 }
 
 let fleetPendingDelete = null;

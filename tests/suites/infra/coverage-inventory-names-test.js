@@ -10,17 +10,24 @@ const { REPO, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 
-const src = fs.readFileSync(
-  path.join(REPO, "scripts", "testing", "build-coverage-inventory.js"),
-  "utf8",
-);
+const src = fs
+  .readFileSync(
+    path.join(REPO, "scripts", "testing", "build-coverage-inventory.js"),
+    "utf8",
+  )
+  .replace(/\r\n/g, "\n");
 const start = src.indexOf("const DECLARED_NAME_PATTERNS");
 const fnAt = src.indexOf("function declaredNames");
-const end = src.indexOf("\n}\n", fnAt) + 3;
+const closeAt = fnAt === -1 ? -1 : src.indexOf("\n}\n", fnAt);
+const end = closeAt === -1 ? -1 : closeAt + 3;
 check(
   "the declaredNames snippet is found in the real tool source",
   start !== -1 && fnAt !== -1 && end > fnAt,
 );
+if (start === -1 || fnAt === -1 || end === -1) {
+  console.log(`\n${state.failures} check(s) failed`);
+  process.exit(1);
+}
 
 const declaredNames = vm.runInNewContext(
   `${src.slice(start, end)}\n;declaredNames`,
