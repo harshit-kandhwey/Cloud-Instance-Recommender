@@ -1896,7 +1896,69 @@ function analyzeInputHygiene(rows) {
       ? { median: medianMemory(rows, MEM) }
       : null;
 
-  return { issues, duplicates, memoryUnit };
+  return { issues, duplicates, memoryUnit, confidence: confidenceNotice(rows) };
+}
+
+// Documented defaults, not tuned constants: a fleet this small is one unusual VM
+// away from a different aggregate; a few hundred is where one stops moving it.
+const CONFIDENCE_FLEET_MEDIUM_MIN = 25;
+const CONFIDENCE_FLEET_HIGH_MIN = 250;
+// The statistics that can show a burst. An average cannot.
+const CONFIDENCE_TAIL_STATISTICS = ["p90", "p95", "p99", "peak"];
+
+// How much the DATA behind each row, and behind the whole file, supports a sizing.
+// Two separate answers on purpose: ten thousand average-only rows raise the fleet
+// tier but not any row's, and one rich row says nothing about the fleet.
+// Per row, over the dimensions the row carries a reading for: every one has a
+// percentile or peak reading → High; some → Medium; none → Low (average only, or
+// nothing at all). It describes what the file carries, not what a run will size on.
+function assessInputConfidence(rows) {
+  const total = rows.length;
+  const tiers = { high: [], medium: [], low: [] };
+  let carriesTail = false;
+  const reads = (row, stat, dim) => readUtilizationReading(row, stat, dim) > 0;
+  rows.forEach((row, i) => {
+    let dimsWithReading = 0;
+    let dimsWithTail = 0;
+    for (const dim of ["cpu", "memory"]) {
+      const any =
+        reads(row, "avg", dim) ||
+        CONFIDENCE_TAIL_STATISTICS.some((s) => reads(row, s, dim));
+      if (!any) continue;
+      dimsWithReading += 1;
+      if (CONFIDENCE_TAIL_STATISTICS.some((s) => reads(row, s, dim))) {
+        dimsWithTail += 1;
+      }
+    }
+    if (dimsWithTail > 0) carriesTail = true;
+    const tier =
+      dimsWithReading > 0 && dimsWithTail === dimsWithReading
+        ? "high"
+        : dimsWithTail > 0
+          ? "medium"
+          : "low";
+    tiers[tier].push(dataRowNumber(i));
+  });
+  const fleetTier =
+    total >= CONFIDENCE_FLEET_HIGH_MIN
+      ? "high"
+      : total >= CONFIDENCE_FLEET_MEDIUM_MIN
+        ? "medium"
+        : "low";
+  return { total, tiers, carriesTail, fleet: fleetTier };
+}
+
+// What the upload notice says, or null when there is nothing worth saying. A file
+// that carries no percentile or peak column at all is the ordinary average-only
+// upload: naming it on every load would be noise. The notice earns its place when
+// the file DOES carry richer readings and some rows fall short of them.
+function confidenceNotice(rows) {
+  if (!rows.length) return null;
+  const c = assessInputConfidence(rows);
+  if (!c.carriesTail || (!c.tiers.low.length && !c.tiers.medium.length)) {
+    return null;
+  }
+  return c;
 }
 
 // The user confirmed the values are MiB. Re-derive from the untouched source rows
@@ -1951,7 +2013,8 @@ function reportInputHygiene() {
   if (
     !report.issues.length &&
     !report.duplicates.length &&
-    !report.memoryUnit
+    !report.memoryUnit &&
+    !report.confidence
   ) {
     el.classList.add("hidden");
     el.innerHTML = "";
@@ -2012,17 +2075,49 @@ function reportInputHygiene() {
       <button class="inl-c937f3b8"${actionAttrs("click", "keepMemoryAsGb")} title="Leave the memory values exactly as they are">✔️ They are GB — leave them</button>`;
   }
 
+  let confidenceBlock = "";
+  if (report.confidence) {
+    const c = report.confidence;
+    const count = (n) => `${n} VM${n === 1 ? "" : "s"}`;
+    const rowList = (list) => ` (rows ${escapeHtml(formatRowNumbers(list))})`;
+    const items = [
+      `<li>High: ${count(c.tiers.high.length)}, a percentile or peak reading for everything they report.</li>`,
+    ];
+    if (c.tiers.medium.length) {
+      items.push(
+        `<li>Medium: ${count(c.tiers.medium.length)}, a percentile or peak reading for only one of CPU and memory${rowList(c.tiers.medium)}.</li>`,
+      );
+    }
+    if (c.tiers.low.length) {
+      items.push(
+        `<li>Low: ${count(c.tiers.low.length)}, an average only or no utilization reading, so bursts are invisible${rowList(c.tiers.low)}.</li>`,
+      );
+    }
+    const fleetReason = {
+      low: `fewer than ${CONFIDENCE_FLEET_MEDIUM_MIN} VMs, so a single unusual VM moves the estimate`,
+      medium: `${CONFIDENCE_FLEET_MEDIUM_MIN} to ${CONFIDENCE_FLEET_HIGH_MIN - 1} VMs`,
+      high: `${CONFIDENCE_FLEET_HIGH_MIN} or more VMs`,
+    }[c.fleet];
+    confidenceBlock = `
+      <p class="inl-54d32d80"><strong>📊 How well the data supports sizing</strong>
+      — per VM, and for the file as a whole. The two are separate: more VMs do not make a thin row richer.</p>
+      <ul class="inl-4e824bb5">${items.join("")}</ul>
+      <p class="inl-54d32d80">Whole file: <strong>${c.fleet.charAt(0).toUpperCase() + c.fleet.slice(1)}</strong> — ${fleetReason}.</p>`;
+  }
+
+  const headline = lines
+    ? "the file loaded, but some rows look wrong."
+    : unitBlock || dupBlock
+      ? "the file loaded. One thing is worth confirming."
+      : "the file loaded. Some rows carry less utilization data than others.";
   el.className = `alert alert-${errors.length ? "warning" : "info"}`;
   el.innerHTML = `
-    <strong>🩺 Input check</strong> — ${
-      lines
-        ? "the file loaded, but some rows look wrong."
-        : "the file loaded. One thing is worth confirming."
-    }
+    <strong>🩺 Input check</strong> — ${headline}
     ${errors.length ? "Rows with a ❌ will not size sensibly." : ""}
     ${lines ? `<ul class="inl-8c01764b">${lines}</ul>` : ""}
     ${unitBlock}
-    ${dupBlock}`;
+    ${dupBlock}
+    ${confidenceBlock}`;
   el.classList.remove("hidden");
 }
 

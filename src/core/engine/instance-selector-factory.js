@@ -660,21 +660,24 @@ const UTILIZATION_FALLBACK = {
 // requested statistic. Returns { value, statistic, fellBack } — statistic is the one
 // actually used. Values are untrusted CSV cells, hence the finite/positive test.
 function resolveDimension(row, want, dim) {
-  const num = (v) => {
-    const n = parseFloat(v);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  };
   for (const key of UTILIZATION_FALLBACK[want]) {
-    const column = UTILIZATION_STATISTICS[key][dim];
-    // Own properties only. Every row is asked for the same six column names, so an
-    // INHERITED property of one would be returned for every VM — a single polluted
-    // prototype re-sizing a whole fleet off a reading in nobody's upload.
-    const value = Object.prototype.hasOwnProperty.call(row, column)
-      ? num(row[column])
-      : 0;
+    const value = readUtilizationReading(row, key, dim);
     if (value > 0) return { value, statistic: key, fellBack: key !== want };
   }
   return { value: 0, statistic: want, fellBack: false };
+}
+
+// One reading of one statistic and dimension, or 0 when the row has none. The single
+// door for "does this row carry a usable reading": the sizing resolver and the
+// upload-time confidence check both go through it, so they cannot disagree.
+function readUtilizationReading(row, statistic, dim) {
+  const column = UTILIZATION_STATISTICS[statistic][dim];
+  // Own properties only. Every row is asked for the same column names, so an
+  // INHERITED property of one would be returned for every VM — a single polluted
+  // prototype re-sizing a whole fleet off a reading in nobody's upload.
+  if (!Object.prototype.hasOwnProperty.call(row, column)) return 0;
+  const n = parseFloat(row[column]);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 // Resolves utilization for a row under the requested statistic. CPU and memory are

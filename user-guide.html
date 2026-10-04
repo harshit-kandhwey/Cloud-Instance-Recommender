@@ -2932,6 +2932,23 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
 
       <p>
         <strong
+          >Q: The input check says "How well the data supports sizing". What
+          does High, Medium and Low mean?</strong
+        ><br />
+        A: It appears only when your file carries percentile or peak columns
+        (p90, p95, p99 or Peak) and some VMs fall short of them. Per VM:
+        <em>High</em> means every dimension the row reports (CPU, memory) has a
+        percentile or peak reading; <em>Medium</em> means only one does;
+        <em>Low</em> means an average only, or nothing, so bursts are invisible.
+        It describes what the file carries, not which statistic a run will size
+        on. The whole-file answer is separate and depends on how many VMs there
+        are (under 25 Low, 25 to 249 Medium, 250 or more High): thousands of
+        average-only rows make the file larger, not any row richer. A plain
+        average-only upload does not show this note at all.
+      </p>
+
+      <p>
+        <strong
           >Q: Can I upload an AWS Application Discovery Service export?</strong
         ><br />
         A: Yes — the ADS <em>import template</em> is recognised and needs no
