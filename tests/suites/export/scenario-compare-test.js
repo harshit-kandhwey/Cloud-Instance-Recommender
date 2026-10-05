@@ -671,6 +671,35 @@ check(
 run("clearScenarios()");
 check("clearScenarios empties the set", run("scenarios.length") === 0);
 
+// The Pin button's handler reads the "name this run" field, empties it so the next pin
+// starts clean, and pins under that name; an empty field gets the default name. The
+// UI functions above ran without a DOM, so give this one a field to read.
+{
+  const field = { value: "Q4 plan" };
+  const realGetElementById = sandbox.document.getElementById;
+  sandbox.document.getElementById = (id) =>
+    id === "scenarioNameInput" ? field : null;
+  try {
+    run("scenarios = []; scenarioSeq = 0;");
+    run("pinScenarioFromInput()");
+    check(
+      "the Pin button pins the run under the name typed in the field",
+      run("scenarios.length") === 1 && run("scenarios[0].label") === "Q4 plan",
+      JSON.stringify(run("scenarios.map((s) => s.label)")),
+    );
+    check("and empties the field for the next pin", field.value === "");
+    run("pinScenarioFromInput()");
+    check(
+      "an empty field pins under the default name",
+      run("scenarios.length") === 2 && run("scenarios[1].label") === "Run 2",
+      JSON.stringify(run("scenarios.map((s) => s.label)")),
+    );
+  } finally {
+    sandbox.document.getElementById = realGetElementById;
+    run("scenarios = []; scenarioSeq = 0;");
+  }
+}
+
 // ─── A run's match rate is its OWN rate, not the rate over compared cells ────
 // The comparison only diffs the recommendation columns common to every run. If
 // the reported "match rate" were scoped to those columns too, a run could be

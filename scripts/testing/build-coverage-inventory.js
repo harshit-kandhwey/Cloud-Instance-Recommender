@@ -206,6 +206,41 @@ const KEYWORDS = new Set([
   "switch",
   "this",
 ]);
+// A control is wired three ways: an inline on…="name(", a data-on-<event>="name" that the
+// delegated dispatcher reads (src/shared/page-actions.js), and, in markup the app
+// generates, actionAttrs("<event>", "name", …), whose `then` option names a second
+// function. The data- and actionAttrs forms replaced the inline one in 3.21; a scan that
+// only knew the inline form stopped seeing those handlers, which is how most of the
+// behavioral surface dropped out of this gate without anything failing.
+const HANDLER_PATTERNS = {
+  page: [
+    /on[a-z]+=["']\s*([A-Za-z_$][\w$]*)\s*\(/g,
+    /data-(?:on|then)-[a-z]+="([A-Za-z_$][\w$]*)"/g,
+  ],
+  generated: [
+    /on[a-z]+=\\?["']?\s*([A-Za-z_$][\w$]*)\s*\(/g,
+    /data-(?:on|then)-[a-z]+=\\?"([A-Za-z_$][\w$]*)\\?"/g,
+    /actionAttrs\(\s*["'][a-z]+["']\s*,\s*["']([A-Za-z_$][\w$]*)["']/g,
+    /\bthen:\s*["']([A-Za-z_$][\w$]*)["']/g,
+  ],
+};
+function handlerReferences(htmlSrc, jsSrc) {
+  const found = [];
+  for (const re of HANDLER_PATTERNS.page) {
+    for (const m of htmlSrc.matchAll(re)) {
+      found.push({ name: m[1], reason: "html-handler" });
+    }
+  }
+  for (const re of HANDLER_PATTERNS.generated) {
+    for (const m of jsSrc.matchAll(re)) {
+      if (!KEYWORDS.has(m[1])) {
+        found.push({ name: m[1], reason: "generated-handler" });
+      }
+    }
+  }
+  return found;
+}
+
 const behavioral = new Map(); // name -> Set(reasons)
 const markBehavioral = (name, reason) => {
   if (!surface.has(name)) return; // only names that are part of our surface
@@ -213,17 +248,9 @@ const markBehavioral = (name, reason) => {
   behavioral.get(name).add(reason);
 };
 
-// 1. Static handlers on real page elements:  onclick="NAME(
-for (const m of allHtmlSrc.matchAll(
-  /on[a-z]+=["']\s*([A-Za-z_$][\w$]*)\s*\(/g,
-)) {
-  markBehavioral(m[1], "html-handler");
-}
-// 2. Handlers in HTML the app generates as template strings:  onclick=\"NAME(
-for (const m of allJsSrc.matchAll(
-  /on[a-z]+=\\?["']?\s*([A-Za-z_$][\w$]*)\s*\(/g,
-)) {
-  if (!KEYWORDS.has(m[1])) markBehavioral(m[1], "generated-handler");
+// 1 and 2. Handlers on page elements and in the markup the app generates.
+for (const { name, reason } of handlerReferences(allHtmlSrc, allJsSrc)) {
+  markBehavioral(name, reason);
 }
 // 3. addEventListener(evt, NAME)
 for (const m of allJsSrc.matchAll(
