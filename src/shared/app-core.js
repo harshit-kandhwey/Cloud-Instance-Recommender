@@ -1091,6 +1091,49 @@ function classifyWorkloadShape(cpu, mem) {
   return { shape, ratio };
 }
 
+// Scale-out advisory. A VM idle at its median that still spikes near saturation is a
+// horizontal-scaling candidate: a smaller base instance behind a load balancer, not a
+// permanently larger box. Needs two points of the distribution (the median and the
+// peak), so a row without both is NOT evaluated, which is different from "not a
+// candidate". Documented defaults, not tuned constants.
+const SCALE_OUT_IDLE_P50_MAX = 20;
+const SCALE_OUT_PEAK_MIN = 80;
+const SCALE_OUT_DIMENSIONS = [
+  {
+    label: "CPU",
+    p50: COLUMN_MAPPINGS.cpuUtilizationP50,
+    peak: COLUMN_MAPPINGS.cpuUtilizationPeak,
+  },
+  {
+    label: "Memory",
+    p50: COLUMN_MAPPINGS.memoryUtilizationP50,
+    peak: COLUMN_MAPPINGS.memoryUtilizationPeak,
+  },
+];
+// Returns { evaluated, candidate, reasons }. A reading is a number above 0 and at
+// most 100, read from the row's own columns only. The advisory is guidance with its
+// reasoning, never an action: it names no autoscaling group because the tool sizes
+// instances and configures nothing.
+function classifyScaleOut(row) {
+  const reasons = [];
+  let evaluated = false;
+  const reading = (col) => {
+    if (!row || !Object.prototype.hasOwnProperty.call(row, col)) return 0;
+    const n = Number(String(row[col]).trim());
+    return Number.isFinite(n) && n > 0 && n <= 100 ? n : 0;
+  };
+  for (const dim of SCALE_OUT_DIMENSIONS) {
+    const p50 = reading(dim.p50);
+    const peak = reading(dim.peak);
+    if (!p50 || !peak) continue;
+    evaluated = true;
+    if (p50 <= SCALE_OUT_IDLE_P50_MAX && peak >= SCALE_OUT_PEAK_MIN) {
+      reasons.push(`${dim.label}: low p50 (${p50}%), high Peak (${peak}%)`);
+    }
+  }
+  return { evaluated, candidate: reasons.length > 0, reasons };
+}
+
 // ─── Nearest-miss "relax" suggestion ──────────────────────────────────────────
 // The engine records per unmatched row which soft-filter group blocked the
 // otherwise-fitting instance ("Nearest Miss"). This picks the ONE filter that,

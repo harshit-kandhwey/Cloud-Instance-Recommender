@@ -604,7 +604,8 @@
               <td>
                 Optional median readings. They map and are carried, but they
                 never size a row: a median sits below the average for a bursty
-                VM. Reserved for the scale-out advisory.
+                VM. The scale-out advisory reads it next to Peak (see the App
+                Portfolio page).
               </td>
               <td>12</td>
             </tr>
@@ -1982,8 +1983,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
         <h4>App Summary CSV</h4>
         <p>
           A per-application rollup — VM count, total vCPUs and memory, and
-          matched vs no-match counts — downloadable from the same download
-          section.
+          matched vs no-match counts, and the number of scale-out candidates —
+          downloadable from the same download section. The last column is blank,
+          not 0, for an application where no VM carried both a median and a
+          peak.
         </p>
 
         <h4>The App Portfolio page</h4>
@@ -1998,16 +2001,30 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             searchable application table (ENV mini-bar, match rate, region count
             and compliance flags per app, expandable to that app's VMs), plus
             rankings and callouts: biggest apps, worst match rate,
-            compliance-sensitive apps, and unassigned VMs.
+            compliance-sensitive apps, scale-out candidates, and unassigned VMs.
           </li>
           <li>
             <strong>One tab per application</strong> — VM / vCPU / memory KPIs,
             ENV / OS / workload mini-bars, compliance and region chips, the
             recommended instance-family spread per provider, match health with
-            the top no-match reasons, right-sizing counts (on Optimized runs),
-            and a full per-VM detail table.
+            the top no-match reasons, right-sizing counts (on Optimized runs), a
+            scale-out advisory, and a full per-VM detail table.
           </li>
         </ul>
+
+        <p>
+          <strong>The scale-out advisory.</strong> A VM whose median (p50)
+          utilization is 20% or less while its Peak reaches 80% or more is
+          listed as a scale-out candidate, with its reasons, for example "CPU:
+          low p50 (10%), high Peak (95%)". CPU and memory are judged separately.
+          It needs both readings: a VM without a median and a peak is
+          <em>not judged</em>, which is different from "not a candidate", so the
+          counts read "1/2 judged" and the detail column stays blank for the VM
+          that could not be judged. It is guidance, not an action: a low median
+          with a high peak can suit a smaller base instance behind a load
+          balancer, but this tool sizes instances and does not configure
+          autoscaling. The thresholds are defaults.
+        </p>
 
         <h4>Executive Excel workbook</h4>
         <p>

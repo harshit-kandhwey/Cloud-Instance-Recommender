@@ -194,6 +194,10 @@ function computeAppStats(app, rows, meta) {
     matchRate: 0,
     noMatchReasons: [],
     rightSizing: null,
+    // Scale-out advisory. `scaleOutEvaluated` counts the VMs that carried both a
+    // median and a peak, so "none" is never reported for rows that could not be judged.
+    scaleOut: [],
+    scaleOutEvaluated: 0,
     rows,
   };
 
@@ -207,6 +211,14 @@ function computeAppStats(app, rows, meta) {
   });
 
   rows.forEach((row) => {
+    const scaleOut = classifyScaleOut(row);
+    if (scaleOut.evaluated) stats.scaleOutEvaluated++;
+    if (scaleOut.candidate) {
+      stats.scaleOut.push({
+        vm: String(row["VM Name"] || "").trim(),
+        reasons: scaleOut.reasons,
+      });
+    }
     stats.vcpus += toNum(row["CPU Count"], true);
     stats.memory += toNum(row["Memory (GB)"], false);
     tally(stats.envMix, normEnv(row["ENV"]));
@@ -976,6 +988,29 @@ function renderAppExpand(a, i) {
   </div>`;
 }
 
+// Estate-level rollup: the apps with the most candidates. Silent when no VM in the
+// estate carried both a median and a peak.
+function renderScaleOutCallout(m) {
+  const all = m.unassigned ? [...m.apps, m.unassigned] : m.apps;
+  if (!all.some((a) => a.scaleOutEvaluated)) return "";
+  const ranked = all
+    .filter((a) => a.scaleOut.length)
+    .sort((x, y) => y.scaleOut.length - x.scaleOut.length)
+    .slice(0, 5);
+  const body = ranked.length
+    ? `<ul class="pf-list">${ranked
+        .map(
+          (a) =>
+            `<li>${esc(a.app || "Unassigned")} — <b>${a.scaleOut.length}</b> of ${a.scaleOutEvaluated} judged</li>`,
+        )
+        .join("")}</ul>`
+    : '<div class="pf-muted">None</div>';
+  return `<div class="pf-card">
+      <h4>↔️ Scale-out candidates</h4>
+      ${body}
+    </div>`;
+}
+
 function renderCallouts(m) {
   const list = (arr, fmt) =>
     arr.length
@@ -994,6 +1029,7 @@ function renderCallouts(m) {
       <h4>🔒 Compliance-sensitive</h4>
       ${list(m.rankings.complianceSensitive, (a) => `<li>${esc(a.app)} — ${pfChips(Object.keys(a.compliance), "pf-chip-danger")}</li>`)}
     </div>
+    ${renderScaleOutCallout(m)}
     <div class="pf-card">
       <h4>❓ Unassigned VMs</h4>
       ${
@@ -1085,7 +1121,8 @@ function renderAppPanel(a, m, idx) {
     regions +
     renderFamilies(a, m) +
     renderHealth(a) +
-    renderRightSizing(a, m);
+    renderRightSizing(a, m) +
+    renderScaleOut(a);
 
   return `<div class="pf-app-head">
       <h3 class="inl-d7d7043c">${esc(title)}</h3>
@@ -1111,6 +1148,26 @@ function renderFamilies(a, m) {
     })
     .join("");
   return `<div class="pf-block"><h4>🧬 Recommended families</h4>${blocks}</div>`;
+}
+
+// Guidance with its reasoning, not an action. Shown only when at least one VM could be
+// judged: an app whose VMs carry no median and peak says nothing rather than "none".
+function renderScaleOut(a) {
+  if (!a.scaleOutEvaluated) return "";
+  const shown = a.scaleOut.slice(0, 5);
+  const list = shown.length
+    ? `<ul class="pf-list">${shown
+        .map(
+          (c) =>
+            `<li>${esc(c.vm || "(unnamed VM)")} — ${esc(c.reasons.join("; "))}</li>`,
+        )
+        .join("")}</ul>${
+        a.scaleOut.length > shown.length
+          ? `<small class="pf-note">…and ${a.scaleOut.length - shown.length} more</small>`
+          : ""
+      }`
+    : '<div class="pf-muted">None of the VMs with a median and a peak look like candidates.</div>';
+  return `<div class="pf-block"><h4>↔️ Scale-out candidates — ${a.scaleOut.length}/${a.scaleOutEvaluated} judged</h4>${list}<small class="pf-note">Guidance, not an action: a low median with a high peak can suit a smaller base instance behind a load balancer. This tool sizes instances; it does not configure autoscaling.</small></div>`;
 }
 
 function renderHealth(a) {
@@ -1150,11 +1207,20 @@ function vmDetailColumns(m, appStat) {
 
 function renderVmTable(a, m) {
   const cols = vmDetailColumns(m, a);
-  const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
+  // A display-only advisory column: blank for a row that could not be judged, so
+  // "no advisory" is never shown for a VM without a median and a peak.
+  const withAdvisory = a.scaleOutEvaluated > 0;
+  const head =
+    cols.map((c) => `<th>${esc(c)}</th>`).join("") +
+    (withAdvisory ? "<th>Scale-out advisory</th>" : "");
+  const advisoryCell = (r) => {
+    const s = classifyScaleOut(r);
+    return `<td>${esc(s.candidate ? s.reasons.join("; ") : s.evaluated ? "No" : "")}</td>`;
+  };
   const body = a.rows
     .map(
       (r) =>
-        `<tr>${cols.map((c) => `<td>${esc(r[c] ?? "")}</td>`).join("")}</tr>`,
+        `<tr>${cols.map((c) => `<td>${esc(r[c] ?? "")}</td>`).join("")}${withAdvisory ? advisoryCell(r) : ""}</tr>`,
     )
     .join("");
   return `<div class="pf-block"><h4>📋 VM detail (${a.vms})</h4><div class="pf-scroll"><table class="pf-table pf-table-sm"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;

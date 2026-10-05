@@ -160,7 +160,7 @@ const lines = rawCsv.replace(/^\uFEFF/, "").split("\n");
 check(
   "header row",
   lines[0] ===
-    "App Name,VMs,Total vCPUs,Total Memory (GB),Matched VMs,No-Match VMs",
+    "App Name,VMs,Total vCPUs,Total Memory (GB),Matched VMs,No-Match VMs,Scale-Out Candidates",
   lines[0],
 );
 check("6 data rows", lines.length === 7, String(lines.length));
@@ -188,6 +188,52 @@ const noAppStats = run(
   '_buildStatsHtml([{ "VM Name": "x", "CPU Count": "2", "AWS Like-to-Like Instance": "m5.large" }])',
 );
 check("no apps chip without App Name column", !noAppStats.includes("apps"));
+
+console.log("[Scale-Out Candidates column]");
+{
+  const row = (name, app, extra) => ({
+    "VM Name": name,
+    "App Name": app,
+    "CPU Count": "4",
+    "Memory (GB)": "16",
+    "AWS Like-to-Like Instance": "m5.xlarge",
+    ...extra,
+  });
+  const spiky = { "CPU Utilization p50": "10", "CPU Utilization Peak": "95" };
+  const steady = { "CPU Utilization p50": "60", "CPU Utilization Peak": "95" };
+  run(
+    `processedResults = ${JSON.stringify([
+      row("s1", "Spiky", spiky),
+      row("s2", "Spiky", steady),
+      row("t1", "Steady", steady),
+      row("n1", "Unjudged", {}),
+    ])};`,
+  );
+  const before = downloads.length;
+  run("downloadAppSummary()");
+  const last = downloads[downloads.length - 1];
+  const csvLines =
+    downloads.length === before + 1
+      ? last.blob.content.replace(/^\uFEFF/, "").split("\n")
+      : [];
+  check(
+    "the column is appended and a candidate count is shown",
+    csvLines[0] ===
+      "App Name,VMs,Total vCPUs,Total Memory (GB),Matched VMs,No-Match VMs,Scale-Out Candidates" &&
+      csvLines.some((l) => l === "Spiky,2,8,32,2,0,1"),
+    csvLines.join(" | "),
+  );
+  check(
+    "judged with no candidates is 0",
+    csvLines.some((l) => l === "Steady,1,4,16,1,0,0"),
+    csvLines.join(" | "),
+  );
+  check(
+    "no VM judged is blank, never 0",
+    csvLines.some((l) => l === "Unjudged,1,4,16,1,0,"),
+    csvLines.join(" | "),
+  );
+}
 
 // process.exitCode, not process.exit(): exit() can truncate buffered stdout
 // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.

@@ -215,12 +215,17 @@ function getAppSummary(results) {
         memory: 0,
         matched: 0,
         noMatch: 0,
+        scaleOut: 0,
+        scaleOutEvaluated: 0,
       });
     }
     const s = byApp.get(app);
     s.vms++;
     s.vcpus += parseInt(row["CPU Count"], 10) || 0;
     s.memory += parseFloat(row["Memory (GB)"]) || 0;
+    const advisory = classifyScaleOut(row);
+    if (advisory.evaluated) s.scaleOutEvaluated++;
+    if (advisory.candidate) s.scaleOut++;
     const hasMatch =
       instCols.length > 0 && instCols.some((c) => !isNoMatchValue(row[c]));
     if (hasMatch) s.matched++;
@@ -253,6 +258,7 @@ function downloadAppSummary() {
     "Total Memory (GB)",
     "Matched VMs",
     "No-Match VMs",
+    "Scale-Out Candidates",
   ];
   const csvContent = [
     headers.map(escapeCsvCell).join(","),
@@ -264,6 +270,9 @@ function downloadAppSummary() {
         Math.round(s.memory * 100) / 100,
         s.matched,
         s.noMatch,
+        // Blank, not 0, when no VM in the app carried both a median and a peak:
+        // 0 would read as "judged, none found".
+        s.scaleOutEvaluated ? s.scaleOut : "",
       ]
         .map(escapeCsvCell)
         .join(","),
