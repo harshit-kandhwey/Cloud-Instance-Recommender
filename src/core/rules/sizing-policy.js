@@ -1,7 +1,7 @@
 // Sizing policy: which utilization statistic a row is sized on, chosen from its ENV,
-// Criticality and Workload. Pure data plus a pure resolver; nothing here is wired
-// into a run yet, so no recommendation changes. Storage is page-only and never
-// called in the worker, like user rules.
+// Criticality and Workload. Pure data plus a pure resolver; a run reads it only when
+// Size against is the per-row policy. Storage is page-only and never called in the
+// worker, like user rules.
 //
 // A statistic is chosen in three steps: Criticality and Workload each name one, the
 // higher wins, then the row's ENV caps it. ENV is the dominant axis on purpose: a Dev
@@ -26,7 +26,12 @@ const DEFAULT_SIZING_POLICY = Object.freeze({
   workload: Object.freeze({ database: "p95", batch: "peak" }),
   envCeiling: Object.freeze({ production: "peak", staging: "p95", dev: "avg" }),
   memoryCeiling: "p95",
+  // The safety veto's thresholds, in percent: a downsize is held for review when the
+  // dimension's Peak reaches peakMin or its p95 is above p95Max. Starting points, like
+  // the rest of the defaults.
+  veto: Object.freeze({ peakMin: 95, p95Max: 85 }),
 });
+const SIZING_VETO_KEYS = ["peakMin", "p95Max"];
 
 function sizingStatisticRank(statistic) {
   return SIZING_STATISTIC_LADDER.indexOf(statistic);
@@ -110,6 +115,26 @@ function normalizeSizingPolicy(raw) {
         `memoryCeiling: "${String(raw.memoryCeiling)}" is not a statistic`,
       );
   }
+
+  if (raw.veto !== undefined) {
+    const given = raw.veto;
+    if (!given || typeof given !== "object" || Array.isArray(given)) {
+      problems.push("veto must be an object");
+    } else {
+      for (const k of Object.keys(given)) {
+        const v = given[k];
+        if (!SIZING_VETO_KEYS.includes(k)) {
+          problems.push(`veto: "${k}" is not a recognised threshold`);
+        } else if (typeof v !== "number" || !(v > 0 && v <= 100)) {
+          problems.push(
+            `veto.${k}: "${String(v)}" must be a number above 0 and at most 100`,
+          );
+        } else {
+          policy.veto[k] = v;
+        }
+      }
+    }
+  }
   return { policy, problems };
 }
 
@@ -120,6 +145,7 @@ function structuredCopyPolicy(p) {
     workload: { ...p.workload },
     envCeiling: { ...p.envCeiling },
     memoryCeiling: p.memoryCeiling,
+    veto: { ...p.veto },
   };
 }
 

@@ -166,6 +166,177 @@ const policyRun = { utilizationStatistic: "policy" };
       explicit["Sized On"],
     );
 
+    console.log("[the safety veto holds a downsize against a saturating VM]");
+    // A Dev VM sizes on the average (20%), so it would be halved. The veto looks at the
+    // row's OWN Peak and p95 as a second metric and holds the downsize when either says
+    // the VM is saturating, flagging it for manual review instead.
+    const devRow = (extra) =>
+      vmRow({ ENV: "Dev", Criticality: "Critical", ...extra });
+    const calm = devRow({});
+    delete calm["CPU Utilization p99"];
+    const base = await sized([calm], policyRun);
+    check(
+      "premise: with no reading near saturation the Dev VM is downsized and not flagged",
+      vcpus(base) < 8 && base["Review Flag"] === "",
+      `${vcpus(base)} vCPU, flag="${base["Review Flag"]}"`,
+    );
+    const spike = await sized(
+      [devRow({ "CPU Utilization Peak": "97" })],
+      policyRun,
+    );
+    check(
+      "a Peak of 97% holds the CPU downsize and says why",
+      vcpus(spike) >= 8 &&
+        spike["Review Flag"].includes("CPU downsize held for review") &&
+        spike["Review Flag"].includes("Peak 97%"),
+      `${vcpus(spike)} vCPU, flag="${spike["Review Flag"]}"`,
+    );
+    const saturated = await sized(
+      [devRow({ "CPU Utilization p95": "88" })],
+      policyRun,
+    );
+    check(
+      "a p95 above 85% holds it too, naming the p95",
+      vcpus(saturated) >= 8 &&
+        saturated["Review Flag"].includes("p95 88% is above 85%"),
+      `${vcpus(saturated)} vCPU, flag="${saturated["Review Flag"]}"`,
+    );
+    const atP95 = await sized(
+      [devRow({ "CPU Utilization p95": "85" })],
+      policyRun,
+    );
+    const underPeak = await sized(
+      [devRow({ "CPU Utilization Peak": "94" })],
+      policyRun,
+    );
+    const atPeak = await sized(
+      [devRow({ "CPU Utilization Peak": "95" })],
+      policyRun,
+    );
+    check(
+      "the edges: p95 of exactly 85 and a Peak of 94 do not hold; a Peak of exactly 95 does",
+      atP95["Review Flag"] === "" &&
+        underPeak["Review Flag"] === "" &&
+        atPeak["Review Flag"] !== "",
+      `${atP95["Review Flag"]} | ${underPeak["Review Flag"]} | ${atPeak["Review Flag"]}`,
+    );
+    const memOnly = await sized(
+      [devRow({ "Memory Utilization Peak": "98" })],
+      policyRun,
+    );
+    check(
+      "only the saturating dimension is flagged: memory is named, CPU is not",
+      memOnly["Review Flag"].includes("Memory downsize held") &&
+        !memOnly["Review Flag"].includes("CPU"),
+      memOnly["Review Flag"],
+    );
+    const both = await sized(
+      [
+        devRow({
+          "CPU Utilization Peak": "97",
+          "Memory Utilization Peak": "98",
+        }),
+      ],
+      policyRun,
+    );
+    check(
+      "both dimensions can be held and are both named",
+      both["Review Flag"].includes("CPU downsize held") &&
+        both["Review Flag"].includes("Memory downsize held"),
+      both["Review Flag"],
+    );
+    const prodSpike = await sized(
+      [
+        vmRow({
+          ENV: "Production",
+          Criticality: "Critical",
+          "CPU Utilization Peak": "99",
+        }),
+      ],
+      policyRun,
+    );
+    check(
+      "a row that is not being downsized anyway is not flagged, whatever its Peak",
+      prodSpike["Review Flag"] === "",
+      prodSpike["Review Flag"],
+    );
+    const loose = await sized([devRow({ "CPU Utilization Peak": "97" })], {
+      ...policyRun,
+      sizingPolicy: { v: 1, veto: { peakMin: 99 } },
+    });
+    check(
+      "the thresholds come from the policy: a Peak of 97 no longer holds at peakMin 99",
+      loose["Review Flag"] === "" && vcpus(loose) < 8,
+      `${vcpus(loose)} vCPU, flag="${loose["Review Flag"]}"`,
+    );
+
+    console.log("[the selector keeps a held dimension's size]");
+    // Asserted on the sizing target the selector computes, not on the instance picked:
+    // the cheapest instance meeting a target can have more vCPUs than the target.
+    ctx.__sel = run("InstanceSelectorFactory.createSelector('aws')");
+    const target = (cpuUtil, memUtil, hold) => {
+      ctx.__o = { ...BASE, ...hold };
+      ctx.__u = [cpuUtil, memUtil];
+      return run(
+        "__sel.getOptimizedInstance('us-east-1', 8, 32, __u[0], __u[1], __o)",
+      ).reason;
+    };
+    check(
+      "with no hold both dimensions halve",
+      target(20, 20, {}).includes("to 4vCPU/16GB"),
+      target(20, 20, {}),
+    );
+    check(
+      "holdCpuDownsize keeps the CPU and still halves memory",
+      target(20, 20, { holdCpuDownsize: true }).includes("to 8vCPU/16GB"),
+      target(20, 20, { holdCpuDownsize: true }),
+    );
+    check(
+      "holdMemoryDownsize keeps the memory and still halves the CPU",
+      target(20, 20, { holdMemoryDownsize: true }).includes("to 4vCPU/32GB"),
+      target(20, 20, { holdMemoryDownsize: true }),
+    );
+    check(
+      "holding both keeps both",
+      target(20, 20, {
+        holdCpuDownsize: true,
+        holdMemoryDownsize: true,
+      }).includes("to 8vCPU/32GB"),
+    );
+    check(
+      "a hold never blocks an upsize: a busy VM still goes to N+1",
+      target(90, 90, {
+        holdCpuDownsize: true,
+        holdMemoryDownsize: true,
+      }).includes("to 9vCPU/33GB"),
+      target(90, 90, { holdCpuDownsize: true, holdMemoryDownsize: true }),
+    );
+
+    console.log("[the veto is a per-row policy feature only]");
+    const explicitSpike = await sized(
+      [devRow({ "CPU Utilization Peak": "97" })],
+      { utilizationStatistic: "avg" },
+    );
+    check(
+      "an explicit-statistic run still downsizes the same VM and carries no Review Flag column",
+      vcpus(explicitSpike) < 8 && !("Review Flag" in explicitSpike),
+      Object.keys(explicitSpike).join(","),
+    );
+    const likeOnly = await sized([devRow({})], {
+      ...policyRun,
+      generateOptimized: false,
+      generateLikeToLike: true,
+    });
+    check(
+      "a like-to-like-only policy run has no Review Flag column, as it has no Sized On",
+      !("Review Flag" in likeOnly),
+    );
+    check(
+      "every row of an optimized policy run carries the column, blank when nothing was held",
+      "Review Flag" in prod && prod["Review Flag"] === "",
+      Object.keys(prod).join(","),
+    );
+
     console.log("[a missing module fails loudly]");
     run(
       "globalThis.__saved = resolvePolicyStatistic; resolvePolicyStatistic = undefined;",

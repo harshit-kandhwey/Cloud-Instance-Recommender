@@ -1044,7 +1044,10 @@ class BaseInstanceSelector {
     // Apply N/2, N, N+1 strategy
     if (options.cpuBased && cpuUtil > 0) {
       if (cpuUtil <= options.cpuDownsizeMax) {
-        targetCpu = Math.max(1, Math.ceil(currentCpu / 2));
+        // A held downsize (the safety veto) keeps the current size.
+        if (!options.holdCpuDownsize) {
+          targetCpu = Math.max(1, Math.ceil(currentCpu / 2));
+        }
       } else if (cpuUtil > options.cpuUpsizeMin) {
         targetCpu = currentCpu + 1;
       }
@@ -1052,7 +1055,9 @@ class BaseInstanceSelector {
 
     if (options.memoryBased && memoryUtil > 0) {
       if (memoryUtil <= options.memoryDownsizeMax) {
-        targetMemory = Math.max(1, Math.ceil(currentMemory / 2));
+        if (!options.holdMemoryDownsize) {
+          targetMemory = Math.max(1, Math.ceil(currentMemory / 2));
+        }
       } else if (memoryUtil > options.memoryUpsizeMin) {
         targetMemory = currentMemory + 1;
       }

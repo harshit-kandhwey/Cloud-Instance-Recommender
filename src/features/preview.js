@@ -249,6 +249,9 @@ function showResultsPreview(results) {
     // download already; must render too, or a fallback-sized row looks arbitrary.
     // displayCols is an explicit allow-list — any new row-level column names here.
     "Sized On",
+    // Per-row policy runs only: a row whose downsize the safety veto held. Named here
+    // or it won't render.
+    "Review Flag",
     // Cross-provider family-class summary, multi-cloud runs only. In the download
     // already; must be named here or it won't render.
     "Family Equivalence",

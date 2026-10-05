@@ -404,6 +404,7 @@ The results CSV contains your original columns plus per-provider recommendation 
 | `AWS No Match Reason` | Explains why no instance was found (when applicable) |
 | `AWS Nearest Miss` | On no-match rows: closest instance that met CPU/memory, and which filters to relax |
 | _(Azure and GCP columns follow the same pattern)_ |  |
+| `Review Flag` | _Per-row policy runs only:_ blank unless the safety veto held a downsize because the VM's own Peak or p95 says it is saturating, then says which (`CPU downsize held for review: Peak 97% reaches 95%`) |
 | `Sized On` | _Optimized runs:_ which utilization statistic sized the row — `Average`, `p95`, `Peak`, `… (fallback)`, or split per axis (`CPU: …, Mem: …`) |
 | `Family Equivalence` | _Multi-cloud runs:_ whether the clouds landed on the same family class — `General purpose on AWS, AZURE, GCP`, or `Differs — AWS …, GCP …` |
 

@@ -181,6 +181,64 @@ console.log("[validation never reinterprets a bad cell]");
   );
 }
 
+console.log("[the safety veto's thresholds are part of the policy]");
+{
+  const def = normalize(null).policy.veto;
+  check(
+    "the defaults are a Peak of 95% and a p95 of 85%",
+    def.peakMin === 95 && def.p95Max === 85,
+    JSON.stringify(def),
+  );
+  const partial = normalize({ v: 1, veto: { peakMin: 90 } });
+  check(
+    "a partial veto changes that threshold and keeps the other default, with no problem",
+    partial.policy.veto.peakMin === 90 &&
+      partial.policy.veto.p95Max === 85 &&
+      partial.problems.length === 0,
+    JSON.stringify(partial),
+  );
+  check(
+    "a threshold that is zero, above 100, text, null or a boolean keeps its default and is named",
+    [0, 101, -5, "95", null, true].every((bad) => {
+      const r = normalize({ v: 1, veto: { peakMin: bad } });
+      return (
+        r.policy.veto.peakMin === 95 &&
+        r.problems.length === 1 &&
+        r.problems[0].includes("veto.peakMin")
+      );
+    }),
+  );
+  const unknown = normalize(
+    JSON.parse('{"v":1,"veto":{"__proto__":50,"constructor":50,"x":50}}'),
+  );
+  check(
+    "an unrecognised threshold, including __proto__, is refused and changes nothing",
+    unknown.problems.length === 3 &&
+      Object.keys(unknown.policy.veto).join() === "peakMin,p95Max" &&
+      unknown.policy.veto.peakMin === 95,
+    JSON.stringify(unknown.problems),
+  );
+  check(
+    "a veto that is not an object is named",
+    [[], "x", 5].every(
+      (bad) => normalize({ v: 1, veto: bad }).problems.length === 1,
+    ),
+  );
+  const copy = normalize(null).policy;
+  copy.veto.peakMin = 1;
+  check(
+    "changing a returned policy's veto does not change the defaults, which are frozen",
+    run("DEFAULT_SIZING_POLICY.veto.peakMin") === 95 &&
+      run("Object.isFrozen(DEFAULT_SIZING_POLICY.veto)"),
+  );
+  run("saveSizingPolicy({ v: 1, veto: { p95Max: 70 } })");
+  check(
+    "a saved veto threshold loads back",
+    run("loadSizingPolicy().veto.p95Max") === 70 &&
+      run("loadSizingPolicy().veto.peakMin") === 95,
+  );
+}
+
 console.log("[the defaults are not shared or mutable]");
 {
   const a = normalize(null).policy;

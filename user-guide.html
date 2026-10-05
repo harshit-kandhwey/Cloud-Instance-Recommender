@@ -656,6 +656,22 @@
           back exactly as above. A policy that is not valid stops the run with
           the problem named rather than guessing.
         </p>
+
+        <p>
+          <strong>The safety veto.</strong> Sizing on a statistic can still miss
+          a VM that is saturating. So in a per-row policy run, when a row would
+          be <em>downsized</em> on CPU or memory, the tool also looks at that
+          dimension's own readings: if its Peak is 95% or more, or its p95 is
+          above 85%, the downsize is <em>held</em> &mdash; that dimension keeps
+          its current size &mdash; and the row is marked in a
+          <span class="col-pill">Review Flag</span> column, for example
+          <em>CPU downsize held for review: Peak 97% reaches 95%</em>. Look at
+          those rows by hand. A VM that is not being downsized is never flagged,
+          a missing Peak or p95 never holds anything, and the column is blank
+          for every other row. The two thresholds are defaults, and the veto
+          applies only to per-row policy runs; the other statistics size exactly
+          as before.
+        </p>
       </div>
 
       <div id="optional-cols">

@@ -176,6 +176,7 @@ window.getInstanceRecommendationWithSelector = async function (
     // and memory sized on different statistics. The key is created here to keep its
     // column position; the value is set once the row's rule inputs are known.
     if (generateOptimized) result["Sized On"] = "";
+    if (generateOptimized && sizingPolicyForRun) result["Review Flag"] = "";
 
     // Per-row rule inputs: CSV column → UI page default → built-in default. These
     // four dimensions don't depend on the provider, so they (and the user-rule match
@@ -214,6 +215,12 @@ window.getInstanceRecommendationWithSelector = async function (
     if (generateOptimized) {
       result["Sized On"] = describeSizedOn(util) + describePolicyBasis(util);
     }
+    // The safety veto: a second metric that stops a downsize the sizing statistic
+    // would make against a VM whose own readings show it saturating. Policy runs only.
+    const veto = sizingPolicyForRun
+      ? evaluateDownsizeVeto(row, util, options, sizingPolicyForRun.veto)
+      : null;
+    if (generateOptimized && veto) result["Review Flag"] = veto.text;
     const rowUserRules =
       userRulesNorm.length && typeof _matchUserRules === "function"
         ? _matchUserRules(
@@ -344,6 +351,12 @@ window.getInstanceRecommendationWithSelector = async function (
         // "low utilization" and the sizing pass must not disagree on what the row read.
         rowCpuUtil: util.cpu,
         rowMemoryUtil: util.memory,
+        ...(veto
+          ? {
+              holdCpuDownsize: veto.held.cpu,
+              holdMemoryDownsize: veto.held.memory,
+            }
+          : {}),
         excludeTypes: mergedExclude.length
           ? mergedExclude
           : options.excludeTypes,
@@ -768,6 +781,38 @@ function resolvePolicyUtilization(row, policy, inputs) {
   const util = resolveUtilizationWants(row, choice);
   util.policyReason = choice.reason;
   return util;
+}
+
+// Decides, per dimension, whether the sizing pass would downsize the row (the very test
+// getOptimizedInstance applies) and, if so, whether the row's own Peak or p95 reading
+// says it is saturating: Peak at or above thresholds.peakMin, or p95 above
+// thresholds.p95Max. A held dimension keeps its current size and the row is flagged for
+// manual review. A missing reading never holds a downsize: absent is not high.
+function evaluateDownsizeVeto(row, util, options, thresholds) {
+  const held = { cpu: false, memory: false };
+  const reasons = [];
+  for (const dim of ["cpu", "memory"]) {
+    const enabled = dim === "cpu" ? options.cpuBased : options.memoryBased;
+    const downsizeMax =
+      dim === "cpu" ? options.cpuDownsizeMax : options.memoryDownsizeMax;
+    const used = util[dim];
+    if (!enabled || !(used > 0) || !(used <= downsizeMax)) continue;
+    const peak = readUtilizationReading(row, "peak", dim);
+    const p95 = readUtilizationReading(row, "p95", dim);
+    const why = [];
+    if (peak >= thresholds.peakMin) {
+      why.push(`Peak ${peak}% reaches ${thresholds.peakMin}%`);
+    }
+    if (p95 > thresholds.p95Max) {
+      why.push(`p95 ${p95}% is above ${thresholds.p95Max}%`);
+    }
+    if (!why.length) continue;
+    held[dim] = true;
+    reasons.push(
+      `${dim === "cpu" ? "CPU" : "Memory"} downsize held for review: ${why.join("; ")}`,
+    );
+  }
+  return { held, text: reasons.join(" | ") };
 }
 
 // What a policy run appends to the "Sized On" label: why that statistic was chosen.
