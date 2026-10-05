@@ -104,6 +104,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
     │   │   └── recommendation-worker.js    # Web Worker batch processing
     │   └── rules/
     │       ├── rule-engine.js
+    │       ├── sizing-policy.js            # Sizing policy — statistic per row from ENV, Criticality, Workload; storage
     │       └── user-rules.js               # User-defined conditional rules — model, evaluator, storage
     ├── providers/
     │   ├── aws/    # Selector, UI, manifest + regions/ data (35 files)

@@ -6,7 +6,7 @@ How the tool is put together: where code lives, what loads in what order, how th
 
 Cloud Instance Recommender is a static, client-side application. There is no server and no build step. Every script is a classic `<script>` sharing one global scope, and the Content Security Policy sets `connect-src 'none'`, so page code cannot call the network. Region and pricing data ship as static files and are injected as same-origin scripts.
 
-Nothing a user uploads leaves the browser. The only persisted data is preferences, manually entered VMs, saved mappings, rules, presets, and (since 3.21) fleet snapshots, all in the browser's own storage. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
+Nothing a user uploads leaves the browser. The only persisted data is preferences, manually entered VMs, saved mappings, rules, presets, and (since 3.21) fleet snapshots and sizing policies, all in the browser's own storage. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
 
 ## Module map
 
@@ -19,6 +19,7 @@ src/
                page-actions.js    delegated dispatch for controls (data-on-click / data-on-change), and the data-style applier
   core/
     rules/     rule-engine.js     ENV / OS / Workload / Compliance rules (window.RuleEngine)
+               sizing-policy.js   sizing policy: statistic per row from ENV, Criticality and Workload, with storage
                user-rules.js      user-defined rule model, evaluator and storage
     engine/    generate.js        builds a run and calls the batch runner
                recommendation-worker.js  runs a batch off the main thread
@@ -74,6 +75,7 @@ Every key the app owns is listed in `src/shared/storage-keys.js` and nowhere els
 | `manualVMs` | `cloudInstanceRecommenderManualVMs` | `manual-entry.js` | VMs entered by hand |
 | `portfolioData` | `cloudInstanceRecommenderPortfolioData` | `app-core.js`, `downloads.js` | The portfolio copy of the last run |
 | `sections` | `cloudInstanceRecommenderSections` | `ui-shell.js` | Which sections are collapsed |
+| `sizingPolicies` | `cloudInstanceRecommenderSizingPolicies` | `sizing-policy.js` | The sizing policy, keyed by page and versioned (below) |
 | `stats` | `cloudInstanceRecommenderStats` | `downloads.js` | Local usage counts |
 | `theme` | `cloudInstanceRecommenderTheme` | `theme-init.js` | The light or dark choice; absent means follow the OS |
 | `userRules` | `cloudInstanceRecommenderUserRules` | `user-rules.js` | User-defined rules, keyed by page |
@@ -106,17 +108,20 @@ A snapshot never stores the raw inventory, and never stores `priceSavings`. That
 
 Drift comparison (`FleetSnapshots.compareFleet`) treats two runs as the same estate only when their `VM Name` sets overlap by at least `MIN_OVERLAP` (90%) of the larger side, and both sides have unique, non-blank names. Anything else is refused, and the refusal names what was added and removed.
 
+## Sizing policy
+
+`src/core/rules/sizing-policy.js` decides which utilization statistic a row is sized on (`avg`, `p90`, `p95`, `p99` or `peak`, ascending) from its ENV, Criticality and Workload. It is pure data plus a pure resolver (`resolvePolicyStatistic`), and no run reads it yet, so no recommendation depends on it.
+
+A policy is stored under the `sizingPolicies` key as one entry per tool page, each `{ v: 1, criticality, workload, envCeiling, memoryCeiling }`. Criticality and Workload each name a statistic and the higher wins; the row's ENV class (`production`, `staging` or `dev`, read from `RuleEngine.RECOGNIZED.envClasses`) then caps it; memory is held at `memoryCeiling` or below. A blank or unrecognised ENV is capped like production and a blank Criticality counts as medium, because sizing on the higher figure is the safe error. Every value is checked against the engine's own vocabularies: an entry from another version is dropped for the defaults, and a bad cell keeps its default and is named in the problems the validator returns. A policy that fails validation is never saved.
+
 ## Pricing and output
 
 Prices rank recommendations internally. The only price figure shown is the relative per-provider saving (`results.priceSavings`), in the stats bar, the portfolio overview, and the executive print report, always with the data's freshness date. No dollar figure appears in any output, and no export carries a price column.
 
 ## Security boundaries
 
-- The Content Security Policy allows scripts and styles only from the site itself. Pages
-  carry no inline script, no inline style block and no style attributes; data-driven
-  styles are set through the CSS object model (`data-style`), and controls dispatch through
-  `data-on-*` attributes. `unsafe-inline` is not used for scripts or styles.
-- Stored values are untrusted input. The stored-value loaders for presets, the app map, column mappings and user rules tolerate malformed and hostile values without throwing; `tests/suites/infra/storage-tamper-test.js` checks this.
+- The Content Security Policy allows scripts and styles only from the site itself. Pages carry no inline script, no inline style block and no style attributes; data-driven styles are set through the CSS object model (`data-style`), and controls dispatch through `data-on-*` attributes. `unsafe-inline` is not used for scripts or styles.
+- Stored values are untrusted input. The stored-value loaders for presets, the app map, column mappings, user rules and sizing policies tolerate malformed and hostile values without throwing; `tests/suites/infra/storage-tamper-test.js` checks this.
 - User text reaches the page only through `escapeHtml`, and never through an inline event handler. New UI uses data attributes and a delegated listener.
 - Exports escape spreadsheet formula prefixes on every path.
 

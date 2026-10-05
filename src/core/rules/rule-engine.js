@@ -338,6 +338,13 @@ const RuleEngine = (() => {
   // workload keys are identical across providers, so aws stands for all three.
   const RECOGNIZED = {
     env: [...ENV_PRODUCTION, ...ENV_STAGING, ...ENV_DEV_TEST],
+    // The same values grouped the way the engine treats them, so a reader that must
+    // class an ENV (the sizing policy) asks here instead of keeping its own copy.
+    envClasses: {
+      production: [...ENV_PRODUCTION],
+      staging: [...ENV_STAGING],
+      dev: [...ENV_DEV_TEST],
+    },
     // os is the true recognised set, but the hygiene check deliberately does NOT
     // scan OS: everything but windows/macos is the Linux default, so a real
     // inventory's distro strings ("Ubuntu Linux (64-bit)") are correct, not lost

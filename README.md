@@ -262,6 +262,7 @@ Cloud-Instance-Recommender/
     │   │   └── recommendation-worker.js    # Web Worker running batches off the main thread
     │   └── rules/
     │       ├── rule-engine.js              # ENV/OS/Workload/Compliance/MinGen rule logic
+    │       ├── sizing-policy.js            # Sizing policy — statistic per row from ENV, Criticality, Workload; storage
     │       └── user-rules.js               # User-defined conditional rules — model, evaluator, storage
     │
     ├── providers/

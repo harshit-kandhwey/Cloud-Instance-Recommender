@@ -17,6 +17,7 @@ const APP_SCRIPTS = [
   "src/shared/storage-keys.js",
   "src/core/rules/rule-engine.js",
   "src/core/rules/user-rules.js",
+  "src/core/rules/sizing-policy.js",
   "src/core/engine/base-instance-selector.js",
   "src/providers/aws/aws-instance-selector.js",
   "src/providers/azure/azure-instance-selector.js",
