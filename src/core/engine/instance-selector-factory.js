@@ -149,6 +149,15 @@ window.getInstanceRecommendationWithSelector = async function (
         : options.userRules
       : [];
 
+  // The sizing policy is validated ONCE for the run. The page snapshots it into the
+  // options before the worker starts; a run that asks for the policy but cannot check
+  // it has no defensible statistic to fall back to, so it fails loudly instead of
+  // quietly sizing every row on the average.
+  const sizingPolicyForRun =
+    options.utilizationStatistic === "policy"
+      ? validatedSizingPolicy(options.sizingPolicy)
+      : null;
+
   // Process each row with all providers
   const results = [];
   // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed 2026-09-14
@@ -162,15 +171,11 @@ window.getInstanceRecommendationWithSelector = async function (
     const row = csvData[index];
     const result = { ...row };
 
-    // Utilization is a property of the VM, not of any provider, so it is
-    // resolved once per row and shared by every provider's optimized pass.
-    const util = resolveUtilization(row, options.utilizationStatistic);
-    if (generateOptimized) {
-      // Which statistic sized the row. Recorded on every row so a small-looking
-      // recommendation can be traced to its basis — especially a fallback, or CPU
-      // and memory sized on different statistics.
-      result["Sized On"] = describeSizedOn(util);
-    }
+    // Which statistic sized the row. Recorded on every row so a small-looking
+    // recommendation can be traced to its basis — especially a fallback, or CPU
+    // and memory sized on different statistics. The key is created here to keep its
+    // column position; the value is set once the row's rule inputs are known.
+    if (generateOptimized) result["Sized On"] = "";
 
     // Per-row rule inputs: CSV column → UI page default → built-in default. These
     // four dimensions don't depend on the provider, so they (and the user-rule match
@@ -194,6 +199,21 @@ window.getInstanceRecommendationWithSelector = async function (
       options.ruleDefaultCompliance ||
       ""
     ).trim();
+    // Utilization is a property of the VM, not of any provider, so it is resolved
+    // once per row and shared by every provider's optimized pass. Under the policy
+    // each row's statistic comes from its ENV, Criticality and Workload, so this runs
+    // after those are resolved.
+    const util =
+      options.utilizationStatistic === "policy"
+        ? resolvePolicyUtilization(row, sizingPolicyForRun, {
+            env: rowEnv,
+            criticality: row["Criticality"],
+            workload: rowWorkload,
+          })
+        : resolveUtilization(row, options.utilizationStatistic);
+    if (generateOptimized) {
+      result["Sized On"] = describeSizedOn(util) + describePolicyBasis(util);
+    }
     const rowUserRules =
       userRulesNorm.length && typeof _matchUserRules === "function"
         ? _matchUserRules(
@@ -703,6 +723,56 @@ function resolveUtilization(row, requested) {
     cpuFellBack: cpu.fellBack,
     memoryFellBack: memory.fellBack,
   };
+}
+
+function validatedSizingPolicy(raw) {
+  if (
+    typeof normalizeSizingPolicy !== "function" ||
+    typeof resolvePolicyStatistic !== "function"
+  ) {
+    throw new Error("The sizing policy module is not loaded.");
+  }
+  const checked = normalizeSizingPolicy(raw);
+  if (checked.problems.length) {
+    throw new Error(
+      `The sizing policy is not valid: ${checked.problems.join("; ")}`,
+    );
+  }
+  return checked.policy;
+}
+
+// The same shape as resolveUtilization, but each dimension asks for its own
+// statistic: { cpu, memory } name the wanted statistic per dimension, and each falls
+// back through its own chain exactly as an explicit run does.
+function resolveUtilizationWants(row, wants) {
+  const known = (stat) =>
+    Object.prototype.hasOwnProperty.call(UTILIZATION_STATISTICS, stat)
+      ? stat
+      : "avg";
+  const cpu = resolveDimension(row, known(wants.cpu), "cpu");
+  const memory = resolveDimension(row, known(wants.memory), "memory");
+  return {
+    cpu: cpu.value,
+    memory: memory.value,
+    cpuStatistic: cpu.statistic,
+    memoryStatistic: memory.statistic,
+    cpuFellBack: cpu.fellBack,
+    memoryFellBack: memory.fellBack,
+  };
+}
+
+// Resolves a row's utilization under a sizing policy that sizingPolicyForRun has already
+// validated once for the whole run.
+function resolvePolicyUtilization(row, policy, inputs) {
+  const choice = resolvePolicyStatistic(inputs, policy);
+  const util = resolveUtilizationWants(row, choice);
+  util.policyReason = choice.reason;
+  return util;
+}
+
+// What a policy run appends to the "Sized On" label: why that statistic was chosen.
+function describePolicyBasis(util) {
+  return util.policyReason ? ` · policy: ${util.policyReason}` : "";
 }
 
 // The "Sized On" label for a row. When both dimensions used the same statistic (the

@@ -305,6 +305,7 @@ vm.runInContext(
     // fallback context must load it too or a userRules run would ReferenceError.
     "src/shared/storage-keys.js",
     "src/core/rules/user-rules.js",
+    "src/core/rules/sizing-policy.js",
     "src/core/engine/base-instance-selector.js",
     "src/providers/aws/aws-instance-selector.js",
     "src/providers/azure/azure-instance-selector.js",
@@ -379,6 +380,55 @@ vm.runInContext(
   }
   const urResult = posted.slice(before).find((m) => m.type === "result");
   const urRow = urResult && urResult.results && urResult.results[0];
+
+  // ── options.sizingPolicy across the worker boundary ─────────────────────────
+  // The page snapshots the stored policy into the options because the worker cannot
+  // read localStorage. Prove it survives structuredClone and is evaluated inside the
+  // worker: a Dev VM with a policy that lets Dev reach p99 must size on p99.
+  console.log("[options.sizingPolicy over the worker boundary]");
+  const beforePolicy = posted.length;
+  await workerCtx.onmessage({
+    data: structuredClone({
+      type: "run",
+      csvData: [
+        {
+          "VM Name": "pol",
+          "CPU Count": "8",
+          "Memory (GB)": "32",
+          "AWS Region": "us-east-1",
+          ENV: "Dev",
+          Criticality: "Critical",
+          "CPU Utilization": "20",
+          "CPU Utilization p99": "95",
+        },
+      ],
+      providers: ["aws"],
+      options: {
+        ...OPTIONS,
+        utilizationStatistic: "policy",
+        sizingPolicy: {
+          v: 1,
+          envCeiling: { production: "peak", staging: "p95", dev: "p99" },
+        },
+      },
+      regionData,
+      flags,
+    }),
+  });
+  for (
+    let i = 0;
+    i < 100 && !posted.slice(beforePolicy).some((m) => m.type === "result");
+    i++
+  ) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  const polResult = posted.slice(beforePolicy).find((m) => m.type === "result");
+  const polRow = polResult && polResult.results && polResult.results[0];
+  check(
+    "the policy chose the statistic inside the worker, and the row says why",
+    !!polRow && /policy: dev \+ critical → p99/.test(polRow["Sized On"] || ""),
+    polRow && polRow["Sized On"],
+  );
   check(
     "the user rule steered the worker pick to its allow-list family",
     !!urRow && /^r5/.test(urRow["AWS Like-to-Like Instance"] || ""),

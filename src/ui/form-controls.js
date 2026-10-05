@@ -291,6 +291,12 @@ function onUtilizationStatisticChange() {
       ? UTILIZATION_STATISTICS[sel.value]
       : null;
   hint.classList.remove("hint-warning");
+  if (sel.value === "policy") {
+    if (!hint.dataset.defaultHtml) hint.dataset.defaultHtml = hint.innerHTML;
+    hint.textContent =
+      'Each row is sized on the statistic its ENV, Criticality and Workload select: a Production critical VM on p99, a Dev VM on the average. A row without that reading falls back to what it has, and the reason is recorded per row in the "Sized On" column.';
+    return;
+  }
   if (!stat || sel.value === "avg") {
     hint.innerHTML = hint.dataset.defaultHtml || hint.innerHTML;
     return;

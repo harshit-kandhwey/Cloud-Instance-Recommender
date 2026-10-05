@@ -20,6 +20,7 @@ importScripts(
   "../../shared/storage-keys.js",
   "../rules/rule-engine.js",
   "../rules/user-rules.js",
+  "../rules/sizing-policy.js",
   "base-instance-selector.js",
   "../../providers/aws/aws-instance-selector.js",
   "../../providers/azure/azure-instance-selector.js",

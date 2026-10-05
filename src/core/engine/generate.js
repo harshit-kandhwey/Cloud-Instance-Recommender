@@ -106,6 +106,17 @@ function generateRecommendations() {
 }
 
 // Real progress bar driven by onProgress(done, total) callbacks
+// The stored sizing policy for a run, or undefined when the run does not size on the
+// policy. Only then is localStorage read, and the policy rides in the options because
+// the worker cannot reach it.
+function sizingPolicyOption() {
+  const asked =
+    document.getElementById("utilizationStatistic")?.value === "policy";
+  return asked && typeof loadSizingPolicy === "function"
+    ? loadSizingPolicy()
+    : undefined;
+}
+
 function updateProgressBar(done, total) {
   const progressFill = document.getElementById("progressFill");
   const progressText = document.getElementById("progressText");
@@ -171,6 +182,9 @@ async function processRecommendations() {
     // behaviour and the default when the control is absent.
     utilizationStatistic:
       document.getElementById("utilizationStatistic")?.value || "avg",
+    // The stored sizing policy, snapshotted here like user rules, and only for a run
+    // that asks for it: the worker cannot read localStorage.
+    sizingPolicy: sizingPolicyOption(),
     cpuBased: document.getElementById("cpuBased")?.checked || false,
     memoryBased: document.getElementById("memoryBased")?.checked || false,
     cpuDownsizeMax: parseInt(

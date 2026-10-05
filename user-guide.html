@@ -578,7 +578,8 @@
                 Optional: <code>Critical</code>, <code>High</code>,
                 <code>Medium</code>, <code>Low</code>. How costly an outage of
                 this VM is. A value outside this list is named in the input
-                check. It does not change a recommendation.
+                check. It changes a recommendation only when
+                <strong>Size against</strong> is set to the per-row policy.
               </td>
               <td>High</td>
             </tr>
@@ -628,13 +629,32 @@
         <p>
           <strong>Which statistic sizes a row.</strong> The
           <strong>Size against</strong> selector in Optimization Settings
-          chooses between Average (the default), p90, p95, p99 and Peak. A row
-          that does not carry the chosen statistic falls back to what it does
-          have — preferring the higher remaining one, since sizing against a
-          lower number than you asked for under-provisions — and every row
-          reports the basis actually used in a
+          chooses between Average (the default), p90, p95, p99, Peak and a
+          per-row policy (below). A row that does not carry the chosen statistic
+          falls back to what it does have — preferring the higher remaining one,
+          since sizing against a lower number than you asked for
+          under-provisions — and every row reports the basis actually used in a
           <span class="col-pill">Sized On</span> column, so a recommendation can
           always be traced to the number behind it.
+        </p>
+
+        <p>
+          <strong>The per-row policy.</strong> Choosing
+          <em>Per-row policy (ENV, Criticality, Workload)</em> sizes each row on
+          the statistic its own ENV, Criticality and Workload select, instead of
+          one statistic for the whole file. Criticality and Workload each name a
+          statistic and the higher one wins; the row's ENV then caps it, so a
+          Dev VM is never sized on the figure a Production VM is. The defaults:
+          Production Critical p99, High p95, Medium and Low p90; a Database
+          takes at least p95 and a Batch VM Peak; Production may reach Peak,
+          Staging p95, and Dev, Test and QA stay on the average; memory is held
+          at p95 or below, since memory is rarely bursty. A blank or
+          unrecognised ENV is treated like Production and a blank Criticality
+          like Medium, because when it is unclear the higher figure is the safe
+          one; the <span class="col-pill">Sized On</span> cell says when it
+          assumed. If a row lacks the statistic its policy asks for, it falls
+          back exactly as above. A policy that is not valid stops the run with
+          the problem named rather than guessing.
         </p>
       </div>
 

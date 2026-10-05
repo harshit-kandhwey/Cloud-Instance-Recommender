@@ -175,6 +175,26 @@ function toggle(ctx, { cpu, memory }) {
     r.html,
   );
 
+  console.log("[the per-row policy explains itself and never warns]");
+  r = drive(ctx, { stat: "policy", cpu: true, memory: true, headers: [] });
+  check(
+    "choosing the policy describes the ENV, Criticality and Workload selection",
+    /ENV, Criticality and Workload/.test(r.text) && !r.warned,
+    r.text,
+  );
+  r = drive(ctx, { stat: "policy", cpu: true, memory: true, headers: [CPU95] });
+  check(
+    "no warning about a missing column: each row falls back to what it has",
+    !r.warned && /Sized On/.test(r.text),
+    r.text,
+  );
+  r = drive(ctx, { stat: "avg", cpu: true, memory: true, headers: [] });
+  check(
+    "switching back to the average restores the default guidance",
+    r.html === DEFAULT_HTML,
+    r.html,
+  );
+
   process.exitCode = state.failures ? 1 : 0;
 })().catch((e) => {
   console.error(e);

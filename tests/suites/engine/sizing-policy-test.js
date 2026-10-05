@@ -240,4 +240,34 @@ console.log("[storage: per page, versioned, tamper-safe]");
   );
 }
 
+console.log("[a run carries the stored policy only when it asks for it]");
+{
+  const select = ctx.document.getElementById("utilizationStatistic");
+  run("saveSizingPolicy({ v: 1, criticality: { critical: 'p95' } })");
+  select.value = "policy";
+  const asked = run("sizingPolicyOption()");
+  check(
+    "the policy option is the stored policy when the run sizes on the policy",
+    asked && asked.criticality.critical === "p95" && asked.criticality.high,
+    JSON.stringify(asked),
+  );
+  select.value = "avg";
+  check(
+    "any other statistic reads nothing from storage and sends no policy",
+    run("sizingPolicyOption()") === undefined,
+  );
+  select.value = "policy";
+  check(
+    "the option is a plain, structured-cloneable object",
+    (() => {
+      try {
+        structuredClone(run("sizingPolicyOption()"));
+        return true;
+      } catch {
+        return false;
+      }
+    })(),
+  );
+}
+
 process.exitCode = state.failures ? 1 : 0;
