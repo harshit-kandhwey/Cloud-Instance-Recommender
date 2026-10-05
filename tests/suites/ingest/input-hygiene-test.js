@@ -180,7 +180,9 @@ web-01,4,16,us-west-2`;
   check(
     "a fresh upload asks again",
     !panel(elements).classes.has("hidden") &&
-      panel(elements).innerHTML.includes('data-on-click="keepDuplicateVmNames"'),
+      panel(elements).innerHTML.includes(
+        'data-on-click="keepDuplicateVmNames"',
+      ),
     panel(elements).innerHTML,
   );
 }

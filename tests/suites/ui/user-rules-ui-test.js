@@ -125,7 +125,8 @@ console.log("[the panel offers export and import controls]");
   ctx.renderUserRulesPanel();
   check(
     "export and import buttons are present",
-    /data-on-click="exportUserRules"/.test(panel()) && /data-on-click="importUserRules"/.test(panel()),
+    /data-on-click="exportUserRules"/.test(panel()) &&
+      /data-on-click="importUserRules"/.test(panel()),
     panel(),
   );
   check(
