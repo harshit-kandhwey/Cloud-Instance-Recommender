@@ -11,3 +11,6 @@ tests/golden/** -text
 
 # Binary E2E fixtures (.xlsx workbooks are ZIP containers) — never translate.
 tests/e2e/fixtures/*.xlsx -text
+
+# The shipped Excel template is a generated ZIP container; never translate it.
+assets/templates/*.xlsx -text

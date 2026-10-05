@@ -77,6 +77,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
 │   │   └── split-data.js                      # Monolith to manifest + per-region files
 │   ├── testing/
 │   │   ├── build-coverage-inventory.js        # npm run coverage:check gate
+│   │   ├── make-template.js                   # Builds the validated Excel template (dropdowns); zero-dep
 │   │   └── static-server.js                   # Zero-dep static server for the Playwright rig
 │   └── lib/
 │       ├── build-env.js                       # Generic Node/CI primitives (argv, atomic write, sandboxed loaders)

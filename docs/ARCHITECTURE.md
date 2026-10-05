@@ -114,6 +114,14 @@ Drift comparison (`FleetSnapshots.compareFleet`) treats two runs as the same est
 
 A policy is stored under the `sizingPolicies` key as one entry per tool page, each `{ v: 1, criticality, workload, envCeiling, memoryCeiling }`. Criticality and Workload each name a statistic and the higher wins; the row's ENV class (`production`, `staging` or `dev`, read from `RuleEngine.RECOGNIZED.envClasses`) then caps it; memory is held at `memoryCeiling` or below. The policy also carries the safety veto's thresholds, `veto: { peakMin: 95, p95Max: 85 }` (percent, above 0 and at most 100). A blank or unrecognised ENV is capped like production and a blank Criticality counts as medium, because sizing on the higher figure is the safe error. Every value is checked against the engine's own vocabularies: an entry from another version is dropped for the defaults, and a bad cell keeps its default and is named in the problems the validator returns. A policy that fails validation is never saved.
 
+## Validated input template
+
+`assets/templates/cloud_instance_recommender_template.xlsx` is a ready-to-fill workbook (an `Inventory` sheet with example rows, an `Allowed values` sheet and a `Read me` sheet) whose ENV, OS, Workload and Criticality columns are dropdowns. It is a committed static file produced by `scripts/testing/make-template.js`, not built in the page: the vendored workbook writers cannot emit data validation, and a static file needs no library in the browser.
+
+The script uses Node built-ins only. It writes the sheet XML, including the `dataValidations` rules, and a STORE-only zip with a fixed timestamp, so the same inputs always give the same bytes. It reads each dropdown's values from `RuleEngine.RECOGNIZED` (never a copy) and lists them on the `Allowed values` sheet, where each rule points at its range. Compliance is free text because it takes several comma-separated values.
+
+`node scripts/testing/make-template.js` rewrites the file and `--check` fails if the committed file differs from what the script builds now. `tests/suites/export/validated-template-test.js` runs that comparison in the suite, so a change to the engine's vocabularies fails CI until the file is regenerated and committed. The same suite checks that each dropdown offers exactly the engine's values, that the package is well formed, and that the vendored reader opens it.
+
 ## Pricing and output
 
 Prices rank recommendations internally. The only price figure shown is the relative per-provider saving (`results.priceSavings`), in the stats bar, the portfolio overview, and the executive print report, always with the data's freshness date. No dollar figure appears in any output, and no export carries a price column.
