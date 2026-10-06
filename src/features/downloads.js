@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Downloads & stats: results CSV, no-match remediation export, AWS bulk
 // template, and usage statistics.
 
@@ -129,8 +127,8 @@ function _csvMenuOutsideClick(e) {
 function downloadSelectedCsvs() {
   const menu = document.getElementById("csvMenu");
   if (!menu) return;
-  const checked = Array.from(
-    menu.querySelectorAll('input[type="checkbox"]:checked'),
+  const checked = /** @type {HTMLInputElement[]} */ (
+    Array.from(menu.querySelectorAll('input[type="checkbox"]:checked'))
   ).map((c) => c.value);
   if (!checked.length) {
     showToast("Select at least one CSV to download.", "warning");
@@ -462,7 +460,9 @@ function downloadAWSBulkTemplate(type) {
     "EBS Snapshot amount per Instance (GB/snapshot)",
   ];
 
-  const osSelector = document.querySelector('input[name="targetOS"]:checked');
+  const osSelector = /** @type {HTMLInputElement | null} */ (
+    document.querySelector('input[name="targetOS"]:checked')
+  );
   const pageOS = osSelector ? osSelector.value : "Linux";
 
   const rows = [];
@@ -627,6 +627,8 @@ function updateUsageCounters() {
   const toolUsageElement = document.getElementById("toolUsageCount");
   const totalVMsElement = document.getElementById("totalVMsProcessed");
 
-  if (toolUsageElement) toolUsageElement.textContent = usageStats.toolUses;
-  if (totalVMsElement) totalVMsElement.textContent = usageStats.totalVMs;
+  if (toolUsageElement)
+    toolUsageElement.textContent = String(usageStats.toolUses);
+  if (totalVMsElement)
+    totalVMsElement.textContent = String(usageStats.totalVMs);
 }

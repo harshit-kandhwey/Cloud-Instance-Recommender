@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Styled .xlsx export of the results grid (companion to the CSV download).
 //
 // The same rows/columns as downloadResults(), written as a single-sheet
@@ -162,7 +160,7 @@ function loadResultsXlsxScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = src;
-    s.onload = () => resolve();
+    s.onload = () => resolve(undefined);
     s.onerror = () => {
       s.remove();
       reject(new Error("failed to load " + src));

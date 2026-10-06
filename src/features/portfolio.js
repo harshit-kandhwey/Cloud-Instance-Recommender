@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // App Portfolio page controller.
 //
 // Receives a generated result set handed off from a tool page — postMessage is
@@ -188,17 +186,17 @@ function computeAppStats(app, rows, meta) {
     shapeMix: {},
     compliance: {},
     hasCompliance: false,
-    regions: [],
+    regions: /** @type {string[]} */ ([]),
     multiRegion: false,
     families: {},
     matched: 0,
     noMatch: 0,
     matchRate: 0,
-    noMatchReasons: [],
-    rightSizing: null,
+    noMatchReasons: /** @type {{ reason: string, count: number }[]} */ ([]),
+    rightSizing: /** @type {any} */ (null),
     // Scale-out advisory. `scaleOutEvaluated` counts the VMs that carried both a
     // median and a peak, so "none" is never reported for rows that could not be judged.
-    scaleOut: [],
+    scaleOut: /** @type {any[]} */ ([]),
     scaleOutEvaluated: 0,
     rows,
   };
@@ -1070,7 +1068,9 @@ function togglePortfolioAppRow(i) {
   renderAppTableBody();
   // The toggle button was replaced by the re-render — restore focus so
   // keyboard users stay anchored to the row they just expanded/collapsed.
-  const toggle = document.querySelector(`.pf-row-toggle[data-row="${i}"]`);
+  const toggle = /** @type {HTMLElement | null} */ (
+    document.querySelector(`.pf-row-toggle[data-row="${i}"]`)
+  );
   if (toggle) toggle.focus();
 }
 function updateSortIndicators() {
@@ -1653,7 +1653,7 @@ function loadScriptOnce(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = src;
-    s.onload = () => resolve();
+    s.onload = () => resolve(undefined);
     s.onerror = () => {
       s.remove();
       reject(new Error("failed to load " + src));

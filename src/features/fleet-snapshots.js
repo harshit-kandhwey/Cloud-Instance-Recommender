@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Named snapshots of a generation run's per-VM outputs (3.21 phase 2). A snapshot
 // holds the rows, the providers the run used and the user rules it applied, never
 // the raw inventory. priceSavings is attached to the results array, not to a row,

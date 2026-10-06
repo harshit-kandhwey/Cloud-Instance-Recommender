@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Filter presets: save/restore named filter + rule-engine configurations.
 //
 // A preset is a snapshot of the live configuration controls (the source of
@@ -112,6 +110,14 @@ function pagePresets(store) {
 
 // ─── Capture / apply ──────────────────────────────────────────────────────────
 
+// The matching inputs as an array. queryInputs (form-controls.js) does the same, but this
+// file is loaded and tested without it.
+function presetInputs(selector) {
+  return /** @type {HTMLInputElement[]} */ (
+    Array.from(document.querySelectorAll(selector))
+  );
+}
+
 function isPresetGroupId(id) {
   return PRESET_GROUP_PREFIXES.some((p) => id.startsWith(p));
 }
@@ -122,11 +128,13 @@ function capturePresetConfig() {
     checkboxes: {},
     numbers: {},
     texts: {},
-    providers: [],
-    groupChecked: [],
+    providers: /** @type {string[]} */ ([]),
+    groupChecked: /** @type {string[]} */ ([]),
   };
 
-  const rt = document.querySelector('input[name="recommendationType"]:checked');
+  const rt = /** @type {HTMLInputElement | null} */ (
+    document.querySelector('input[name="recommendationType"]:checked')
+  );
   if (rt) cfg.recommendationType = rt.value;
 
   PRESET_CHECKBOXES.forEach((id) => {
@@ -147,9 +155,7 @@ function capturePresetConfig() {
     if (el && el.checked) cfg.providers.push(id);
   });
 
-  cfg.groupChecked = Array.from(
-    document.querySelectorAll('input[type="checkbox"]'),
-  )
+  cfg.groupChecked = presetInputs('input[type="checkbox"]')
     .filter((cb) => cb.checked && cb.id && isPresetGroupId(cb.id))
     .map((cb) => cb.id);
 
@@ -344,11 +350,9 @@ function applyPresetConfig(cfg) {
 
   // Recommendation type radio.
   if (cfg.recommendationType) {
-    document
-      .querySelectorAll('input[name="recommendationType"]')
-      .forEach((r) => {
-        r.checked = r.value === cfg.recommendationType;
-      });
+    presetInputs('input[name="recommendationType"]').forEach((r) => {
+      r.checked = r.value === cfg.recommendationType;
+    });
   }
   callIfFn("handleRecommendationTypeChange");
 
@@ -380,12 +384,10 @@ function applyPresetConfig(cfg) {
   callIfFn("checkRuleConflicts");
 
   // Dynamic per-provider filter selections: clear all, then re-check saved.
-  document.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+  presetInputs('input[type="checkbox"]').forEach((cb) => {
     if (cb.id && isPresetGroupId(cb.id)) cb.checked = false;
   });
-  const allBoxes = Array.from(
-    document.querySelectorAll('input[type="checkbox"]'),
-  );
+  const allBoxes = presetInputs('input[type="checkbox"]');
   let restoredByPosition = 0;
   (Array.isArray(cfg.groupChecked) ? cfg.groupChecked : []).forEach((id) => {
     if (typeof id !== "string" || !isPresetGroupId(id)) return;
