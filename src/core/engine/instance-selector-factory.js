@@ -350,7 +350,7 @@ window.getInstanceRecommendationWithSelector = async function (
         // The row's resolved utilization, so the rule engine can tell a busy Dev box
         // from an idle one. Same figures that drive the N/2 rules — a rule keyed on
         // "low utilization" and the sizing pass must not disagree on what the row read.
-        // A row the veto is holding is not a confirmed idler. Zero is "unknown", which
+        // A row the veto is holding, on CPU or on memory, is not a confirmed idler. Zero is "unknown", which
         // the Dev/Test burstable preference does not treat as low, so a saturating VM is
         // not handed a credit-limited instance because its sizing statistic was an average.
         rowCpuUtil: veto && (veto.held.cpu || veto.held.memory) ? 0 : util.cpu,

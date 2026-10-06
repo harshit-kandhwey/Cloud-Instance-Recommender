@@ -10,13 +10,15 @@ const FleetSnapshots = (() => {
   const SCHEMA_VERSION = 1;
   const MAX_NAME_LENGTH = 60;
 
-  function readStored() {
-    let raw;
+  function readRaw() {
     try {
-      raw = localStorage.getItem(STORAGE_KEYS.fleetSnapshots);
+      return localStorage.getItem(STORAGE_KEYS.fleetSnapshots);
     } catch {
-      return [];
+      return null;
     }
+  }
+
+  function parseStored(raw) {
     if (raw === null) return [];
     let parsed;
     try {
@@ -25,6 +27,10 @@ const FleetSnapshots = (() => {
       return [];
     }
     return Array.isArray(parsed) ? parsed : [];
+  }
+
+  function readStored() {
+    return parseStored(readRaw());
   }
 
   const isCurrent = (e) =>
@@ -49,8 +55,26 @@ const FleetSnapshots = (() => {
 
   // What a write keeps: the readable entries and the other-version ones, in stored order.
   // Anything else is malformed and is dropped.
-  function keptEntries() {
-    return readStored().filter((e) => isCurrent(e) || isOtherVersion(e));
+  function keptEntries(stored) {
+    return stored.filter((e) => isCurrent(e) || isOtherVersion(e));
+  }
+
+  // Another tab can write between this one's read and its write, and a blind write would
+  // drop that tab's snapshot. The stored text is read again just before the write; if it
+  // moved, the change is rebuilt from the new list once, and a second move is refused.
+  function writeFrom(build) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const raw = readRaw();
+      const built = build(parseStored(raw));
+      if (!built.ok) return built;
+      if (readRaw() !== raw) continue;
+      const result = AppStorage.write(
+        "fleetSnapshots",
+        JSON.stringify(built.list),
+      );
+      return result.ok ? { ok: true } : { ok: false, reason: result.reason };
+    }
+    return { ok: false, reason: "changed" };
   }
 
   function normaliseName(name) {
@@ -87,26 +111,18 @@ const FleetSnapshots = (() => {
   }
 
   function save(entry) {
-    const existing = readEntries();
-    if (existing.some((e) => e.name === entry.name)) {
-      return { ok: false, reason: "duplicate" };
-    }
-    const result = AppStorage.write(
-      "fleetSnapshots",
-      JSON.stringify([...keptEntries(), entry]),
+    return writeFrom((stored) =>
+      stored.filter(isCurrent).some((e) => e.name === entry.name)
+        ? { ok: false, reason: "duplicate" }
+        : { ok: true, list: [...keptEntries(stored), entry] },
     );
-    return result.ok ? { ok: true } : { ok: false, reason: result.reason };
   }
 
   function remove(id) {
-    const remaining = keptEntries().filter(
-      (e) => !(isCurrent(e) && e.id === id),
-    );
-    const result = AppStorage.write(
-      "fleetSnapshots",
-      JSON.stringify(remaining),
-    );
-    return result.ok ? { ok: true } : { ok: false, reason: result.reason };
+    return writeFrom((stored) => ({
+      ok: true,
+      list: keptEntries(stored).filter((e) => !(isCurrent(e) && e.id === id)),
+    }));
   }
 
   // Same fleet means the same VM names. Below this share of the larger side, the two

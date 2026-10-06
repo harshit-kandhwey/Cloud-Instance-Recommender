@@ -179,6 +179,8 @@ function handleFleetSnapshotSubmit(event) {
     duplicate: `A snapshot named "${built.entry.name}" already exists.`,
     quota:
       "This browser has no room for another snapshot. Delete one or clear app data first.",
+    changed:
+      "Another tab changed the snapshots while this one was saving. Try again.",
   };
   renderFleetSnapshotsPanel(
     why[saved.reason] || "The snapshot could not be saved.",

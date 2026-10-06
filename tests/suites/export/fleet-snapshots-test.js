@@ -211,6 +211,69 @@ const sourceResults = [...sourceRows];
   );
 }
 
+// Another tab writes the list between this tab's read and its write. The store below
+// lets the test place that write exactly there: `moves` says how many reads of the key
+// are followed by a foreign write.
+function storeWithForeignWrites(moves) {
+  const store = fresh();
+  const realGet = store.getItem.bind(store);
+  let reads = 0;
+  store.getItem = (k) => {
+    const value = realGet(k);
+    if (k === KEY && reads < moves) {
+      reads++;
+      const list = value === null ? [] : JSON.parse(value);
+      list.push({
+        v: 1,
+        id: `other${reads}`,
+        name: `From another tab ${reads}`,
+        rows: [],
+      });
+      store.setItem(KEY, JSON.stringify(list));
+    }
+    return value;
+  };
+  return store;
+}
+const mine = (id, name) => ({ v: 1, id, name, rows: [] });
+
+{
+  const store = storeWithForeignWrites(1);
+  const saved = run(
+    `FleetSnapshots.save(${JSON.stringify(mine("m", "Mine"))})`,
+  );
+  const ids = JSON.parse(store.getItem(KEY)).map((e) => e.id);
+  check(
+    "a save that races another tab keeps both snapshots",
+    saved.ok === true &&
+      JSON.stringify(ids) === JSON.stringify(["other1", "m"]),
+    JSON.stringify({ saved, ids }),
+  );
+}
+{
+  const store = storeWithForeignWrites(1);
+  store.setItem(KEY, JSON.stringify([mine("a", "A"), mine("b", "B")]));
+  const removed = run('FleetSnapshots.remove("a")');
+  const ids = JSON.parse(store.getItem(KEY)).map((e) => e.id);
+  check(
+    "a delete that races another tab does not drop the other tab's snapshot",
+    removed.ok === true && ids.includes("other1") && !ids.includes("a"),
+    JSON.stringify({ removed, ids }),
+  );
+}
+{
+  const store = storeWithForeignWrites(Infinity);
+  const saved = run(
+    `FleetSnapshots.save(${JSON.stringify(mine("m", "Mine"))})`,
+  );
+  const ids = JSON.parse(store.getItem(KEY)).map((e) => e.id);
+  check(
+    "a list that keeps moving is refused with a reason and not overwritten",
+    saved.ok === false && saved.reason === "changed" && !ids.includes("m"),
+    JSON.stringify({ saved, ids }),
+  );
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;
