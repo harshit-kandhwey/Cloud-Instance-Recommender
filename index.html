@@ -14,6 +14,7 @@
     <title>Cloud Instance Recommender</title>
     <script src="src/shared/storage-keys.js"></script>
     <script src="src/shared/theme-init.js"></script>
+    <script defer src="src/shared/page-actions.js"></script>
     <link rel="stylesheet" href="styles/theme.css" />
     <link rel="stylesheet" href="styles/index_style.css" />
     <link rel="stylesheet" href="styles/inline-utilities.css" />
@@ -43,7 +44,7 @@
           <button
             id="themeToggle"
             class="theme-toggle"
-            onclick="toggleTheme()"
+            data-on-click="toggleTheme"
             title="Toggle dark mode"
             aria-label="Toggle dark mode"
             aria-pressed="false"

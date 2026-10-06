@@ -14,6 +14,18 @@
       : mql && mql.matches
         ? "dark"
         : "light";
+  // The toggle ships with aria-pressed="false", so a saved or OS dark theme must be
+  // reported once the button exists, not only after the first click.
+  function syncButton() {
+    var btn = document.getElementById("themeToggle");
+    if (btn) {
+      btn.setAttribute(
+        "aria-pressed",
+        document.documentElement.dataset.theme === "dark",
+      );
+    }
+  }
+  document.addEventListener("DOMContentLoaded", syncButton);
   window.toggleTheme = function () {
     var next =
       document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -21,8 +33,7 @@
     try {
       localStorage.setItem(STORAGE_KEYS.theme, next);
     } catch (e) {}
-    var btn = document.getElementById("themeToggle");
-    if (btn) btn.setAttribute("aria-pressed", next === "dark");
+    syncButton();
   };
   if (mql && mql.addEventListener) {
     mql.addEventListener("change", function (e) {
@@ -32,6 +43,7 @@
       } catch (err) {}
       if (saved !== "dark" && saved !== "light") {
         document.documentElement.dataset.theme = e.matches ? "dark" : "light";
+        syncButton();
       }
     });
   }

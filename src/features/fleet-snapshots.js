@@ -2,13 +2,13 @@
 // holds the rows, the providers the run used and the user rules it applied, never
 // the raw inventory. priceSavings is attached to the results array, not to a row,
 // so copying rows cannot carry it, and nothing here reads that array property
-// (CLAUDE rule 7). Entries are versioned: an unknown version is dropped on read,
-// not migrated (CLAUDE rule 6).
+// (CLAUDE rule 7). Entries are versioned: an unknown version is ignored on read,
+// not migrated (CLAUDE rule 6), and left in storage untouched by a save or delete.
 const FleetSnapshots = (() => {
   const SCHEMA_VERSION = 1;
   const MAX_NAME_LENGTH = 60;
 
-  function readEntries() {
+  function readStored() {
     let raw;
     try {
       raw = localStorage.getItem(STORAGE_KEYS.fleetSnapshots);
@@ -22,16 +22,33 @@ const FleetSnapshots = (() => {
     } catch {
       return [];
     }
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (e) =>
-        e !== null &&
-        typeof e === "object" &&
-        e.v === SCHEMA_VERSION &&
-        typeof e.id === "string" &&
-        typeof e.name === "string" &&
-        Array.isArray(e.rows),
-    );
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  const isCurrent = (e) =>
+    e !== null &&
+    typeof e === "object" &&
+    e.v === SCHEMA_VERSION &&
+    typeof e.id === "string" &&
+    typeof e.name === "string" &&
+    Array.isArray(e.rows);
+
+  // Written by another build under a version this one cannot read. It is never shown
+  // or trusted, but a save or delete here must not destroy it.
+  const isOtherVersion = (e) =>
+    e !== null &&
+    typeof e === "object" &&
+    e.v !== undefined &&
+    e.v !== SCHEMA_VERSION;
+
+  function readEntries() {
+    return readStored().filter(isCurrent);
+  }
+
+  // What a write keeps: the readable entries and the other-version ones, in stored order.
+  // Anything else is malformed and is dropped.
+  function keptEntries() {
+    return readStored().filter((e) => isCurrent(e) || isOtherVersion(e));
   }
 
   function normaliseName(name) {
@@ -70,13 +87,15 @@ const FleetSnapshots = (() => {
     }
     const result = StorageManager.write(
       "fleetSnapshots",
-      JSON.stringify([...existing, entry]),
+      JSON.stringify([...keptEntries(), entry]),
     );
     return result.ok ? { ok: true } : { ok: false, reason: result.reason };
   }
 
   function remove(id) {
-    const remaining = readEntries().filter((e) => e.id !== id);
+    const remaining = keptEntries().filter(
+      (e) => !(isCurrent(e) && e.id === id),
+    );
     const result = StorageManager.write(
       "fleetSnapshots",
       JSON.stringify(remaining),

@@ -179,11 +179,12 @@ function renderManualEntry() {
           <thead><tr>${listCols
             .map((c) => `<th class="inl-50920e1c">${escapeHtml(c)}</th>`)
             .join("")}<th></th></tr></thead>
-          <tbody class="inl-f99adf42">${manualVMs
+          <tbody>${manualVMs
             .map((vm, i) => {
               const beingEdited = i === window._manualEditIndex;
-              const rowStyle = beingEdited ? "" : "";
-              return `<tr${rowStyle}>${listCols
+              // inl-f99adf42 is the info background, which marks the row under edit.
+              const rowClass = beingEdited ? ' class="inl-f99adf42"' : "";
+              return `<tr${rowClass}>${listCols
                 .map(
                   (c) =>
                     `<td class="inl-525a655e">${escapeHtml(vm[c] || "")}</td>`,

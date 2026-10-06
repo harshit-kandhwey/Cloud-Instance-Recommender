@@ -54,6 +54,45 @@ check(
   unresolved.join(", "),
 );
 
+// Every page shares one CSP without 'unsafe-inline', so an inline handler on the landing
+// page, the portfolio or the guide is dead, not merely unstyled: their theme buttons
+// once did nothing while only the four tool pages were checked.
+const everyPage = [
+  ...pages,
+  "app-portfolio.html",
+  "index.html",
+  "user-guide.html",
+];
+const inlineAnywhere = everyPage.filter((p) =>
+  /\son[a-z]+\s*=\s*["']/.test(read(p)),
+);
+check(
+  "no page carries an inline event handler attribute",
+  inlineAnywhere.length === 0,
+  inlineAnywhere.join(", "),
+);
+const themePages = everyPage.filter((p) =>
+  read(p).includes('id="themeToggle"'),
+);
+check(
+  "all seven pages have the theme toggle",
+  themePages.length === 7,
+  themePages.join(", "),
+);
+const undispatched = themePages.filter((p) => {
+  const html = read(p);
+  return (
+    !html.includes('data-on-click="toggleTheme"') ||
+    !/<script[^>]*src="src\/shared\/page-actions\.js"/.test(html) ||
+    !/<script[^>]*src="src\/shared\/theme-init\.js"/.test(html)
+  );
+});
+check(
+  "every theme toggle is dispatched, and its page loads both the dispatcher and the theme script",
+  undispatched.length === 0,
+  undispatched.join(", "),
+);
+
 const listeners = {};
 function makeEl(attrs) {
   return {

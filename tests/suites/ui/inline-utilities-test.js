@@ -31,8 +31,11 @@ for (const p of pages) {
     for (const c of m[1].split(/\s+/)) if (c.startsWith("inl-")) used.add(c);
   }
 }
+// Doubled backslashes: in a template literal a single one is dropped, which left the
+// dot matching any character, so `xinl-foo {` would satisfy the rule for `inl-foo`.
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const undefinedClasses = [...used].filter(
-  (c) => !new RegExp(`\.${c} \{`).test(css),
+  (c) => !new RegExp(`\\.${escapeRegExp(c)}\\s*\\{`).test(css),
 );
 check(
   "every inl- class on a page has a rule in inline-utilities.css",
@@ -56,6 +59,23 @@ check(
   "no style attribute remains in src/",
   styleAttrsInSrc === 0,
   `${styleAttrsInSrc} style attributes`,
+);
+
+// Generated markup names its utility classes in JS strings, which the page scan above
+// never sees: a missing rule there drops a style with nothing failing.
+const usedInSrc = new Set();
+for (const f of walkJs(path.join(REPO, "src"))) {
+  for (const m of fs.readFileSync(f, "utf8").matchAll(/\binl-[0-9a-f]{8}\b/g)) {
+    usedInSrc.add(m[0]);
+  }
+}
+const undefinedInSrc = [...usedInSrc].filter(
+  (c) => !new RegExp(`\\.${escapeRegExp(c)}\\s*\\{`).test(css),
+);
+check(
+  "every inl- class that src/ markup uses has a rule in inline-utilities.css",
+  usedInSrc.size > 0 && undefinedInSrc.length === 0,
+  `used ${usedInSrc.size}; undefined: ${undefinedInSrc.join(", ")}`,
 );
 
 // The pages carry no inline script or style block, and the CSP allows neither

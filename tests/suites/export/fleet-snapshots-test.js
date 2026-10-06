@@ -125,6 +125,58 @@ sourceResults.priceSavings = { percent: 18, provider: "aws" };
 }
 
 {
+  const store = fresh();
+  const future = {
+    v: 2,
+    id: "future",
+    name: "From a newer build",
+    rows: [],
+    extra: "kept as is",
+  };
+  store.setItem(
+    KEY,
+    JSON.stringify([
+      { v: 1, id: "ok", name: "Current", rows: [] },
+      future,
+      { id: "unversioned", name: "No version", rows: [] },
+      "junk",
+    ]),
+  );
+  const built = run(
+    `FleetSnapshots.build({ name: "New", rows: [{ "VM Name": "a" }] })`,
+  );
+  const saved = run(`FleetSnapshots.save(${JSON.stringify(built.entry)})`);
+  const stored = JSON.parse(store.getItem(KEY));
+  check(
+    "saving keeps an entry another build wrote, unchanged",
+    saved.ok &&
+      stored.some((e) => JSON.stringify(e) === JSON.stringify(future)),
+    JSON.stringify(stored.map((e) => e && e.id)),
+  );
+  check(
+    "saving still drops entries that are malformed",
+    !stored.includes("junk") &&
+      !stored.some((e) => e && e.id === "unversioned"),
+    JSON.stringify(stored.map((e) => e && e.id)),
+  );
+  const removed = run(`FleetSnapshots.remove("ok")`);
+  const after = JSON.parse(store.getItem(KEY));
+  check(
+    "deleting a snapshot removes only that one and keeps the other build's entry",
+    removed.ok &&
+      after.some((e) => e && e.id === "future") &&
+      after.some((e) => e && e.name === "New") &&
+      !after.some((e) => e && e.id === "ok"),
+    JSON.stringify(after.map((e) => e && e.id)),
+  );
+  run(`FleetSnapshots.remove("future")`);
+  check(
+    "an id that belongs to another build's entry deletes nothing",
+    JSON.parse(store.getItem(KEY)).some((e) => e && e.id === "future"),
+  );
+}
+
+{
   const store = fresh(120);
   const big = run(
     `FleetSnapshots.build({ name: "Large", rows: JSON.parse(${JSON.stringify(JSON.stringify(Array.from({ length: 40 }, (_, i) => ({ VM: `vm-${i}`, Notes: "x".repeat(20) }))))}), id: "big" })`,

@@ -308,8 +308,8 @@ const RuleEngine = (() => {
     return tokens;
   }
   // How much an outage of this VM costs the business. Read by the hygiene check so a
-  // typo is named at upload; no sizing rule reads it yet (the performance-based
-  // policy will), so a value changes nothing about a recommendation today.
+  // typo is named at upload, and by the sizing policy, which picks a row's statistic
+  // from it. Outside a policy run a value changes no recommendation.
   const CRITICALITY_VALUES = ["critical", "high", "medium", "low"];
   const OS_WINDOWS = ["windows", "windows server"];
   const OS_MAC = ["macos", "mac"];

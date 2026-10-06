@@ -37,9 +37,11 @@ function setup({ stored, osDark, storageThrows, noMatchMedia, noButton } = {}) {
       this.attrs[k] = v;
     },
   };
+  const domListeners = [];
   ctx.document = {
     documentElement: { dataset: {} },
     getElementById: (id) => (id === "themeToggle" && !noButton ? button : null),
+    addEventListener: (type, fn) => domListeners.push([type, fn]),
   };
   load("src/shared/theme-init.js");
   return {
@@ -49,6 +51,12 @@ function setup({ stored, osDark, storageThrows, noMatchMedia, noButton } = {}) {
     listeners,
     button,
     theme: () => ctx.document.documentElement.dataset.theme,
+    // The button does not exist while the head script runs; the page reaches this
+    // point when the document has been parsed.
+    documentLoaded: () =>
+      domListeners
+        .filter(([type]) => type === "DOMContentLoaded")
+        .forEach(([, fn]) => fn()),
   };
 }
 
@@ -130,6 +138,53 @@ console.log("[the toggle flips, persists and tells assistive technology]");
   check(
     "a page without the toggle button can still be toggled",
     !threw && t.theme() === "dark",
+  );
+}
+
+console.log("[the button reports the theme the page opened with]");
+{
+  const dark = setup({ stored: "dark", osDark: false });
+  check(
+    "nothing is set before the document is parsed",
+    !("aria-pressed" in dark.button.attrs),
+    JSON.stringify(dark.button.attrs),
+  );
+  dark.documentLoaded();
+  check(
+    "a saved dark choice opens with the button pressed, before any click",
+    dark.button.attrs["aria-pressed"] === true,
+    JSON.stringify(dark.button.attrs),
+  );
+  const osDark = setup({ osDark: true });
+  osDark.documentLoaded();
+  check(
+    "an OS-dark page opens with the button pressed",
+    osDark.button.attrs["aria-pressed"] === true,
+  );
+  const light = setup({ stored: "light", osDark: true });
+  light.documentLoaded();
+  check(
+    "a light page opens with the button not pressed",
+    light.button.attrs["aria-pressed"] === false,
+    JSON.stringify(light.button.attrs),
+  );
+  const noButton = setup({ stored: "dark", noButton: true });
+  let threw = false;
+  try {
+    noButton.documentLoaded();
+  } catch {
+    threw = true;
+  }
+  check("a page without the button loads without throwing", !threw);
+}
+{
+  const t = setup({ osDark: false });
+  t.documentLoaded();
+  t.listeners[0][1]({ matches: true });
+  check(
+    "an OS switch to dark, with no saved choice, updates the button too",
+    t.button.attrs["aria-pressed"] === true,
+    JSON.stringify(t.button.attrs),
   );
 }
 

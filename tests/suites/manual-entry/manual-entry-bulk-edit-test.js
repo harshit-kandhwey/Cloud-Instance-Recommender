@@ -183,6 +183,40 @@ console.log(
   );
 }
 
+console.log("[only the row under edit is highlighted]");
+{
+  const { ctx, elements } = buildContext();
+  for (const n of ["a", "b", "c"]) {
+    fill(ctx, { "VM Name": n, "CPU Count": "4", "Memory (GB)": "16" }, 1);
+    ctx.manualAddVM();
+  }
+  const html = () => elements.manualEntrySection.innerHTML;
+  const highlighted = () =>
+    (html().match(/<tr class="inl-f99adf42">/g) || []).length;
+  check(
+    "no row is highlighted while none is being edited",
+    highlighted() === 0,
+    `${highlighted()}`,
+  );
+  check(
+    "and the list body is not tinted as a whole",
+    !/<tbody class=/.test(html()),
+  );
+  ctx.manualEditVM(1);
+  check(
+    "exactly one row is highlighted while a row is edited",
+    highlighted() === 1,
+    `${highlighted()}`,
+  );
+  const row = (html().match(/<tr class="inl-f99adf42">([\s\S]*?)<\/tr>/) ||
+    [])[1];
+  check(
+    "and it is the row being edited",
+    !!row && row.includes(">b</td>") && !row.includes(">a</td>"),
+    row && row.slice(0, 120),
+  );
+}
+
 console.log("[clearing everything asks first, without a browser dialog]");
 {
   const { ctx, elements } = buildContext();

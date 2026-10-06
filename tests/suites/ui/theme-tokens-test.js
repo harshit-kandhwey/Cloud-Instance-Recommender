@@ -187,6 +187,7 @@ console.log("[boot script behavior]");
         document: {
           documentElement: { dataset: {} },
           getElementById: () => null,
+          addEventListener: () => {},
         },
         localStorage: storageThrows
           ? {

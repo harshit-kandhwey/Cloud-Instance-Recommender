@@ -96,7 +96,7 @@ The storage quota is set by the browser, typically about 5 MB per site. The app 
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `v` | number | Always `1`. Entries with any other version are dropped on read, not migrated. |
+| `v` | number | Always `1`. Entries with any other version are ignored on read, not migrated, and left untouched in storage by a save or delete. |
 | `id` | string | Unique within the list. |
 | `name` | string | Trimmed, 1 to 60 characters, unique within the list. |
 | `takenAt` | string | ISO 8601 time the snapshot was built. |
