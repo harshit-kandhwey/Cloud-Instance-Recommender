@@ -19,7 +19,7 @@ console.log("[a downsize shows a 'lower' line with the row count]");
 {
   const { ctx } = buildContext();
   const rows = [row()];
-  rows.priceSavings = { AWS: { pct: 18, rows: 1 } };
+  /** @type {any} */ (rows).priceSavings = { AWS: { pct: 18, rows: 1 } };
   const html = ctx._buildStatsHtml(rows);
   check(
     "shows the percentage and direction",
@@ -40,7 +40,7 @@ console.log("[an upsize shows a 'higher' line]");
 {
   const { ctx } = buildContext();
   const rows = [row()];
-  rows.priceSavings = { AWS: { pct: -7, rows: 3 } };
+  /** @type {any} */ (rows).priceSavings = { AWS: { pct: -7, rows: 3 } };
   const html = ctx._buildStatsHtml(rows);
   check(
     "shows the magnitude with 'higher', not a bare negative number",
@@ -56,7 +56,7 @@ console.log("[an identical result reports 'the same', not '0% lower']");
 {
   const { ctx } = buildContext();
   const rows = [row()];
-  rows.priceSavings = { AWS: { pct: 0, rows: 2 } };
+  /** @type {any} */ (rows).priceSavings = { AWS: { pct: 0, rows: 2 } };
   const html = ctx._buildStatsHtml(rows);
   check(
     "shows 'the same' rather than a fabricated 0% saving",

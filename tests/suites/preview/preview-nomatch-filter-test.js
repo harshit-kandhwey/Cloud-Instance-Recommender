@@ -104,7 +104,7 @@ console.log("[the clipboard narrows with the toggle]");
   ctx.showResultsPreview(MIXED);
   ctx._previewToggleNoMatch(true);
 
-  let captured = null;
+  let captured = /** @type {string | null} */ (null);
   ctx.copyTextToClipboard = (text) => {
     captured = text;
   };

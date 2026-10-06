@@ -116,6 +116,7 @@ console.log("[a clean sweep says 100%, with no phantom no-match]");
 // A row landing on a given family, per provider. Optimized and Like-to-Like are
 // given DIFFERENT families on purpose, so a test can tell which one the chart
 // counted — the chart should prefer the optimized recommendation.
+/** @param {string} name @param {{ awsOpt?: string, awsL2l?: string, azOpt?: string }} [families] */
 const famRow = (name, { awsOpt, awsL2l, azOpt } = {}) => {
   const row = { "VM Name": name };
   if (awsOpt || awsL2l) {
@@ -513,7 +514,7 @@ console.log(
 {
   const { ctx } = buildContext();
   const rows = [matched("a")];
-  rows.priceSavings = { AWS: { pct: 14, rows: 1 } };
+  /** @type {any} */ (rows).priceSavings = { AWS: { pct: 14, rows: 1 } };
   const html = ctx.buildExecutiveReport(rows);
   check(
     "shows the relative percentage and direction",
@@ -525,7 +526,7 @@ console.log(
 {
   const { ctx } = buildContext();
   const rows = [matched("a")];
-  rows.priceSavings = { AWS: { pct: 0, rows: 1 } };
+  /** @type {any} */ (rows).priceSavings = { AWS: { pct: 0, rows: 1 } };
   const html = ctx.buildExecutiveReport(rows);
   check(
     "an identical result shows 'same', not a fabricated −0%",

@@ -302,10 +302,25 @@ for (const { name, prefix } of PROVIDERS) {
 // — it does not merely go unoffered. A refresh that adds a series must add it here,
 // which is what this pins. (c4n and m4n arrived in the 2026-08-30 refresh; seven more
 // had been missing for longer.)
+// gcp-specific.js is a browser script, so it is run as text in a sandbox like the rest
+// of src/, and the filter list is read from its global scope.
+function loadGcpFilterData() {
+  const sandbox = { window: {} };
+  sandbox.window = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(
+    fs.readFileSync(
+      path.join(REPO, "src", "providers", "gcp", "gcp-specific.js"),
+      "utf8",
+    ),
+    sandbox,
+    { filename: "gcp-specific.js" },
+  );
+  return vm.runInContext("gcpAdvancedFilterData", sandbox);
+}
+
 {
-  const {
-    gcpAdvancedFilterData,
-  } = require("../../../src/providers/gcp/gcp-specific.js");
+  const gcpAdvancedFilterData = loadGcpFilterData();
   const listed = new Set(
     (gcpAdvancedFilterData.machineFamilies || []).map((f) => f.toLowerCase()),
   );
@@ -345,9 +360,7 @@ for (const { name, prefix } of PROVIDERS) {
 // offered platform the data never uses ("Intel Skylake") can never match, and a
 // shipped vendor the list omits can never be ticked.
 {
-  const {
-    gcpAdvancedFilterData,
-  } = require("../../../src/providers/gcp/gcp-specific.js");
+  const gcpAdvancedFilterData = loadGcpFilterData();
   const sandbox = { window: {} };
   sandbox.window = sandbox;
   vm.createContext(sandbox);

@@ -8,6 +8,7 @@ const { buildEngineContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 
+/** @param {{ removeThrows?: boolean, quotaFull?: boolean }} [options] */
 function setup({ removeThrows, quotaFull } = {}) {
   const { ctx, load, run } = buildEngineContext({
     scripts: [

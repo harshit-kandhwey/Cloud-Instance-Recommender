@@ -63,6 +63,7 @@ test("aws.html: xlsx upload → mapping panel → confirm → generate → expor
   // the way through: a real instance was sized. If the mapping had silently
   // dropped, the engine would have no vCPU to size against.
   const web01 = rows.find((r) => r["VM Name"] === "web-server-01");
+  if (!web01) throw new Error("web-server-01 is missing from the export");
   expect(web01["CPU Count"]).toBe("4");
   expectSized(web01["AWS Like-to-Like Instance"]);
 

@@ -46,6 +46,7 @@ const BULK_URLS = {
   gcp: "https://instances.vantage.sh/gcp/instances.json",
 };
 
+/** @type {{ name: "aws"|"azure"|"gcp", prefix: "AWS"|"AZURE"|"GCP", source: string }[]} */
 const PROVIDERS = [
   { name: "aws", prefix: "AWS", source: "instances.vantage.sh" },
   { name: "azure", prefix: "AZURE", source: "instances.vantage.sh/azure" },
@@ -500,6 +501,7 @@ function buildMonolith({
 
   // Map(rk -> Map(type -> record)) → plain { rk: { type: record } } for the shared
   // serializer below, which is the one definition of the on-disk format.
+  /** @type {Record<string, Record<string, any>>} */
   const obj = {};
   for (const [rk, recs] of byRegion) {
     obj[rk] = {};

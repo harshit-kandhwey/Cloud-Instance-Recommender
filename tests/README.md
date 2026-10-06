@@ -14,7 +14,7 @@ Six CI jobs run on every pull request and every push to `main`. A PR is green on
 | `node tests/syntax-check.js` | every first-party JS file parses (`node --check`) | `test` |
 | `node tests/run-all.js` | all suites pass, and the golden outputs match byte for byte | `test` |
 | `npm run coverage:check` | no user-reachable name is untested and unwaived | `test` |
-| `npm run typecheck` | `tsc --noEmit` over the `// @ts-check` modules | `typecheck` |
+| `npm run typecheck` | `tsc --noEmit` over `src/` (files that opt in with `// @ts-check`) and `tsc -p tsconfig.node.json` over every file in `scripts/` and `tests/` | `typecheck` |
 | `npm run test:property` | the engine invariants hold over randomised input | `property` |
 | `npm run test:e2e` | the real flow works in a real browser (Chromium + WebKit) | `e2e` |
 | `npm run test:visual` | the rendered pages still look right (Chromium) | `visual` |
@@ -41,7 +41,7 @@ The remaining gates need dev dependencies, which is why they are kept out of `np
 npm ci                                    # dev deps for everything below
 npx playwright install chromium webkit    # one-time browser download (e2e)
 
-npm run typecheck        # tsc --noEmit
+npm run typecheck        # both type programs
 npm run test:property    # fast-check engine invariants
 npm run test:e2e         # Playwright, Chromium + WebKit
 npm run test:visual      # visual regression, Chromium only

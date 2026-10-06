@@ -95,7 +95,7 @@ function createServer(root) {
     let pathname;
     try {
       pathname = decodeURIComponent(
-        new URL(req.url, "http://localhost").pathname,
+        new URL(req.url ?? "/", "http://localhost").pathname,
       );
     } catch {
       res.writeHead(400).end("Bad request");

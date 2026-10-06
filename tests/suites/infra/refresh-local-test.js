@@ -80,11 +80,11 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
 
 // ── data-diff step carries the sentinel/capture wiring ──────────────────────────
 {
-  const diff = planSteps({ pricing: true, date: "x" }).find(
-    (s) => s.name === "data-diff",
+  const diff = /** @type {any} */ (
+    planSteps({ pricing: true, date: "x" }).find((s) => s.name === "data-diff")
   );
-  const split = planSteps({ pricing: true, date: "x" }).find(
-    (s) => s.name === "split-data",
+  const split = /** @type {any} */ (
+    planSteps({ pricing: true, date: "x" }).find((s) => s.name === "split-data")
   );
   check(
     "data-diff captures a report and is the sentinel step; split gated on changed",
@@ -97,8 +97,10 @@ const names = (opts) => planSteps(opts).map((s) => s.name);
 
 // ── --date flows into fetch-vantage ──────────────────────────────────────────────
 {
-  const v = planSteps({ pricing: false, date: "2026-01-02" }).find(
-    (s) => s.name === "fetch-vantage",
+  const v = /** @type {any} */ (
+    planSteps({ pricing: false, date: "2026-01-02" }).find(
+      (s) => s.name === "fetch-vantage",
+    )
   );
   check(
     "the snapshot date is passed to fetch-vantage",

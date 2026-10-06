@@ -93,14 +93,14 @@ function generateSample(sample) {
       { filename: sample.script },
     );
   }
-  let csv = null;
+  let csv = /** @type {string | null} */ (null);
   ctx.downloadCsv = (content) => {
     csv = content;
   };
   // Guard the call itself: a renamed/removed generator would otherwise throw at
   // the top level and abort the whole run, leaving the remaining samples
   // unchecked. Report it as a named failure on this sample instead.
-  let error = null;
+  let error = /** @type {string | null} */ (null);
   if (typeof ctx[sample.fn] !== "function") {
     error = `${sample.fn} is not defined`;
   } else {

@@ -179,6 +179,8 @@ db-server-02,8,32,70,80,us-west-2`;
     const { ctx, requested } = buildContext();
     // FileReader stub for the CSV branch
     ctx.FileReader = class {
+      /** @type {any} */
+      onload = null;
       readAsText(file) {
         const self = this;
         setTimeout(() => self.onload({ target: { result: file._text } }), 0);

@@ -8,6 +8,7 @@ const { makeChecker, REPO } = require("../harness");
 
 const { check, state } = makeChecker();
 
+/** @type {[string, string[], RegExp][]} */
 const CASES = [
   ["data-diff", ["--provider", "nope"], /unknown --provider nope/],
   ["reconcile-data", ["--provider", "nope"], /unknown --provider nope/],

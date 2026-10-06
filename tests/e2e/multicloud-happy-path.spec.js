@@ -58,6 +58,7 @@ test("multicloud.html: upload → per-provider chips → generate → export", a
   ]);
   // Every provider sized the row — the multicloud run fanned out to all three.
   const web01 = rows.find((r) => r["VM Name"] === "web-server-01");
+  if (!web01) throw new Error("web-server-01 is missing from the export");
   expectSized(web01["AWS Like-to-Like Instance"]);
   expectSized(web01["AZURE Like-to-Like Instance"]);
   expectSized(web01["GCP Like-to-Like Instance"]);

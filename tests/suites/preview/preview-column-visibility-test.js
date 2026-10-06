@@ -185,7 +185,7 @@ const settle = () => new Promise((r) => setTimeout(r, 250));
     // column selection under test is copyPreviewToClipboard's own — not one the
     // test recomputed. Reassigning the context's copyTextToClipboard intercepts
     // the internal call.
-    let captured = null;
+    let captured = /** @type {string | null} */ (null);
     ctx.copyTextToClipboard = (text) => {
       captured = text;
     };

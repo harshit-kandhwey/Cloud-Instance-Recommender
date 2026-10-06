@@ -677,7 +677,7 @@ check("clearScenarios empties the set", run("scenarios.length") === 0);
 {
   const field = { value: "Q4 plan" };
   const realGetElementById = sandbox.document.getElementById;
-  sandbox.document.getElementById = (id) =>
+  /** @type {any} */ (sandbox.document).getElementById = (id) =>
     id === "scenarioNameInput" ? field : null;
   try {
     run("scenarios = []; scenarioSeq = 0;");

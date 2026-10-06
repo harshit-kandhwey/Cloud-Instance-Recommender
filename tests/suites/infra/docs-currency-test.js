@@ -54,7 +54,9 @@ const treeBlock = (rel, name, fromLine = 0) => {
       i >= fromLine && new RegExp(`^([\\s│]*)[├└]── ${name}/(\\s|$)`).test(l),
   );
   if (start === -1) return "";
-  const indent = lines[start].match(/^([\s│]*)/)[1];
+  const indent = /** @type {RegExpMatchArray} */ (
+    lines[start].match(/^([\s│]*)/)
+  )[1];
   // Ends at the next tree-branch line at this SAME OR SHALLOWER indent — a
   // sibling of this block, or a sibling of one of its ancestors. A same-indent
   // sibling is the common case (`data/` ending at `testing/`); shallower is

@@ -134,6 +134,8 @@ const AOA = [
       };
     };
     ctx.FileReader = class {
+      /** @type {any} */
+      onload = null;
       readAsText(file) {
         const self = this;
         setTimeout(
@@ -270,6 +272,8 @@ const AOA = [
   {
     resetUi();
     ctx.FileReader = class {
+      /** @type {any} */
+      onerror = null;
       readAsText() {
         const self = this;
         setTimeout(() => self.onerror && self.onerror(new Error("io")), 0);
@@ -313,6 +317,8 @@ const AOA = [
     // absence looked harmless.
     let errorFired = false;
     ctx.FileReader = class {
+      /** @type {any} */
+      onerror = null;
       readAsText() {
         const self = this;
         setTimeout(() => {

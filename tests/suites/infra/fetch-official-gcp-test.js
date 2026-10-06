@@ -73,12 +73,12 @@ const rates = parseCoreRamSkus(page.skus);
   );
   check(
     "classifyCoreRam maps the AMD/Arm-suffixed series names",
-    classifyCoreRam("C2D AMD Instance Ram running in X").series === "c2d" &&
-      classifyCoreRam("T2A Arm Instance Core running in X").series === "t2a",
+    classifyCoreRam("C2D AMD Instance Ram running in X")?.series === "c2d" &&
+      classifyCoreRam("T2A Arm Instance Core running in X")?.series === "t2a",
   );
   check(
     "classifyCoreRam maps c2's token-less 'Compute optimized', rejects its hyphenated sole-tenancy form",
-    classifyCoreRam("Compute optimized Instance Core running in X").series ===
+    classifyCoreRam("Compute optimized Instance Core running in X")?.series ===
       "c2" &&
       classifyCoreRam(
         "Compute-optimized Sole Tenancy Instance Core running in X",
@@ -659,7 +659,7 @@ async function paginationChecks() {
   // Serves pages built by `plan(page)`; every response is a 200 with a skus array.
   const stub = (plan) => {
     let calls = 0;
-    globalThis.fetch = async () => {
+    /** @type {any} */ (globalThis).fetch = async () => {
       const body = plan(calls++);
       return { ok: true, json: async () => body };
     };
@@ -682,7 +682,7 @@ async function paginationChecks() {
     );
     check(
       "fetchAllSkus follows nextPageToken and stops when it is absent",
-      ok.error === "" && ok.calls === 2 && ok.skus.length === 2,
+      ok.error === "" && ok.calls === 2 && ok.skus?.length === 2,
       JSON.stringify({ calls: ok.calls, error: ok.error }),
     );
 
@@ -690,7 +690,7 @@ async function paginationChecks() {
     // opaque and may carry + / =, which an unencoded query string would corrupt
     // into a different page — or a 400 that the retry-free fetcher surfaces late.
     const urls = [];
-    globalThis.fetch = async (url) => {
+    /** @type {any} */ (globalThis).fetch = async (url) => {
       urls.push(String(url));
       const body =
         urls.length === 1

@@ -97,7 +97,7 @@ const sandbox = {
     timers.delete(id);
   },
   __page: "aws",
-  selectedProviders: [],
+  selectedProviders: /** @type {string[]} */ ([]),
   localStorage: {
     getItem: (k) => (k in storage ? storage[k] : null),
     setItem: (k, v) => {
@@ -114,6 +114,8 @@ sandbox.currentSourcePage = () => sandbox.__page;
 // stub fires onload synchronously with the file's text, so the reset line that
 // runs right after readAsText in that handler is observable immediately.
 sandbox.FileReader = class {
+  /** @type {any} */
+  onload = null;
   readAsText(file) {
     const t = file && typeof file.text === "function" ? file.text() : "";
     this.result = t; // the handler reads reader.result, not the event arg

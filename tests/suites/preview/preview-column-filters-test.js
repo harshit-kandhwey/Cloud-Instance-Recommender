@@ -156,7 +156,7 @@ function colIndex(ctx, name) {
     // filters — it would stay green if copyPreviewToClipboard stopped forwarding
     // columnFilters at all, which is the one thing this test exists to catch.
     // Reassigning the context's copyTextToClipboard intercepts the internal call.
-    let captured = null;
+    let captured = /** @type {string | null} */ (null);
     ctx.copyTextToClipboard = (text) => {
       captured = text;
     };

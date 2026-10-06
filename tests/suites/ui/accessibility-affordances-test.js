@@ -14,7 +14,9 @@ function check(name, cond, detail) {
 const read = (f) => fs.readFileSync(path.join(REPO, f), "utf8");
 
 // ── DOM stub with attribute support ─────────────────────────────────────────
+/** @returns {any} */
 function makeAttrElement(extra = {}) {
+  /** @type {any} */
   const el = {
     attrs: {},
     listeners: {},

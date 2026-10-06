@@ -507,7 +507,7 @@ const gcp = (o) => ({
   );
   check(
     "[unpriced] no absolute price reaches the section (D8)",
-    !/32\.77|20\.608|0\.228/.test(renderUnpriced([d])),
+    !/32\.77|20\.608|0\.228/.test(String(renderUnpriced([d]))),
     renderUnpriced([d]),
   );
 

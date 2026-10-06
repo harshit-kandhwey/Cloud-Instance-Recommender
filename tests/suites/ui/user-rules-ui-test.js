@@ -13,6 +13,8 @@ const { ctx, run, elements, downloads } = buildContext();
 // with a synchronous stub that sets result (the same one presets-test uses) —
 // this also lets the value-reset line right after readAsText be observed at once.
 ctx.FileReader = class {
+  /** @type {any} */
+  onload = null;
   readAsText(file) {
     const t = file && typeof file.text === "function" ? file.text() : "";
     this.result = t;

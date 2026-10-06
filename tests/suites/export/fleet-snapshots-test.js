@@ -32,7 +32,10 @@ const sourceRows = [
   { VM: "db-01", "Recommended Instance": "r5.xlarge", ENV: "Prod" },
 ];
 const sourceResults = [...sourceRows];
-sourceResults.priceSavings = { percent: 18, provider: "aws" };
+/** @type {any} */ (sourceResults).priceSavings = {
+  percent: 18,
+  provider: "aws",
+};
 
 {
   fresh();
@@ -49,7 +52,7 @@ sourceResults.priceSavings = { percent: 18, provider: "aws" };
   check("the entry records schema version 1", built.entry.v === 1);
   check(
     "the entry never carries priceSavings, even though the results array does",
-    sourceResults.priceSavings !== undefined &&
+    /** @type {any} */ (sourceResults).priceSavings !== undefined &&
       !json.includes("priceSavings") &&
       !json.includes("percent"),
   );

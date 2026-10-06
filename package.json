@@ -5,7 +5,7 @@
   "description": "Static GitHub Pages tool that recommends AWS/Azure/GCP instances from a VM inventory CSV/XLSX. Ships as raw JS — the only tooling here is dev-time type checking and the Node test harness; there is no build/bundle step.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "test": "node tests/run-all.js",
     "test:smoke": "node tests/run-all.js --smoke",
     "test:e2e": "playwright test",
@@ -23,6 +23,7 @@
     "@axe-core/playwright": "4.12.1",
     "@playwright/test": "1.56.1",
     "@stryker-mutator/core": "9.6.1",
+    "@types/node": "20.19.43",
     "axe-core": "4.12.1",
     "fast-check": "4.9.0",
     "prettier": "3.9.5",

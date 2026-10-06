@@ -245,8 +245,3 @@ frontend-08,Storefront,2,4,40,50,europe-west1,Staging,Windows,Web Server,,,,,e2-
 
   downloadCsv(csvContent, "GCP_sample_instance_data.csv");
 }
-
-// Node-side consumers (the data-integrity suite) read the filter list directly.
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = { gcpAdvancedFilterData };
-}

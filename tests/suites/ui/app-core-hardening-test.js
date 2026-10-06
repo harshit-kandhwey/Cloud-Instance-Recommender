@@ -11,8 +11,9 @@ const { check, state } = makeChecker();
 console.log("[the data watcher gives up instead of polling forever]");
 {
   const { ctx, toasts } = buildContext();
+  /** @type {any} */
   let tick = null;
-  let cleared = false;
+  let cleared = /** @type {boolean} */ (false);
   ctx.setInterval = (fn) => {
     tick = fn;
     return 1;
@@ -55,6 +56,7 @@ console.log("[the data watcher gives up instead of polling forever]");
 console.log("[a poll that finds the data ready still runs the queue]");
 {
   const { ctx } = buildContext();
+  /** @type {any} */
   let tick = null;
   ctx.setInterval = (fn) => {
     tick = fn;

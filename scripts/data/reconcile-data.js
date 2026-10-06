@@ -41,6 +41,7 @@ const {
 } = require("../lib/build-env");
 const { priceFields } = require("../lib/record-schema");
 
+/** @type {{ name: "aws"|"azure"|"gcp", prefix: "AWS"|"AZURE"|"GCP", source: string }[]} */
 const PROVIDERS = [
   {
     name: "aws",
@@ -120,10 +121,11 @@ function reconcileProvider(name, byRegion, official) {
     typesVerified: 0, // type×region that had an official price entry
     priceFieldsUpdated: 0, // official price fields that differed and were taken
     specFieldsUpdated: 0, // official spec fields that differed and were taken
-    unverifiedPrices: [], // "type@region" with no official price at all
-    specConflicts: [], // { type, region, field, vantage, official }
+    unverifiedPrices: /** @type {string[]} */ ([]), // "type@region" with no official price at all
+    specConflicts:
+      /** @type {{ type: string, region: string, field: string, vantage: any, official: any }[]} */ ([]),
     specsUnverified: cfg.spec.length === 0, // whole provider: no official spec source
-    nonFiniteOfficialSpecs: [], // "type@region.field" — official value was NaN, Vantage's kept
+    nonFiniteOfficialSpecs: /** @type {string[]} */ ([]), // "type@region.field" — official value was NaN, Vantage's kept
   };
 
   for (const [rk, types] of Object.entries(byRegion)) {
@@ -264,6 +266,7 @@ function loadMonolith(name, prefix) {
         .map((s) => s.trim())
         .filter(Boolean)
     : [];
+  /** @type {Record<string, Record<string, any>>} */
   const byRegion = {};
   for (const k of keys) {
     if (!sandbox[k] || typeof sandbox[k] !== "object") {

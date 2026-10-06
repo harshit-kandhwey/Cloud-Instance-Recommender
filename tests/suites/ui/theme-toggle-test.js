@@ -7,6 +7,9 @@ const { buildEngineContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 
+/**
+ * @param {{ stored?: string, osDark?: boolean, storageThrows?: boolean, noMatchMedia?: boolean, noButton?: boolean }} [options]
+ */
 function setup({ stored, osDark, storageThrows, noMatchMedia, noButton } = {}) {
   const { ctx, load, run } = buildEngineContext({
     scripts: ["src/shared/storage-keys.js"],

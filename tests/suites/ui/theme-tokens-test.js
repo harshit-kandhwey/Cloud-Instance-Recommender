@@ -179,6 +179,7 @@ console.log("[boot script behavior]");
   } else {
     const src = m[0];
 
+    /** @param {{ stored?: string | null, osDark?: boolean, storageThrows?: boolean }} options */
     function runBoot({ stored, osDark, storageThrows }) {
       const listeners = [];
       const storage = {};

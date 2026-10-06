@@ -80,6 +80,7 @@ function buildContext({
   const alerts = [];
   // A REAL store. Suites that assert what survives an upload need one; a stub
   // that forgets would let those assertions pass without testing anything.
+  /** @type {Map<string | symbol, string>} */
   const store = new Map(Object.entries(seedStorage));
   // A plain-object VIEW over the same store, for suites written against the
   // `storage["key"]` idiom (read, write, `in`, delete) — every op forwards to
@@ -202,6 +203,8 @@ function buildContext({
     confirm: () => true,
     // The CSV branch of ingestFile goes through FileReader, which Node has not
     FileReader: class {
+      /** @type {any} */
+      onload = null;
       readAsText(file) {
         Promise.resolve(file.text()).then((t) => {
           this.onload && this.onload({ target: { result: t } });

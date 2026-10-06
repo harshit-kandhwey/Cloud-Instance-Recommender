@@ -29,6 +29,7 @@ const {
   priceFields,
 } = require("../lib/record-schema");
 
+/** @type {{ name: "aws"|"azure"|"gcp", prefix: "AWS"|"AZURE"|"GCP" }[]} */
 const PROVIDERS = [
   { name: "aws", prefix: "AWS" },
   { name: "azure", prefix: "AZURE" },

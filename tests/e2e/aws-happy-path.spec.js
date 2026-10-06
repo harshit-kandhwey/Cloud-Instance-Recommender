@@ -92,6 +92,7 @@ test("aws.html: upload → region chips → generate → export results CSV", as
   // a coarse match would pass even if this column were blanked while a sibling
   // strategy column still emitted one.
   const web01 = rows.find((r) => r["VM Name"] === "web-server-01");
+  if (!web01) throw new Error("web-server-01 is missing from the export");
   expect(web01["AWS Like-to-Like Instance"]).toMatch(AWS_INSTANCE);
 
   // The shipped page must load and run clean.

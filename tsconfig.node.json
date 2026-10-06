@@ -1,0 +1,15 @@
+{
+  // The Node side of the project: build scripts and the test harness. Kept apart from
+  // tsconfig.json so Node globals (require, process, Buffer) are visible here and never
+  // to the browser code under src/, which a mistaken `require` would only break at runtime.
+  // The test suites load src/ into a vm sandbox as text, so nothing here imports it, and
+  // the DOM lib is on only because the test stubs and fixtures name DOM types.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "checkJs": true,
+    "types": ["node"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+  },
+  "include": ["scripts/**/*.js", "tests/**/*.js", "tests/**/*.d.ts"],
+  "exclude": ["node_modules", "js/vendor"]
+}

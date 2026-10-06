@@ -72,7 +72,7 @@ console.log("[replacing the data makes them stale]");
 
 console.log("[every route into the data counts, not just file upload]");
 {
-  for (const [label, load] of [
+  for (const [label, load] of /** @type {[string, (ctx: any) => void][]} */ ([
     [
       "paste",
       (ctx) => {
@@ -82,7 +82,7 @@ console.log("[every route into the data counts, not just file upload]");
       },
     ],
     ["sample", (ctx) => ctx.loadSampleDataset(0)],
-  ]) {
+  ])) {
     const { ctx, elements } = buildContext();
     parse(ctx, FILE_A);
     pretendGenerated(ctx);

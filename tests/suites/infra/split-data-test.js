@@ -648,6 +648,7 @@ for (const provider of [AWS, AZURE, GCP]) {
 // ── The remaining guard clauses, each a real upstream-drift mode ───────────────
 console.log("[upstream drift]");
 {
+  /** @type {[string, object, RegExp][]} */
   const cases = [
     [
       "a monolith with no data date aborts",
@@ -687,6 +688,7 @@ console.log("[upstream drift]");
 {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "cir-split-"));
   let lines = [];
+  /** @type {any} */
   let result = null;
   const msg = threw(() => {
     const captured = capturingLog(() => splitProvider(AWS, root));
@@ -744,6 +746,7 @@ console.log("[pruning a dropped region]");
   // as opposed to a named FAIL. A result that came back without `pruned` would
   // otherwise raise a raw TypeError instead of a named failure too.
   writeMonolith(root, monolith({ us_east_1: { "m5.large": rec() } }));
+  /** @type {any} */
   let result = null;
   let lines = [];
   const reSplitErr = threw(() => {

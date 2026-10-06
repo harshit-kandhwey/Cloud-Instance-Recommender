@@ -114,8 +114,10 @@ async function main() {
   }
 
   const server = createServer(root);
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const port = server.address().port;
+  await new Promise((resolve) =>
+    server.listen(0, "127.0.0.1", () => resolve(undefined)),
+  );
+  const port = /** @type {import("net").AddressInfo} */ (server.address()).port;
   try {
     const js = await get(port, "/app.js");
     check(

@@ -52,6 +52,7 @@ const isSpotOrLowPriority = (skuName) =>
  * @returns {Object<string, Object<string, object>>} region → type → { linuxPrice?, windowsPrice? }
  */
 function parseAzureItems(items) {
+  /** @type {Record<string, Record<string, any>>} */
   const byRegion = {};
   for (const it of items || []) {
     if (!it) continue;

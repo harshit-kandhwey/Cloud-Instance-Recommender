@@ -42,6 +42,7 @@ test("azure.html: upload → region chips → generate → export results CSV", 
     "app-server-03",
   ]);
   const web01 = rows.find((r) => r["VM Name"] === "web-server-01");
+  if (!web01) throw new Error("web-server-01 is missing from the export");
   expectSized(web01["AZURE Like-to-Like Instance"]);
 
   expect(consoleErrors).toEqual([]);

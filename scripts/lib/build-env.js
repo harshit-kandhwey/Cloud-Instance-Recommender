@@ -100,7 +100,12 @@ function writeFileAtomic(target, contents) {
 
 // Shared JSON GET (timeout + "not ok" check) for the 4 refresh tools that
 // hit a network API — was independently hand-copied per tool before this.
-async function fetchJson(url, { timeoutMs, headers = {}, errorContext } = {}) {
+// timeoutMs is required: AbortSignal.timeout(undefined) throws.
+/**
+ * @param {string} url
+ * @param {{ timeoutMs: number, headers?: Record<string, string>, errorContext?: string }} options
+ */
+async function fetchJson(url, { timeoutMs, headers = {}, errorContext }) {
   const res = await fetch(url, {
     headers: { Accept: "application/json", ...headers },
     signal: AbortSignal.timeout(timeoutMs),
