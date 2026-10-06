@@ -25,6 +25,7 @@ function readStoredObject(key) {
 }
 
 // Enhanced exclude types data - now references provider-specific data
+/** @type {Record<string, string[]>} */
 const excludeTypesData = {
   aws: [], // Will be populated from aws-specific.js
   azure: [], // Will be populated from azure-specific.js
@@ -32,6 +33,7 @@ const excludeTypesData = {
 };
 
 // Instance families data - now references provider-specific data
+/** @type {Record<string, string[]>} */
 const familyData = {
   aws: [], // Will be populated from aws-specific.js
   azure: [], // Will be populated from azure-specific.js

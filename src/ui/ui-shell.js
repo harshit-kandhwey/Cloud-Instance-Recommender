@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // UI shell: page initialization (DOMContentLoaded), sticky generate
 // button, section toggles, and accessibility enhancements.
 
@@ -313,23 +311,26 @@ function toggleSection(header) {
 // Makes the clickable-div section headers keyboard-operable and wires the
 // dynamic status areas as live regions. Runs once on DOMContentLoaded.
 function enhanceAccessibility() {
-  document
-    .querySelectorAll('.section-header[data-on-click="toggleSection"]')
-    .forEach((header) => {
-      header.setAttribute("role", "button");
-      header.setAttribute("tabindex", "0");
-      const section = header.parentElement;
-      header.setAttribute(
-        "aria-expanded",
-        section && section.classList.contains("collapsed") ? "false" : "true",
-      );
-      header.addEventListener("keydown", (event) => {
+  /** @type {NodeListOf<HTMLElement>} */ (
+    document.querySelectorAll('.section-header[data-on-click="toggleSection"]')
+  ).forEach((header) => {
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    const section = header.parentElement;
+    header.setAttribute(
+      "aria-expanded",
+      section && section.classList.contains("collapsed") ? "false" : "true",
+    );
+    header.addEventListener(
+      "keydown",
+      /** @param {KeyboardEvent} event */ (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           header.click();
         }
-      });
-    });
+      },
+    );
+  });
 
   const fileStatus = document.getElementById("fileStatus");
   if (fileStatus) fileStatus.setAttribute("aria-live", "polite");

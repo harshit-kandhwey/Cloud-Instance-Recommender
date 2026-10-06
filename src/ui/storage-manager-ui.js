@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Storage panel (3.21 phase 1): lists the app's own localStorage keys with their
 // measured size and lets the user clear one or all of them. Renders into
 // #storageManagerPanel and does nothing on a page that lacks it.
@@ -139,7 +137,7 @@ function renderFleetSnapshotsPanel(status, detailHtml) {
 function handleFleetSnapshotSubmit(event) {
   if (!event.target.matches("#fleetSnapshotForm")) return;
   event.preventDefault();
-  const name = document.getElementById("fleetSnapshotName").value;
+  const name = document.getElementById("fleetSnapshotName")?.value ?? "";
   if (typeof processedResults === "undefined" || !processedResults) {
     renderFleetSnapshotsPanel("Generate a run before saving a snapshot.");
     return;

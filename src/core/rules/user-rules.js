@@ -171,6 +171,7 @@ function userRulesPageKey() {
   }
 }
 
+/** @returns {NonNullable<ReturnType<typeof normalizeUserRule>>[]} */
 function loadUserRules() {
   try {
     const store = readStoredObject(USER_RULES_KEY);
@@ -181,7 +182,7 @@ function loadUserRules() {
       ? store[page]
       : undefined;
     return Array.isArray(list)
-      ? list.map(normalizeUserRule).filter(Boolean)
+      ? list.map(normalizeUserRule).filter((r) => r !== null)
       : [];
   } catch {
     return [];

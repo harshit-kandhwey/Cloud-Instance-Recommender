@@ -60,6 +60,10 @@ const FleetSnapshots = (() => {
     return { name: trimmed };
   }
 
+  /**
+   * @param {{ name: string, rows: any[], providers?: string[], rules?: any[], takenAt?: string, id?: string }} input
+   * @returns {{ ok: true, entry: any } | { ok: false, reason: string }}
+   */
   function build({ name, rows, providers, rules, takenAt, id }) {
     const checked = normaliseName(name);
     if (checked.error) return { ok: false, reason: checked.error };

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Form controls: file stats/preview panels, provider checkboxes,
 // recommendation type + optimization inputs, rule engine UI, filter
 // toggles, and the getSelected* option readers.
@@ -86,9 +84,22 @@ function showDataPreview() {
   previewSection.classList.remove("hidden");
 }
 
+// Inputs matching a selector. Every caller names checkboxes or radios, so the result
+// is typed as inputs rather than the generic Elements querySelectorAll returns.
+/**
+ * @param {string} selector
+ * @returns {HTMLInputElement[]}
+ */
+function queryInputs(selector) {
+  return /** @type {HTMLInputElement[]} */ (
+    Array.from(document.querySelectorAll(selector))
+  );
+}
+
 // Toggle cloud provider
 function toggleCloudProvider(provider) {
   const checkbox = document.getElementById(provider);
+  if (!checkbox) return;
 
   // Once only: a repeated change event must not list a provider twice, which
   // would run it twice and double its counts in the results summary.
@@ -122,11 +133,11 @@ function toggleCloudProvider(provider) {
 
 function handleRecommendationTypeChange() {
   const optimizationControls = document.getElementById("optimizationControls");
-  const selectedType = document.querySelector(
-    'input[name="recommendationType"]:checked',
+  const selectedType = /** @type {HTMLInputElement | null} */ (
+    document.querySelector('input[name="recommendationType"]:checked')
   );
 
-  if (!selectedType) return;
+  if (!selectedType || !optimizationControls) return;
 
   // Show/hide optimization controls based on recommendation type
   if (selectedType.value === "optimized" || selectedType.value === "both") {
@@ -144,24 +155,24 @@ function handleRecommendationTypeChange() {
 
 // Toggle optimization mode
 function toggleOptimizationMode() {
-  const cpuBased = document.getElementById("cpuBased").checked;
-  const memoryBased = document.getElementById("memoryBased").checked;
+  const cpuBased = document.getElementById("cpuBased")?.checked;
+  const memoryBased = document.getElementById("memoryBased")?.checked;
 
   const cpuRanges = document.getElementById("cpuUtilizationRanges");
   const memoryRanges = document.getElementById("memoryUtilizationRanges");
 
   if (cpuBased) {
-    cpuRanges.classList.remove("hidden");
+    cpuRanges?.classList.remove("hidden");
     updateCpuRanges();
   } else {
-    cpuRanges.classList.add("hidden");
+    cpuRanges?.classList.add("hidden");
   }
 
   if (memoryBased) {
-    memoryRanges.classList.remove("hidden");
+    memoryRanges?.classList.remove("hidden");
     updateMemoryRanges();
   } else {
-    memoryRanges.classList.add("hidden");
+    memoryRanges?.classList.add("hidden");
   }
 
   // The statistic hint is scoped to the enabled axes, so re-evaluate it when
@@ -184,11 +195,12 @@ function updateCpuRanges() {
   const downsizeMaxVal = parseInt(cpuDownsizeMax.value);
   const keepMaxVal = parseInt(cpuKeepMax.value);
 
-  cpuKeepMin.value = downsizeMaxVal;
-  cpuUpsizeMin.value = keepMaxVal;
+  cpuKeepMin.value = String(downsizeMaxVal);
+  cpuUpsizeMin.value = String(keepMaxVal);
 
   // Disable upsizing if keepMax is 100
-  const upsizeLabel = cpuUpsizeMin.parentElement;
+  // An input found by id is in the document, so it has a parent.
+  const upsizeLabel = /** @type {HTMLElement} */ (cpuUpsizeMin.parentElement);
   if (keepMaxVal >= 100) {
     upsizeLabel.style.opacity = "0.5";
     const spans = upsizeLabel.querySelectorAll("span");
@@ -218,11 +230,13 @@ function updateMemoryRanges() {
   const downsizeMaxVal = parseInt(memoryDownsizeMax.value);
   const keepMaxVal = parseInt(memoryKeepMax.value);
 
-  memoryKeepMin.value = downsizeMaxVal;
-  memoryUpsizeMin.value = keepMaxVal;
+  memoryKeepMin.value = String(downsizeMaxVal);
+  memoryUpsizeMin.value = String(keepMaxVal);
 
   // Disable upsizing if keepMax is 100
-  const upsizeLabel = memoryUpsizeMin.parentElement;
+  const upsizeLabel = /** @type {HTMLElement} */ (
+    memoryUpsizeMin.parentElement
+  );
   if (keepMaxVal >= 100) {
     upsizeLabel.style.opacity = "0.5";
     const spans = upsizeLabel.querySelectorAll("span");
@@ -253,9 +267,7 @@ function getRuleDefaults() {
     // <select> — each page has only the ones with a real effect there (see
     // rule-engine.js). Joined comma-separated, the same convention Exclude/
     // Include Only already use; a page missing all four reads back "".
-    compliance: Array.from(
-      document.querySelectorAll('input[id^="ruleDefaultCompliance"]'),
-    )
+    compliance: queryInputs('input[id^="ruleDefaultCompliance"]')
       .filter((el) => el.checked)
       .map((el) => el.value)
       .join(", "),
@@ -403,7 +415,7 @@ function checkRuleConflicts() {
       "restrictProcessorManufacturers",
     )?.checked;
     if (procRestrict) {
-      const procBoxes = document.querySelectorAll(
+      const procBoxes = queryInputs(
         "#processorCheckboxes input[type=checkbox]:checked",
       );
       const selected = Array.from(procBoxes).map((cb) =>
@@ -438,7 +450,7 @@ function checkRuleConflicts() {
       "restrictMainFamilies",
     )?.checked;
     if (mainRestrict) {
-      const famBoxes = document.querySelectorAll(
+      const famBoxes = queryInputs(
         "#mainFamiliesCheckboxes input[type=checkbox]:checked",
       );
       const selected = Array.from(famBoxes).map((cb) => cb.value.toLowerCase());
@@ -465,7 +477,7 @@ function checkRuleConflicts() {
       "restrictProcessorManufacturers",
     )?.checked;
     if (procRestrict) {
-      const procBoxes = document.querySelectorAll(
+      const procBoxes = queryInputs(
         "#processorCheckboxes input[type=checkbox]:checked",
       );
       const selected = Array.from(procBoxes).map((cb) =>
@@ -712,9 +724,7 @@ function initializeInstanceFamilyNameFilter(names) {
 
 function getSelectedInstanceFamilyNames() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="familyName_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="familyName_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -726,7 +736,7 @@ function getSelectedInstanceFamilyNames() {
 function getSelectedProcessorManufacturers() {
   const selected = [];
   // Look for checked checkboxes with pattern processor_, azureProcessor_, gcpProcessor_
-  const checkboxes = document.querySelectorAll(
+  const checkboxes = queryInputs(
     'input[id^="processor_"]:checked, input[id^="azureProcessor_"]:checked, input[id^="gcpProcessor_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
@@ -740,7 +750,7 @@ function getSelectedProcessorManufacturers() {
 function getSelectedMainFamilies() {
   const selected = [];
   // Look for checked checkboxes with pattern mainFamily_, azureFamily_, gcpType_
-  const checkboxes = document.querySelectorAll(
+  const checkboxes = queryInputs(
     'input[id^="mainFamily_"]:checked, input[id^="azureFamily_"]:checked, input[id^="gcpType_"]:checked',
   );
   checkboxes.forEach((checkbox) => {
@@ -754,9 +764,7 @@ function getSelectedMainFamilies() {
 // Azure-specific fallback getter functions
 function getSelectedAzureSeries() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="azureSeries_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="azureSeries_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -767,9 +775,7 @@ function getSelectedAzureSeries() {
 
 function getSelectedAzureProcessors() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="azureProcessor_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="azureProcessor_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -780,9 +786,7 @@ function getSelectedAzureProcessors() {
 
 function getSelectedAzureVMFamilies() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="azureFamily_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="azureFamily_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -794,9 +798,7 @@ function getSelectedAzureVMFamilies() {
 // GCP-specific fallback getter functions
 function getSelectedGCPFamilies() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="gcpFamily_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="gcpFamily_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -807,9 +809,7 @@ function getSelectedGCPFamilies() {
 
 function getSelectedGCPProcessors() {
   const selected = [];
-  const checkboxes = document.querySelectorAll(
-    'input[id^="gcpProcessor_"]:checked',
-  );
+  const checkboxes = queryInputs('input[id^="gcpProcessor_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
@@ -820,7 +820,7 @@ function getSelectedGCPProcessors() {
 
 function getSelectedGCPMachineTypes() {
   const selected = [];
-  const checkboxes = document.querySelectorAll('input[id^="gcpType_"]:checked');
+  const checkboxes = queryInputs('input[id^="gcpType_"]:checked');
   checkboxes.forEach((checkbox) => {
     if (checkbox.value) {
       selected.push(checkbox.value);
