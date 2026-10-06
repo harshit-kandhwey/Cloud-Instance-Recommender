@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // One delegated listener per event type for the tool pages' controls (3.21 phase 5).
 // A control names the global function to run in data-on-click or data-on-change.
 // Arguments come from data-args, a JSON array, so numbers stay numbers. An object
@@ -49,22 +47,28 @@ if (typeof MutationObserver === "function") {
     // blur does not bubble, so it is caught in the capture phase.
     document.addEventListener(
       type,
+      /** @param {Event & { key?: string }} event */
       function (event) {
-        var target = event.target;
+        var target = /** @type {Element | null} */ (event.target);
         var el =
           target && target.closest ? target.closest("[" + attr + "]") : null;
         if (!el) return;
         var sfx = "-" + type;
         if (el.hasAttribute("data-keys" + sfx)) {
-          var keys = JSON.parse(el.getAttribute("data-keys" + sfx));
+          var keys = JSON.parse(
+            /** @type {string} */ (el.getAttribute("data-keys" + sfx)),
+          );
           if (keys.indexOf(event.key) === -1) return;
         }
-        var fn = window[el.getAttribute(attr)];
+        /** @type {Function | undefined} */
+        var fn = window[String(el.getAttribute(attr))];
         if (typeof fn !== "function") return;
         if (el.hasAttribute("data-prevent" + sfx)) event.preventDefault();
         if (el.hasAttribute("data-stop" + sfx)) event.stopPropagation();
         if (el.hasAttribute("data-args" + sfx)) {
-          var list = JSON.parse(el.getAttribute("data-args" + sfx));
+          var list = JSON.parse(
+            /** @type {string} */ (el.getAttribute("data-args" + sfx)),
+          );
           fn.apply(
             el,
             list.map(function (a) {

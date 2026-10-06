@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // App core: shared state, column-mapping tables, data readiness, region
 // validation, and the data watcher. Loads first — later modules reference these
 // globals at runtime.
@@ -19,7 +17,7 @@ function isPlainObject(v) {
 // returns it, and writing a key onto it is dropped while the save reports success.
 function readStoredObject(key) {
   try {
-    const parsed = JSON.parse(localStorage.getItem(key));
+    const parsed = JSON.parse(localStorage.getItem(key) ?? "null");
     return isPlainObject(parsed) ? parsed : {};
   } catch {
     return {};
@@ -406,6 +404,7 @@ function pageCanonicals() {
 // region on demand (base-instance-selector _injectRegionScript). A Generate click
 // before the manifest loads is queued and auto-run once data is ready.
 
+/** @type {Record<string, string>} */
 const DATA_READY_FLAGS = {
   aws: "AWS_DATA_READY",
   azure: "AZURE_DATA_READY",
@@ -419,9 +418,11 @@ const DATA_LOAD_GIVE_UP_TICKS = 60; // 30 seconds
 window._prewarmedSelectors = window._prewarmedSelectors || {};
 
 function getPageProviders() {
-  const scripts = Array.from(document.querySelectorAll("script[src]")).map(
-    (s) => s.src,
-  );
+  const scripts = Array.from(
+    /** @type {NodeListOf<HTMLScriptElement>} */ (
+      document.querySelectorAll("script[src]")
+    ),
+  ).map((s) => s.src);
   return Object.keys(DATA_READY_FLAGS).filter((p) =>
     scripts.some((s) => s.includes(`${p}-data.js`)),
   );
@@ -435,7 +436,9 @@ function allDataReady(providers = getPageProviders()) {
 // code (hideDataToast) — deliberately NOT the transient toast stack below, which
 // stacks and expires by timer/user.
 function showDataToast(msg) {
-  let toast = document.getElementById("dataToast");
+  let toast = /** @type {HTMLElement | null} */ (
+    document.getElementById("dataToast")
+  );
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "dataToast";
@@ -1204,12 +1207,13 @@ function computeRelaxSuggestion(results) {
     );
   });
 
+  /** @type {{ label: string, count: number } | null} */
   let best = null;
-  rescues.forEach((count, label) => {
+  for (const [label, count] of rescues) {
     if (hasRelaxControl(label) && (!best || count > best.count)) {
       best = { label, count };
     }
-  });
+  }
   if (!best) return null;
 
   return {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Owns the app's localStorage keys by registry id: measures what the app stores,
 // writes through one quota-aware path, and clears only keys it owns. Keys it does
 // not own are never read, written or removed here.

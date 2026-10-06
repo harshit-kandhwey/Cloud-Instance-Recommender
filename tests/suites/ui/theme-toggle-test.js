@@ -106,7 +106,7 @@ console.log("[the toggle flips, persists and tells assistive technology]");
   );
   check(
     "the button reports it is pressed",
-    t.button.attrs["aria-pressed"] === true,
+    t.button.attrs["aria-pressed"] === "true",
     JSON.stringify(t.button.attrs),
   );
   t.ctx.toggleTheme();
@@ -114,7 +114,7 @@ console.log("[the toggle flips, persists and tells assistive technology]");
   check("and that choice is saved over the first", t.store[t.key] === "light");
   check(
     "the button reports it is no longer pressed",
-    t.button.attrs["aria-pressed"] === false,
+    t.button.attrs["aria-pressed"] === "false",
   );
 }
 {
@@ -155,20 +155,20 @@ console.log("[the button reports the theme the page opened with]");
   dark.documentLoaded();
   check(
     "a saved dark choice opens with the button pressed, before any click",
-    dark.button.attrs["aria-pressed"] === true,
+    dark.button.attrs["aria-pressed"] === "true",
     JSON.stringify(dark.button.attrs),
   );
   const osDark = setup({ osDark: true });
   osDark.documentLoaded();
   check(
     "an OS-dark page opens with the button pressed",
-    osDark.button.attrs["aria-pressed"] === true,
+    osDark.button.attrs["aria-pressed"] === "true",
   );
   const light = setup({ stored: "light", osDark: true });
   light.documentLoaded();
   check(
     "a light page opens with the button not pressed",
-    light.button.attrs["aria-pressed"] === false,
+    light.button.attrs["aria-pressed"] === "false",
     JSON.stringify(light.button.attrs),
   );
   const noButton = setup({ stored: "dark", noButton: true });
@@ -186,7 +186,7 @@ console.log("[the button reports the theme the page opened with]");
   t.listeners[0][1]({ matches: true });
   check(
     "an OS switch to dark, with no saved choice, updates the button too",
-    t.button.attrs["aria-pressed"] === true,
+    t.button.attrs["aria-pressed"] === "true",
     JSON.stringify(t.button.attrs),
   );
 }
