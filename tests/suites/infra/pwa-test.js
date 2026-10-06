@@ -393,6 +393,32 @@ process.exitCode = 1;
   });
   check("all 7 pages link the manifest and the registration script", allWired);
 
+  // The template is a plain download link, so a renamed file or a missing
+  // precache entry would leave a dead button, online or off.
+  {
+    const precacheList = vm.runInContext("PRECACHE", sandbox);
+    const toolPages = ["aws.html", "azure.html", "gcp.html", "multicloud.html"];
+    const targets = toolPages.map((p) => {
+      const html = fs.readFileSync(path.join(REPO, p), "utf8");
+      const m = html.match(
+        /<a\b[^>]*\bhref="([^"]+\.xlsx)"[^>]*\bdownload\b[^>]*>/,
+      );
+      return m ? m[1] : null;
+    });
+    check(
+      "every tool page offers the same template download link",
+      targets.every((t) => t && t === targets[0]),
+      JSON.stringify(targets),
+    );
+    check(
+      "the template link points at a file that exists and is precached",
+      !!targets[0] &&
+        fs.existsSync(path.join(REPO, targets[0])) &&
+        precacheList.includes(targets[0]),
+      String(targets[0]),
+    );
+  }
+
   // The shared script registers the SW, guarded on secure context.
   const reg = fs.readFileSync(path.join(REPO, "js/pwa-register.js"), "utf8");
   check(

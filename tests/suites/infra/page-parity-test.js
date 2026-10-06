@@ -232,7 +232,8 @@ console.log("[every page offers the same shared features]");
 {
   const MARKERS = {
     "Excel download (primary)": "downloadResultsXlsxBtn",
-    "Excel input template": 'data-on-click="downloadInputTemplate"',
+    "Excel input template":
+      'href="assets/templates/cloud_instance_recommender_template.xlsx"',
     "Custom rules panel": 'id="userRulesPanel"',
     "Cloud-to-cloud toggle": "cloudToCloudMode",
     "CSV multiselect dropdown": 'id="csvMenu"',

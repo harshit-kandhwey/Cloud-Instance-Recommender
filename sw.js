@@ -27,7 +27,7 @@
 // would keep the old keys around forever unused (activate only deletes whole
 // OTHER cache names, never prunes stale keys within one), so this forces a
 // clean re-precache instead of accumulating dead entries.
-const CACHE = "cir-cache-v11";
+const CACHE = "cir-cache-v12";
 
 // Kept small and stable — anything missed here is still runtime-cached on first
 // online visit. cache.add is per-file so one bad path can't abort the precache.
@@ -96,6 +96,7 @@ const PRECACHE = [
   "js/pwa-register.js",
   "public/manifest.json",
   "public/icon.svg",
+  "assets/templates/cloud_instance_recommender_template.xlsx",
   ...PRECACHE_SCRIPTS,
 ];
 

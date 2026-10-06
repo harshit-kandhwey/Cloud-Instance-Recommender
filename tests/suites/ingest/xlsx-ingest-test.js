@@ -200,6 +200,41 @@ db-server-02,8,32,70,80,us-west-2`;
     );
   }
 
+  console.log("[the shipped template uploads as its Inventory sheet]");
+  {
+    // The app scores sheets by their columns, not by name, so nothing but this
+    // test says the reference sheets cannot outrank the inventory.
+    const fs = require("fs");
+    const buf = fs.readFileSync(
+      path.join(
+        REPO,
+        "assets/templates/cloud_instance_recommender_template.xlsx",
+      ),
+    );
+    const ab = buf.buffer.slice(
+      buf.byteOffset,
+      buf.byteOffset + buf.byteLength,
+    );
+    const { ctx } = buildContext();
+    await ctx.ingestFile(
+      fakeFile("cloud_instance_recommender_template.xlsx", ab),
+    );
+    const data = vm.runInContext("csvData", ctx);
+    const sheets = vm.runInContext("window._uploadedSheets", ctx) || [];
+    check(
+      "the workbook offers its sheets and the rows ingested are the Inventory examples",
+      data.length === 2 &&
+        data[0]["VM Name"] === "web-server-01" &&
+        data[1]["VM Name"] === "db-server-02",
+      `${sheets.map((s) => s.name).join("|")} :: ${JSON.stringify(data.map((r) => r["VM Name"]))}`,
+    );
+    check(
+      "the reference sheets are offered alongside Inventory, so the pick was a real contest",
+      sheets.length > 1 && sheets.some((s) => s.name === "Inventory"),
+      sheets.map((s) => s.name).join("|"),
+    );
+  }
+
   // process.exitCode, not process.exit(): exit() can truncate buffered stdout
   // when it is a pipe (the CI case), dropping the FAIL: lines the run just wrote.
   process.exitCode = failures ? 1 : 0;

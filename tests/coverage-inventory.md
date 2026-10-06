@@ -14,10 +14,10 @@ waiver still records the reason.
 
 | | Behavioral | Internal | Total |
 | --- | ---: | ---: | ---: |
-| Covered | 79 | 329 | 408 |
-| Waived | 25 | 0 | 25 |
+| Covered | 79 | 327 | 406 |
+| Waived | 24 | 0 | 24 |
 | Uncovered | 0 | 82 | 82 |
-| **Total** | 104 | 411 | 515 |
+| **Total** | 103 | 409 | 512 |
 
 **No behavioral gaps.** Every user-reachable name is covered or waived.
 
@@ -126,8 +126,6 @@ waiver still records the reason.
 | `buildAppSheet` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
 | `buildDerivedSpecs` | src/core/engine/generate.js | function | internal | covered | engine/cloud-to-cloud-test.js |
 | `buildExecutiveReport` | src/ui/charts.js | function+window | internal | covered | export/report-test.js, ui/charts-test.js |
-| `buildInputTemplateAllowedValues` | src/features/xlsx-export.js | function | internal | covered | export/input-template-test.js |
-| `buildInputTemplateWorkbook` | src/features/xlsx-export.js | function | internal | covered | export/input-template-test.js |
 | `buildPortfolioModel` | src/features/portfolio.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js, export/scale-out-advisory-test.js, export/xlsx-structural-test.js |
 | `buildPortfolioPayload` | src/features/downloads.js | function | internal | uncovered | — |
 | `buildPortfolioWorkbookModel` | src/features/portfolio.js | function | internal | covered | export/portfolio-test.js, export/xlsx-structural-test.js |
@@ -145,7 +143,7 @@ waiver still records the reason.
 | `cancelSavePreset` | src/features/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `capturePresetConfig` | src/features/presets.js | function | internal | covered | ui/persisted-shape-test.js, ui/presets-test.js |
 | `checkRuleConflicts` | src/ui/form-controls.js | function | behavioral | covered | preview/preview-search-test.js |
-| `classifyEolOs` | src/features/ingest.js | function | internal | covered | ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, preview/stale-results-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
+| `classifyEolOs` | src/features/ingest.js | function | internal | covered | ingest/column-mapping-test.js, ingest/eol-os-test.js, ingest/input-hygiene-test.js, ingest/xlsx-ingest-test.js, preview/stale-results-test.js, ui/sample-gallery-test.js, ui/sample-templates-test.js |
 | `classifyScaleOut` | src/shared/app-core.js | function | internal | covered | export/portfolio-hostile-values-test.js, export/portfolio-test.js, export/scale-out-advisory-test.js, export/xlsx-structural-test.js, workload/app-summary-test.js |
 | `classifyWorkloadShape` | src/shared/app-core.js | function | internal | covered | engine/current-instance-test.js, engine/fit-headroom-test.js, export/portfolio-hostile-values-test.js, export/portfolio-test.js, export/scale-out-advisory-test.js, export/xlsx-structural-test.js, preview/preview-column-filters-test.js, preview/preview-column-visibility-test.js, preview/preview-focus-test.js, preview/preview-nomatch-filter-test.js, preview/preview-pagination-test.js, preview/preview-search-test.js, preview/review-flag-preview-test.js, preview/rightsize-verdict-test.js, preview/workload-shape-test.js |
 | `clearScenarios` | src/features/scenario-compare.js | function | behavioral | covered | export/scenario-compare-test.js |
@@ -186,7 +184,6 @@ waiver still records the reason.
 | `downloadAzureSampleCSV` | src/providers/azure/azure-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
 | `downloadCsv` | src/shared/app-core.js | function | internal | covered | export/nomatch-export-test.js, preview/preview-search-test.js, workload/app-summary-test.js |
 | `downloadGCPSampleCSV` | src/providers/gcp/gcp-specific.js | function | behavioral | covered | ui/sample-templates-test.js |
-| `downloadInputTemplate` | src/features/xlsx-export.js | function | behavioral | waived | _waived: Async XLSX build of the blank input template — ensure engine, build the two-sheet workbook, writeFile, with button busy-state. Async spreadsheet-engine + download plumbing; the workbook CONTENT (headers, example rows, and the drift-proof Allowed-values sheet) is pinned by export/input-template-test.js, which builds the same workbook via the vendored engine and reads it back. browser residual (the .xlsx download firing) deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |
 | `downloadNoMatchRows` | src/features/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResults` | src/features/downloads.js | function | internal | covered | export/nomatch-export-test.js |
 | `downloadResultsXlsx` | src/features/xlsx-export.js | function | behavioral | covered | export/xlsx-export-test.js |
