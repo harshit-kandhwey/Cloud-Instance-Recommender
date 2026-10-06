@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Ingestion: file upload (CSV/xlsx), parsing, column auto-mapping,
 // mapping panel, and MB→GB unit conversion.
 
@@ -100,7 +98,7 @@ function ensureXlsxLoaded() {
       script.onload = () => {
         // Whatever the global held before, the parser is this build.
         window._xlsxParser = window.XLSX;
-        resolve();
+        resolve(undefined);
       };
       script.onerror = () => {
         window._xlsxLoadPromise = null;
@@ -260,7 +258,11 @@ async function ingestFile(file) {
       // usable" invariant (see the ingestFile comment above).
       resetIngestState();
       window._uploadNote = uploadNote;
-      parseCSV(e.target.result);
+      parseCSV(
+        /** @type {string} */ (
+          /** @type {FileReader} */ (/** @type {unknown} */ (e.target)).result
+        ),
+      );
     };
     reader.onerror = function () {
       const fileStatus = document.getElementById("fileStatus");
@@ -1916,7 +1918,11 @@ const CONFIDENCE_TAIL_STATISTICS = ["p90", "p95", "p99", "peak"];
 // nothing at all). It describes what the file carries, not what a run will size on.
 function assessInputConfidence(rows) {
   const total = rows.length;
-  const tiers = { high: [], medium: [], low: [] };
+  const tiers = {
+    high: /** @type {number[]} */ ([]),
+    medium: /** @type {number[]} */ ([]),
+    low: /** @type {number[]} */ ([]),
+  };
   let carriesTail = false;
   const reads = (row, stat, dim) => readUtilizationReading(row, stat, dim) > 0;
   rows.forEach((row, i) => {
@@ -2478,7 +2484,9 @@ function applyAppMapping() {
   const panel = document.getElementById("appMappingSection");
   if (!panel) return;
   const map = loadAppWorkloadMap();
-  panel.querySelectorAll("select[data-app]").forEach((sel) => {
+  /** @type {NodeListOf<HTMLSelectElement>} */ (
+    panel.querySelectorAll("select[data-app]")
+  ).forEach((sel) => {
     const app = (sel.getAttribute("data-app") || "").toLowerCase();
     if (!app) return;
     if (sel.value) map[app] = sel.value;
@@ -2560,6 +2568,7 @@ function sniffDelimiter(headerLine) {
 // A doubled quote inside a field is one escaped literal, not a state toggle.
 function splitRecords(text) {
   const normalized = text.replace(/\r\n?/g, "\n");
+  /** @type {string[] & { unterminatedQuote?: boolean }} */
   const records = [];
   let current = "";
   let inQuotes = false;

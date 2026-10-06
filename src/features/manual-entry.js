@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Manual VM entry: form-based alternative to file upload, feeding the
 // same ingestRows() pipeline.
 
@@ -33,13 +31,18 @@ function saveManualVMs() {
 // "Editing a row" section for why it isn't inline in the table).
 function manualEditingRow() {
   const index = window._manualEditIndex;
-  return Number.isInteger(index) && manualVMs[index] ? manualVMs[index] : null;
+  return typeof index === "number" &&
+    Number.isInteger(index) &&
+    manualVMs[index]
+    ? manualVMs[index]
+    : null;
 }
 
 // Field definitions for the current page's providers. Region inputs are
 // sticky: they keep the last-entered value across adds.
 function manualFieldDefs() {
   const editing = manualEditingRow();
+  /** @type {{ key: string, label: string, type: string, placeholder?: string, list?: string, provider?: string, value?: string, options?: string[] }[]} */
   const defs = [
     {
       key: "VM Name",
@@ -326,7 +329,8 @@ function manualEditVM(index) {
 
 function manualSaveEdit() {
   const index = window._manualEditIndex;
-  if (!Number.isInteger(index) || !manualVMs[index]) return;
+  if (typeof index !== "number" || !Number.isInteger(index)) return;
+  if (!manualVMs[index]) return;
 
   const read = readManualForm();
   if (!read) return; // invalid — stay in edit mode rather than discarding it
@@ -346,9 +350,10 @@ function manualCancelEdit() {
 function manualRemoveVM(index) {
   // Removing the row under edit would leave the form editing a row that no
   // longer exists; removing one BEFORE it would leave it editing the wrong one.
-  if (Number.isInteger(window._manualEditIndex)) {
-    if (index === window._manualEditIndex) window._manualEditIndex = null;
-    else if (index < window._manualEditIndex) window._manualEditIndex -= 1;
+  const editIndex = window._manualEditIndex;
+  if (typeof editIndex === "number" && Number.isInteger(editIndex)) {
+    if (index === editIndex) window._manualEditIndex = null;
+    else if (index < editIndex) window._manualEditIndex = editIndex - 1;
   }
   manualVMs.splice(index, 1);
   saveManualVMs();

@@ -1,15 +1,11 @@
-// The type check is being turned on for src/ in stages (3.21). A src/ file that still
-// has type errors carries `// @ts-nocheck` as its first line. This ratchet lets that list
-// only shrink: fix a folder, delete its markers, and lower PENDING_LIMIT in the same
-// commit. scripts/ and tests/ are fully checked and may never carry the marker.
+// The type check was turned on for src/ in stages (3.21), with `// @ts-nocheck` as the
+// first line of each file still being fixed. Every file is checked now, so no file in
+// src/, scripts/ or tests/ may opt out again.
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
-
-// Files in src/ still marked. Lower this as each stage lands; it reaches 0 at the end.
-const PENDING_LIMIT = 4;
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -31,8 +27,8 @@ const marked = (dir) =>
 
 const inSrc = marked("src").map((f) => path.relative(REPO, f));
 check(
-  `at most ${PENDING_LIMIT} src files are still pending the type check`,
-  inSrc.length <= PENDING_LIMIT,
+  "no file in src/ opts out of the type check",
+  inSrc.length === 0,
   `${inSrc.length} marked: ${inSrc.join(", ")}`,
 );
 

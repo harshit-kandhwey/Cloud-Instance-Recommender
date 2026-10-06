@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Scenario comparison: pin generation runs (same input, different config) and
 // show which settings differed plus a per-VM diff of what changed. Two runs get
 // a pairwise view (config diff + old → new cells); 3+ get an N-way matrix.
@@ -304,6 +302,7 @@ function diffScenarioConfigs(cfgA, cfgB) {
 
   // Flat keyed groups: a key missing on one side (control not on the page for
   // that run) shows as blank rather than being skipped.
+  /** @type {[string, (v: any) => string][]} */
   const scalarGroups = [
     ["checkboxes", (v) => (v ? "on" : "off")],
     ["numbers", (v) => String(v)],
@@ -413,6 +412,7 @@ function buildScenarioComparisonCsv(a, b) {
 // column expanded to one cell per run (`col [label]`). Used for 3+ runs; the
 // two-run export keeps the richer pairwise format above.
 function buildScenarioComparisonCsvN(list) {
+  // The diff is null only for fewer than two runs; the callers only reach here with three or more.
   const esc = escapeCsvCell;
   const line = (cells) => cells.map(esc).join(",");
   const out = [];
@@ -421,7 +421,9 @@ function buildScenarioComparisonCsvN(list) {
   list.forEach((s, i) => out.push(line([`S${i + 1}`, `${s.label} · ${s.at}`])));
   out.push("");
 
-  const d = diffScenariosN(list);
+  const d = /** @type {NonNullable<ReturnType<typeof diffScenariosN>>} */ (
+    diffScenariosN(list)
+  );
 
   out.push(line(["Summary"]));
   out.push(line(["Scenario", "Match rate %"]));
@@ -720,7 +722,9 @@ function renderPairwiseComparison(result, A, B) {
 // moved without a legend. Config is not diffed here — pairwise settings changes
 // don't generalise to N runs; the per-run match rate carries the headline.
 function renderNWayComparison(result, list) {
-  const d = diffScenariosN(list);
+  const d = /** @type {NonNullable<ReturnType<typeof diffScenariosN>>} */ (
+    diffScenariosN(list)
+  );
   if (!d.cols.length) {
     result.innerHTML = `<div class="scenario-note">These runs have no comparable recommendation columns (different providers or recommendation types).</div>`;
     setScenarioLiveStatus(

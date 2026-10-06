@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Results preview: stats bar, sortable/searchable preview table, and
 // download button arrangement.
 
@@ -684,7 +682,9 @@ function _renderPreviewTable(
   // `toggle` does not bubble, so a delegated listener never sees it: the Columns menu is
   // wired directly after each render. The state setter does not re-render, so the event
   // a freshly rendered open menu fires cannot loop.
-  const colsMenu = document.getElementById("previewColsMenu");
+  const colsMenu = /** @type {HTMLDetailsElement | null} */ (
+    document.getElementById("previewColsMenu")
+  );
   if (colsMenu && typeof colsMenu.addEventListener === "function") {
     colsMenu.addEventListener("toggle", () =>
       window._previewColsMenuState(colsMenu.open),
@@ -929,7 +929,7 @@ function applyRelaxSuggestion() {
 
   // Let the control's own handler hide its sub-panel, so the form doesn't keep
   // showing options for a filter that is now off
-  const handler = window[suggestion.control.toggle];
+  const handler = /** @type {any} */ (window)[suggestion.control.toggle];
   if (typeof handler === "function") handler();
 
   showToast(`Relaxed "${suggestion.label}" — regenerating…`, "info", 4000);
@@ -1025,7 +1025,9 @@ window._previewColumnFilterChanged = function (colIdx, value) {
   s.page = 0;
   clearTimeout(window._previewFilterTimer);
   window._previewFilterTimer = setTimeout(() => {
-    const live = document.getElementById(`colfilter_${colIdx}`);
+    const live = /** @type {HTMLInputElement | null} */ (
+      document.getElementById(`colfilter_${colIdx}`)
+    );
     window._previewActiveColFilter = {
       col,
       pos: live && live.selectionStart != null ? live.selectionStart : null,
@@ -1096,7 +1098,9 @@ window._previewFilterChanged = function (value) {
   s.page = 0;
   clearTimeout(window._previewFilterTimer);
   window._previewFilterTimer = setTimeout(() => {
-    const liveInput = document.getElementById("previewSearch");
+    const liveInput = /** @type {HTMLInputElement | null} */ (
+      document.getElementById("previewSearch")
+    );
     window._previewCursorPos =
       liveInput && liveInput.selectionStart != null
         ? liveInput.selectionStart

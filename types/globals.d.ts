@@ -53,7 +53,7 @@ declare global {
 
     // Upload state (features/ingest.js).
     _ingestToken: number;
-    _ingestLabel: string;
+    _ingestLabel: string | null;
     _pendingIngest: any;
     _lastIngest: any;
     _uploadNote: string | null | undefined;
@@ -64,7 +64,7 @@ declare global {
     _inputHygiene: any;
     _duplicatesAcknowledged: boolean;
     _memoryUnitAcknowledged: boolean;
-    _syncSizeUnit: (id: string, el: HTMLElement) => void;
+    _syncSizeUnit: (id: string, el: HTMLSelectElement) => void;
 
     // Spreadsheet engines, loaded on demand.
     XLSX: any;
