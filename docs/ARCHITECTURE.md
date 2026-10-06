@@ -82,7 +82,7 @@ Every key the app owns is listed in `src/shared/storage-keys.js` and nowhere els
 
 ### Storage manager
 
-`StorageManager` (`src/shared/storage-manager.js`) is the one path for reading the sizes of, writing, and clearing these keys:
+`AppStorage` (`src/shared/storage-manager.js`) is the one path for reading the sizes of, writing, and clearing these keys:
 
 - `usage()` returns each owned key's state and size, in UTF-16 bytes, and counts nothing outside the registry.
 - `write(id, value)` returns `{ ok }` or `{ ok: false, reason }`. A browser quota error is `quota`; any other failure is `unavailable`. Neither throws, and an earlier value survives a refused write.

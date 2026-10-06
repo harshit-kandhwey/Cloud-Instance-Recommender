@@ -29,7 +29,7 @@ function fresh(limitUnits) {
 
 {
   const store = fresh();
-  const u = run("StorageManager.usage()");
+  const u = run("AppStorage.usage()");
   check("usage lists every owned key", u.items.length === owned.length);
   check(
     "absent keys measure zero bytes",
@@ -38,7 +38,7 @@ function fresh(limitUnits) {
 
   store.setItem(keys.portfolioData, "abcd");
   store.setItem(foreign, "x".repeat(500));
-  const after = run("StorageManager.usage()");
+  const after = run("AppStorage.usage()");
   const portfolio = after.items.find((i) => i.id === "portfolioData");
   check(
     "a present owned key counts key plus value",
@@ -52,9 +52,9 @@ function fresh(limitUnits) {
 
 {
   const store = fresh(40);
-  const ok = run('StorageManager.write("manualVMs", "small")');
+  const ok = run('AppStorage.write("manualVMs", "small")');
   check("a write under the limit succeeds", ok.ok === true);
-  const big = run('StorageManager.write("filterPresets", "y".repeat(200))');
+  const big = run('AppStorage.write("filterPresets", "y".repeat(200))');
   check(
     "a write past the quota reports reason quota and does not throw",
     big.ok === false && big.reason === "quota",
@@ -75,7 +75,7 @@ function fresh(limitUnits) {
     },
     removeItem: () => {},
   };
-  const r = run('StorageManager.write("userRules", "{}")');
+  const r = run('AppStorage.write("userRules", "{}")');
   check(
     "a non-quota failure reports unavailable, not quota",
     r.ok === false && r.reason === "unavailable",
@@ -86,7 +86,7 @@ function fresh(limitUnits) {
 {
   let threw = false;
   try {
-    run('StorageManager.write("notAKey", "x")');
+    run('AppStorage.write("notAKey", "x")');
   } catch {
     threw = true;
   }
@@ -97,7 +97,7 @@ function fresh(limitUnits) {
   const store = fresh();
   for (const k of owned) store.setItem(k, "v");
   store.setItem(foreign, "keep me");
-  run("StorageManager.clearAll()");
+  run("AppStorage.clearAll()");
   check(
     "clearAll removes every owned key",
     owned.every((k) => store.getItem(k) === null),
@@ -112,7 +112,7 @@ function fresh(limitUnits) {
   const store = fresh();
   store.setItem(keys.stats, "1");
   store.setItem(keys.appMap, "2");
-  run('StorageManager.clear("stats")');
+  run('AppStorage.clear("stats")');
   check(
     "clear removes only the named owned key",
     store.getItem(keys.stats) === null && store.getItem(keys.appMap) === "2",

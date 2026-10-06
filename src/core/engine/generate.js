@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Generation: option gathering, progress bar, worker-based batch runner
 // with main-thread fallback, and exclusion helpers.
 
@@ -101,7 +99,7 @@ function generateRecommendations() {
   // Show processing status — progress is now driven by the batch runner
   // (worker messages, or the chunked main-thread fallback)
   const processingStatus = document.getElementById("processingStatus");
-  processingStatus.classList.remove("hidden");
+  processingStatus?.classList.remove("hidden");
   updateProgressBar(0, csvData.length);
 
   processRecommendations();
@@ -145,9 +143,11 @@ async function processRecommendations() {
   const ingestTokenForRun = window._ingestToken;
   const rowsForRun = csvData.map((row) => ({ ...row }));
 
-  const recommendationType = document.querySelector(
-    'input[name="recommendationType"]:checked',
-  ).value;
+  const checkedType = /** @type {HTMLInputElement | null} */ (
+    document.querySelector('input[name="recommendationType"]:checked')
+  );
+  if (!checkedType) throw new Error("No recommendation type is selected");
+  const recommendationType = checkedType.value;
 
   // Determine which recommendation types to generate
   const generateLikeToLike =
@@ -169,6 +169,7 @@ async function processRecommendations() {
   const userRules = typeof loadUserRules === "function" ? loadUserRules() : [];
 
   // Prepare options with comprehensive filtering and recommendation type control
+  /** @type {any} */
   const options = {
     // **NEW: Recommendation type control**
     generateLikeToLike: generateLikeToLike,
@@ -190,16 +191,16 @@ async function processRecommendations() {
     cpuBased: document.getElementById("cpuBased")?.checked || false,
     memoryBased: document.getElementById("memoryBased")?.checked || false,
     cpuDownsizeMax: parseInt(
-      document.getElementById("cpuDownsizeMax")?.value || 40,
+      document.getElementById("cpuDownsizeMax")?.value || "40",
     ),
     cpuUpsizeMin: parseInt(
-      document.getElementById("cpuUpsizeMin")?.value || 80,
+      document.getElementById("cpuUpsizeMin")?.value || "80",
     ),
     memoryDownsizeMax: parseInt(
-      document.getElementById("memoryDownsizeMax")?.value || 40,
+      document.getElementById("memoryDownsizeMax")?.value || "40",
     ),
     memoryUpsizeMin: parseInt(
-      document.getElementById("memoryUpsizeMin")?.value || 80,
+      document.getElementById("memoryUpsizeMin")?.value || "80",
     ),
 
     // Comprehensive AWS filtering options (only if AWS functions are available)
@@ -305,7 +306,7 @@ async function processRecommendations() {
 
     // Update usage statistics and show download section
     updateUsageStatistics(rowsForRun.length);
-    document.getElementById("downloadSection").classList.remove("hidden");
+    document.getElementById("downloadSection")?.classList.remove("hidden");
 
     // Show inline results preview
     showResultsPreview(processedResults);
@@ -600,7 +601,7 @@ function getExcludedTypes() {
     checkboxes.forEach((checkbox) => {
       excludedTypes.push({
         provider: provider,
-        type: checkbox.value,
+        type: /** @type {HTMLInputElement} */ (checkbox).value,
       });
     });
   });

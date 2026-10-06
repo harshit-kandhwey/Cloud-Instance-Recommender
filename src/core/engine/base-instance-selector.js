@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Base Instance Selector - Common functionality for all cloud providers
 // Provides shared methods and the foundation for provider-specific implementations
 
@@ -24,23 +22,31 @@ class BaseInstanceSelector {
 
   // Returns all region name strings (CSV-format) available in window globals.
   // Override in each provider subclass.
+  /** @returns {string[]} */
   getAllAvailableRegionKeys() {
     return [];
   }
 
   // Abstract methods to be implemented by provider-specific classes
+  /** @returns {string} */
   getProviderName() {
     throw new Error("getProviderName must be implemented by provider class");
   }
 
+  /** @returns {Record<string, string>} */
   getFieldMappings() {
     throw new Error("getFieldMappings must be implemented by provider class");
   }
 
+  /** @returns {any[]} */
   getSampleData() {
     throw new Error("getSampleData must be implemented by provider class");
   }
 
+  /**
+   * @param {string} region
+   * @returns {string}
+   */
   normalizeRegionForJS(region) {
     throw new Error(
       "normalizeRegionForJS must be implemented by provider class",
@@ -636,7 +642,9 @@ class BaseInstanceSelector {
       return { cost: null, workload: null, newestGen: null, bestNetwork: null };
     }
 
-    const provider = this.getProviderName().toLowerCase();
+    const provider = /** @type {Provider} */ (
+      this.getProviderName().toLowerCase()
+    );
     const workload = (options.rowWorkload || "").toLowerCase().trim();
     const RE = typeof RuleEngine !== "undefined" ? RuleEngine : null;
 
@@ -919,7 +927,7 @@ class BaseInstanceSelector {
       const ruleResult = RuleEngine.apply(
         filtered,
         { ...options, reqCpu: currentCpu, reqMemory: currentMemory },
-        this.getProviderName().toLowerCase(),
+        /** @type {Provider} */ (this.getProviderName().toLowerCase()),
       );
       this._lastRulesApplied = ruleResult.rules;
       if (ruleResult.instances.length > 0) {

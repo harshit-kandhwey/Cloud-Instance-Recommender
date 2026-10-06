@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Instance Selector Factory - Creates appropriate provider-specific selectors
 // Provides unified interface and integration functions
 
@@ -161,6 +159,7 @@ window.getInstanceRecommendationWithSelector = async function (
       : null;
 
   // Process each row with all providers
+  /** @type {any[] & { priceSavings?: any }} */
   const results = [];
   // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed 2026-09-14
   // — see ROADMAP.md's 3.17). Summed per provider from the same rows

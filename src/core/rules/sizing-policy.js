@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Sizing policy: which utilization statistic a row is sized on, chosen from its ENV,
 // Criticality and Workload. Pure data plus a pure resolver; a run reads it only when
 // Size against is the per-row policy. Storage is page-only and never called in the
@@ -53,7 +51,9 @@ const _hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
 // offer a value the engine does not recognise. Workload keys are lower-cased names.
 function sizingPolicyVocabulary() {
   const recognized =
-    (typeof RuleEngine !== "undefined" && RuleEngine.RECOGNIZED) || {};
+    /** @type {{ criticality?: string[], workload?: string[], envClasses?: Record<string, string[]> }} */ (
+      (typeof RuleEngine !== "undefined" && RuleEngine.RECOGNIZED) || {}
+    );
   return {
     criticality: (recognized.criticality || []).slice(),
     workload: (recognized.workload || []).map((w) => String(w).toLowerCase()),
@@ -244,8 +244,8 @@ function saveSizingPolicy(policy) {
       configurable: true,
     });
     const json = JSON.stringify(store);
-    if (typeof StorageManager !== "undefined") {
-      const result = StorageManager.write("sizingPolicies", json);
+    if (typeof AppStorage !== "undefined") {
+      const result = AppStorage.write("sizingPolicies", json);
       return { ...result, problems: [] };
     }
     localStorage.setItem(STORAGE_KEYS.sizingPolicies, json);

@@ -31,5 +31,10 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["types/**/*.d.ts", "src/**/*.js"],
-  "exclude": ["node_modules", "src/providers", "js/vendor"]
+  "exclude": [
+    "node_modules",
+    "src/providers/**/regions",
+    "src/providers/**/*-data.js",
+    "js/vendor"
+  ]
 }

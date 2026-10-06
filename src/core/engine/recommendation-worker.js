@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Web Worker: runs recommendation generation off the main thread so large
 // CSVs don't freeze the UI. Code files are pulled in via importScripts
 // (same-origin, CSP-compatible); region DATA arrives via postMessage because

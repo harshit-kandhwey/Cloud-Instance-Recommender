@@ -87,7 +87,7 @@ const FleetSnapshots = (() => {
     if (existing.some((e) => e.name === entry.name)) {
       return { ok: false, reason: "duplicate" };
     }
-    const result = StorageManager.write(
+    const result = AppStorage.write(
       "fleetSnapshots",
       JSON.stringify([...keptEntries(), entry]),
     );
@@ -98,7 +98,7 @@ const FleetSnapshots = (() => {
     const remaining = keptEntries().filter(
       (e) => !(isCurrent(e) && e.id === id),
     );
-    const result = StorageManager.write(
+    const result = AppStorage.write(
       "fleetSnapshots",
       JSON.stringify(remaining),
     );

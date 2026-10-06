@@ -9,7 +9,7 @@ const { REPO, makeChecker } = require("../harness");
 const { check, state } = makeChecker();
 
 // Files in src/ still marked. Lower this as each stage lands; it reaches 0 at the end.
-const PENDING_LIMIT = 24;
+const PENDING_LIMIT = 19;
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

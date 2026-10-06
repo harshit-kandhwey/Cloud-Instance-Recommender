@@ -40,7 +40,7 @@ function renderStorageManagerPanel() {
   if (!host) return;
   let usage;
   try {
-    usage = StorageManager.usage();
+    usage = AppStorage.usage();
   } catch {
     host.innerHTML =
       '<p role="status">Browser storage is unavailable here, so there is nothing to show or clear.</p>';
@@ -93,8 +93,8 @@ function handleStoragePanelClick(event) {
 // Storage is cleared and the in-memory copies that would write it back are reset
 // first, so a later save cannot restore the data the user just cleared.
 function applyStorageClear(target) {
-  if (target === "all") StorageManager.clearAll();
-  else StorageManager.clear(target);
+  if (target === "all") AppStorage.clearAll();
+  else AppStorage.clear(target);
   if (target === "all" || target === "manualVMs") loadManualVMs();
   if (target === "all" || target === "stats") {
     usageStats = freshUsageStatistics();

@@ -3,7 +3,7 @@
 // Owns the app's localStorage keys by registry id: measures what the app stores,
 // writes through one quota-aware path, and clears only keys it owns. Keys it does
 // not own are never read, written or removed here.
-const StorageManager = (() => {
+const AppStorage = (() => {
   // localStorage quotas count UTF-16 code units, two bytes each.
   const BYTES_PER_UNIT = 2;
   const OWNED_IDS = Object.freeze(Object.keys(STORAGE_KEYS));
