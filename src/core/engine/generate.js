@@ -105,7 +105,6 @@ function generateRecommendations() {
   processRecommendations();
 }
 
-// Real progress bar driven by onProgress(done, total) callbacks
 // The stored sizing policy for a run, or undefined when the run does not size on the
 // policy. Only then is localStorage read, and the policy rides in the options because
 // the worker cannot reach it.
@@ -117,6 +116,7 @@ function sizingPolicyOption() {
     : undefined;
 }
 
+// Real progress bar driven by onProgress(done, total) callbacks
 function updateProgressBar(done, total) {
   const progressFill = document.getElementById("progressFill");
   const progressText = document.getElementById("progressText");
