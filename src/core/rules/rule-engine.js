@@ -1303,7 +1303,7 @@ const RuleEngine = (() => {
   // changelog, whenever a member below is added, removed, or its contract
   // changes; NOT on every behavior tweak inside apply()'s own rules (those
   // are covered by the app's own CHANGELOG.md, a separate concern).
-  const API_VERSION = "1.0.0";
+  const API_VERSION = "1.1.0";
 
   return {
     apiVersion: API_VERSION,

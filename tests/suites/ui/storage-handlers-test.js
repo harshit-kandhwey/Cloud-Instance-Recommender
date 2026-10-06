@@ -19,7 +19,7 @@ function setup({ removeThrows, quotaFull } = {}) {
     label: "storage-handlers",
   });
   const store = {};
-  const calls = { manualVMs: 0, stats: 0 };
+  const calls = { manualVMs: 0, stats: 0, rules: 0, presets: 0, mappings: 0 };
   ctx.localStorage = {
     getItem: (k) => (k in store ? store[k] : null),
     setItem: (k, v) => {
@@ -52,6 +52,15 @@ function setup({ removeThrows, quotaFull } = {}) {
   ctx.freshUsageStatistics = () => {
     calls.stats++;
     return {};
+  };
+  ctx.renderUserRulesPanel = () => {
+    calls.rules++;
+  };
+  ctx.renderPresetsBar = () => {
+    calls.presets++;
+  };
+  ctx.renderSavedMappings = () => {
+    calls.mappings++;
   };
   load("src/features/fleet-snapshots.js");
   load("src/ui/storage-manager-ui.js");
@@ -180,6 +189,63 @@ console.log("[the two-step clear in the storage panel]");
       "This browser would not clear the data." &&
       t.run("storagePendingClear") === null,
     t.els.storageManagerStatus.textContent,
+  );
+}
+
+console.log("[clearing refreshes the panels that list the cleared data]");
+{
+  const cleared = (id) => {
+    const t = setup();
+    t.run("handleStoragePanelClick")(panelClick("clear", id));
+    t.run("handleStoragePanelClick")(panelClick("clear", id));
+    return t.calls;
+  };
+  const rules = cleared("userRules");
+  check(
+    "clearing the custom rules redraws the rules panel and nothing else",
+    rules.rules === 1 && rules.presets === 0 && rules.mappings === 0,
+    JSON.stringify(rules),
+  );
+  const presets = cleared("filterPresets");
+  check(
+    "clearing the presets redraws the presets bar and nothing else",
+    presets.presets === 1 && presets.rules === 0 && presets.mappings === 0,
+    JSON.stringify(presets),
+  );
+  const maps = cleared("columnMaps");
+  check(
+    "clearing the saved column mappings redraws that list and nothing else",
+    maps.mappings === 1 && maps.rules === 0 && maps.presets === 0,
+    JSON.stringify(maps),
+  );
+  const stats = cleared("stats");
+  check(
+    "clearing a key no panel lists redraws none of them",
+    stats.rules === 0 && stats.presets === 0 && stats.mappings === 0,
+    JSON.stringify(stats),
+  );
+  const all = cleared("all");
+  check(
+    "clearing everything redraws each of the three once",
+    all.rules === 1 && all.presets === 1 && all.mappings === 1,
+    JSON.stringify(all),
+  );
+
+  const t = setup();
+  t.ctx.renderUserRulesPanel = undefined;
+  t.ctx.renderPresetsBar = undefined;
+  t.ctx.renderSavedMappings = undefined;
+  let threw = false;
+  try {
+    t.run("handleStoragePanelClick")(panelClick("clear-all"));
+    t.run("handleStoragePanelClick")(panelClick("clear-all"));
+  } catch {
+    threw = true;
+  }
+  check(
+    "a page without those panels still clears, without throwing",
+    !threw &&
+      t.els.storageManagerStatus.textContent === "All app data cleared.",
   );
 }
 

@@ -171,15 +171,21 @@ fire("click", makeEl({ "data-on-click": "missingFunction" }));
 check("a control naming a missing function does nothing", calls.length === 0);
 
 // Generated markup (src/**) builds controls through actionAttrs (app-core.js). Any
-// inline handler attribute left in src/ would bypass the dispatcher.
-const srcInlineHandlers = walk(path.join(REPO, "src"))
-  .map((p) => fs.readFileSync(p, "utf8"))
-  .join("\n")
-  .match(/ on(click|change|input|keydown|keyup|blur|submit|focus)="/g);
+// inline handler attribute left in src/ would bypass the dispatcher, and under the strict
+// CSP the browser would refuse it. Every event name counts, not a fixed list: a Columns
+// menu once kept an ontoggle that a list of click, change and the like never saw. An
+// attribute only counts inside a tag, so a variable named online is not mistaken for one.
+const srcInlineHandlers = walk(path.join(REPO, "src")).flatMap((p) =>
+  (
+    fs
+      .readFileSync(p, "utf8")
+      .match(/<[a-zA-Z][^<>]*\son[a-z]+\s*=\s*\\?["']/g) || []
+  ).map((m) => `${path.relative(REPO, p)}: ${m.slice(0, 60)}`),
+);
 check(
   "no inline handler attribute remains in src/",
-  !srcInlineHandlers,
-  srcInlineHandlers ? srcInlineHandlers.join(", ") : "",
+  srcInlineHandlers.length === 0,
+  srcInlineHandlers.join(" | "),
 );
 
 {
@@ -245,6 +251,24 @@ check(
         ["width", "75%"],
       ]),
     JSON.stringify(set),
+  );
+
+  const before = set.length;
+  const bad = makeNode({ "data-style": "{not json" }, []);
+  const notObject = makeNode({ "data-style": "null" }, []);
+  const good = makeNode({ "data-style": '{"width":"10%"}' }, []);
+  const batch = makeNode({}, [bad, notObject, good]);
+  let threw = false;
+  try {
+    dsSandbox.applyDataStyles(batch);
+  } catch (e) {
+    threw = true;
+  }
+  check(
+    "a malformed data-style is skipped and the rest of the batch is still styled",
+    !threw &&
+      JSON.stringify(set.slice(before)) === JSON.stringify([["width", "10%"]]),
+    JSON.stringify(set.slice(before)),
   );
 }
 

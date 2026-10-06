@@ -499,7 +499,7 @@ function _renderPreviewTable(
   // carries the column's INDEX, never its name.
   const hiddenCount = displayCols.length - visibleCols.length;
   const columnsMenu = `
-    <details class="inl-87db2275" id="previewColsMenu"${colsMenuOpen ? " open" : ""} ontoggle="window._previewColsMenuState(this.open)">
+    <details class="inl-87db2275" id="previewColsMenu"${colsMenuOpen ? " open" : ""}>
       <summary class="inl-8182ead2">🧬 Columns${hiddenCount ? ` (${hiddenCount} hidden)` : ""}</summary>
       <div class="inl-03e7ae88">
         ${displayCols
@@ -680,6 +680,16 @@ function _renderPreviewTable(
 
   container.innerHTML = html;
   container.classList.remove("hidden");
+
+  // `toggle` does not bubble, so a delegated listener never sees it: the Columns menu is
+  // wired directly after each render. The state setter does not re-render, so the event
+  // a freshly rendered open menu fires cannot loop.
+  const colsMenu = document.getElementById("previewColsMenu");
+  if (colsMenu && typeof colsMenu.addEventListener === "function") {
+    colsMenu.addEventListener("toggle", () =>
+      window._previewColsMenuState(colsMenu.open),
+    );
+  }
 
   // Repopulate every filter input via the DOM (never as an HTML attribute — a value
   // with a quote would break it) and restore focus + cursor so a mid-typing

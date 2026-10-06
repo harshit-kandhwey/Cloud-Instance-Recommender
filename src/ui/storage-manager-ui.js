@@ -97,6 +97,18 @@ function applyStorageClear(target) {
   if (target === "all" || target === "stats") {
     usageStats = freshUsageStatistics();
   }
+  // The panels that list stored data would otherwise keep showing what was just cleared
+  // until the next reload.
+  const touches = (key) => target === "all" || target === key;
+  if (touches("userRules") && typeof renderUserRulesPanel === "function") {
+    renderUserRulesPanel();
+  }
+  if (touches("filterPresets") && typeof renderPresetsBar === "function") {
+    renderPresetsBar();
+  }
+  if (touches("columnMaps") && typeof renderSavedMappings === "function") {
+    renderSavedMappings();
+  }
 }
 
 let fleetPendingDelete = null;

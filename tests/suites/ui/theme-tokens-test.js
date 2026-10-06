@@ -169,15 +169,9 @@ console.log("[boot script behavior]");
     read("src/shared/storage-keys.js"),
     read("src/shared/theme-init.js"),
   ].join("\n");
-  const m = [bootSrc];
   check("boot script extracted", bootSrc.includes("window.toggleTheme"));
-  // Bail cleanly if the marker changed: m[0] would throw and abort the whole
-  // block — including the cross-page consistency check below — turning one
-  // failure into a stack trace that hides the rest of the suite.
-  if (!m) {
-    console.error("  boot script not found — skipping behaviour checks");
-  } else {
-    const src = m[0];
+  {
+    const src = bootSrc;
 
     /** @param {{ stored?: string | null, osDark?: boolean, storageThrows?: boolean }} options */
     function runBoot({ stored, osDark, storageThrows }) {

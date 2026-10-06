@@ -16,7 +16,14 @@ function applyDataStyles(node) {
     Array.prototype.slice.call(node.querySelectorAll("[data-style]")),
   );
   targets.forEach(function (el) {
-    var decls = JSON.parse(el.getAttribute("data-style"));
+    // One malformed value must not leave the rest of the batch unstyled.
+    var decls;
+    try {
+      decls = JSON.parse(el.getAttribute("data-style"));
+    } catch (e) {
+      return;
+    }
+    if (!decls || typeof decls !== "object") return;
     Object.keys(decls).forEach(function (k) {
       el.style.setProperty(k, decls[k]);
     });

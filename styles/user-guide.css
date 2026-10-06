@@ -83,7 +83,7 @@ body {
 }
 @media print {
   .cover {
-    height: 297mm;
+    height: 257mm;
   }
 }
 .cover-logo {

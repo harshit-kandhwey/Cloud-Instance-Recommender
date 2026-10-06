@@ -3,16 +3,16 @@
    declarations. The declarations are !important so they keep the precedence the inline
    attribute had over the page's stylesheets. */
 .inl-01ab9a1f {
-  background: var(--surface-tint-strong) !important !important;
+  background: var(--surface-tint-strong) !important;
 }
 .inl-037a9c71 {
-  font-size: 0.82em !important !important;
+  font-size: 0.82em !important;
 }
 .inl-09601dc1 {
-  margin: 10px 0 !important !important;
+  margin: 10px 0 !important;
 }
 .inl-0f7d2c04 {
-  font-size: 0.83em !important !important;
+  font-size: 0.83em !important;
 }
 .inl-137f0166 {
   margin-top: 14px !important;
@@ -29,8 +29,8 @@
   color: var(--heading-indigo) !important;
 }
 .inl-16991972 {
-  display: block !important !important;
-  color: var(--text-muted) !important !important;
+  display: block !important;
+  color: var(--text-muted) !important;
 }
 .inl-2520cbd2 {
   padding: 5px 8px !important;
@@ -43,9 +43,9 @@
 }
 .inl-32a8a59d {
   padding: 8px !important;
-  border: 1.5px solid var(--border-slate) !important;
+  border: 1.5px solid var(--border-slate);
   border-radius: 6px !important;
-  background: white !important;
+  background: white;
 }
 .inl-34cbf4cf {
   background: var(--surface-tint) !important;
@@ -93,7 +93,7 @@
   border: 1px solid var(--border-slate) !important;
 }
 .inl-4c0544d5 {
-  margin-top: 16px !important !important;
+  margin-top: 16px !important;
 }
 .inl-4cc60e05 {
   font-weight: 700 !important;
@@ -101,7 +101,7 @@
   margin-bottom: 5px !important;
 }
 .inl-5790ffba {
-  display: none !important !important;
+  display: none !important;
 }
 .inl-59d18b96 {
   margin-top: 24px !important;
@@ -137,7 +137,7 @@
   white-space: nowrap !important;
 }
 .inl-7c8ebd94 {
-  font-weight: 400 !important !important;
+  font-weight: 400 !important;
 }
 .inl-7cb6736d {
   display: flex !important;
@@ -154,11 +154,11 @@
   background: white !important;
 }
 .inl-7e613283 {
-  color: var(--text-muted) !important !important;
-  margin-top: 5px !important !important;
+  color: var(--text-muted) !important;
+  margin-top: 5px !important;
 }
 .inl-83d1f535 {
-  color: var(--heading-blue) !important !important;
+  color: var(--heading-blue) !important;
 }
 .inl-870f73a3 {
   background: var(--surface-tint) !important;
@@ -167,7 +167,7 @@
   padding: 12px !important;
 }
 .inl-8afd308e {
-  background: var(--surface-tint) !important !important;
+  background: var(--surface-tint) !important;
 }
 .inl-96fb1766 {
   margin-top: 14px !important;
@@ -194,7 +194,7 @@
   line-height: 1.7 !important;
 }
 .inl-a9e07907 {
-  background: var(--surface-alt) !important !important;
+  background: var(--surface-alt) !important;
 }
 .inl-aa08e943 {
   display: block !important;
@@ -208,11 +208,11 @@
   margin-bottom: 5px !important;
 }
 .inl-bfe4fc0b {
-  font-size: 13px !important !important;
-  padding: 8px 16px !important !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
 }
 .inl-c0385465 {
-  display: none !important;
+  display: none;
   color: var(--red-strong) !important;
   font-size: 0.74em !important;
   margin-top: 3px !important;
@@ -231,8 +231,8 @@
   margin-bottom: 4px !important;
 }
 .inl-c7cfa86c {
-  margin-top: 6px !important !important;
-  color: var(--text-muted) !important !important;
+  margin-top: 6px !important;
+  color: var(--text-muted) !important;
 }
 .inl-ca45ceac {
   display: grid !important;
@@ -241,8 +241,8 @@
   margin-bottom: 14px !important;
 }
 .inl-cc7cae85 {
-  border-collapse: collapse !important !important;
-  width: 100% !important !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
 }
 .inl-d7d17b16 {
   margin-top: 8px !important;
@@ -256,10 +256,10 @@
   margin-bottom: 6px !important;
 }
 .inl-ded2115d {
-  color: var(--heading-green) !important !important;
+  color: var(--heading-green) !important;
 }
 .inl-e24f6a7d {
-  color: var(--heading-purple) !important !important;
+  color: var(--heading-purple) !important;
 }
 .inl-e3e72b1c {
   margin: 0 !important;
@@ -268,10 +268,10 @@
   line-height: 1.7 !important;
 }
 .inl-e5a6d3c3 {
-  margin-top: 10px !important !important;
+  margin-top: 10px !important;
 }
 .inl-f01a3964 {
-  color: var(--heading-indigo) !important !important;
+  color: var(--heading-indigo) !important;
 }
 .inl-fac4845e {
   font-weight: 700 !important;
@@ -572,7 +572,7 @@
 .inl-619fe476 {
   margin-left: 10px !important;
   font-size: 13px !important;
-  color: var(--good-strong) !important;
+  color: var(--good-strong);
 }
 .inl-61a663d1 {
   margin: 0 0 4px 0 !important;

@@ -12,7 +12,7 @@ There is no build step in this project (see `.claude/rules/coding.md` §9 for th
 
 `RuleEngine.apiVersion` — a SemVer string. See [API changelog](#api-changelog) below for what each version changed. This tracks the shape of the surface documented here, independently of the app's own `CHANGELOG.md` version map (an app patch can ship with no change to this surface at all, and vice versa is not expected but not architecturally prevented).
 
-Current: **1.0.0**
+Current: **1.1.0**
 
 ## Stable surface
 
@@ -66,4 +66,5 @@ These are real exported functions — every one of them is called from elsewhere
 
 | Version | Date | Change |
 | --- | --- | --- |
+| 1.1.0 | 2026-10-06 | `RECOGNIZED` adds `envClasses` (the ENV values grouped as `production`, `staging` and `dev`, read by the sizing policy) and `criticality` (the four Criticality values). Additive: no existing member or value changed. |
 | 1.0.0 | 2026-09-28 | Initial published surface. No behavior change from the pre-existing `RuleEngine` module — this version marks the existing return-object shape as the documented, versioned boundary for the first time (3.20). |

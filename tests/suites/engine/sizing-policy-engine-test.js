@@ -245,6 +245,29 @@ const policyRun = { utilizationStatistic: "policy" };
         both["Review Flag"].includes("Memory downsize held"),
       both["Review Flag"],
     );
+    // The Dev/Test burstable preference reads the sizing statistic as "idle". A row the
+    // veto is holding is not a confirmed idler, so it must not be handed a credit-limited
+    // instance for that reason.
+    const burstable = (r) => /^t\d/.test(r["AWS Optimized Instance"]);
+    const heldCpuRow = await sized(
+      [devRow({ "CPU Utilization Peak": "97" })],
+      policyRun,
+    );
+    check(
+      "premise: a calm, idle Dev VM is steered to a burstable instance",
+      burstable(base),
+      base["AWS Optimized Instance"],
+    );
+    check(
+      "a Dev VM whose CPU downsize is held is not steered to a burstable instance",
+      heldCpuRow["Review Flag"] !== "" && !burstable(heldCpuRow),
+      `${heldCpuRow["AWS Optimized Instance"]} | ${heldCpuRow["Review Flag"]}`,
+    );
+    check(
+      "nor is one whose memory downsize is held",
+      memOnly["Review Flag"] !== "" && !burstable(memOnly),
+      `${memOnly["AWS Optimized Instance"]} | ${memOnly["Review Flag"]}`,
+    );
     const prodSpike = await sized(
       [
         vmRow({

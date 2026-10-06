@@ -78,6 +78,82 @@ check(
   `used ${usedInSrc.size}; undefined: ${undefinedInSrc.join(", ")}`,
 );
 
+// A declaration with the important flag twice is invalid CSS: the browser discards the
+// whole declaration, so the style silently disappears.
+const badDeclarations = css
+  .split("\n")
+  .filter((line) => /:/.test(line) && /!important/.test(line))
+  .filter((line) => (line.match(/!important/g) || []).length !== 1);
+check(
+  "no declaration carries the important flag more than once",
+  badDeclarations.length === 0,
+  badDeclarations.slice(0, 3).join(" | "),
+);
+
+// Elements whose style script rewrites at run time, and the properties it writes. A
+// utility rule that is !important on one of those properties beats the inline write, so
+// the rewrite never shows (the conflict warnings and the failed-save colour once did not).
+const DYNAMIC_STYLE_TARGETS = [
+  ["appMappingStatus", ["color"]],
+  ["presetStatus", ["color"]],
+  ["userRulesStatus", ["color"]],
+  ["progressFill", ["width"]],
+  ...["Env", "OS", "Workload", "Compliance", "MinGen"].flatMap((n) => [
+    ["conflict" + n, ["display"]],
+    ["ruleGroup" + n, ["border", "background"]],
+  ]),
+];
+const utilityRules = {};
+for (const m of css.matchAll(/\.(inl-[0-9a-f]{8})\s*\{([^}]*)\}/g)) {
+  utilityRules[m[1]] = m[2];
+}
+const markupFiles = [
+  ...pages,
+  ...walkJs(path.join(REPO, "src")).map((f) => path.relative(REPO, f)),
+];
+const markup = Object.fromEntries(markupFiles.map((f) => [f, read(f)]));
+const missingElements = [];
+const importantOnRewritten = [];
+for (const [id, props] of DYNAMIC_STYLE_TARGETS) {
+  let seen = 0;
+  for (const [file, text] of Object.entries(markup)) {
+    // The tag that carries this id, in a page or in a string the app builds.
+    const tags = text.matchAll(
+      new RegExp(`<[a-zA-Z]+[^>]*\\bid=\\\\?"${id}\\\\?"[^>]*>`, "g"),
+    );
+    for (const tag of tags) {
+      seen += 1;
+      const classes = (tag[0].match(/class=\\?"([^"\\]*)/) || [])[1] || "";
+      for (const cls of classes
+        .split(/\s+/)
+        .filter((c) => c.startsWith("inl-"))) {
+        for (const decl of (utilityRules[cls] || "").split(";")) {
+          const [prop, ...rest] = decl.split(":");
+          if (
+            props.includes((prop || "").trim()) &&
+            /!important/.test(rest.join(":"))
+          ) {
+            importantOnRewritten.push(
+              `${id} in ${file}: .${cls} ${prop.trim()}`,
+            );
+          }
+        }
+      }
+    }
+  }
+  if (!seen) missingElements.push(id);
+}
+check(
+  "every element that script restyles is found in the markup, so the next check sees it",
+  missingElements.length === 0,
+  missingElements.join(", "),
+);
+check(
+  "no utility rule is !important on a property that script rewrites on the same element",
+  importantOnRewritten.length === 0,
+  [...new Set(importantOnRewritten)].slice(0, 4).join(" | "),
+);
+
 // The pages carry no inline script or style block, and the CSP allows neither
 // 'unsafe-inline' nor inline code (slice 5 of phase 5).
 const inlineCode = pages.filter((p) => {
