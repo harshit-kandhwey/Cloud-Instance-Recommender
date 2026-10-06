@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Multicloud page logic: the filter helpers, the init that resets optional filters,
 // and the window getters the engine reads. Loaded as a blocking head script on
 // multicloud.html only, so its DOMContentLoaded listeners register before the

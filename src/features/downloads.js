@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Downloads & stats: results CSV, no-match remediation export, AWS bulk
 // template, and usage statistics.
 

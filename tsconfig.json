@@ -6,13 +6,14 @@
   // (src/: DOM lib, no Node globals). tsconfig.node.json covers scripts/ and tests/
   // with checkJs on and @types/node. `npm run typecheck` runs both.
   //
-  // Staged flip: the Node program is fully checked. Here `checkJs` is still false, so
-  // a src/ file is checked only when it starts with `// @ts-check`. The src/ stages
-  // turn checkJs on folder by folder, each ending at zero errors.
+  // Staged flip: `checkJs` is on for the whole program, so cross-file globals resolve.
+  // A src/ file that still has errors carries `// @ts-nocheck` at its top, and
+  // tests/suites/infra/ts-ratchet-test.js stops that list from growing. Each stage fixes
+  // a folder and deletes its markers, until none remain.
   "compilerOptions": {
     "noEmit": true,
     "allowJs": true,
-    "checkJs": false,
+    "checkJs": true,
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "Bundler",

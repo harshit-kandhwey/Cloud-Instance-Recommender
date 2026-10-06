@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // App core: shared state, column-mapping tables, data readiness, region
 // validation, and the data watcher. Loads first — later modules reference these
 // globals at runtime.

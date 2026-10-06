@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Sets the theme before first paint. Loaded as a blocking script in every page's
 // head: a deferred script would flash the wrong theme. A saved choice wins; otherwise
 // the page follows the OS setting until the user picks one.

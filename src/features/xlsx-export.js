@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Styled .xlsx export of the results grid (companion to the CSV download).
 //
 // The same rows/columns as downloadResults(), written as a single-sheet

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Scenario comparison: pin generation runs (same input, different config) and
 // show which settings differed plus a per-VM diff of what changed. Two runs get
 // a pairwise view (config diff + old → new cells); 3+ get an N-way matrix.

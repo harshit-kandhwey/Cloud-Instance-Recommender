@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // One delegated listener per event type for the tool pages' controls (3.21 phase 5).
 // A control names the global function to run in data-on-click or data-on-change.
 // Arguments come from data-args, a JSON array, so numbers stay numbers. An object

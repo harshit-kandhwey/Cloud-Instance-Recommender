@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Generation: option gathering, progress bar, worker-based batch runner
 // with main-thread fallback, and exclusion helpers.
 

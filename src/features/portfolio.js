@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // App Portfolio page controller.
 //
 // Receives a generated result set handed off from a tool page — postMessage is

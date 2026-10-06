@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // User-defined rules — the authoring UI (companion to user-rules.js, which holds
 // the model/evaluator/storage). Its own top-level "Custom Rules" section (3.20:
 // promoted out of the Generate section, one of this project's two primary

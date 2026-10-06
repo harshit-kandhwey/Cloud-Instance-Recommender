@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Results charts. No charting library by policy (dependency-free, no CDN); CSP
 // would permit a vendored one. Rendered into #resultsChartsSection by
 // renderResultsCharts(); tolerates a missing placeholder (no charts, no throw).

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Base Instance Selector - Common functionality for all cloud providers
 // Provides shared methods and the foundation for provider-specific implementations
 

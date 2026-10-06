@@ -1,3 +1,5 @@
+// @ts-nocheck
+// Type-check stage pending: remove the line above when this file is fixed (tests/suites/infra/ts-ratchet-test.js).
 // Form controls: file stats/preview panels, provider checkboxes,
 // recommendation type + optimization inputs, rule engine UI, filter
 // toggles, and the getSelected* option readers.
