@@ -93,6 +93,47 @@ check(
   undispatched.join(", "),
 );
 
+// An action must be defined by a script the page itself loads: a function that exists in
+// src/ but is not loaded on that page is as dead as a misspelt name. Every event type
+// counts, on all seven pages, and so do the actions that src markup names through
+// actionAttrs, which only exist on pages that load the file doing the naming.
+const definesFunction = (name, text) =>
+  new RegExp(`function\\s+${name}\\s*\\(`).test(text) ||
+  new RegExp(`window\\.${name}\\s*=`).test(text);
+const loadedByPage = {};
+for (const page of everyPage) {
+  loadedByPage[page] = [
+    ...read(page).matchAll(/<script[^>]*\ssrc="(src\/[^"]+)"/g),
+  ].map((m) => m[1]);
+}
+const notLoaded = [];
+let sweptNames = 0;
+for (const page of everyPage) {
+  const scripts = loadedByPage[page].map((s) => ({ file: s, text: read(s) }));
+  const loadedText = scripts.map((s) => s.text).join("\n");
+  const names = new Set(
+    [...read(page).matchAll(/data-(?:on|then)-[a-z]+="([^"]+)"/g)].map(
+      (m) => m[1],
+    ),
+  );
+  for (const s of scripts) {
+    for (const m of s.text.matchAll(
+      /actionAttrs\(\s*["'][a-z]+["']\s*,\s*["']([^"']+)["']/g,
+    )) {
+      names.add(m[1]);
+    }
+  }
+  sweptNames += names.size;
+  for (const n of names) {
+    if (!definesFunction(n, loadedText)) notLoaded.push(`${page}: ${n}`);
+  }
+}
+check(
+  "every action a page or its scripts name is defined by a script that page loads",
+  notLoaded.length === 0 && sweptNames > 0,
+  notLoaded.join("; ") || `${sweptNames} names swept`,
+);
+
 const listeners = {};
 function makeEl(attrs) {
   return {
