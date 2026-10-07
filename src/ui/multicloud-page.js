@@ -76,7 +76,7 @@ function _mcGCPFamilies() {
 }
 
 // ── Override provider-specific getters with unified multicloud versions ──
-// This inline script runs at parse time, BEFORE the deferred modules, whose
+// This blocking head script runs at parse time, BEFORE the deferred modules, whose
 // top-level function declarations of the same names would overwrite anything
 // assigned now. DOMContentLoaded fires after every deferred script has run.
 document.addEventListener("DOMContentLoaded", function () {
