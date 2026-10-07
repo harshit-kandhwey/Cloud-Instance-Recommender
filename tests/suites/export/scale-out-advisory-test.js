@@ -91,6 +91,14 @@ check(
   }).reasons.length === 2,
 );
 
+check(
+  "a reading with a percent sign counts, as it does when the row is sized",
+  (() => {
+    const r = classify({ [P50]: "12%", [PEAK]: "94%" });
+    return r.evaluated && r.candidate;
+  })(),
+);
+
 console.log("[a row that cannot be judged is not 'not a candidate']");
 check(
   "median only, peak only, or neither: not evaluated",

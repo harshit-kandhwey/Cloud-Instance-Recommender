@@ -96,6 +96,7 @@ function applyStorageClear(target) {
   if (target === "all" || target === "manualVMs") loadManualVMs();
   if (target === "all" || target === "stats") {
     usageStats = freshUsageStatistics();
+    if (typeof updateUsageCounters === "function") updateUsageCounters();
   }
   // The panels that list stored data would otherwise keep showing what was just cleared
   // until the next reload.

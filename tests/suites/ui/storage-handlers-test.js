@@ -19,7 +19,14 @@ function setup({ removeThrows, quotaFull } = {}) {
     label: "storage-handlers",
   });
   const store = {};
-  const calls = { manualVMs: 0, stats: 0, rules: 0, presets: 0, mappings: 0 };
+  const calls = {
+    manualVMs: 0,
+    stats: 0,
+    rules: 0,
+    presets: 0,
+    mappings: 0,
+    counters: 0,
+  };
   ctx.localStorage = {
     getItem: (k) => (k in store ? store[k] : null),
     setItem: (k, v) => {
@@ -52,6 +59,9 @@ function setup({ removeThrows, quotaFull } = {}) {
   ctx.freshUsageStatistics = () => {
     calls.stats++;
     return {};
+  };
+  ctx.updateUsageCounters = () => {
+    calls.counters++;
   };
   ctx.renderUserRulesPanel = () => {
     calls.rules++;
@@ -224,10 +234,18 @@ console.log("[clearing refreshes the panels that list the cleared data]");
     stats.rules === 0 && stats.presets === 0 && stats.mappings === 0,
     JSON.stringify(stats),
   );
+  check(
+    "clearing the stats redraws the usage counters once, and clearing another key does not",
+    stats.counters === 1 && rules.counters === 0 && presets.counters === 0,
+    JSON.stringify({ stats, rules, presets }),
+  );
   const all = cleared("all");
   check(
-    "clearing everything redraws each of the three once",
-    all.rules === 1 && all.presets === 1 && all.mappings === 1,
+    "clearing everything redraws each of the three, and the usage counters, once",
+    all.rules === 1 &&
+      all.presets === 1 &&
+      all.mappings === 1 &&
+      all.counters === 1,
     JSON.stringify(all),
   );
 

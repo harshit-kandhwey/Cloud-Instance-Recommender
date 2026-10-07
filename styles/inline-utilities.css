@@ -1,7 +1,9 @@
 /* Static inline styles from the tool and info pages, moved here so the CSP can drop
    'unsafe-inline' for styles. Each class is the first 8 hex digits of the SHA-1 of its
    declarations. The declarations are !important so they keep the precedence the inline
-   attribute had over the page's stylesheets. */
+   attribute had over the page's stylesheets, except on the properties script rewrites
+   with an inline style at run time (see DYNAMIC_STYLE_TARGETS in inline-utilities-test):
+   an !important class would beat that write and the rewrite would never show. */
 .inl-01ab9a1f {
   background: var(--surface-tint-strong) !important;
 }

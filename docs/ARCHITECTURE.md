@@ -17,6 +17,8 @@ src/
                storage-keys.js    every localStorage key the app owns
                storage-manager.js measure, write and clear the app's own keys
                page-actions.js    delegated dispatch for controls (data-on-click / data-on-change), and the data-style applier
+               theme-init.js      sets the light/dark theme before first paint and wires the theme toggle (all seven pages)
+               provider-init.js   runs the page's provider toggle on load (the four tool pages)
   core/
     rules/     rule-engine.js     ENV / OS / Workload / Compliance rules (window.RuleEngine)
                sizing-policy.js   sizing policy: statistic per row from ENV, Criticality and Workload, with storage
@@ -28,14 +30,15 @@ src/
   features/    ingest.js, manual-entry.js, presets.js, portfolio.js, downloads.js,
                preview.js, scenario-compare.js, fleet-snapshots.js, xlsx-export.js
   ui/          ui-shell.js, form-controls.js, charts.js, user-rules-ui.js,
-               storage-manager-ui.js (the Browser Storage section)
+               storage-manager-ui.js (the Browser Storage section),
+               multicloud-page.js (multicloud.html only: the unified filter getters)
 ```
 
 Provider-independent modules live under `src/` and are loaded by every tool page. Provider code lives under `src/providers/`. The page-parity test fails if the four pages load different provider-independent modules, or load them in a different order.
 
 ## Load order
 
-Scripts are deferred and run in the order the page lists them. Two rules follow:
+Scripts run in the order the page lists them. Most are deferred; `src/shared/storage-keys.js`, `theme-init.js`, `provider-init.js` and `multicloud-page.js` are blocking head scripts, because they must run before the deferred modules (the theme before first paint, the keys before any module reads one, and the multicloud getters before the modules that would overwrite them). Two rules follow:
 
 - `src/shared/storage-keys.js` loads before any module that reads a key at top level. `user-rules.js`, `presets.js`, `app-core.js`, `ui-shell.js`, `downloads.js`, `ingest.js`, and `manual-entry.js` all read `STORAGE_KEYS` when they load.
 - `src/shared/storage-manager.js` loads before the snapshot and storage-panel modules that call it. `fleet-snapshots.js` loads before `storage-manager-ui.js`.

@@ -1126,7 +1126,8 @@ function classifyScaleOut(row) {
   let evaluated = false;
   const reading = (col) => {
     if (!row || !Object.prototype.hasOwnProperty.call(row, col)) return 0;
-    const n = Number(String(row[col]).trim());
+    // parseFloat, like the sizing resolver, so a cell such as "85%" is the same reading to both.
+    const n = parseFloat(row[col]);
     return Number.isFinite(n) && n > 0 && n <= 100 ? n : 0;
   };
   for (const dim of SCALE_OUT_DIMENSIONS) {
