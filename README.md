@@ -94,7 +94,7 @@ Memory in **MB/MiB** is converted when the header says so, or when a recognised 
 
 ### 🩺 Input Check
 
-After the data loads, rows that will not size sensibly are named with the row numbers your spreadsheet shows: missing or zero CPU and memory, figures no provider sells, utilization outside 0–100%, blank names. A repeated VM name is a **question** — one VM listed twice, or two VMs sharing a name? — and nothing is dropped until you answer. It is a report, not a gate.
+After the data loads, rows that will not size sensibly are named with the row numbers your spreadsheet shows: missing or zero CPU and memory, figures no provider sells, utilization outside 0–100%, blank names. A repeated VM name is a **question** — one VM listed twice, or two VMs sharing a name? — and nothing is dropped until you answer. When a file carries percentile or peak readings for some VMs and not others, it also says how well the data supports sizing: each VM is High (a percentile or peak reading for everything it reports), Medium (for only one of CPU and memory) or Low (an average only, or nothing), with the row numbers of the thinner ones, and the file as a whole is Low, Medium or High by VM count (under 25, 25 to 249, 250 or more). The two are separate: more VMs do not make a thin row richer. It is a report, not a gate.
 
 ### ⌨️ Four ways to get data in
 
@@ -148,9 +148,9 @@ Beside the primary **Best Match** (like-to-like) and utilization-based **Optimiz
 
 They appear as separate columns in the results grid/CSV and preview (hideable like any column), and the **Excel export adds one sheet per strategy**. Pricing is only ever used to rank internally — never shown.
 
-### 📈 Size against an average, p95, or peak
+### 📈 Size against a statistic, or per row
 
-Averages hide bursts. A VM averaging 20% CPU looks like an obvious downsize; the same VM with a p95 of 85% is not one, and shipping that downsize under-provisions it in production. **Size against** in Optimization Settings picks which statistic drives the N/2 / N / N+1 rules — **Average** (the default, and the historical behaviour), **p95**, or **Peak** — reading the matching `… p95` / `… Peak` columns when present.
+Averages hide bursts. A VM averaging 20% CPU looks like an obvious downsize; the same VM with a p95 of 85% is not one, and shipping that downsize under-provisions it in production. **Size against** in Optimization Settings picks which statistic drives the N/2 / N / N+1 rules — **Average** (the default, and the historical behaviour), **p90**, **p95**, **p99**, **Peak**, or **Per-row policy** — reading the matching `… p90` / `… p95` / `… p99` / `… Peak` columns when present. Per-row policy sizes each VM on the statistic its ENV, Criticality and Workload select (a Production critical VM on p99, a Dev VM on the average), and a safety veto holds a downsize, with a `Review Flag`, when the VM's own Peak or p95 says it is saturating.
 
 Resolution is **per row, not per run**: fleet exports routinely carry p95 for monitored VMs and only an average for the rest, so a row missing the requested statistic falls back to what it does have rather than dropping to "no utilization data". The fallback prefers the _higher_ remaining statistic, because sizing against a lower number than you asked for under-provisions. Every row reports the basis actually used in a **`Sized On`** column (`p95`, `Average (fallback)`, …), so a recommendation can be traced to the number behind it. If you pick p95 or Peak and the upload has no such columns, the control says so at that moment instead of letting the run look like something it isn't.
 

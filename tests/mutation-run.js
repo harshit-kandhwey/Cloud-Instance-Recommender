@@ -28,6 +28,7 @@ const { ctx, run, load } = buildEngineContext({
   scripts: [
     "src/core/engine/base-instance-selector.js",
     "src/core/rules/rule-engine.js",
+    "src/core/rules/sizing-policy.js",
     "src/providers/aws/aws-instance-selector.js",
     "src/providers/azure/azure-instance-selector.js",
     "src/providers/gcp/gcp-instance-selector.js",
@@ -724,6 +725,243 @@ check(
     "resolveUtilization absent columns → 0",
     u3.cpu === 0 && u3.memory === 0,
     JSON.stringify(u3),
+  );
+}
+
+// The 3.21 sizing inputs: one reading, a per-dimension want, the per-row policy, the
+// safety veto and the labels. The policy module is loaded so the factory's resolver
+// can reach it, as it does on a page.
+{
+  const reading = (row, stat, dim) =>
+    call("readUtilizationReading", [row, stat, dim]);
+  check(
+    "readUtilizationReading reads a percent sign as the number before it",
+    reading({ "CPU Utilization p95": "85%" }, "p95", "cpu") === 85,
+  );
+  check(
+    "readUtilizationReading: a missing column, zero, negative or text is no reading",
+    [
+      reading({}, "p95", "cpu"),
+      reading({ "CPU Utilization p95": "0" }, "p95", "cpu"),
+      reading({ "CPU Utilization p95": "-5" }, "p95", "cpu"),
+      reading({ "CPU Utilization p95": "n/a" }, "p95", "cpu"),
+    ].every((v) => v === 0),
+  );
+  check(
+    "readUtilizationReading names the memory column and the peak column",
+    reading({ "Memory Utilization Peak": 77 }, "peak", "memory") === 77 &&
+      reading({ "Memory Utilization Peak": 77 }, "peak", "cpu") === 0,
+  );
+
+  const w = call("resolveUtilizationWants", [
+    { "CPU Utilization p99": 70, "Memory Utilization": 30 },
+    { cpu: "p99", memory: "avg" },
+  ]);
+  check(
+    "resolveUtilizationWants: each dimension reads the statistic it asked for",
+    w.cpu === 70 &&
+      w.cpuStatistic === "p99" &&
+      w.cpuFellBack === false &&
+      w.memory === 30 &&
+      w.memoryStatistic === "avg" &&
+      w.memoryFellBack === false,
+    JSON.stringify(w),
+  );
+  const wf = call("resolveUtilizationWants", [
+    { "CPU Utilization Peak": 88, "Memory Utilization p90": 40 },
+    { cpu: "p99", memory: "p95" },
+  ]);
+  check(
+    "resolveUtilizationWants: a missing statistic falls to the next higher one first",
+    wf.cpuStatistic === "peak" &&
+      wf.cpuFellBack === true &&
+      wf.memoryStatistic === "p90" &&
+      wf.memoryFellBack === true,
+    JSON.stringify(wf),
+  );
+  const wu = call("resolveUtilizationWants", [
+    { "CPU Utilization": 20 },
+    { cpu: "bogus", memory: "bogus" },
+  ]);
+  check(
+    "resolveUtilizationWants: an unknown statistic name reads as the average",
+    wu.cpu === 20 && wu.cpuStatistic === "avg" && wu.cpuFellBack === false,
+    JSON.stringify(wu),
+  );
+
+  const policy = call("normalizeSizingPolicy", [null]).policy;
+  const rowP = {
+    "CPU Utilization p99": 70,
+    "CPU Utilization p95": 55,
+    "Memory Utilization p95": 50,
+    "CPU Utilization": 20,
+    "Memory Utilization": 25,
+  };
+  const prod = call("resolvePolicyUtilization", [
+    rowP,
+    policy,
+    { env: "Production", criticality: "Critical", workload: "" },
+  ]);
+  check(
+    "resolvePolicyUtilization: production critical sizes CPU on p99 and memory on p95",
+    prod.cpu === 70 &&
+      prod.cpuStatistic === "p99" &&
+      prod.memory === 50 &&
+      prod.memoryStatistic === "p95" &&
+      prod.policyReason === "production + critical → p99",
+    JSON.stringify(prod),
+  );
+  const dev = call("resolvePolicyUtilization", [
+    rowP,
+    policy,
+    { env: "Dev", criticality: "Critical", workload: "" },
+  ]);
+  check(
+    "resolvePolicyUtilization: a Dev VM is capped to the average, and the reason says so",
+    dev.cpu === 20 &&
+      dev.cpuStatistic === "avg" &&
+      dev.policyReason === "dev + critical → p99, capped by dev to avg",
+    JSON.stringify(dev),
+  );
+
+  let threw = "";
+  try {
+    call("validatedSizingPolicy", [{ v: 2 }]);
+  } catch (e) {
+    threw = String(e && e.message);
+  }
+  check(
+    "validatedSizingPolicy refuses a policy from another version and says why",
+    threw.startsWith("The sizing policy is not valid:") &&
+      threw.includes("version 2"),
+    threw,
+  );
+  check(
+    "validatedSizingPolicy returns the default for an absent policy",
+    call("validatedSizingPolicy", [undefined]).criticality.critical === "p99",
+  );
+
+  const th = { peakMin: 95, p95Max: 85 };
+  const optsCpu = { cpuBased: true, cpuDownsizeMax: 40, memoryBased: false };
+  const veto = (row, util, opts, t = th) =>
+    call("evaluateDownsizeVeto", [row, util, opts, t]);
+  const vPeak = veto(
+    { "CPU Utilization Peak": 96, "CPU Utilization p95": 50 },
+    { cpu: 30, memory: 0 },
+    optsCpu,
+  );
+  check(
+    "evaluateDownsizeVeto holds a CPU downsize when Peak reaches the threshold",
+    vPeak.held.cpu === true &&
+      vPeak.held.memory === false &&
+      vPeak.text === "CPU downsize held for review: Peak 96% reaches 95%",
+    JSON.stringify(vPeak),
+  );
+  check(
+    "evaluateDownsizeVeto: Peak exactly at the threshold holds, one below does not",
+    veto({ "CPU Utilization Peak": 95 }, { cpu: 30, memory: 0 }, optsCpu).held
+      .cpu === true &&
+      veto({ "CPU Utilization Peak": 94 }, { cpu: 30, memory: 0 }, optsCpu).held
+        .cpu === false,
+  );
+  check(
+    "evaluateDownsizeVeto: p95 must be above its threshold, equal does not hold",
+    veto({ "CPU Utilization p95": 86 }, { cpu: 30, memory: 0 }, optsCpu).held
+      .cpu === true &&
+      veto({ "CPU Utilization p95": 85 }, { cpu: 30, memory: 0 }, optsCpu).held
+        .cpu === false,
+  );
+  const vBoth = veto(
+    { "CPU Utilization Peak": 99, "CPU Utilization p95": 90 },
+    { cpu: 30, memory: 0 },
+    optsCpu,
+  );
+  check(
+    "evaluateDownsizeVeto joins both reasons for one dimension with a semicolon",
+    vBoth.text ===
+      "CPU downsize held for review: Peak 99% reaches 95%; p95 90% is above 85%",
+    vBoth.text,
+  );
+  check(
+    "evaluateDownsizeVeto: no hold when the row would not be downsized, has no reading, or the axis is off",
+    [
+      veto({ "CPU Utilization Peak": 99 }, { cpu: 50, memory: 0 }, optsCpu),
+      veto({ "CPU Utilization Peak": 99 }, { cpu: 0, memory: 0 }, optsCpu),
+      veto(
+        { "CPU Utilization Peak": 99 },
+        { cpu: 30, memory: 0 },
+        { ...optsCpu, cpuBased: false },
+      ),
+      veto({}, { cpu: 30, memory: 0 }, optsCpu),
+    ].every((v) => v.held.cpu === false && v.text === ""),
+  );
+  const vMem = veto(
+    {
+      "CPU Utilization Peak": 99,
+      "Memory Utilization Peak": 97,
+    },
+    { cpu: 30, memory: 35 },
+    {
+      cpuBased: true,
+      cpuDownsizeMax: 40,
+      memoryBased: true,
+      memoryDownsizeMax: 40,
+    },
+  );
+  check(
+    "evaluateDownsizeVeto: CPU and memory are judged separately and listed with a bar",
+    vMem.held.cpu === true &&
+      vMem.held.memory === true &&
+      vMem.text ===
+        "CPU downsize held for review: Peak 99% reaches 95% | Memory downsize held for review: Peak 97% reaches 95%",
+    vMem.text,
+  );
+  const vMemOnly = veto(
+    { "Memory Utilization Peak": 97 },
+    { cpu: 30, memory: 35 },
+    {
+      cpuBased: true,
+      cpuDownsizeMax: 40,
+      memoryBased: true,
+      memoryDownsizeMax: 40,
+    },
+  );
+  check(
+    "evaluateDownsizeVeto: a memory hold leaves CPU free to downsize",
+    vMemOnly.held.cpu === false && vMemOnly.held.memory === true,
+    JSON.stringify(vMemOnly),
+  );
+  const vCustom = veto(
+    { "CPU Utilization Peak": 80 },
+    { cpu: 30, memory: 0 },
+    optsCpu,
+    { peakMin: 75, p95Max: 60 },
+  );
+  check(
+    "evaluateDownsizeVeto uses the policy's own thresholds",
+    vCustom.held.cpu === true && vCustom.text.endsWith("Peak 80% reaches 75%"),
+    vCustom.text,
+  );
+
+  check(
+    "describePolicyBasis appends the reason, and nothing without one",
+    call("describePolicyBasis", [{ policyReason: "prod + high → p95" }]) ===
+      " · policy: prod + high → p95" &&
+      call("describePolicyBasis", [{}]) === "",
+  );
+
+  check(
+    "RuleEngine reports its API version",
+    run("RuleEngine.apiVersion") === "1.1.0",
+  );
+  const rec = run("RuleEngine.RECOGNIZED");
+  check(
+    "RECOGNIZED carries the Criticality values and the ENV classes",
+    eqArr(rec.criticality, ["critical", "high", "medium", "low"]) &&
+      Object.keys(rec.envClasses).join() === "production,staging,dev" &&
+      rec.envClasses.production.length > 0 &&
+      rec.envClasses.staging.length > 0 &&
+      rec.envClasses.dev.length > 0,
   );
 }
 
