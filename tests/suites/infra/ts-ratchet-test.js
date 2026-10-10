@@ -1,6 +1,6 @@
-// The type check was turned on for src/ in stages (3.21), with `// @ts-nocheck` as the
-// first line of each file still being fixed. Every file is checked now, so no file in
-// src/, scripts/ or tests/ may opt out again.
+// The type check was turned on for src/ in stages (3.21), with `// @ts-nocheck` marking
+// each file still being fixed. Every file is checked now, so no file in src/, scripts/
+// or tests/ may opt out again.
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
@@ -19,11 +19,43 @@ function walk(dir) {
   });
 }
 
+// TypeScript reads the pragma from any comment at the top of a file, not only line 1,
+// and accepts the spellings below. A comment that merely mentions the marker in prose
+// does not start with it, so it is not an opt-out.
+const OPT_OUT = /^[ \t]*(?:\/\/\/?|\/\*+)[ \t]*@ts-nocheck\b/m;
+const optsOut = (text) => OPT_OUT.test(text);
+
 const marked = (dir) =>
-  walk(path.join(REPO, dir)).filter((f) => {
-    const first = fs.readFileSync(f, "utf8").split(/\r?\n/, 1)[0];
-    return first.trim() === "// @ts-nocheck";
-  });
+  walk(path.join(REPO, dir)).filter((f) => optsOut(fs.readFileSync(f, "utf8")));
+
+console.log("[the detector sees every spelling of the marker]");
+const code = "const a = 1;\n";
+for (const [name, text] of [
+  ["on line 1", `// @ts-nocheck\n${code}`],
+  [
+    "on line 3 under a header comment",
+    `// Header\n//\n// @ts-nocheck\n${code}`,
+  ],
+  ["without a space", `//@ts-nocheck\n${code}`],
+  ["with three slashes", `/// @ts-nocheck\n${code}`],
+  ["with a reason after it", `// @ts-nocheck pending the ui stage\n${code}`],
+  ["with CRLF line endings", `// Header\r\n// @ts-nocheck\r\n${code}`],
+  ["in a block comment", `/* @ts-nocheck */\n${code}`],
+  ["indented", `  // @ts-nocheck\n${code}`],
+]) {
+  check(`marker ${name} is an opt-out`, optsOut(text));
+}
+for (const [name, text] of [
+  [
+    "prose that mentions it",
+    `// The marker \`// @ts-nocheck\` is forbidden.\n${code}`,
+  ],
+  ["a string that holds it", `const s = "// @ts-nocheck";\n${code}`],
+  ["a different pragma", `// @ts-check\n${code}`],
+  ["a longer word", `// @ts-nochecked\n${code}`],
+]) {
+  check(`${name} is not an opt-out`, !optsOut(text));
+}
 
 const inSrc = marked("src").map((f) => path.relative(REPO, f));
 check(
