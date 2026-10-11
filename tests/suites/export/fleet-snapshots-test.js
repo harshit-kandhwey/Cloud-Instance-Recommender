@@ -493,6 +493,21 @@ const mine = (id, name) => ({ v: 1, id, name, rows: [] });
     );
   }
 
+  // a name cut to make room for the suffix does not end in a space before it
+  {
+    fresh();
+    const long = "a".repeat(55) + " " + "b".repeat(4);
+    importText(FILE({ name: long }));
+    const again = importText(FILE({ name: long }));
+    check(
+      "a suggestion cut at a space carries no double space",
+      again.reason === "duplicate" &&
+        again.suggestion === "a".repeat(55) + " (2)" &&
+        !/\s\s/.test(again.suggestion),
+      JSON.stringify(again.suggestion),
+    );
+  }
+
   // names are cleaned of control characters, and kept as typed otherwise
   {
     fresh();

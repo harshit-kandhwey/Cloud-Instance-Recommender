@@ -307,7 +307,8 @@ const FleetSnapshots = (() => {
     const taken = new Set(readEntries().map((e) => e.name));
     for (let n = 2; n < 1000; n++) {
       const suffix = ` (${n})`;
-      const candidate = name.slice(0, MAX_NAME_LENGTH - suffix.length) + suffix;
+      const candidate =
+        name.slice(0, MAX_NAME_LENGTH - suffix.length).trimEnd() + suffix;
       if (!taken.has(candidate)) return candidate;
     }
     return name.slice(0, MAX_NAME_LENGTH);

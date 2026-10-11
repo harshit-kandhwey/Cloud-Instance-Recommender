@@ -258,6 +258,37 @@ check(
   );
 }
 
+// A file refused only for its name leaves its text for the rename form. Choosing another
+// file must not leave that text behind, whether the new file is read or not.
+{
+  const pick = (file) =>
+    run("handleFleetSnapshotImportFile")({
+      target: { matches: () => true, files: [file] },
+    });
+  const pending = () => run("fleetPendingImportText");
+
+  run('fleetPendingImportText = "earlier refused file"');
+  pick({ size: run("FleetSnapshots.MAX_IMPORT_CHARS") + 1 });
+  check(
+    "choosing a file that is too large clears the earlier pending text",
+    pending() === null,
+    String(pending()),
+  );
+
+  run('fleetPendingImportText = "earlier refused file"');
+  ctx.ctx.FileReader = class {
+    readAsText() {
+      this.onerror();
+    }
+  };
+  pick({ size: 10 });
+  check(
+    "choosing a file that cannot be read clears the earlier pending text",
+    pending() === null,
+    String(pending()),
+  );
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;

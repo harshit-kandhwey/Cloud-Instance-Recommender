@@ -255,6 +255,8 @@ function handleFleetSnapshotImportFile(event) {
   if (!input.matches("#fleetSnapshotImportFile")) return;
   const file = input.files && input.files[0];
   if (!file) return;
+  // A new choice replaces whatever an earlier refused file left for the rename form.
+  fleetPendingImportText = null;
   if (file.size > FleetSnapshots.MAX_IMPORT_CHARS) {
     renderFleetSnapshotsPanel(IMPORT_REFUSALS["too-large"]);
     return;
