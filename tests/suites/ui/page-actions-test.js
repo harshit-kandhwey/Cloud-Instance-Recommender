@@ -160,7 +160,16 @@ sandbox.fnB = function (...args) {
 sandbox.fnC = function () {
   calls.push(["fnC"]);
 };
-vm.runInContext(read("src/shared/page-actions.js"), vm.createContext(sandbox));
+const dispatcherContext = vm.createContext(sandbox);
+vm.runInContext(read("src/shared/page-actions.js"), dispatcherContext);
+// The dispatcher only calls registered names; these three stand in for real ones.
+vm.runInContext(
+  '["fnA", "fnB", "fnC"].forEach((n) => PAGE_ACTION_NAMES.add(n))',
+  dispatcherContext,
+);
+sandbox.fnUnregistered = function () {
+  calls.push(["fnUnregistered"]);
+};
 
 function fire(type, el) {
   listeners[type]({
@@ -210,6 +219,95 @@ check(
 calls.length = 0;
 fire("click", makeEl({ "data-on-click": "missingFunction" }));
 check("a control naming a missing function does nothing", calls.length === 0);
+
+calls.length = 0;
+fire("click", makeEl({ "data-on-click": "fnUnregistered" }));
+check(
+  "a control naming a defined function that is not registered does nothing",
+  calls.length === 0,
+  JSON.stringify(calls),
+);
+
+calls.length = 0;
+fire(
+  "click",
+  makeEl({ "data-on-click": "fnA", "data-then-click": "fnUnregistered" }),
+);
+check(
+  "a paired control does not run an unregistered second function",
+  calls.length === 1 && calls[0][0] === "fnA",
+  JSON.stringify(calls),
+);
+
+calls.length = 0;
+fire("click", makeEl({ "data-on-click": "constructor" }));
+check(
+  "an inherited member name is not called either",
+  calls.length === 0,
+  JSON.stringify(calls),
+);
+
+// The registry is the one list of names a control may use. It must equal what the
+// pages and the src/ renderers actually write, in both directions: a name missing from
+// it is a dead control, and a name nothing uses is a callable global for no reason.
+{
+  const listText = read("src/shared/page-actions.js").match(
+    /const PAGE_ACTION_NAMES = new Set\(\[([\s\S]*?)\]\);/,
+  );
+  const registered = new Set(
+    listText ? [...listText[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [],
+  );
+  const used = new Set();
+  for (const page of everyPage) {
+    for (const m of read(page).matchAll(/data-(?:on|then)-[a-z]+="([^"]+)"/g)) {
+      used.add(m[1]);
+    }
+  }
+  const walk = (dir) =>
+    fs
+      .readdirSync(path.join(REPO, dir), { withFileTypes: true })
+      .flatMap((e) => {
+        const rel = path.posix.join(dir, e.name);
+        if (e.isDirectory()) return /vendor|regions/.test(rel) ? [] : walk(rel);
+        return rel.endsWith(".js") ? [rel] : [];
+      });
+  for (const file of walk("src")) {
+    const text = read(file);
+    for (const m of text.matchAll(
+      /actionAttrs\(\s*["'][a-z]+["']\s*,\s*["']([^"']+)["']/g,
+    )) {
+      used.add(m[1]);
+    }
+    for (const m of text.matchAll(/\bthen:\s*["']([^"']+)["']/g))
+      used.add(m[1]);
+  }
+  check(
+    "the scan found the registry and the names in use",
+    registered.size > 50 && used.size > 50,
+    `registered ${registered.size}, used ${used.size}`,
+  );
+  const missing = [...used].filter((n) => !registered.has(n));
+  const unused = [...registered].filter((n) => !used.has(n));
+  check(
+    "every name a page or renderer writes is registered",
+    missing.length === 0,
+    missing.join(", "),
+  );
+  check("no registered name is unused", unused.length === 0, unused.join(", "));
+  const dynamic = [];
+  for (const file of walk("src")) {
+    for (const m of read(file).matchAll(
+      /actionAttrs\(\s*["'][a-z]+["']\s*,\s*([^"'\s][^,)]*)/g,
+    )) {
+      dynamic.push(`${file}: ${m[1]}`);
+    }
+  }
+  check(
+    "no renderer computes an action name (the scan above would not see it)",
+    dynamic.length === 0,
+    dynamic.join("; "),
+  );
+}
 
 // Generated markup (src/**) builds controls through actionAttrs (app-core.js). Any
 // inline handler attribute left in src/ would bypass the dispatcher, and under the strict

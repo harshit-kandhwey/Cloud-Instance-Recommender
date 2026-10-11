@@ -16,7 +16,7 @@ src/
   shared/      app-core.js        state, mapping tables, readiness, region validation, actionAttrs (control markup)
                storage-keys.js    every localStorage key the app owns
                storage-manager.js measure, write and clear the app's own keys
-               page-actions.js    delegated dispatch for controls (data-on-click / data-on-change), and the data-style applier
+               page-actions.js    delegated dispatch for controls (data-on-click / data-on-change), only for the names in its PAGE_ACTION_NAMES list, and the data-style applier
                theme-init.js      sets the light/dark theme before first paint and wires the theme toggle (all seven pages)
                provider-init.js   runs the page's provider toggle on load (the four tool pages)
   core/
