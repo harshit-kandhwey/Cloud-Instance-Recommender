@@ -58,11 +58,36 @@ function onPortfolioMessage(event) {
   }
 }
 
+// The stored copy exists so a reload or a cold open still shows the last hand-off. It
+// holds the uploaded columns, so it is not kept indefinitely: a copy older than this, or
+// one whose date cannot be read, is removed instead of shown.
+const PORTFOLIO_COPY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+// A date this far in the future is a wrong clock or a hand-edited copy, not a fresh one.
+const PORTFOLIO_COPY_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
+function portfolioCopyIsFresh(payload, now = Date.now()) {
+  const at =
+    payload && typeof payload.generatedAt === "string"
+      ? Date.parse(payload.generatedAt)
+      : NaN;
+  if (Number.isNaN(at)) return false;
+  const age = now - at;
+  return (
+    age >= -PORTFOLIO_COPY_CLOCK_SKEW_MS && age <= PORTFOLIO_COPY_MAX_AGE_MS
+  );
+}
+
 function loadPortfolioFromStorage() {
   if (portfolioData) return;
   try {
     const raw = localStorage.getItem(PORTFOLIO_STORAGE_KEY);
-    if (raw) receivePortfolio(JSON.parse(raw));
+    if (!raw) return;
+    const stored = JSON.parse(raw);
+    if (!portfolioCopyIsFresh(stored)) {
+      localStorage.removeItem(PORTFOLIO_STORAGE_KEY);
+      return;
+    }
+    receivePortfolio(stored);
   } catch (e) {
     console.warn("Portfolio localStorage read failed:", e);
   }

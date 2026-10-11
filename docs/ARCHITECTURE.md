@@ -76,7 +76,7 @@ Every key the app owns is listed in `src/shared/storage-keys.js` and nowhere els
 | `filterPresets` | `cloudInstanceRecommenderFilterPresets` | `presets.js` | Named filter presets |
 | `fleetSnapshots` | `cloudInstanceRecommenderFleetSnapshots` | `fleet-snapshots.js` | Named snapshots of a run (below) |
 | `manualVMs` | `cloudInstanceRecommenderManualVMs` | `manual-entry.js` | VMs entered by hand |
-| `portfolioData` | `cloudInstanceRecommenderPortfolioData` | `app-core.js`, `downloads.js` | The portfolio copy of the last run |
+| `portfolioData` | `cloudInstanceRecommenderPortfolioData` | `app-core.js`, `downloads.js` | The portfolio copy of the last run; ignored and removed on read once its `generatedAt` is more than 24 hours old or unreadable (`portfolioCopyIsFresh`) |
 | `sections` | `cloudInstanceRecommenderSections` | `ui-shell.js` | Which sections are collapsed |
 | `sizingPolicies` | `cloudInstanceRecommenderSizingPolicies` | `sizing-policy.js` | The sizing policy, keyed by page and versioned (below) |
 | `stats` | `cloudInstanceRecommenderStats` | `downloads.js` | Local usage counts |
