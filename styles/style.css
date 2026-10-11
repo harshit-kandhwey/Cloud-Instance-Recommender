@@ -506,6 +506,63 @@ body {
   color: var(--text-body);
 }
 
+/* Browser Storage and Fleet Snapshots (3.21): plain markup that storage-manager-ui.js
+   renders into two hosts, so the rules hang off the host ids. Tokens only. */
+#storageManagerPanel .table-wrapper {
+  overflow-x: auto;
+  margin: 10px 0 12px;
+}
+#storageManagerPanel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+#storageManagerPanel th,
+#storageManagerPanel td {
+  padding: 8px 10px;
+  border: 1px solid var(--border-mid);
+  text-align: left;
+}
+#storageManagerPanel thead th {
+  background: var(--surface-alt);
+  font-weight: 600;
+}
+#storageManagerPanel code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+#fleetSnapshotsPanel form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0;
+}
+#fleetSnapshotsPanel input[type="text"] {
+  min-width: 220px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+#fleetSnapshotsPanel ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+#fleetSnapshotsPanel li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-soft);
+}
+#fleetSnapshotsPanel li strong {
+  flex: 1 1 200px;
+}
+
 .alert {
   padding: 15px 20px;
   border-radius: 8px;

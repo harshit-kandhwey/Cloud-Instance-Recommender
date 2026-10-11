@@ -17,6 +17,15 @@ for (const name of ["aws", "azure", "gcp", "multicloud"]) {
     page,
   }) => {
     await page.goto(`/${name}.html`);
+    // The link sits in a section that is collapsed on a first visit, so a user opens it
+    // first; clicking a hidden link waits for a visibility that never comes.
+    const header = page.locator(
+      '.section-header[data-section-id="sample-template"]',
+    );
+    if ((await header.getAttribute("aria-expanded")) === "false") {
+      await header.click();
+    }
+    await expect(page.locator("#downloadInputTemplateBtn")).toBeVisible();
     const downloadPromise = page.waitForEvent("download");
     await page.locator("#downloadInputTemplateBtn").click();
     const download = await downloadPromise;
