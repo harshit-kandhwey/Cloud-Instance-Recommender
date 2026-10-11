@@ -29,6 +29,14 @@ check(
   `found ${jobs.length}`,
 );
 
+// The baselines are rendered on one runner image; a floating label would move them.
+const visualJob = jobs.find((j) => j.startsWith("visual:")) || "";
+check(
+  "the visual job runs on a pinned runner image, not a -latest label",
+  /^ {4}runs-on: ubuntu-\d+\.\d+$/m.test(visualJob),
+  (visualJob.match(/^ {4}runs-on: .*$/m) || ["no runs-on found"])[0],
+);
+
 const unbounded = jobs
   .filter((j) => !/^ {4}timeout-minutes: \d+$/m.test(j))
   .map((j) => j.split(":")[0]);

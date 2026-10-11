@@ -145,7 +145,9 @@ jobs:
     # Depth gate C — visual regression (chromium-only, ubuntu baselines). The
     # committed baselines are the -linux PNGs this runner produces; a pixel diff
     # here is a layout/colour regression. See playwright-visual.config.js.
-    runs-on: ubuntu-latest
+    # Pinned: font hinting differs between runner images, so a floating label
+    # would turn an image change into a diff on every page with no code change.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
