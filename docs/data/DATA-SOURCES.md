@@ -36,7 +36,7 @@ Every record carries a Windows price beside the Linux one, and the recommender r
 ## Key handling
 
 - **Local:** copy `.env.example` to `.env` (gitignored) and fill in `VANTAGE_API_KEY` and `GCP_BILLING_API_KEY`. Never commit `.env`. The local runner imports only those two names from it; any other line (`NODE_OPTIONS`, `PATH`, and so on) is ignored, because the pipeline's child processes inherit the environment it builds.
-- **CI:** the same names are GitHub Actions secrets, exposed to the data-refresh workflow as environment variables. AWS and Azure need no key.
+- **CI:** the same names are GitHub Actions secrets, exposed to the data-refresh workflow as environment variables. AWS and Azure need no key. The workflow's own token is read-only and no checkout keeps a credential; `DATA_REFRESH_PAT` (the push and the pull request, so that the six CI checks run on the result) is used only in the last step of the assemble job, after everything that evaluates vendor data has finished.
 
 ## Running a refresh
 

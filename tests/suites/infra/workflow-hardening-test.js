@@ -3,8 +3,7 @@
 // GITHUB_TOKEN scope falls back to the repo/org default, which can be write; a
 // job without `timeout-minutes` can hang for GitHub's 6-hour ceiling.
 //
-// Scoped to ci.yml: data-refresh.yml legitimately needs contents/pull-requests
-// write and declares it.
+// The first checks are scoped to ci.yml; data-refresh.yml has its own block below.
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");
@@ -77,6 +76,85 @@ for (const file of ["ci.yml", "data-refresh.yml"]) {
     `${file}: every action is pinned to a full commit SHA with a version comment`,
     unpinned.length === 0,
     unpinned.join("; "),
+  );
+}
+
+// ── data-refresh.yml: no write credential reaches a step that evaluates feed data ──
+// The workflow fetches vendor data, evaluates it (the monolith is run through vm), and
+// opens a pull request. Its token used to be write-scoped for every job and the PAT was
+// persisted by checkout into .git/config, so every later step ran with a credential
+// that could push. The PAT is now attached to the remote in the final step only.
+{
+  const src = fs
+    .readFileSync(
+      path.join(REPO, ".github", "workflows", "data-refresh.yml"),
+      "utf8",
+    )
+    .split("\r\n")
+    .join("\n");
+  const code = src
+    .split("\n")
+    .filter((l) => !/^\s*#/.test(l))
+    .join("\n");
+
+  const top = code.match(/^permissions:\n((?: {2}[a-z-]+: \w+\n)+)/m);
+  check("data-refresh.yml declares a top-level permissions block", !!top);
+  check(
+    "its top-level token is read-only: contents: read and nothing else",
+    !!top && top[1] === "  contents: read\n",
+    top ? top[1] : "none",
+  );
+  check(
+    "no job asks for write scope",
+    !/^\s+[a-z-]+: write$/m.test(code),
+    (code.match(/^\s+[a-z-]+: write$/gm) || []).join(", "),
+  );
+
+  const checkouts = [
+    ...code.matchAll(/uses: actions\/checkout@[^\n]+\n((?: {8,}[^\n]+\n)*)/g),
+  ];
+  check(
+    "the scan found the checkout steps",
+    checkouts.length >= 2,
+    String(checkouts.length),
+  );
+  check(
+    "every checkout leaves no credential behind",
+    checkouts.every((m) => /^ {10}persist-credentials: false$/m.test(m[1])),
+    checkouts.map((m) => m[1].trim().replace(/\n\s*/g, " ; ")).join(" | "),
+  );
+  check(
+    "no checkout is given a token",
+    checkouts.every((m) => !/^ {10}token:/m.test(m[1])),
+  );
+
+  const uses = code.split("DATA_REFRESH_PAT").length - 1;
+  check(
+    "the PAT is named exactly once in the workflow",
+    uses === 1,
+    `${uses} references`,
+  );
+  const stepStart = code.lastIndexOf("      - name: Open refresh PR");
+  const patAt = code.indexOf("DATA_REFRESH_PAT");
+  const nextStep = code.indexOf("\n      - ", stepStart + 1);
+  check(
+    "and that one reference is inside the Open refresh PR step",
+    stepStart >= 0 &&
+      patAt > stepStart &&
+      (nextStep === -1 || patAt < nextStep),
+    `step at ${stepStart}, PAT at ${patAt}`,
+  );
+  const pushAt = code.indexOf('git push origin "$branch"');
+  const setUrlAt = code.indexOf("git remote set-url origin");
+  check(
+    "the PAT is attached to the remote before the push, in that step",
+    setUrlAt > stepStart && pushAt > setUrlAt,
+    `set-url ${setUrlAt}, push ${pushAt}`,
+  );
+  check(
+    "the Open refresh PR step is the last step of its job",
+    stepStart >= 0 && nextStep === -1,
+    `next step at ${nextStep}`,
   );
 }
 
