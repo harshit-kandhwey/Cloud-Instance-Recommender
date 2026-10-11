@@ -107,7 +107,7 @@ The storage quota is set by the browser, typically about 5 MB per site. The app 
 | `rules` | object[] | The user-defined rules the run applied. |
 | `rows` | object[] | A copy of the run's per-VM results. |
 
-A snapshot never stores the raw inventory, and never stores `priceSavings`. That value lives on the results array, not on a row, so copying rows cannot carry it.
+Each result row carries the uploaded columns of its VM next to the recommendation, so a snapshot holds the inventory's data, though not the original file; an exported snapshot file holds the same rows. A snapshot never stores `priceSavings`. That value lives on the results array, not on a row, so copying rows cannot carry it.
 
 Drift comparison (`FleetSnapshots.compareFleet`) treats two runs as the same estate only when their `VM Name` sets overlap by at least `MIN_OVERLAP` (90%) of the larger side, and both sides have unique, non-blank names. Anything else is refused, and the refusal names what was added and removed.
 

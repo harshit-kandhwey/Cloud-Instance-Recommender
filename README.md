@@ -476,7 +476,7 @@ const results = await getInstanceRecommendationWithSelector(
 - **Client-Side Only** — All processing runs in your browser
 - **No Data Transmission** — CSV files never leave your machine
 - **No Authentication** — No login, fully anonymous
-- **Local Storage** — Only preferences and any manually entered VM list are stored locally (usage statistics, theme choice, confirmed column mappings, saved filter presets, manual VM entries); uploaded CSV/xlsx inventory is never stored
+- **Local Storage** — Only what you set or ask for is stored locally: preferences and usage statistics, theme choice, confirmed column mappings, saved filter presets, custom rules, sizing policy and manual VM entries. Fleet snapshots you save and the copy of your last results that the App Portfolio page reads also hold the columns you uploaded. The uploaded CSV/xlsx file itself is never stored
 - **Offline Cache** — The service worker caches the app's own static files (pages, scripts, instance data) for offline use; your uploads and results are never cached
 
 ---
