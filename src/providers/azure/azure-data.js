@@ -5,7 +5,7 @@
 window.AZURE_DATA_DATE = "2026-10-11";
 window.AZURE_SPECS = {
   compute: {
-    "a0": {
+    a0: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -18,7 +18,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a1": {
+    a1: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -31,7 +31,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a1v2": {
+    a1v2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -44,7 +44,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a2": {
+    a2: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -57,7 +57,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a2mv2": {
+    a2mv2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -70,7 +70,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a2v2": {
+    a2v2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -83,7 +83,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a3": {
+    a3: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -96,7 +96,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a4": {
+    a4: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -109,7 +109,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a4mv2": {
+    a4mv2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -122,7 +122,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a4v2": {
+    a4v2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -135,7 +135,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a5": {
+    a5: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -148,7 +148,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a6": {
+    a6: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -161,7 +161,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a7": {
+    a7: {
       family: "a",
       familyName: "General purpose",
       isARM: 0,
@@ -174,7 +174,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a8mv2": {
+    a8mv2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -187,7 +187,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "a8v2": {
+    a8v2: {
       family: "av2",
       familyName: "General purpose",
       isARM: 0,
@@ -200,7 +200,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b12ms": {
+    b12ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -213,7 +213,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b16alsv2": {
+    b16alsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -226,7 +226,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b16asv2": {
+    b16asv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -239,7 +239,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b16lsv2": {
+    b16lsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -252,7 +252,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b16ms": {
+    b16ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -265,7 +265,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b16plsv2": {
+    b16plsv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -278,7 +278,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b16psv2": {
+    b16psv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -291,7 +291,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b16sv2": {
+    b16sv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -304,7 +304,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b1ls": {
+    b1ls: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -317,7 +317,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b1ms": {
+    b1ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -330,7 +330,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b1s": {
+    b1s: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -343,7 +343,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b20ms": {
+    b20ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -356,7 +356,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2alsv2": {
+    b2alsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -369,7 +369,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2asv2": {
+    b2asv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -382,7 +382,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2atsv2": {
+    b2atsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -395,7 +395,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2lsv2": {
+    b2lsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -408,7 +408,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2ms": {
+    b2ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -421,7 +421,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2plsv2": {
+    b2plsv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -434,7 +434,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b2psv2": {
+    b2psv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -447,7 +447,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b2ptsv2": {
+    b2ptsv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -460,7 +460,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b2s": {
+    b2s: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -473,7 +473,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2sv2": {
+    b2sv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -486,7 +486,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b2tsv2": {
+    b2tsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -499,7 +499,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b32alsv2": {
+    b32alsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -512,7 +512,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b32asv2": {
+    b32asv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -525,7 +525,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b32lsv2": {
+    b32lsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -538,7 +538,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b32sv2": {
+    b32sv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -551,7 +551,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b4alsv2": {
+    b4alsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -564,7 +564,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b4asv2": {
+    b4asv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -577,7 +577,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b4lsv2": {
+    b4lsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -590,7 +590,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b4ms": {
+    b4ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -603,7 +603,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b4plsv2": {
+    b4plsv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -616,7 +616,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b4psv2": {
+    b4psv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -629,7 +629,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b4sv2": {
+    b4sv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -642,7 +642,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b8alsv2": {
+    b8alsv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -655,7 +655,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b8asv2": {
+    b8asv2: {
       family: "basv2",
       familyName: "General purpose",
       isARM: 0,
@@ -668,7 +668,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b8lsv2": {
+    b8lsv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -681,7 +681,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b8ms": {
+    b8ms: {
       family: "bs",
       familyName: "General purpose",
       isARM: 0,
@@ -694,7 +694,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "b8plsv2": {
+    b8plsv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -707,7 +707,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b8psv2": {
+    b8psv2: {
       family: "bpsv2",
       familyName: "General purpose",
       isARM: 1,
@@ -720,7 +720,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "b8sv2": {
+    b8sv2: {
       family: "bsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -733,7 +733,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d1": {
+    d1: {
       family: "d",
       familyName: "General purpose",
       isARM: 0,
@@ -746,7 +746,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d11": {
+    d11: {
       family: "d",
       familyName: "Memory optimized",
       isARM: 0,
@@ -759,7 +759,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d11s": {
+    d11s: {
       family: "ds",
       familyName: "Memory optimized",
       isARM: 0,
@@ -772,7 +772,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d11v2": {
+    d11v2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -785,7 +785,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d12": {
+    d12: {
       family: "d",
       familyName: "Memory optimized",
       isARM: 0,
@@ -798,7 +798,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128adsv7": {
+    d128adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -811,7 +811,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128aldsv7": {
+    d128aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -824,7 +824,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128alsv7": {
+    d128alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -837,7 +837,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128asv7": {
+    d128asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -850,7 +850,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128dsv6": {
+    d128dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -863,7 +863,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128dsv7": {
+    d128dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -876,7 +876,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128ldsv6": {
+    d128ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -889,7 +889,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128ldsv7": {
+    d128ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -902,7 +902,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128lsv6": {
+    d128lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -915,7 +915,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128lsv7": {
+    d128lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -928,7 +928,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128ndsv6": {
+    d128ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -941,7 +941,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128nldsv6": {
+    d128nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -954,7 +954,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128nlsv6": {
+    d128nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -967,7 +967,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128nsv6": {
+    d128nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -980,7 +980,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128sv6": {
+    d128sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -993,7 +993,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d128sv7": {
+    d128sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1006,7 +1006,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d12s": {
+    d12s: {
       family: "ds",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1019,7 +1019,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d12v2": {
+    d12v2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1032,7 +1032,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d13": {
+    d13: {
       family: "d",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1045,7 +1045,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d13s": {
+    d13s: {
       family: "ds",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1058,7 +1058,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d13v2": {
+    d13v2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1071,7 +1071,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d14": {
+    d14: {
       family: "d",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1084,7 +1084,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d14s": {
+    d14s: {
       family: "ds",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1097,7 +1097,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d14v2": {
+    d14v2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1110,7 +1110,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d15iv2": {
+    d15iv2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1123,7 +1123,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d15v2": {
+    d15v2: {
       family: "dv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -1136,7 +1136,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d160adsv7": {
+    d160adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1149,7 +1149,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d160aldsv7": {
+    d160aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1162,7 +1162,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d160alsv7": {
+    d160alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1175,7 +1175,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d160asv7": {
+    d160asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1188,7 +1188,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16adsv5": {
+    d16adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1201,7 +1201,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16adsv6": {
+    d16adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1214,7 +1214,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16adsv7": {
+    d16adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1227,7 +1227,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16aldsv6": {
+    d16aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1240,7 +1240,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16aldsv7": {
+    d16aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1253,7 +1253,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16alsv6": {
+    d16alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1266,7 +1266,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16alsv7": {
+    d16alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1279,7 +1279,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16asv4": {
+    d16asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -1292,7 +1292,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16asv5": {
+    d16asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1305,7 +1305,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16asv6": {
+    d16asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1318,7 +1318,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16asv7": {
+    d16asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1331,7 +1331,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16av4": {
+    d16av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -1344,7 +1344,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dsv4": {
+    d16dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -1357,7 +1357,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dsv5": {
+    d16dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1370,7 +1370,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dsv6": {
+    d16dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1383,7 +1383,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dsv7": {
+    d16dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1396,7 +1396,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dv4": {
+    d16dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -1409,7 +1409,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16dv5": {
+    d16dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1422,7 +1422,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16ldsv5": {
+    d16ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1435,7 +1435,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16ldsv6": {
+    d16ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1448,7 +1448,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16ldsv7": {
+    d16ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1461,7 +1461,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16lsv5": {
+    d16lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1474,7 +1474,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16lsv6": {
+    d16lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1487,7 +1487,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16lsv7": {
+    d16lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1500,7 +1500,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16ndsv6": {
+    d16ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1513,7 +1513,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16nldsv6": {
+    d16nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1526,7 +1526,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16nlsv6": {
+    d16nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1539,7 +1539,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16nsv6": {
+    d16nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1552,7 +1552,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16pdsv5": {
+    d16pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -1565,7 +1565,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d16pdsv6": {
+    d16pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -1578,7 +1578,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16pldsv5": {
+    d16pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -1591,7 +1591,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d16pldsv6": {
+    d16pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -1604,7 +1604,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16plsv5": {
+    d16plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -1617,7 +1617,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d16plsv6": {
+    d16plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -1630,7 +1630,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16psv5": {
+    d16psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -1643,7 +1643,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d16psv6": {
+    d16psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -1656,7 +1656,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16sv3": {
+    d16sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -1669,7 +1669,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16sv4": {
+    d16sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -1682,7 +1682,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16sv5": {
+    d16sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1695,7 +1695,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16sv6": {
+    d16sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1708,7 +1708,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16sv7": {
+    d16sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1721,7 +1721,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16v3": {
+    d16v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -1734,7 +1734,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16v4": {
+    d16v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -1747,7 +1747,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d16v5": {
+    d16v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1760,7 +1760,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192dsv6": {
+    d192dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1773,7 +1773,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192dsv7": {
+    d192dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1786,7 +1786,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192ldsv7": {
+    d192ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1799,7 +1799,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192lsv7": {
+    d192lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1812,7 +1812,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192sv6": {
+    d192sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1825,7 +1825,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d192sv7": {
+    d192sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1838,7 +1838,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d1s": {
+    d1s: {
       family: "ds",
       familyName: "General purpose",
       isARM: 0,
@@ -1851,7 +1851,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d1v2": {
+    d1v2: {
       family: "dv2",
       familyName: "General purpose",
       isARM: 0,
@@ -1864,7 +1864,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2": {
+    d2: {
       family: "d",
       familyName: "General purpose",
       isARM: 0,
@@ -1877,7 +1877,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d248dsv7": {
+    d248dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1890,7 +1890,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d248ldsv7": {
+    d248ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1903,7 +1903,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d248lsv7": {
+    d248lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1916,7 +1916,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d248sv7": {
+    d248sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1929,7 +1929,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2adsv5": {
+    d2adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -1942,7 +1942,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2adsv6": {
+    d2adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1955,7 +1955,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2adsv7": {
+    d2adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1968,7 +1968,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2aldsv6": {
+    d2aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -1981,7 +1981,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2aldsv7": {
+    d2aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -1994,7 +1994,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2alsv6": {
+    d2alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2007,7 +2007,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2alsv7": {
+    d2alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2020,7 +2020,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2asv4": {
+    d2asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2033,7 +2033,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2asv5": {
+    d2asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2046,7 +2046,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2asv6": {
+    d2asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2059,7 +2059,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2asv7": {
+    d2asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2072,7 +2072,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2av4": {
+    d2av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -2085,7 +2085,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dsv4": {
+    d2dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2098,7 +2098,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dsv5": {
+    d2dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2111,7 +2111,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dsv6": {
+    d2dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2124,7 +2124,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dsv7": {
+    d2dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2137,7 +2137,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dv4": {
+    d2dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2150,7 +2150,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2dv5": {
+    d2dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2163,7 +2163,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2ldsv5": {
+    d2ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2176,7 +2176,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2ldsv6": {
+    d2ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2189,7 +2189,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2ldsv7": {
+    d2ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2202,7 +2202,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2lsv5": {
+    d2lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2215,7 +2215,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2lsv6": {
+    d2lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2228,7 +2228,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2lsv7": {
+    d2lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2241,7 +2241,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2ndsv6": {
+    d2ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2254,7 +2254,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2nldsv6": {
+    d2nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2267,7 +2267,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2nlsv6": {
+    d2nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2280,7 +2280,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2nsv6": {
+    d2nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2293,7 +2293,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2pdsv5": {
+    d2pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2306,7 +2306,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d2pdsv6": {
+    d2pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2319,7 +2319,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2pldsv5": {
+    d2pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2332,7 +2332,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d2pldsv6": {
+    d2pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2345,7 +2345,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2plsv5": {
+    d2plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2358,7 +2358,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d2plsv6": {
+    d2plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2371,7 +2371,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2psv5": {
+    d2psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2384,7 +2384,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d2psv6": {
+    d2psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2397,7 +2397,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2s": {
+    d2s: {
       family: "ds",
       familyName: "General purpose",
       isARM: 0,
@@ -2410,7 +2410,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2sv3": {
+    d2sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -2423,7 +2423,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2sv4": {
+    d2sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2436,7 +2436,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2sv5": {
+    d2sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2449,7 +2449,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2sv6": {
+    d2sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2462,7 +2462,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2sv7": {
+    d2sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2475,7 +2475,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2v2": {
+    d2v2: {
       family: "dv2",
       familyName: "General purpose",
       isARM: 0,
@@ -2488,7 +2488,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2v3": {
+    d2v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -2501,7 +2501,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2v4": {
+    d2v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2514,7 +2514,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d2v5": {
+    d2v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2527,7 +2527,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d3": {
+    d3: {
       family: "d",
       familyName: "General purpose",
       isARM: 0,
@@ -2540,7 +2540,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32adsv5": {
+    d32adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2553,7 +2553,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32adsv6": {
+    d32adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2566,7 +2566,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32adsv7": {
+    d32adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2579,7 +2579,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32aldsv6": {
+    d32aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2592,7 +2592,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32aldsv7": {
+    d32aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2605,7 +2605,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32alsv6": {
+    d32alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2618,7 +2618,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32alsv7": {
+    d32alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2631,7 +2631,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32asv4": {
+    d32asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2644,7 +2644,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32asv5": {
+    d32asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2657,7 +2657,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32asv6": {
+    d32asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2670,7 +2670,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32asv7": {
+    d32asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2683,7 +2683,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32av4": {
+    d32av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -2696,7 +2696,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dsv4": {
+    d32dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2709,7 +2709,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dsv5": {
+    d32dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2722,7 +2722,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dsv6": {
+    d32dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2735,7 +2735,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dsv7": {
+    d32dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2748,7 +2748,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dv4": {
+    d32dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -2761,7 +2761,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32dv5": {
+    d32dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2774,7 +2774,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32ldsv5": {
+    d32ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2787,7 +2787,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32ldsv6": {
+    d32ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2800,7 +2800,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32ldsv7": {
+    d32ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2813,7 +2813,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32lsv5": {
+    d32lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -2826,7 +2826,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32lsv6": {
+    d32lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2839,7 +2839,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32lsv7": {
+    d32lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -2852,7 +2852,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32ndsv6": {
+    d32ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2865,7 +2865,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32nldsv6": {
+    d32nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2878,7 +2878,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32nlsv6": {
+    d32nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2891,7 +2891,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32nsv6": {
+    d32nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -2904,7 +2904,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32pdsv5": {
+    d32pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2917,7 +2917,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d32pdsv6": {
+    d32pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2930,7 +2930,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32pldsv5": {
+    d32pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2943,7 +2943,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d32pldsv6": {
+    d32pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2956,7 +2956,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32plsv5": {
+    d32plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2969,7 +2969,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d32plsv6": {
+    d32plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -2982,7 +2982,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32psv5": {
+    d32psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -2995,7 +2995,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d32psv6": {
+    d32psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -3008,7 +3008,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32sv3": {
+    d32sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -3021,7 +3021,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32sv4": {
+    d32sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3034,7 +3034,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32sv5": {
+    d32sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3047,7 +3047,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32sv6": {
+    d32sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3060,7 +3060,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32sv7": {
+    d32sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3073,7 +3073,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32v3": {
+    d32v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -3086,7 +3086,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32v4": {
+    d32v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3099,7 +3099,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d32v5": {
+    d32v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3112,7 +3112,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d372dsv7": {
+    d372dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3125,7 +3125,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d372idsv7": {
+    d372idsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3138,7 +3138,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d372isv7": {
+    d372isv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3151,7 +3151,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d372sv7": {
+    d372sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3164,7 +3164,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d3s": {
+    d3s: {
       family: "ds",
       familyName: "General purpose",
       isARM: 0,
@@ -3177,7 +3177,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d3v2": {
+    d3v2: {
       family: "dv2",
       familyName: "General purpose",
       isARM: 0,
@@ -3190,7 +3190,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4": {
+    d4: {
       family: "d",
       familyName: "General purpose",
       isARM: 0,
@@ -3203,7 +3203,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48adsv5": {
+    d48adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3216,7 +3216,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48adsv6": {
+    d48adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3229,7 +3229,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48adsv7": {
+    d48adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3242,7 +3242,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48aldsv6": {
+    d48aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3255,7 +3255,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48aldsv7": {
+    d48aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3268,7 +3268,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48alsv6": {
+    d48alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3281,7 +3281,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48alsv7": {
+    d48alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3294,7 +3294,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48asv4": {
+    d48asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3307,7 +3307,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48asv5": {
+    d48asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3320,7 +3320,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48asv6": {
+    d48asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3333,7 +3333,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48asv7": {
+    d48asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3346,7 +3346,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48av4": {
+    d48av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -3359,7 +3359,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dsv4": {
+    d48dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3372,7 +3372,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dsv5": {
+    d48dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3385,7 +3385,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dsv6": {
+    d48dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3398,7 +3398,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dsv7": {
+    d48dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3411,7 +3411,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dv4": {
+    d48dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3424,7 +3424,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48dv5": {
+    d48dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3437,7 +3437,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48ldsv5": {
+    d48ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3450,7 +3450,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48ldsv6": {
+    d48ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3463,7 +3463,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48ldsv7": {
+    d48ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3476,7 +3476,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48lsv5": {
+    d48lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3489,7 +3489,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48lsv6": {
+    d48lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3502,7 +3502,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48lsv7": {
+    d48lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3515,7 +3515,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48ndsv6": {
+    d48ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3528,7 +3528,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48nldsv6": {
+    d48nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3541,7 +3541,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48nlsv6": {
+    d48nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3554,7 +3554,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48nsv6": {
+    d48nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3567,7 +3567,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48pdsv5": {
+    d48pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -3580,7 +3580,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d48pdsv6": {
+    d48pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -3593,7 +3593,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48pldsv5": {
+    d48pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -3606,7 +3606,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d48pldsv6": {
+    d48pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -3619,7 +3619,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48plsv5": {
+    d48plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -3632,7 +3632,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d48plsv6": {
+    d48plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -3645,7 +3645,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48psv5": {
+    d48psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -3658,7 +3658,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d48psv6": {
+    d48psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -3671,7 +3671,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48sv3": {
+    d48sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -3684,7 +3684,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48sv4": {
+    d48sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3697,7 +3697,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48sv5": {
+    d48sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3710,7 +3710,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48sv6": {
+    d48sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3723,7 +3723,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48sv7": {
+    d48sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3736,7 +3736,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48v3": {
+    d48v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -3749,7 +3749,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48v4": {
+    d48v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3762,7 +3762,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d48v5": {
+    d48v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3775,7 +3775,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4adsv5": {
+    d4adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3788,7 +3788,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4adsv6": {
+    d4adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3801,7 +3801,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4adsv7": {
+    d4adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3814,7 +3814,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4aldsv6": {
+    d4aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3827,7 +3827,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4aldsv7": {
+    d4aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3840,7 +3840,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4alsv6": {
+    d4alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3853,7 +3853,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4alsv7": {
+    d4alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3866,7 +3866,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4asv4": {
+    d4asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3879,7 +3879,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4asv5": {
+    d4asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3892,7 +3892,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4asv6": {
+    d4asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3905,7 +3905,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4asv7": {
+    d4asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3918,7 +3918,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4av4": {
+    d4av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -3931,7 +3931,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dsv4": {
+    d4dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3944,7 +3944,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dsv5": {
+    d4dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -3957,7 +3957,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dsv6": {
+    d4dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -3970,7 +3970,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dsv7": {
+    d4dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -3983,7 +3983,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dv4": {
+    d4dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -3996,7 +3996,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4dv5": {
+    d4dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4009,7 +4009,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4ldsv5": {
+    d4ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4022,7 +4022,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4ldsv6": {
+    d4ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4035,7 +4035,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4ldsv7": {
+    d4ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4048,7 +4048,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4lsv5": {
+    d4lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4061,7 +4061,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4lsv6": {
+    d4lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4074,7 +4074,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4lsv7": {
+    d4lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4087,7 +4087,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4ndsv6": {
+    d4ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4100,7 +4100,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4nldsv6": {
+    d4nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4113,7 +4113,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4nlsv6": {
+    d4nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4126,7 +4126,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4nsv6": {
+    d4nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4139,7 +4139,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4pdsv5": {
+    d4pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4152,7 +4152,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d4pdsv6": {
+    d4pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4165,7 +4165,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4pldsv5": {
+    d4pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4178,7 +4178,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d4pldsv6": {
+    d4pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4191,7 +4191,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4plsv5": {
+    d4plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4204,7 +4204,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d4plsv6": {
+    d4plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4217,7 +4217,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4psv5": {
+    d4psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4230,7 +4230,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d4psv6": {
+    d4psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4243,7 +4243,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4s": {
+    d4s: {
       family: "ds",
       familyName: "General purpose",
       isARM: 0,
@@ -4256,7 +4256,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4sv3": {
+    d4sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -4269,7 +4269,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4sv4": {
+    d4sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4282,7 +4282,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4sv5": {
+    d4sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4295,7 +4295,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4sv6": {
+    d4sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4308,7 +4308,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4sv7": {
+    d4sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4321,7 +4321,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4v2": {
+    d4v2: {
       family: "dv2",
       familyName: "General purpose",
       isARM: 0,
@@ -4334,7 +4334,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4v3": {
+    d4v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -4347,7 +4347,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4v4": {
+    d4v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4360,7 +4360,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d4v5": {
+    d4v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4373,7 +4373,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d5v2": {
+    d5v2: {
       family: "dv2",
       familyName: "General purpose",
       isARM: 0,
@@ -4386,7 +4386,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64adsv5": {
+    d64adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4399,7 +4399,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64adsv6": {
+    d64adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4412,7 +4412,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64adsv7": {
+    d64adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4425,7 +4425,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64aldsv6": {
+    d64aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4438,7 +4438,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64aldsv7": {
+    d64aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4451,7 +4451,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64alsv6": {
+    d64alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4464,7 +4464,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64alsv7": {
+    d64alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4477,7 +4477,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64asv4": {
+    d64asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4490,7 +4490,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64asv5": {
+    d64asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4503,7 +4503,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64asv6": {
+    d64asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4516,7 +4516,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64asv7": {
+    d64asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4529,7 +4529,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64av4": {
+    d64av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -4542,7 +4542,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dsv4": {
+    d64dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4555,7 +4555,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dsv5": {
+    d64dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4568,7 +4568,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dsv6": {
+    d64dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4581,7 +4581,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dsv7": {
+    d64dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4594,7 +4594,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dv4": {
+    d64dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4607,7 +4607,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64dv5": {
+    d64dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4620,7 +4620,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64ldsv5": {
+    d64ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4633,7 +4633,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64ldsv6": {
+    d64ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4646,7 +4646,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64ldsv7": {
+    d64ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4659,7 +4659,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64lsv5": {
+    d64lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4672,7 +4672,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64lsv6": {
+    d64lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4685,7 +4685,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64lsv7": {
+    d64lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4698,7 +4698,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64ndsv6": {
+    d64ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4711,7 +4711,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64nldsv6": {
+    d64nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4724,7 +4724,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64nlsv6": {
+    d64nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4737,7 +4737,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64nsv6": {
+    d64nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4750,7 +4750,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64pdsv5": {
+    d64pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4763,7 +4763,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d64pdsv6": {
+    d64pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4776,7 +4776,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64pldsv5": {
+    d64pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4789,7 +4789,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d64pldsv6": {
+    d64pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4802,7 +4802,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64plsv5": {
+    d64plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4815,7 +4815,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d64plsv6": {
+    d64plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4828,7 +4828,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64psv5": {
+    d64psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -4841,7 +4841,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d64psv6": {
+    d64psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -4854,7 +4854,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64sv3": {
+    d64sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -4867,7 +4867,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64sv4": {
+    d64sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4880,7 +4880,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64sv5": {
+    d64sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4893,7 +4893,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64sv6": {
+    d64sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4906,7 +4906,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64sv7": {
+    d64sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4919,7 +4919,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64v3": {
+    d64v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -4932,7 +4932,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64v4": {
+    d64v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -4945,7 +4945,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d64v5": {
+    d64v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4958,7 +4958,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8adsv5": {
+    d8adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -4971,7 +4971,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8adsv6": {
+    d8adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -4984,7 +4984,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8adsv7": {
+    d8adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -4997,7 +4997,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8aldsv6": {
+    d8aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5010,7 +5010,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8aldsv7": {
+    d8aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5023,7 +5023,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8alsv6": {
+    d8alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5036,7 +5036,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8alsv7": {
+    d8alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5049,7 +5049,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8asv4": {
+    d8asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5062,7 +5062,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8asv5": {
+    d8asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5075,7 +5075,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8asv6": {
+    d8asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5088,7 +5088,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8asv7": {
+    d8asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5101,7 +5101,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8av4": {
+    d8av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -5114,7 +5114,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dsv4": {
+    d8dsv4: {
       family: "ddsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5127,7 +5127,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dsv5": {
+    d8dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5140,7 +5140,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dsv6": {
+    d8dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5153,7 +5153,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dsv7": {
+    d8dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5166,7 +5166,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dv4": {
+    d8dv4: {
       family: "ddv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5179,7 +5179,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8dv5": {
+    d8dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5192,7 +5192,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8ldsv5": {
+    d8ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5205,7 +5205,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8ldsv6": {
+    d8ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5218,7 +5218,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8ldsv7": {
+    d8ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5231,7 +5231,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8lsv5": {
+    d8lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5244,7 +5244,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8lsv6": {
+    d8lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5257,7 +5257,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8lsv7": {
+    d8lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5270,7 +5270,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8ndsv6": {
+    d8ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5283,7 +5283,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8nldsv6": {
+    d8nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5296,7 +5296,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8nlsv6": {
+    d8nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5309,7 +5309,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8nsv6": {
+    d8nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5322,7 +5322,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8pdsv5": {
+    d8pdsv5: {
       family: "dpdsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -5335,7 +5335,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d8pdsv6": {
+    d8pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5348,7 +5348,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8pldsv5": {
+    d8pldsv5: {
       family: "dpldsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -5361,7 +5361,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d8pldsv6": {
+    d8pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5374,7 +5374,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8plsv5": {
+    d8plsv5: {
       family: "dplsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -5387,7 +5387,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d8plsv6": {
+    d8plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5400,7 +5400,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8psv5": {
+    d8psv5: {
       family: "dpsv5",
       familyName: "General purpose",
       isARM: 1,
@@ -5413,7 +5413,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "d8psv6": {
+    d8psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5426,7 +5426,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8sv3": {
+    d8sv3: {
       family: "dsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -5439,7 +5439,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8sv4": {
+    d8sv4: {
       family: "dsv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5452,7 +5452,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8sv5": {
+    d8sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5465,7 +5465,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8sv6": {
+    d8sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5478,7 +5478,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8sv7": {
+    d8sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5491,7 +5491,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8v3": {
+    d8v3: {
       family: "dv3",
       familyName: "General purpose",
       isARM: 0,
@@ -5504,7 +5504,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8v4": {
+    d8v4: {
       family: "dv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5517,7 +5517,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d8v5": {
+    d8v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5530,7 +5530,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96adsv5": {
+    d96adsv5: {
       family: "dadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5543,7 +5543,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96adsv6": {
+    d96adsv6: {
       family: "dadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5556,7 +5556,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96adsv7": {
+    d96adsv7: {
       family: "dadsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5569,7 +5569,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96aldsv6": {
+    d96aldsv6: {
       family: "daldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5582,7 +5582,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96aldsv7": {
+    d96aldsv7: {
       family: "daldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5595,7 +5595,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96alsv6": {
+    d96alsv6: {
       family: "dalsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5608,7 +5608,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96alsv7": {
+    d96alsv7: {
       family: "dalsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5621,7 +5621,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96asv4": {
+    d96asv4: {
       family: "dasv4",
       familyName: "General purpose",
       isARM: 0,
@@ -5634,7 +5634,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96asv5": {
+    d96asv5: {
       family: "dasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5647,7 +5647,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96asv6": {
+    d96asv6: {
       family: "dasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5660,7 +5660,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96asv7": {
+    d96asv7: {
       family: "dasv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5673,7 +5673,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96av4": {
+    d96av4: {
       family: "dav4",
       familyName: "General purpose",
       isARM: 0,
@@ -5686,7 +5686,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96dsv5": {
+    d96dsv5: {
       family: "ddsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5699,7 +5699,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96dsv6": {
+    d96dsv6: {
       family: "ddsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5712,7 +5712,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96dsv7": {
+    d96dsv7: {
       family: "ddsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5725,7 +5725,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96dv5": {
+    d96dv5: {
       family: "ddv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5738,7 +5738,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96ldsv5": {
+    d96ldsv5: {
       family: "dldsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5751,7 +5751,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96ldsv6": {
+    d96ldsv6: {
       family: "dldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5764,7 +5764,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96ldsv7": {
+    d96ldsv7: {
       family: "dldsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5777,7 +5777,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96lsv5": {
+    d96lsv5: {
       family: "dlsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5790,7 +5790,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96lsv6": {
+    d96lsv6: {
       family: "dlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5803,7 +5803,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96lsv7": {
+    d96lsv7: {
       family: "dlsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5816,7 +5816,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96ndsv6": {
+    d96ndsv6: {
       family: "dndsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5829,7 +5829,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96nldsv6": {
+    d96nldsv6: {
       family: "dnldsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5842,7 +5842,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96nlsv6": {
+    d96nlsv6: {
       family: "dnlsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5855,7 +5855,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96nsv6": {
+    d96nsv6: {
       family: "dnsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5868,7 +5868,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96pdsv6": {
+    d96pdsv6: {
       family: "dpdsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5881,7 +5881,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96pldsv6": {
+    d96pldsv6: {
       family: "dpldsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5894,7 +5894,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96plsv6": {
+    d96plsv6: {
       family: "dplsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5907,7 +5907,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96psv6": {
+    d96psv6: {
       family: "dpsv6",
       familyName: "General purpose",
       isARM: 1,
@@ -5920,7 +5920,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96sv5": {
+    d96sv5: {
       family: "dsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5933,7 +5933,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96sv6": {
+    d96sv6: {
       family: "dsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5946,7 +5946,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96sv7": {
+    d96sv7: {
       family: "dsv7",
       familyName: "General purpose",
       isARM: 0,
@@ -5959,7 +5959,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "d96v5": {
+    d96v5: {
       family: "dv5",
       familyName: "General purpose",
       isARM: 0,
@@ -5972,7 +5972,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc128edsv6": {
+    dc128edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5985,7 +5985,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc128esv6": {
+    dc128esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -5998,7 +5998,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16adsv5": {
+    dc16adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6011,7 +6011,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16adsv6": {
+    dc16adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6024,7 +6024,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16asv5": {
+    dc16asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6037,7 +6037,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16asv6": {
+    dc16asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6050,7 +6050,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16dsv3": {
+    dc16dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6063,7 +6063,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16edsv6": {
+    dc16edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6076,7 +6076,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16esv6": {
+    dc16esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6089,7 +6089,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc16sv3": {
+    dc16sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6102,7 +6102,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc1dsv3": {
+    dc1dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6115,7 +6115,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc1sv2": {
+    dc1sv2: {
       family: "dcsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -6128,7 +6128,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc1sv3": {
+    dc1sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6141,7 +6141,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc24dsv3": {
+    dc24dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6154,7 +6154,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc24sv3": {
+    dc24sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6167,7 +6167,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2adsv5": {
+    dc2adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6180,7 +6180,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2adsv6": {
+    dc2adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6193,7 +6193,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2asv5": {
+    dc2asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6206,7 +6206,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2asv6": {
+    dc2asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6219,7 +6219,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2dsv3": {
+    dc2dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6232,7 +6232,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2edsv6": {
+    dc2edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6245,7 +6245,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2esv6": {
+    dc2esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6258,7 +6258,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2sv2": {
+    dc2sv2: {
       family: "dcsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -6271,7 +6271,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc2sv3": {
+    dc2sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6284,7 +6284,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32adsv5": {
+    dc32adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6297,7 +6297,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32adsv6": {
+    dc32adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6310,7 +6310,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32asv5": {
+    dc32asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6323,7 +6323,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32asv6": {
+    dc32asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6336,7 +6336,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32dsv3": {
+    dc32dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6349,7 +6349,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32edsv6": {
+    dc32edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6362,7 +6362,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32esv6": {
+    dc32esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6375,7 +6375,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc32sv3": {
+    dc32sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6388,7 +6388,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48adsv5": {
+    dc48adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6401,7 +6401,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48adsv6": {
+    dc48adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6414,7 +6414,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48asv5": {
+    dc48asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6427,7 +6427,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48asv6": {
+    dc48asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6440,7 +6440,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48dsv3": {
+    dc48dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6453,7 +6453,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48edsv6": {
+    dc48edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6466,7 +6466,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48esv6": {
+    dc48esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6479,7 +6479,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc48sv3": {
+    dc48sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6492,7 +6492,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4adsv5": {
+    dc4adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6505,7 +6505,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4adsv6": {
+    dc4adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6518,7 +6518,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4asv5": {
+    dc4asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6531,7 +6531,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4asv6": {
+    dc4asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6544,7 +6544,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4dsv3": {
+    dc4dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6557,7 +6557,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4edsv6": {
+    dc4edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6570,7 +6570,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4esv6": {
+    dc4esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6583,7 +6583,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4sv2": {
+    dc4sv2: {
       family: "dcsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -6596,7 +6596,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc4sv3": {
+    dc4sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6609,7 +6609,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64adsv5": {
+    dc64adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6622,7 +6622,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64adsv6": {
+    dc64adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6635,7 +6635,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64asv5": {
+    dc64asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6648,7 +6648,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64asv6": {
+    dc64asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6661,7 +6661,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64edsv6": {
+    dc64edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6674,7 +6674,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc64esv6": {
+    dc64esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6687,7 +6687,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8adsv5": {
+    dc8adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6700,7 +6700,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8adsv6": {
+    dc8adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6713,7 +6713,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8asv5": {
+    dc8asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6726,7 +6726,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8asv6": {
+    dc8asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6739,7 +6739,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8dsv3": {
+    dc8dsv3: {
       family: "dcdsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6752,7 +6752,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8edsv6": {
+    dc8edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6765,7 +6765,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8esv6": {
+    dc8esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6778,7 +6778,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8sv2": {
+    dc8sv2: {
       family: "dcsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -6791,7 +6791,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc8sv3": {
+    dc8sv3: {
       family: "dcsv3",
       familyName: "General purpose",
       isARM: 0,
@@ -6804,7 +6804,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96adsv5": {
+    dc96adsv5: {
       family: "dcadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6817,7 +6817,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96adsv6": {
+    dc96adsv6: {
       family: "dcadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6830,7 +6830,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96asv5": {
+    dc96asv5: {
       family: "dcasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -6843,7 +6843,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96asv6": {
+    dc96asv6: {
       family: "dcasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6856,7 +6856,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96edsv6": {
+    dc96edsv6: {
       family: "dcedsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6869,7 +6869,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "dc96esv6": {
+    dc96esv6: {
       family: "dcesv6",
       familyName: "General purpose",
       isARM: 0,
@@ -6882,7 +6882,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds11": {
+    ds11: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6895,7 +6895,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds11v2": {
+    ds11v2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6908,7 +6908,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds12": {
+    ds12: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6921,7 +6921,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds12v2": {
+    ds12v2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6934,7 +6934,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds13": {
+    ds13: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6947,7 +6947,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds13v2": {
+    ds13v2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6960,7 +6960,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds14": {
+    ds14: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6973,7 +6973,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds14v2": {
+    ds14v2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6986,7 +6986,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds15iv2": {
+    ds15iv2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -6999,7 +6999,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds15v2": {
+    ds15v2: {
       family: "dsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7012,7 +7012,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds1v2": {
+    ds1v2: {
       family: "dsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -7025,7 +7025,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds2v2": {
+    ds2v2: {
       family: "dsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -7038,7 +7038,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds3v2": {
+    ds3v2: {
       family: "dsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -7051,7 +7051,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds4v2": {
+    ds4v2: {
       family: "dsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -7064,7 +7064,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ds5v2": {
+    ds5v2: {
       family: "dsv2",
       familyName: "General purpose",
       isARM: 0,
@@ -7077,7 +7077,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e104idsv5": {
+    e104idsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7090,7 +7090,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e104idv5": {
+    e104idv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7103,7 +7103,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e104isv5": {
+    e104isv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7116,7 +7116,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e104iv5": {
+    e104iv5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7129,7 +7129,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e112bdsv5": {
+    e112bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7142,7 +7142,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e112bsv5": {
+    e112bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7155,7 +7155,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128": {
+    e128: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7168,7 +7168,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128adsv7": {
+    e128adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7181,7 +7181,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128asv7": {
+    e128asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7194,7 +7194,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128bdsv6": {
+    e128bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7207,7 +7207,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128bsv6": {
+    e128bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7220,7 +7220,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128dsv6": {
+    e128dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7233,7 +7233,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128dsv7": {
+    e128dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7246,7 +7246,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128ndsv6": {
+    e128ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7259,7 +7259,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128nsv6": {
+    e128nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7272,7 +7272,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128sv6": {
+    e128sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7285,7 +7285,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e128sv7": {
+    e128sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7298,7 +7298,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16": {
+    e16: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7311,7 +7311,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e160adsv7": {
+    e160adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7324,7 +7324,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e160asv7": {
+    e160asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7337,7 +7337,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16adsv5": {
+    e16adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7350,7 +7350,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16adsv6": {
+    e16adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7363,7 +7363,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16adsv7": {
+    e16adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7376,7 +7376,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16asv4": {
+    e16asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7389,7 +7389,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16asv5": {
+    e16asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7402,7 +7402,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16asv6": {
+    e16asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7415,7 +7415,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16asv7": {
+    e16asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7428,7 +7428,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16av4": {
+    e16av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7441,7 +7441,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16bdsv5": {
+    e16bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7454,7 +7454,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16bdsv6": {
+    e16bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7467,7 +7467,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16bsv5": {
+    e16bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7480,7 +7480,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16bsv6": {
+    e16bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7493,7 +7493,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dsv4": {
+    e16dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7506,7 +7506,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dsv5": {
+    e16dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7519,7 +7519,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dsv6": {
+    e16dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7532,7 +7532,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dsv7": {
+    e16dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7545,7 +7545,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dv4": {
+    e16dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7558,7 +7558,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16dv5": {
+    e16dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7571,7 +7571,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16ndsv6": {
+    e16ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7584,7 +7584,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16nsv6": {
+    e16nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7597,7 +7597,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16pdsv5": {
+    e16pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -7610,7 +7610,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e16pdsv6": {
+    e16pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -7623,7 +7623,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16psv5": {
+    e16psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -7636,7 +7636,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e16psv6": {
+    e16psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -7649,7 +7649,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16sv3": {
+    e16sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7662,7 +7662,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16sv4": {
+    e16sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7675,7 +7675,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16sv5": {
+    e16sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7688,7 +7688,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16sv6": {
+    e16sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7701,7 +7701,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16sv7": {
+    e16sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7714,7 +7714,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16v3": {
+    e16v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7727,7 +7727,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16v4": {
+    e16v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7740,7 +7740,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e16v5": {
+    e16v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7753,7 +7753,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e192dsv7": {
+    e192dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7766,7 +7766,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e192ibdsv6": {
+    e192ibdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7779,7 +7779,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e192ibsv6": {
+    e192ibsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7792,7 +7792,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e192idsv6": {
+    e192idsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7805,7 +7805,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e192sv7": {
+    e192sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7818,7 +7818,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20adsv5": {
+    e20adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7831,7 +7831,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20adsv6": {
+    e20adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7844,7 +7844,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20asv4": {
+    e20asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7857,7 +7857,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20asv5": {
+    e20asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7870,7 +7870,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20asv6": {
+    e20asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7883,7 +7883,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20av4": {
+    e20av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7896,7 +7896,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dsv4": {
+    e20dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7909,7 +7909,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dsv5": {
+    e20dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7922,7 +7922,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dsv6": {
+    e20dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7935,7 +7935,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dsv7": {
+    e20dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7948,7 +7948,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dv4": {
+    e20dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7961,7 +7961,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20dv5": {
+    e20dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -7974,7 +7974,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20pdsv5": {
+    e20pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -7987,7 +7987,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e20psv5": {
+    e20psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8000,7 +8000,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e20sv3": {
+    e20sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8013,7 +8013,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20sv4": {
+    e20sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8026,7 +8026,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20sv5": {
+    e20sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8039,7 +8039,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20sv6": {
+    e20sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8052,7 +8052,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20sv7": {
+    e20sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8065,7 +8065,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20v3": {
+    e20v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8078,7 +8078,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20v4": {
+    e20v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8091,7 +8091,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e20v5": {
+    e20v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8104,7 +8104,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e248dsv7": {
+    e248dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8117,7 +8117,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e248sv7": {
+    e248sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8130,7 +8130,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2adsv5": {
+    e2adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8143,7 +8143,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2adsv6": {
+    e2adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8156,7 +8156,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2adsv7": {
+    e2adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8169,7 +8169,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2asv4": {
+    e2asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8182,7 +8182,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2asv5": {
+    e2asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8195,7 +8195,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2asv6": {
+    e2asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8208,7 +8208,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2asv7": {
+    e2asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8221,7 +8221,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2av4": {
+    e2av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8234,7 +8234,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2bdsv5": {
+    e2bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8247,7 +8247,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2bdsv6": {
+    e2bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8260,7 +8260,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2bsv5": {
+    e2bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8273,7 +8273,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2bsv6": {
+    e2bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8286,7 +8286,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dsv4": {
+    e2dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8299,7 +8299,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dsv5": {
+    e2dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8312,7 +8312,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dsv6": {
+    e2dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8325,7 +8325,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dsv7": {
+    e2dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8338,7 +8338,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dv4": {
+    e2dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8351,7 +8351,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2dv5": {
+    e2dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8364,7 +8364,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2ndsv6": {
+    e2ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8377,7 +8377,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2nsv6": {
+    e2nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8390,7 +8390,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2pdsv5": {
+    e2pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8403,7 +8403,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e2pdsv6": {
+    e2pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8416,7 +8416,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2psv5": {
+    e2psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8429,7 +8429,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e2psv6": {
+    e2psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8442,7 +8442,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2sv3": {
+    e2sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8455,7 +8455,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2sv4": {
+    e2sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8468,7 +8468,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2sv5": {
+    e2sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8481,7 +8481,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2sv6": {
+    e2sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8494,7 +8494,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2sv7": {
+    e2sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8507,7 +8507,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2v3": {
+    e2v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8520,7 +8520,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2v4": {
+    e2v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8533,7 +8533,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e2v5": {
+    e2v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8546,7 +8546,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32": {
+    e32: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8559,7 +8559,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32adsv5": {
+    e32adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8572,7 +8572,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32adsv6": {
+    e32adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8585,7 +8585,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32adsv7": {
+    e32adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8598,7 +8598,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32asv4": {
+    e32asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8611,7 +8611,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32asv5": {
+    e32asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8624,7 +8624,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32asv6": {
+    e32asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8637,7 +8637,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32asv7": {
+    e32asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8650,7 +8650,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32av4": {
+    e32av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8663,7 +8663,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32bdsv5": {
+    e32bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8676,7 +8676,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32bdsv6": {
+    e32bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8689,7 +8689,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32bsv5": {
+    e32bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8702,7 +8702,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32bsv6": {
+    e32bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8715,7 +8715,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dsv4": {
+    e32dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8728,7 +8728,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dsv5": {
+    e32dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8741,7 +8741,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dsv6": {
+    e32dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8754,7 +8754,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dsv7": {
+    e32dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8767,7 +8767,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dv4": {
+    e32dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8780,7 +8780,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32dv5": {
+    e32dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8793,7 +8793,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32ndsv6": {
+    e32ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8806,7 +8806,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32nsv6": {
+    e32nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8819,7 +8819,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32pdsv5": {
+    e32pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8832,7 +8832,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e32pdsv6": {
+    e32pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8845,7 +8845,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32psv5": {
+    e32psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8858,7 +8858,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e32psv6": {
+    e32psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -8871,7 +8871,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32sv3": {
+    e32sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8884,7 +8884,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32sv4": {
+    e32sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8897,7 +8897,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32sv5": {
+    e32sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8910,7 +8910,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32sv6": {
+    e32sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8923,7 +8923,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32sv7": {
+    e32sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8936,7 +8936,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32v3": {
+    e32v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8949,7 +8949,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32v4": {
+    e32v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8962,7 +8962,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e32v5": {
+    e32v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8975,7 +8975,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e372idsv7": {
+    e372idsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -8988,7 +8988,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e372isv7": {
+    e372isv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9001,7 +9001,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4": {
+    e4: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9014,7 +9014,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48adsv5": {
+    e48adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9027,7 +9027,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48adsv6": {
+    e48adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9040,7 +9040,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48adsv7": {
+    e48adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9053,7 +9053,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48asv4": {
+    e48asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9066,7 +9066,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48asv5": {
+    e48asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9079,7 +9079,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48asv6": {
+    e48asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9092,7 +9092,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48asv7": {
+    e48asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9105,7 +9105,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48av4": {
+    e48av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9118,7 +9118,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48bdsv5": {
+    e48bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9131,7 +9131,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48bdsv6": {
+    e48bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9144,7 +9144,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48bsv5": {
+    e48bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9157,7 +9157,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48bsv6": {
+    e48bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9170,7 +9170,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dsv4": {
+    e48dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9183,7 +9183,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dsv5": {
+    e48dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9196,7 +9196,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dsv6": {
+    e48dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9209,7 +9209,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dsv7": {
+    e48dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9222,7 +9222,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dv4": {
+    e48dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9235,7 +9235,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48dv5": {
+    e48dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9248,7 +9248,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48ndsv6": {
+    e48ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9261,7 +9261,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48nsv6": {
+    e48nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9274,7 +9274,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48pdsv6": {
+    e48pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9287,7 +9287,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48psv6": {
+    e48psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9300,7 +9300,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48sv3": {
+    e48sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9313,7 +9313,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48sv4": {
+    e48sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9326,7 +9326,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48sv5": {
+    e48sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9339,7 +9339,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48sv6": {
+    e48sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9352,7 +9352,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48sv7": {
+    e48sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9365,7 +9365,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48v3": {
+    e48v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9378,7 +9378,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48v4": {
+    e48v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9391,7 +9391,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e48v5": {
+    e48v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9404,7 +9404,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4adsv5": {
+    e4adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9417,7 +9417,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4adsv6": {
+    e4adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9430,7 +9430,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4adsv7": {
+    e4adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9443,7 +9443,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4asv4": {
+    e4asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9456,7 +9456,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4asv5": {
+    e4asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9469,7 +9469,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4asv6": {
+    e4asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9482,7 +9482,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4asv7": {
+    e4asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9495,7 +9495,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4av4": {
+    e4av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9508,7 +9508,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4bdsv5": {
+    e4bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9521,7 +9521,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4bdsv6": {
+    e4bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9534,7 +9534,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4bsv5": {
+    e4bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9547,7 +9547,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4bsv6": {
+    e4bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9560,7 +9560,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dsv4": {
+    e4dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9573,7 +9573,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dsv5": {
+    e4dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9586,7 +9586,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dsv6": {
+    e4dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9599,7 +9599,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dsv7": {
+    e4dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9612,7 +9612,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dv4": {
+    e4dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9625,7 +9625,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4dv5": {
+    e4dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9638,7 +9638,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4ndsv6": {
+    e4ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9651,7 +9651,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4nsv6": {
+    e4nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9664,7 +9664,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4pdsv5": {
+    e4pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9677,7 +9677,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e4pdsv6": {
+    e4pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9690,7 +9690,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4psv5": {
+    e4psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9703,7 +9703,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e4psv6": {
+    e4psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -9716,7 +9716,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4sv3": {
+    e4sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9729,7 +9729,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4sv4": {
+    e4sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9742,7 +9742,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4sv5": {
+    e4sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9755,7 +9755,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4sv6": {
+    e4sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9768,7 +9768,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4sv7": {
+    e4sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9781,7 +9781,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4v3": {
+    e4v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9794,7 +9794,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4v4": {
+    e4v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9807,7 +9807,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e4v5": {
+    e4v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9820,7 +9820,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64": {
+    e64: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9833,7 +9833,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64adsv5": {
+    e64adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9846,7 +9846,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64adsv6": {
+    e64adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9859,7 +9859,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64adsv7": {
+    e64adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9872,7 +9872,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64asv4": {
+    e64asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9885,7 +9885,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64asv5": {
+    e64asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9898,7 +9898,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64asv6": {
+    e64asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9911,7 +9911,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64asv7": {
+    e64asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9924,7 +9924,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64av4": {
+    e64av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9937,7 +9937,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64bdsv5": {
+    e64bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9950,7 +9950,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64bdsv6": {
+    e64bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9963,7 +9963,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64bsv5": {
+    e64bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9976,7 +9976,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64bsv6": {
+    e64bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -9989,7 +9989,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dsv4": {
+    e64dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10002,7 +10002,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dsv5": {
+    e64dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10015,7 +10015,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dsv6": {
+    e64dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10028,7 +10028,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dsv7": {
+    e64dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10041,7 +10041,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dv4": {
+    e64dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10054,7 +10054,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64dv5": {
+    e64dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10067,7 +10067,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64isv3": {
+    e64isv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10080,7 +10080,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64iv3": {
+    e64iv3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10093,7 +10093,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64ndsv6": {
+    e64ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10106,7 +10106,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64nsv6": {
+    e64nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10119,7 +10119,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64pdsv6": {
+    e64pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10132,7 +10132,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64psv6": {
+    e64psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10145,7 +10145,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64sv3": {
+    e64sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10158,7 +10158,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64sv4": {
+    e64sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10171,7 +10171,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64sv5": {
+    e64sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10184,7 +10184,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64sv6": {
+    e64sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10197,7 +10197,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64sv7": {
+    e64sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10210,7 +10210,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64v3": {
+    e64v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10223,7 +10223,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64v4": {
+    e64v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10236,7 +10236,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e64v5": {
+    e64v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10249,7 +10249,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8": {
+    e8: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10262,7 +10262,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e80idsv4": {
+    e80idsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10275,7 +10275,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e80isv4": {
+    e80isv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10288,7 +10288,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8adsv5": {
+    e8adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10301,7 +10301,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8adsv6": {
+    e8adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10314,7 +10314,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8adsv7": {
+    e8adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10327,7 +10327,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8asv4": {
+    e8asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10340,7 +10340,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8asv5": {
+    e8asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10353,7 +10353,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8asv6": {
+    e8asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10366,7 +10366,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8asv7": {
+    e8asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10379,7 +10379,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8av4": {
+    e8av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10392,7 +10392,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8bdsv5": {
+    e8bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10405,7 +10405,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8bdsv6": {
+    e8bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10418,7 +10418,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8bsv5": {
+    e8bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10431,7 +10431,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8bsv6": {
+    e8bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10444,7 +10444,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dsv4": {
+    e8dsv4: {
       family: "edsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10457,7 +10457,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dsv5": {
+    e8dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10470,7 +10470,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dsv6": {
+    e8dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10483,7 +10483,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dsv7": {
+    e8dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10496,7 +10496,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dv4": {
+    e8dv4: {
       family: "edv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10509,7 +10509,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8dv5": {
+    e8dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10522,7 +10522,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8ndsv6": {
+    e8ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10535,7 +10535,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8nsv6": {
+    e8nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10548,7 +10548,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8pdsv5": {
+    e8pdsv5: {
       family: "epdsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10561,7 +10561,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e8pdsv6": {
+    e8pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10574,7 +10574,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8psv5": {
+    e8psv5: {
       family: "epsv5",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10587,7 +10587,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "e8psv6": {
+    e8psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10600,7 +10600,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8sv3": {
+    e8sv3: {
       family: "esv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10613,7 +10613,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8sv4": {
+    e8sv4: {
       family: "esv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10626,7 +10626,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8sv5": {
+    e8sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10639,7 +10639,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8sv6": {
+    e8sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10652,7 +10652,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8sv7": {
+    e8sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10665,7 +10665,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8v3": {
+    e8v3: {
       family: "ev3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10678,7 +10678,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8v4": {
+    e8v4: {
       family: "ev4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10691,7 +10691,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e8v5": {
+    e8v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10704,7 +10704,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96": {
+    e96: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10717,7 +10717,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96adsv5": {
+    e96adsv5: {
       family: "eadsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10730,7 +10730,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96adsv6": {
+    e96adsv6: {
       family: "eadsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10743,7 +10743,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96adsv7": {
+    e96adsv7: {
       family: "eadsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10756,7 +10756,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96asv4": {
+    e96asv4: {
       family: "easv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10769,7 +10769,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96asv5": {
+    e96asv5: {
       family: "easv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10782,7 +10782,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96asv6": {
+    e96asv6: {
       family: "easv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10795,7 +10795,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96asv7": {
+    e96asv7: {
       family: "easv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10808,7 +10808,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96av4": {
+    e96av4: {
       family: "eav4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10821,7 +10821,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96bdsv5": {
+    e96bdsv5: {
       family: "ebdsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10834,7 +10834,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96bdsv6": {
+    e96bdsv6: {
       family: "ebdsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10847,7 +10847,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96bsv5": {
+    e96bsv5: {
       family: "ebsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10860,7 +10860,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96bsv6": {
+    e96bsv6: {
       family: "ebsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10873,7 +10873,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96dsv5": {
+    e96dsv5: {
       family: "edsv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10886,7 +10886,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96dsv6": {
+    e96dsv6: {
       family: "edsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10899,7 +10899,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96dsv7": {
+    e96dsv7: {
       family: "edsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10912,7 +10912,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96dv5": {
+    e96dv5: {
       family: "edv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10925,7 +10925,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96ndsv6": {
+    e96ndsv6: {
       family: "endsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10938,7 +10938,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96nsv6": {
+    e96nsv6: {
       family: "ensv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10951,7 +10951,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96pdsv6": {
+    e96pdsv6: {
       family: "epdsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10964,7 +10964,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96psv6": {
+    e96psv6: {
       family: "epsv6",
       familyName: "Memory optimized",
       isARM: 1,
@@ -10977,7 +10977,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96sv5": {
+    e96sv5: {
       family: "esv5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -10990,7 +10990,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96sv6": {
+    e96sv6: {
       family: "esv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11003,7 +11003,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96sv7": {
+    e96sv7: {
       family: "esv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11016,7 +11016,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "e96v5": {
+    e96v5: {
       family: "ev5",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11029,7 +11029,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec128edsv6": {
+    ec128edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11042,7 +11042,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec128esv6": {
+    ec128esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11055,7 +11055,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16adsv5": {
+    ec16adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11068,7 +11068,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16adsv6": {
+    ec16adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11081,7 +11081,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16asv5": {
+    ec16asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11094,7 +11094,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16asv6": {
+    ec16asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11107,7 +11107,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16edsv6": {
+    ec16edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11120,7 +11120,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec16esv6": {
+    ec16esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11133,7 +11133,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec20adsv5": {
+    ec20adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11146,7 +11146,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec20asv5": {
+    ec20asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11159,7 +11159,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2adsv5": {
+    ec2adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11172,7 +11172,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2adsv6": {
+    ec2adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11185,7 +11185,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2asv5": {
+    ec2asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11198,7 +11198,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2asv6": {
+    ec2asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11211,7 +11211,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2edsv6": {
+    ec2edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11224,7 +11224,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec2esv6": {
+    ec2esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11237,7 +11237,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32adsv5": {
+    ec32adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11250,7 +11250,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32adsv6": {
+    ec32adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11263,7 +11263,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32asv5": {
+    ec32asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11276,7 +11276,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32asv6": {
+    ec32asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11289,7 +11289,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32edsv6": {
+    ec32edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11302,7 +11302,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec32esv6": {
+    ec32esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11315,7 +11315,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48adsv5": {
+    ec48adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11328,7 +11328,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48adsv6": {
+    ec48adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11341,7 +11341,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48asv5": {
+    ec48asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11354,7 +11354,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48asv6": {
+    ec48asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11367,7 +11367,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48edsv6": {
+    ec48edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11380,7 +11380,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec48esv6": {
+    ec48esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11393,7 +11393,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4adsv5": {
+    ec4adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11406,7 +11406,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4adsv6": {
+    ec4adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11419,7 +11419,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4asv5": {
+    ec4asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11432,7 +11432,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4asv6": {
+    ec4asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11445,7 +11445,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4edsv6": {
+    ec4edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11458,7 +11458,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec4esv6": {
+    ec4esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11471,7 +11471,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64adsv5": {
+    ec64adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11484,7 +11484,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64adsv6": {
+    ec64adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11497,7 +11497,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64asv5": {
+    ec64asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11510,7 +11510,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64asv6": {
+    ec64asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11523,7 +11523,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64edsv6": {
+    ec64edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11536,7 +11536,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec64esv6": {
+    ec64esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11549,7 +11549,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8adsv5": {
+    ec8adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11562,7 +11562,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8adsv6": {
+    ec8adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11575,7 +11575,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8asv5": {
+    ec8asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11588,7 +11588,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8asv6": {
+    ec8asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11601,7 +11601,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8edsv6": {
+    ec8edsv6: {
       family: "ecedsv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11614,7 +11614,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec8esv6": {
+    ec8esv6: {
       family: "ecesv6",
       familyName: "Memory optimized",
       isARM: 0,
@@ -11627,7 +11627,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96adsv5": {
+    ec96adsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11640,7 +11640,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96adsv6": {
+    ec96adsv6: {
       family: "ecadsv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11653,7 +11653,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96asv5": {
+    ec96asv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11666,7 +11666,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96asv6": {
+    ec96asv6: {
       family: "ecasv6",
       familyName: "General purpose",
       isARM: 0,
@@ -11679,7 +11679,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96iadsv5": {
+    ec96iadsv5: {
       family: "ecadsv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11692,7 +11692,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "ec96iasv5": {
+    ec96iasv5: {
       family: "ecasv5",
       familyName: "General purpose",
       isARM: 0,
@@ -11705,7 +11705,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1": {
+    f1: {
       family: "f",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11718,7 +11718,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16": {
+    f16: {
       family: "f",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11731,7 +11731,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16adsv7": {
+    f16adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11744,7 +11744,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16aldsv7": {
+    f16aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11757,7 +11757,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16alsv6": {
+    f16alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11770,7 +11770,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16alsv7": {
+    f16alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11783,7 +11783,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16amdsv7": {
+    f16amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11796,7 +11796,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16amsv6": {
+    f16amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11809,7 +11809,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16amsv7": {
+    f16amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11822,7 +11822,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16asv6": {
+    f16asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11835,7 +11835,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16asv7": {
+    f16asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11848,7 +11848,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16s": {
+    f16s: {
       family: "fs",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11861,7 +11861,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f16sv2": {
+    f16sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11874,7 +11874,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1adsv7": {
+    f1adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11887,7 +11887,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1aldsv7": {
+    f1aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11900,7 +11900,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1alsv7": {
+    f1alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11913,7 +11913,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1amdsv7": {
+    f1amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11926,7 +11926,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1amsv7": {
+    f1amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11939,7 +11939,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1asv7": {
+    f1asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11952,7 +11952,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f1s": {
+    f1s: {
       family: "fs",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11965,7 +11965,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2": {
+    f2: {
       family: "f",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11978,7 +11978,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2adsv7": {
+    f2adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -11991,7 +11991,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2aldsv7": {
+    f2aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12004,7 +12004,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2alsv6": {
+    f2alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12017,7 +12017,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2alsv7": {
+    f2alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12030,7 +12030,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2amdsv7": {
+    f2amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12043,7 +12043,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2amsv6": {
+    f2amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12056,7 +12056,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2amsv7": {
+    f2amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12069,7 +12069,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2asv6": {
+    f2asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12082,7 +12082,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2asv7": {
+    f2asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12095,7 +12095,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2s": {
+    f2s: {
       family: "fs",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12108,7 +12108,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f2sv2": {
+    f2sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12121,7 +12121,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32": {
+    f32: {
       family: "famsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -12134,7 +12134,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32adsv7": {
+    f32adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12147,7 +12147,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32aldsv7": {
+    f32aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12160,7 +12160,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32alsv6": {
+    f32alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12173,7 +12173,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32alsv7": {
+    f32alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12186,7 +12186,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32amdsv7": {
+    f32amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12199,7 +12199,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32amsv6": {
+    f32amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12212,7 +12212,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32amsv7": {
+    f32amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12225,7 +12225,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32asv6": {
+    f32asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12238,7 +12238,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32asv7": {
+    f32asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12251,7 +12251,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f32sv2": {
+    f32sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12264,7 +12264,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4": {
+    f4: {
       family: "f",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12277,7 +12277,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48adsv7": {
+    f48adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12290,7 +12290,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48aldsv7": {
+    f48aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12303,7 +12303,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48alsv6": {
+    f48alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12316,7 +12316,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48alsv7": {
+    f48alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12329,7 +12329,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48amdsv7": {
+    f48amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12342,7 +12342,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48amsv6": {
+    f48amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12355,7 +12355,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48amsv7": {
+    f48amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12368,7 +12368,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48asv6": {
+    f48asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12381,7 +12381,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48asv7": {
+    f48asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12394,7 +12394,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f48sv2": {
+    f48sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12407,7 +12407,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4adsv7": {
+    f4adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12420,7 +12420,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4aldsv7": {
+    f4aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12433,7 +12433,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4alsv6": {
+    f4alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12446,7 +12446,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4alsv7": {
+    f4alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12459,7 +12459,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4amdsv7": {
+    f4amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12472,7 +12472,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4amsv6": {
+    f4amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12485,7 +12485,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4amsv7": {
+    f4amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12498,7 +12498,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4asv6": {
+    f4asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12511,7 +12511,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4asv7": {
+    f4asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12524,7 +12524,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4s": {
+    f4s: {
       family: "fs",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12537,7 +12537,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f4sv2": {
+    f4sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12550,7 +12550,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64": {
+    f64: {
       family: "famsv7",
       familyName: "Memory optimized",
       isARM: 0,
@@ -12563,7 +12563,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64adsv7": {
+    f64adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12576,7 +12576,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64aldsv7": {
+    f64aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12589,7 +12589,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64alsv6": {
+    f64alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12602,7 +12602,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64alsv7": {
+    f64alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12615,7 +12615,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64amdsv7": {
+    f64amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12628,7 +12628,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64amsv6": {
+    f64amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12641,7 +12641,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64amsv7": {
+    f64amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12654,7 +12654,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64asv6": {
+    f64asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12667,7 +12667,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64asv7": {
+    f64asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12680,7 +12680,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f64sv2": {
+    f64sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12693,7 +12693,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f72sv2": {
+    f72sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12706,7 +12706,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8": {
+    f8: {
       family: "f",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12719,7 +12719,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80adsv7": {
+    f80adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12732,7 +12732,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80aldsv7": {
+    f80aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12745,7 +12745,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80alsv7": {
+    f80alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12758,7 +12758,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80amdsv7": {
+    f80amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12771,7 +12771,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80amsv7": {
+    f80amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12784,7 +12784,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f80asv7": {
+    f80asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12797,7 +12797,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8adsv7": {
+    f8adsv7: {
       family: "fadsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12810,7 +12810,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8aldsv7": {
+    f8aldsv7: {
       family: "faldsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12823,7 +12823,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8alsv6": {
+    f8alsv6: {
       family: "falsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12836,7 +12836,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8alsv7": {
+    f8alsv7: {
       family: "falsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12849,7 +12849,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8amdsv7": {
+    f8amdsv7: {
       family: "famdsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12862,7 +12862,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8amsv6": {
+    f8amsv6: {
       family: "famsv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12875,7 +12875,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8amsv7": {
+    f8amsv7: {
       family: "famsv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12888,7 +12888,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8asv6": {
+    f8asv6: {
       family: "fasv6",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12901,7 +12901,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8asv7": {
+    f8asv7: {
       family: "fasv7",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12914,7 +12914,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8s": {
+    f8s: {
       family: "fs",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12927,7 +12927,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "f8sv2": {
+    f8sv2: {
       family: "fsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12940,7 +12940,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx12": {
+    fx12: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -12953,7 +12953,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx12mds": {
+    fx12mds: {
       family: "fx",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12966,7 +12966,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx12mdsv2": {
+    fx12mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12979,7 +12979,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx12msv2": {
+    fx12msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -12992,7 +12992,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx16": {
+    fx16: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13005,7 +13005,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx16mdsv2": {
+    fx16mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13018,7 +13018,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx16msv2": {
+    fx16msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13031,7 +13031,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx24": {
+    fx24: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13044,7 +13044,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx24mds": {
+    fx24mds: {
       family: "fx",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13057,7 +13057,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx24mdsv2": {
+    fx24mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13070,7 +13070,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx24msv2": {
+    fx24msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13083,7 +13083,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx2mdsv2": {
+    fx2mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13096,7 +13096,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx2msv2": {
+    fx2msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13109,7 +13109,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx32": {
+    fx32: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13122,7 +13122,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx32mdsv2": {
+    fx32mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13135,7 +13135,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx32msv2": {
+    fx32msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13148,7 +13148,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx36mds": {
+    fx36mds: {
       family: "fx",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13161,7 +13161,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx4": {
+    fx4: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13174,7 +13174,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx48": {
+    fx48: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13187,7 +13187,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx48mds": {
+    fx48mds: {
       family: "fx",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13200,7 +13200,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx48mdsv2": {
+    fx48mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13213,7 +13213,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx48msv2": {
+    fx48msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13226,7 +13226,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx4mds": {
+    fx4mds: {
       family: "fx",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13239,7 +13239,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx4mdsv2": {
+    fx4mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13252,7 +13252,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx4msv2": {
+    fx4msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13265,7 +13265,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx64": {
+    fx64: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13278,7 +13278,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx64mdsv2": {
+    fx64mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13291,7 +13291,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx64msv2": {
+    fx64msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13304,7 +13304,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx8": {
+    fx8: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13317,7 +13317,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx8mdsv2": {
+    fx8mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13330,7 +13330,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx8msv2": {
+    fx8msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13343,7 +13343,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx96": {
+    fx96: {
       family: "fxmsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13356,7 +13356,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx96mdsv2": {
+    fx96mdsv2: {
       family: "fxmdsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13369,7 +13369,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "fx96msv2": {
+    fx96msv2: {
       family: "fxmsv2",
       familyName: "Compute optimized",
       isARM: 0,
@@ -13382,7 +13382,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "g1": {
+    g1: {
       family: "g",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13395,7 +13395,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "g2": {
+    g2: {
       family: "g",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13408,7 +13408,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "g3": {
+    g3: {
       family: "g",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13421,7 +13421,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "g4": {
+    g4: {
       family: "g",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13434,7 +13434,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "g5": {
+    g5: {
       family: "g",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13447,7 +13447,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "gs1": {
+    gs1: {
       family: "gs",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13460,7 +13460,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "gs2": {
+    gs2: {
       family: "gs",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13473,7 +13473,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "gs3": {
+    gs3: {
       family: "gs",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13486,7 +13486,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "gs4": {
+    gs4: {
       family: "gs",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13499,7 +13499,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "gs5": {
+    gs5: {
       family: "gs",
       familyName: "Memory optimized",
       isARM: 0,
@@ -13512,7 +13512,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "h16": {
+    h16: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13525,7 +13525,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "h16m": {
+    h16m: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13538,7 +13538,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "h16mr": {
+    h16mr: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13551,7 +13551,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "h16r": {
+    h16r: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13564,7 +13564,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "h8": {
+    h8: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13577,7 +13577,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "h8m": {
+    h8m: {
       family: "h",
       familyName: "High performance compute",
       isARM: 0,
@@ -13590,7 +13590,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb120": {
+    hb120: {
       family: "hbv3",
       familyName: "High performance compute",
       isARM: 0,
@@ -13603,7 +13603,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb120rsv2": {
+    hb120rsv2: {
       family: "hbv2",
       familyName: "High performance compute",
       isARM: 0,
@@ -13616,7 +13616,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb120rsv3": {
+    hb120rsv3: {
       family: "hbv3",
       familyName: "High performance compute",
       isARM: 0,
@@ -13629,7 +13629,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb176": {
+    hb176: {
       family: "hbv4",
       familyName: "High performance compute",
       isARM: 0,
@@ -13642,7 +13642,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb176rsv4": {
+    hb176rsv4: {
       family: "hbv4",
       familyName: "High performance compute",
       isARM: 0,
@@ -13655,7 +13655,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb368": {
+    hb368: {
       family: "hbv5",
       familyName: "High performance compute",
       isARM: 0,
@@ -13668,7 +13668,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb368rsv5": {
+    hb368rsv5: {
       family: "hbv5",
       familyName: "High performance compute",
       isARM: 0,
@@ -13681,7 +13681,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb60": {
+    hb60: {
       family: "hb",
       familyName: "High performance compute",
       isARM: 0,
@@ -13694,7 +13694,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hb60rs": {
+    hb60rs: {
       family: "hb",
       familyName: "High performance compute",
       isARM: 0,
@@ -13707,7 +13707,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hc44": {
+    hc44: {
       family: "hc",
       familyName: "High performance compute",
       isARM: 0,
@@ -13720,7 +13720,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hc44rs": {
+    hc44rs: {
       family: "hc",
       familyName: "High performance compute",
       isARM: 0,
@@ -13733,7 +13733,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hx176": {
+    hx176: {
       family: "hx",
       familyName: "High performance compute",
       isARM: 0,
@@ -13746,7 +13746,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "hx176rs": {
+    hx176rs: {
       family: "hx",
       familyName: "High performance compute",
       isARM: 0,
@@ -13759,7 +13759,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l128aosv5": {
+    l128aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13772,7 +13772,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l128asv5": {
+    l128asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13785,7 +13785,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l12aosv4": {
+    l12aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13798,7 +13798,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l12aosv5": {
+    l12aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13811,7 +13811,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l160iaosv5": {
+    l160iaosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13824,7 +13824,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l160iasv5": {
+    l160iasv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13837,7 +13837,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16aosv4": {
+    l16aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13850,7 +13850,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16aosv5": {
+    l16aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13863,7 +13863,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16asv3": {
+    l16asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13876,7 +13876,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16asv4": {
+    l16asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13889,7 +13889,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16asv5": {
+    l16asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13902,7 +13902,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16s": {
+    l16s: {
       family: "ls",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13915,7 +13915,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16sv2": {
+    l16sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13928,7 +13928,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16sv3": {
+    l16sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13941,7 +13941,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l16sv4": {
+    l16sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13954,7 +13954,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l24aosv4": {
+    l24aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13967,7 +13967,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l24aosv5": {
+    l24aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13980,7 +13980,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l2aosv4": {
+    l2aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -13993,7 +13993,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l2aosv5": {
+    l2aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14006,7 +14006,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l2asv4": {
+    l2asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14019,7 +14019,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l2asv5": {
+    l2asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14032,7 +14032,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l2sv4": {
+    l2sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14045,7 +14045,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32aosv4": {
+    l32aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14058,7 +14058,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32aosv5": {
+    l32aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14071,7 +14071,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32asv3": {
+    l32asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14084,7 +14084,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32asv4": {
+    l32asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14097,7 +14097,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32asv5": {
+    l32asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14110,7 +14110,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32s": {
+    l32s: {
       family: "ls",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14123,7 +14123,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32sv2": {
+    l32sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14136,7 +14136,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32sv3": {
+    l32sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14149,7 +14149,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l32sv4": {
+    l32sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14162,7 +14162,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48aosv5": {
+    l48aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14175,7 +14175,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48asv3": {
+    l48asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14188,7 +14188,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48asv4": {
+    l48asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14201,7 +14201,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48asv5": {
+    l48asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14214,7 +14214,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48sv2": {
+    l48sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14227,7 +14227,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48sv3": {
+    l48sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14240,7 +14240,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l48sv4": {
+    l48sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14253,7 +14253,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4aosv4": {
+    l4aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14266,7 +14266,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4aosv5": {
+    l4aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14279,7 +14279,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4asv4": {
+    l4asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14292,7 +14292,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4asv5": {
+    l4asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14305,7 +14305,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4s": {
+    l4s: {
       family: "ls",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14318,7 +14318,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l4sv4": {
+    l4sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14331,7 +14331,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64aosv5": {
+    l64aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14344,7 +14344,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64asv3": {
+    l64asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14357,7 +14357,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64asv4": {
+    l64asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14370,7 +14370,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64asv5": {
+    l64asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14383,7 +14383,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64sv2": {
+    l64sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14396,7 +14396,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64sv3": {
+    l64sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14409,7 +14409,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l64sv4": {
+    l64sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14422,7 +14422,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80asv3": {
+    l80asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14435,7 +14435,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80asv4": {
+    l80asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14448,7 +14448,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80asv5": {
+    l80asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14461,7 +14461,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80sv2": {
+    l80sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14474,7 +14474,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80sv3": {
+    l80sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14487,7 +14487,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l80sv4": {
+    l80sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14500,7 +14500,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8aosv4": {
+    l8aosv4: {
       family: "laosv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14513,7 +14513,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8aosv5": {
+    l8aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14526,7 +14526,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8asv3": {
+    l8asv3: {
       family: "lasv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14539,7 +14539,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8asv4": {
+    l8asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14552,7 +14552,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8asv5": {
+    l8asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14565,7 +14565,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8s": {
+    l8s: {
       family: "ls",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14578,7 +14578,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8sv2": {
+    l8sv2: {
       family: "lsv2",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14591,7 +14591,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8sv3": {
+    l8sv3: {
       family: "lsv3",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14604,7 +14604,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l8sv4": {
+    l8sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14617,7 +14617,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l96aosv5": {
+    l96aosv5: {
       family: "laosv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14630,7 +14630,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l96asv4": {
+    l96asv4: {
       family: "lasv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14643,7 +14643,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l96asv5": {
+    l96asv5: {
       family: "lasv5",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14656,7 +14656,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "l96sv4": {
+    l96sv4: {
       family: "lsv4",
       familyName: "Storage optimized",
       isARM: 0,
@@ -14669,7 +14669,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m128": {
+    m128: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14682,7 +14682,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128bds3v3": {
+    m128bds3v3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14695,7 +14695,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128bdsv3": {
+    m128bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14708,7 +14708,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128bsv3": {
+    m128bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14721,7 +14721,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128dlsv4": {
+    m128dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14734,7 +14734,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m128dmsv2": {
+    m128dmsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14747,7 +14747,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128dsv2": {
+    m128dsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14760,7 +14760,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128lsv4": {
+    m128lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14773,7 +14773,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m128m": {
+    m128m: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14786,7 +14786,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128ms": {
+    m128ms: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14799,7 +14799,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128msv2": {
+    m128msv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14812,7 +14812,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128s": {
+    m128s: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14825,7 +14825,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m128sv2": {
+    m128sv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14838,7 +14838,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m12dsv3": {
+    m12dsv3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14851,7 +14851,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m12sv3": {
+    m12sv3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14864,7 +14864,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m16": {
+    m16: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14877,7 +14877,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m16bdsv3": {
+    m16bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14890,7 +14890,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m16bsv3": {
+    m16bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14903,7 +14903,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m16dlsv4": {
+    m16dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14916,7 +14916,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m16lsv4": {
+    m16lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14929,7 +14929,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m16ms": {
+    m16ms: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14942,7 +14942,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m16sv3": {
+    m16sv3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14955,7 +14955,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m176": {
+    m176: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14968,7 +14968,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m176bds4v3": {
+    m176bds4v3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14981,7 +14981,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176bdsv3": {
+    m176bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -14994,7 +14994,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176bsv3": {
+    m176bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15007,7 +15007,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176ds3v3": {
+    m176ds3v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15020,7 +15020,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176ds4v3": {
+    m176ds4v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15033,7 +15033,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176s3v3": {
+    m176s3v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15046,7 +15046,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m176s4v3": {
+    m176s4v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15059,7 +15059,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m192dlsv4": {
+    m192dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15072,7 +15072,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m192idmsv2": {
+    m192idmsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15085,7 +15085,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m192idsv2": {
+    m192idsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15098,7 +15098,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m192imsv2": {
+    m192imsv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15111,7 +15111,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m192isv2": {
+    m192isv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15124,7 +15124,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m192lsv4": {
+    m192lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15137,7 +15137,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m208msv2": {
+    m208msv2: {
       family: "mv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15150,7 +15150,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m208sv2": {
+    m208sv2: {
       family: "mv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15163,7 +15163,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m24dsv3": {
+    m24dsv3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15176,7 +15176,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m24sv3": {
+    m24sv3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15189,7 +15189,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m256dlsv4": {
+    m256dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15202,7 +15202,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m256lsv4": {
+    m256lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15215,7 +15215,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m32": {
+    m32: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15228,7 +15228,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m32bdsv3": {
+    m32bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15241,7 +15241,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32bsv3": {
+    m32bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15254,7 +15254,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32dlsv4": {
+    m32dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15267,7 +15267,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m32dmsv2": {
+    m32dmsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15280,7 +15280,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32ls": {
+    m32ls: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15293,7 +15293,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32lsv4": {
+    m32lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15306,7 +15306,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m32ms": {
+    m32ms: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15319,7 +15319,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32msv2": {
+    m32msv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15332,7 +15332,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32ts": {
+    m32ts: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15345,7 +15345,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m32tsv3": {
+    m32tsv3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15358,7 +15358,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m416bsv3": {
+    m416bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15371,7 +15371,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416ds6v3": {
+    m416ds6v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15384,7 +15384,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416ds8v3": {
+    m416ds8v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15397,7 +15397,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416msv2": {
+    m416msv2: {
       family: "mv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15410,7 +15410,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416s6v3": {
+    m416s6v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15423,7 +15423,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416s8v2": {
+    m416s8v2: {
       family: "mv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15436,7 +15436,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416s8v3": {
+    m416s8v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15449,7 +15449,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m416sv2": {
+    m416sv2: {
       family: "mv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15462,7 +15462,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m48bdsv3": {
+    m48bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15475,7 +15475,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m48bsv3": {
+    m48bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15488,7 +15488,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m48dlsv4": {
+    m48dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15501,7 +15501,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m48ds1v3": {
+    m48ds1v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15514,7 +15514,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m48lsv4": {
+    m48lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15527,7 +15527,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m48s1v3": {
+    m48s1v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15540,7 +15540,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m624ds12v3": {
+    m624ds12v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15553,7 +15553,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m624s12v3": {
+    m624s12v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15566,7 +15566,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64": {
+    m64: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15579,7 +15579,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m6432bds1v3": {
+    m6432bds1v3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15592,7 +15592,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m64bds1v3": {
+    m64bds1v3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15605,7 +15605,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64bdsv3": {
+    m64bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15618,7 +15618,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64bsv3": {
+    m64bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15631,7 +15631,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64dlsv4": {
+    m64dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15644,7 +15644,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m64dmsv2": {
+    m64dmsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15657,7 +15657,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64dsv2": {
+    m64dsv2: {
       family: "mdsv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15670,7 +15670,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64ls": {
+    m64ls: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15683,7 +15683,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64lsv4": {
+    m64lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15696,7 +15696,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m64m": {
+    m64m: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15709,7 +15709,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64ms": {
+    m64ms: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15722,7 +15722,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64msv2": {
+    m64msv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15735,7 +15735,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64s": {
+    m64s: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15748,7 +15748,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m64sv2": {
+    m64sv2: {
       family: "msv2",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15761,7 +15761,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m8": {
+    m8: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15774,7 +15774,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m832ds12v3": {
+    m832ds12v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15787,7 +15787,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m832ids16v3": {
+    m832ids16v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15800,7 +15800,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m832is16v3": {
+    m832is16v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15813,7 +15813,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m832s12v3": {
+    m832s12v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15826,7 +15826,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m896ixds24v3": {
+    m896ixds24v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15839,7 +15839,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m896ixds32v3": {
+    m896ixds32v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15852,7 +15852,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m8ms": {
+    m8ms: {
       family: "m",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15865,7 +15865,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96": {
+    m96: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15878,7 +15878,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m96bds2v3": {
+    m96bds2v3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15891,7 +15891,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96bdsv3": {
+    m96bdsv3: {
       family: "mbdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15904,7 +15904,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96bsv3": {
+    m96bsv3: {
       family: "mbsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15917,7 +15917,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96dlsv4": {
+    m96dlsv4: {
       family: "mdsv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15930,7 +15930,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m96ds1v3": {
+    m96ds1v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15943,7 +15943,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96ds2v3": {
+    m96ds2v3: {
       family: "mdsv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15956,7 +15956,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96lsv4": {
+    m96lsv4: {
       family: "msv4",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15969,7 +15969,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "m96s1v3": {
+    m96s1v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15982,7 +15982,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "m96s2v3": {
+    m96s2v3: {
       family: "msv3",
       familyName: "Memory optimized",
       isARM: 0,
@@ -15995,7 +15995,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 1,
     },
-    "nc12": {
+    nc12: {
       family: "nc",
       familyName: "GPU",
       isARM: 0,
@@ -16008,7 +16008,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc12sv2": {
+    nc12sv2: {
       family: "ncsv2",
       familyName: "GPU",
       isARM: 0,
@@ -16021,7 +16021,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc12sv3": {
+    nc12sv3: {
       family: "ncsv3",
       familyName: "GPU",
       isARM: 0,
@@ -16034,7 +16034,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc144dsxlrtx6kv6": {
+    nc144dsxlrtx6kv6: {
       family: "ncdsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16047,7 +16047,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc144ldsxlrtx6kv6": {
+    nc144ldsxlrtx6kv6: {
       family: "ncldsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16060,7 +16060,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc16adsv4": {
+    nc16adsv4: {
       family: "nca10v4",
       familyName: "GPU",
       isARM: 0,
@@ -16073,7 +16073,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc16ast4v3": {
+    nc16ast4v3: {
       family: "ncast4v3",
       familyName: "GPU",
       isARM: 0,
@@ -16086,7 +16086,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc24": {
+    nc24: {
       family: "nc",
       familyName: "GPU",
       isARM: 0,
@@ -16099,7 +16099,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc24adsv4": {
+    nc24adsv4: {
       family: "nca100v4",
       familyName: "GPU",
       isARM: 0,
@@ -16112,7 +16112,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc24ldsxlrtx6kv6": {
+    nc24ldsxlrtx6kv6: {
       family: "ncldsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16125,7 +16125,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.25,
       trustedLaunch: 0,
     },
-    "nc24r": {
+    nc24r: {
       family: "nc",
       familyName: "GPU",
       isARM: 0,
@@ -16138,7 +16138,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc24rsv2": {
+    nc24rsv2: {
       family: "ncsv2",
       familyName: "GPU",
       isARM: 0,
@@ -16151,7 +16151,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc24rsv3": {
+    nc24rsv3: {
       family: "ncsv3",
       familyName: "GPU",
       isARM: 0,
@@ -16164,7 +16164,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc24sv2": {
+    nc24sv2: {
       family: "ncsv2",
       familyName: "GPU",
       isARM: 0,
@@ -16177,7 +16177,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc24sv3": {
+    nc24sv3: {
       family: "ncsv3",
       familyName: "GPU",
       isARM: 0,
@@ -16190,7 +16190,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc288dsxlrtx6kv6": {
+    nc288dsxlrtx6kv6: {
       family: "ncdsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16203,7 +16203,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc288ldsxlrtx6kv6": {
+    nc288ldsxlrtx6kv6: {
       family: "ncldsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16216,7 +16216,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc32adsv4": {
+    nc32adsv4: {
       family: "nca10v4",
       familyName: "GPU",
       isARM: 0,
@@ -16229,7 +16229,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc36dsxlrtx6kv6": {
+    nc36dsxlrtx6kv6: {
       family: "ncdsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16242,7 +16242,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.25,
       trustedLaunch: 0,
     },
-    "nc36ldsxlrtx6kv6": {
+    nc36ldsxlrtx6kv6: {
       family: "ncldsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16255,7 +16255,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.25,
       trustedLaunch: 0,
     },
-    "nc40adsh100v5": {
+    nc40adsh100v5: {
       family: "ncadsh100v5",
       familyName: "GPU",
       isARM: 0,
@@ -16268,7 +16268,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc48adsv4": {
+    nc48adsv4: {
       family: "nca100v4",
       familyName: "GPU",
       isARM: 0,
@@ -16281,7 +16281,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc4ast4v3": {
+    nc4ast4v3: {
       family: "ncast4v3",
       familyName: "GPU",
       isARM: 0,
@@ -16294,7 +16294,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc6": {
+    nc6: {
       family: "nc",
       familyName: "GPU",
       isARM: 0,
@@ -16307,7 +16307,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc64ast4v3": {
+    nc64ast4v3: {
       family: "ncast4v3",
       familyName: "GPU",
       isARM: 0,
@@ -16320,7 +16320,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nc6sv2": {
+    nc6sv2: {
       family: "ncsv2",
       familyName: "GPU",
       isARM: 0,
@@ -16333,7 +16333,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc6sv3": {
+    nc6sv3: {
       family: "ncsv3",
       familyName: "GPU",
       isARM: 0,
@@ -16346,7 +16346,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc72dsxlrtx6kv6": {
+    nc72dsxlrtx6kv6: {
       family: "ncdsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16359,7 +16359,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "nc72ldsxlrtx6kv6": {
+    nc72ldsxlrtx6kv6: {
       family: "ncldsxlrtx6kv6",
       familyName: "GPU",
       isARM: 0,
@@ -16372,7 +16372,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "nc80adish100v5": {
+    nc80adish100v5: {
       family: "ncadsh100v5",
       familyName: "GPU",
       isARM: 0,
@@ -16385,7 +16385,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nc8adsv4": {
+    nc8adsv4: {
       family: "nca10v4",
       familyName: "GPU",
       isARM: 0,
@@ -16398,7 +16398,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "nc8ast4v3": {
+    nc8ast4v3: {
       family: "ncast4v3",
       familyName: "GPU",
       isARM: 0,
@@ -16411,7 +16411,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nc96adsv4": {
+    nc96adsv4: {
       family: "nca100v4",
       familyName: "GPU",
       isARM: 0,
@@ -16424,7 +16424,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "ncc40adsh100v5": {
+    ncc40adsh100v5: {
       family: "nccadsh100v5",
       familyName: "GPU",
       isARM: 0,
@@ -16437,7 +16437,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nd12s": {
+    nd12s: {
       family: "nds",
       familyName: "GPU",
       isARM: 0,
@@ -16450,7 +16450,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nd24rs": {
+    nd24rs: {
       family: "nds",
       familyName: "GPU",
       isARM: 0,
@@ -16463,7 +16463,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nd24s": {
+    nd24s: {
       family: "nds",
       familyName: "GPU",
       isARM: 0,
@@ -16476,7 +16476,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nd40rsv2": {
+    nd40rsv2: {
       family: "ndv2",
       familyName: "GPU",
       isARM: 0,
@@ -16489,7 +16489,7 @@ window.AZURE_SPECS = {
       gpuCount: 8,
       trustedLaunch: 0,
     },
-    "nd6s": {
+    nd6s: {
       family: "nds",
       familyName: "GPU",
       isARM: 0,
@@ -16502,7 +16502,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nd96amsr": {
+    nd96amsr: {
       family: "ndamsrv4",
       familyName: "GPU",
       isARM: 0,
@@ -16515,7 +16515,7 @@ window.AZURE_SPECS = {
       gpuCount: 8,
       trustedLaunch: 0,
     },
-    "nd96asr": {
+    nd96asr: {
       family: "ndasrv4",
       familyName: "GPU",
       isARM: 0,
@@ -16528,7 +16528,7 @@ window.AZURE_SPECS = {
       gpuCount: 8,
       trustedLaunch: 0,
     },
-    "nd96isrh100v5": {
+    nd96isrh100v5: {
       family: "ndsrv5",
       familyName: "GPU",
       isARM: 0,
@@ -16541,7 +16541,7 @@ window.AZURE_SPECS = {
       gpuCount: 8,
       trustedLaunch: 0,
     },
-    "nd96isrh200v5": {
+    nd96isrh200v5: {
       family: "ndsrh200v5",
       familyName: "GPU",
       isARM: 0,
@@ -16554,7 +16554,7 @@ window.AZURE_SPECS = {
       gpuCount: 8,
       trustedLaunch: 0,
     },
-    "ng16adsv620v1": {
+    ng16adsv620v1: {
       family: "ngadsv620",
       familyName: "GPU",
       isARM: 0,
@@ -16567,7 +16567,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "ng32admsv620v1": {
+    ng32admsv620v1: {
       family: "ngadsv620",
       familyName: "GPU",
       isARM: 0,
@@ -16580,7 +16580,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "ng32adsv620v1": {
+    ng32adsv620v1: {
       family: "ngadsv620",
       familyName: "GPU",
       isARM: 0,
@@ -16593,7 +16593,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "ng8adsv620v1": {
+    ng8adsv620v1: {
       family: "ngadsv620",
       familyName: "GPU",
       isARM: 0,
@@ -16606,7 +16606,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.25,
       trustedLaunch: 0,
     },
-    "nm16adsma35d": {
+    nm16adsma35d: {
       family: "nmadsma35d",
       familyName: "GPU",
       isARM: 0,
@@ -16619,7 +16619,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "np10s": {
+    np10s: {
       family: "np",
       familyName: "GPU",
       isARM: 0,
@@ -16632,7 +16632,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "np20s": {
+    np20s: {
       family: "np",
       familyName: "GPU",
       isARM: 0,
@@ -16645,7 +16645,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "np40s": {
+    np40s: {
       family: "np",
       familyName: "GPU",
       isARM: 0,
@@ -16658,7 +16658,7 @@ window.AZURE_SPECS = {
       gpuCount: 0,
       trustedLaunch: 0,
     },
-    "nv12": {
+    nv12: {
       family: "nv",
       familyName: "GPU",
       isARM: 0,
@@ -16671,7 +16671,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nv12adsv5": {
+    nv12adsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16684,7 +16684,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.3333333333333333,
       trustedLaunch: 0,
     },
-    "nv12adsv710v5": {
+    nv12adsv710v5: {
       family: "nvadsv710v5",
       familyName: "GPU",
       isARM: 0,
@@ -16697,7 +16697,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "nv12sv3": {
+    nv12sv3: {
       family: "nvv3",
       familyName: "GPU",
       isARM: 0,
@@ -16710,7 +16710,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv18adsv5": {
+    nv18adsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16723,7 +16723,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.5,
       trustedLaunch: 0,
     },
-    "nv24": {
+    nv24: {
       family: "nv",
       familyName: "GPU",
       isARM: 0,
@@ -16736,7 +16736,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nv24adsv710v5": {
+    nv24adsv710v5: {
       family: "nvadsv710v5",
       familyName: "GPU",
       isARM: 0,
@@ -16749,7 +16749,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv24sv3": {
+    nv24sv3: {
       family: "nvv3",
       familyName: "GPU",
       isARM: 0,
@@ -16762,7 +16762,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nv28adsv710v5": {
+    nv28adsv710v5: {
       family: "nvadsv710v5",
       familyName: "GPU",
       isARM: 0,
@@ -16775,7 +16775,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv36admsv5": {
+    nv36admsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16788,7 +16788,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv36adsv5": {
+    nv36adsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16801,7 +16801,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv48sv3": {
+    nv48sv3: {
       family: "nvv3",
       familyName: "GPU",
       isARM: 0,
@@ -16814,7 +16814,7 @@ window.AZURE_SPECS = {
       gpuCount: 4,
       trustedLaunch: 0,
     },
-    "nv4adsv710v5": {
+    nv4adsv710v5: {
       family: "nvadsv710v5",
       familyName: "GPU",
       isARM: 0,
@@ -16827,7 +16827,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.16666666666666666,
       trustedLaunch: 0,
     },
-    "nv6": {
+    nv6: {
       family: "nv",
       familyName: "GPU",
       isARM: 0,
@@ -16840,7 +16840,7 @@ window.AZURE_SPECS = {
       gpuCount: 1,
       trustedLaunch: 0,
     },
-    "nv6adsv5": {
+    nv6adsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16853,7 +16853,7 @@ window.AZURE_SPECS = {
       gpuCount: 0.16666666666666666,
       trustedLaunch: 0,
     },
-    "nv72adsv5": {
+    nv72adsv5: {
       family: "nvv5",
       familyName: "GPU",
       isARM: 0,
@@ -16866,7 +16866,7 @@ window.AZURE_SPECS = {
       gpuCount: 2,
       trustedLaunch: 0,
     },
-    "nv8adsv710v5": {
+    nv8adsv710v5: {
       family: "nvadsv710v5",
       familyName: "GPU",
       isARM: 0,
