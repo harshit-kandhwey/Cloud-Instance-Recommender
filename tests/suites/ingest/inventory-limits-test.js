@@ -73,12 +73,45 @@ function craftedZip(declaredSizes) {
       ),
   );
   check(
-    "the line counter counts a text without splitting it",
-    run(`countTextLines("a\\nb\\nc")`) === 3 &&
-      run(`countTextLines("")`) === 1 &&
-      run(`countTextLines("a\\n")`) === 1 &&
-      run(`countTextLines("a\\nb\\n")`) === 2,
+    "the record counter counts records, not physical lines",
+    run(`countCsvRecords("a\\nb\\nc")`) === 3 &&
+      run(`countCsvRecords("")`) === 0 &&
+      run(`countCsvRecords("a\\n")`) === 1 &&
+      run(`countCsvRecords("a\\nb\\n")`) === 2 &&
+      run(`countCsvRecords('h\\n"x\\ny",2\\n')`) === 2 &&
+      run(`countCsvRecords("h\\n\\n  \\nz\\n")`) === 2,
   );
+  {
+    // The counter is a second reader of the same format; it must agree with the
+    // parser's own record splitter on every shape, or the refusal names a wrong count.
+    const texts = [
+      "",
+      "a",
+      "a\n",
+      "a\nb\nc",
+      "a\n\n\nb",
+      "a\r\nb\r\n",
+      "a\rb\r",
+      '"x\ny",2\nz',
+      'a,"b""c\nd"\ne',
+      '"unterminated\nstill going',
+      "   \n\t\n z",
+      '""\n',
+      "﻿a\n \nb",
+    ];
+    const disagree = texts.filter((t) => {
+      ctx.__t = t;
+      return (
+        run("countCsvRecords(__t)") !==
+        run('splitRecords(__t).filter((r) => r.trim() !== "").length')
+      );
+    });
+    check(
+      "the record counter agrees with the parser's record splitter on every shape",
+      disagree.length === 0,
+      JSON.stringify(disagree),
+    );
+  }
 
   // ── the declared size of a workbook ───────────────────────────────────────────
   {
@@ -265,6 +298,47 @@ function craftedZip(declaredSizes) {
       "a CSV of exactly the row limit, ending with a newline, is not refused",
       !exactHtml.includes("the limit is") && rowsOf(ctx).length === MAX_ROWS,
       `${rowsOf(ctx).length} rows; ${exactHtml.slice(0, 160)}`,
+    );
+
+    // Records, not lines: every record here holds a two-line quoted cell, so the file
+    // has twice the limit in physical lines and exactly the limit in records.
+    for (const key of Object.keys(elements)) delete elements[key];
+    const multiText =
+      "VM Name,CPU Count,Memory (GB),Notes\n" +
+      'x,1,1,"first line\nsecond line"\n'.repeat(MAX_ROWS);
+    ctx.FileReader = class {
+      onload = null;
+      readAsText() {
+        setTimeout(() => this.onload({ target: { result: multiText } }), 0);
+      }
+    };
+    await ctx.ingestFile({ name: "multiline.csv", size: 1000 });
+    await sleep(3000);
+    const multiHtml = elements.fileStatus ? elements.fileStatus.innerHTML : "";
+    check(
+      "a file at the record limit whose cells span lines is not refused",
+      !multiHtml.includes("the limit is") && rowsOf(ctx).length === MAX_ROWS,
+      `${rowsOf(ctx).length} rows; ${multiHtml.slice(0, 160)}`,
+    );
+
+    // One record over is refused with the true record count, not the line count.
+    for (const key of Object.keys(elements)) delete elements[key];
+    const overText =
+      "VM Name,CPU Count,Memory (GB),Notes\n" +
+      'x,1,1,"first line\nsecond line"\n'.repeat(MAX_ROWS + 1);
+    ctx.FileReader = class {
+      onload = null;
+      readAsText() {
+        setTimeout(() => this.onload({ target: { result: overText } }), 0);
+      }
+    };
+    await ctx.ingestFile({ name: "multiline-over.csv", size: 1000 });
+    await sleep(200);
+    const overHtml = elements.fileStatus ? elements.fileStatus.innerHTML : "";
+    check(
+      "one record over is refused and the count named is the record count",
+      overHtml.includes("100,001 rows; the limit is 100,000"),
+      overHtml.slice(0, 160),
     );
   }
 

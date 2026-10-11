@@ -44,13 +44,47 @@ function inventoryLimitMessage(rowCount, columnCount) {
   return null;
 }
 
-// Lines in a text, without splitting it into a line array first. The newline that ends
-// the last line does not start another one: a file of exactly the row limit that ends
-// with it would otherwise be counted one row over.
-function countTextLines(text) {
-  let n = 1;
-  for (let i = text.indexOf("\n"); i !== -1; i = text.indexOf("\n", i + 1)) n++;
-  return text.endsWith("\n") ? n - 1 : n;
+// Whether a UTF-16 code unit is one of the characters String.prototype.trim removes.
+function isTrimmedChar(c) {
+  return (
+    c === 32 ||
+    (c >= 9 && c <= 13) ||
+    c === 160 ||
+    c === 0x1680 ||
+    (c >= 0x2000 && c <= 0x200a) ||
+    c === 0x2028 ||
+    c === 0x2029 ||
+    c === 0x202f ||
+    c === 0x205f ||
+    c === 0x3000 ||
+    c === 0xfeff
+  );
+}
+
+// How many non-blank records a delimited text holds, in one pass and without building
+// them. It follows splitRecords: a newline ends a record only outside quotes, so a
+// multi-line quoted cell is one record, and a blank line is not one. The newline that
+// ends the last line starts nothing. Counting physical lines instead would refuse a
+// valid file, and name the wrong number.
+function countCsvRecords(text) {
+  let count = 0;
+  let inQuotes = false;
+  let hasContent = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (c === 34) {
+      if (inQuotes && text.charCodeAt(i + 1) === 34) i++;
+      else inQuotes = !inQuotes;
+      hasContent = true;
+    } else if ((c === 10 || c === 13) && !inQuotes) {
+      if (c === 13 && text.charCodeAt(i + 1) === 10) i++;
+      if (hasContent) count++;
+      hasContent = false;
+    } else if (!hasContent && !isTrimmedChar(c)) {
+      hasContent = true;
+    }
+  }
+  return hasContent ? count + 1 : count;
 }
 
 // The total uncompressed size a ZIP's central directory declares, Infinity when an
@@ -355,7 +389,10 @@ async function ingestFile(file) {
       const csvText = /** @type {string} */ (
         /** @type {FileReader} */ (/** @type {unknown} */ (e.target)).result
       );
-      const csvLimit = inventoryLimitMessage(countTextLines(csvText) - 1, 0);
+      const csvLimit = inventoryLimitMessage(
+        Math.max(0, countCsvRecords(csvText) - 1),
+        0,
+      );
       if (csvLimit) {
         showUploadError(csvLimit);
         return;
