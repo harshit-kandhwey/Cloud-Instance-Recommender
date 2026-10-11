@@ -53,6 +53,7 @@ declare global {
 
     // Upload state (features/ingest.js).
     _ingestToken: number;
+    _ingestFileSeq: number;
     _ingestLabel: string | null;
     _pendingIngest: any;
     _lastIngest: any;

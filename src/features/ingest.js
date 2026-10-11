@@ -239,6 +239,12 @@ function resetIngestState() {
 // sheet), text → the delimited-text parser, anything else rejected. Extension
 // only decides when the bytes are unavailable.
 async function ingestFile(file) {
+  // The latest choice wins. A slow workbook still parsing when a CSV is picked
+  // would otherwise reach its commit point afterwards and replace the CSV's rows.
+  // Taken before the first await, like the other run snapshots, and compared at each
+  // commit point and in each failure report below.
+  const selection = (window._ingestFileSeq = (window._ingestFileSeq || 0) + 1);
+  const superseded = () => selection !== window._ingestFileSeq;
   // Nothing is torn down until the new file is known usable: resetting first left
   // a rejected upload having removed the previous workbook's sheet picker while
   // its rows were still loaded and generatable.
@@ -285,6 +291,7 @@ async function ingestFile(file) {
       // reader failure below leaves the previous upload's rows and controls
       // intact, matching the module's own "nothing torn down until known
       // usable" invariant (see the ingestFile comment above).
+      if (superseded()) return;
       resetIngestState();
       window._uploadNote = uploadNote;
       parseCSV(
@@ -294,6 +301,7 @@ async function ingestFile(file) {
       );
     };
     reader.onerror = function () {
+      if (superseded()) return;
       const fileStatus = document.getElementById("fileStatus");
       if (fileStatus) {
         fileStatus.className = "alert alert-warning";
@@ -324,6 +332,7 @@ async function ingestFile(file) {
     // parse failure above (empty workbook, a thrown SheetJS error) leaves the
     // previous upload's rows and controls intact, same invariant as the CSV
     // path above.
+    if (superseded()) return;
     resetIngestState();
     window._uploadNote = uploadNote;
     window._uploadedSheets = sheets;
@@ -343,6 +352,7 @@ async function ingestFile(file) {
     ingestRows(chosen.headers, chosen.rows);
   } catch (error) {
     console.error("Excel parsing failed:", error);
+    if (superseded()) return;
     const fileStatus = document.getElementById("fileStatus");
     if (fileStatus) {
       fileStatus.className = "alert alert-warning";
