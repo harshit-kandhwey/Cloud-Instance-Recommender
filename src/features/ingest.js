@@ -1578,7 +1578,7 @@ function applyIngest(headers, rows, mapping, units = {}) {
     ? `<br>📐 ${convertedCols.join(" and ")} values converted from MB to GB`
     : "";
   const editBtn = ` <button class="inl-c85beeb7"${actionAttrs("click", "editColumnMapping")} title="Change which of your columns map to the CPU, memory, name, and region fields">✏️ Edit mapping</button>`;
-  const okLabel = window._ingestLabel || "File loaded successfully";
+  const okLabel = escapeHtml(window._ingestLabel || "File loaded successfully");
   // Guarded like every other status write in this file (showUploadError, the
   // reader error handler, showColumnMappingPanel) — a page missing #fileStatus
   // must not throw here and strand csvData already set before the later steps run.

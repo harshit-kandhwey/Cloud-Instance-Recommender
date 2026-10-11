@@ -162,6 +162,26 @@ const HOSTILE = [
     );
   }
 
+  // ── the file-status label is text ────────────────────────────────────────────────
+  {
+    const { buildContext } = require("../harness");
+    const { run: page, elements } = buildContext();
+    page(`window._ingestLabel = "<img src=x onerror=alert(1)>"`);
+    page(
+      `applyIngest(["CPU Count", "Memory (GB)"], [{ "CPU Count": "2", "Memory (GB)": "4" }], {})`,
+    );
+    const html = elements.fileStatus ? elements.fileStatus.innerHTML : "";
+    check(
+      "the status shows the label",
+      html.includes("rows") && html.includes("&lt;img"),
+      html.slice(0, 200),
+    );
+    check(
+      "and no raw tag from the label reaches the status",
+      !html.includes("<img"),
+    );
+  }
+
   // ── keys written back to storage (F-13) ─────────────────────────────────────────
   {
     const { buildContext } = require("../harness");

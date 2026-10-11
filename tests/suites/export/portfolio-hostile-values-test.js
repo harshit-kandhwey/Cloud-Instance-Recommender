@@ -214,5 +214,81 @@ console.log("[a handoff payload of the wrong shape is refused or cleaned]");
   );
 }
 
+console.log("[a stored price-savings figure is numbers or nothing]");
+{
+  const good = { "App Name": "Z", "CPU Count": "1", "Memory (GB)": "1" };
+  const receive = (priceSavings) => {
+    vm.runInContext(
+      "window._portfolioModel = null; portfolioData = null;",
+      ctx,
+    );
+    // Parsed inside the sandbox from text, as a stored copy would be: an object LITERAL
+    // with a "__proto__" key sets a prototype instead of making a property.
+    vm.runInContext(
+      `receivePortfolio({ providers: ["aws"], priceSavings: JSON.parse(${JSON.stringify(
+        JSON.stringify(priceSavings),
+      )}), results: [${JSON.stringify(good)}] })`,
+      ctx,
+    );
+    return vm.runInContext(
+      "priceSavingsKpiTiles(window._portfolioModel.estate.priceSavings)",
+      ctx,
+    );
+  };
+  const real = receive({ AWS: { pct: 18, rows: 3 } });
+  check(
+    "a real figure still renders its percentage and row count",
+    real.includes("~18% lower ranked cost") && real.includes("(3 rows)"),
+    real,
+  );
+  const markup = receive({
+    AWS: { pct: 1, rows: "<img src=x onerror=alert(1)>" },
+  });
+  check(
+    "a non-numeric row count is dropped and no markup is rendered",
+    !markup.includes("<img") && markup === "",
+    markup,
+  );
+  const textPct = receive({ AWS: { pct: "<b>1</b>", rows: 2 } });
+  check(
+    "a non-numeric percentage is dropped",
+    !textPct.includes("<b>") && textPct === "",
+    textPct,
+  );
+  const mixed = receive({
+    AWS: { pct: 5, rows: 1 },
+    "<img src=x>": { pct: 9, rows: 9 },
+    GCP: "nope",
+  });
+  check(
+    "a hostile provider key is escaped and a non-object entry is dropped",
+    !mixed.includes("<img") && mixed.includes("AWS") && !mixed.includes("GCP"),
+    mixed,
+  );
+  const proto = receive(JSON.parse('{"__proto__": {"pct": 2, "rows": 2}}'));
+  check(
+    'a provider key of "__proto__" is kept as a key',
+    proto.includes("__proto__") && proto.includes("(2 rows)"),
+    proto,
+  );
+  check(
+    "a number sent as text is dropped, not coerced",
+    receive({ AWS: { pct: "5", rows: 1 } }) === "",
+  );
+  const sink = vm.runInContext(
+    `priceSavingsKpiTiles({ AWS: { pct: 1, rows: "<img src=x onerror=alert(1)>" } })`,
+    ctx,
+  );
+  check(
+    "the tile renderer escapes a row count on its own, whatever was cleaned before it",
+    !sink.includes("<img") && sink.includes("&lt;img"),
+    sink,
+  );
+  check(
+    "a figure of the wrong type is dropped whole",
+    receive("not an object") === "" && receive([1, 2]) === "",
+  );
+}
+
 process.exitCode = failures ? 1 : 0;
 if (!failures) console.log("\nportfolio-hostile-values: all checks passed");

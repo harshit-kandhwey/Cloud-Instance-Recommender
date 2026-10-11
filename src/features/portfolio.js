@@ -96,6 +96,25 @@ function loadPortfolioFromStorage() {
 // Accepts a handoff payload, ignoring anything that isn't a non-empty result
 // set. Idempotent: a postMessage delivery that duplicates the localStorage copy
 // simply re-renders the same data.
+// A payload from storage or another window is not trusted: only numeric pct and rows
+// survive, so the KPI tiles can never carry markup. defineProperty, not assignment, so
+// a provider key of "__proto__" stays a key.
+function cleanPriceSavings(raw) {
+  const out = {};
+  if (!isPlainObject(raw)) return out;
+  for (const [provider, s] of Object.entries(raw)) {
+    if (!isPlainObject(s)) continue;
+    if (!Number.isFinite(s.pct) || !Number.isFinite(s.rows)) continue;
+    Object.defineProperty(out, provider, {
+      value: { pct: s.pct, rows: s.rows },
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+  return out;
+}
+
 function receivePortfolio(payload) {
   if (!payload || !Array.isArray(payload.results)) return;
   // The payload arrives from storage or another window, so its shape is not
@@ -103,9 +122,10 @@ function receivePortfolio(payload) {
   // providers must be a list of names.
   const results = payload.results.filter(isPlainObject);
   if (!results.length) return;
-  results.priceSavings = payload.results.priceSavings;
+  results.priceSavings = cleanPriceSavings(payload.results.priceSavings);
   payload = {
     ...payload,
+    priceSavings: cleanPriceSavings(payload.priceSavings),
     results,
     providers: Array.isArray(payload.providers)
       ? payload.providers.filter((p) => typeof p === "string")
@@ -873,7 +893,7 @@ function priceSavingsKpiTiles(priceSavings) {
             : `~${Math.abs(s.pct)}% higher ranked cost`;
       return `<div class="counter-card" title="Relative ranking only, not a quote — use ${esc(provider)}'s own pricing calculator for actual cost">
         <div class="counter-number">${esc(label)}</div>
-        <div class="counter-title">💲 ${esc(provider)} Optimized vs Like-to-Like (${s.rows} row${s.rows === 1 ? "" : "s"})</div>
+        <div class="counter-title">💲 ${esc(provider)} Optimized vs Like-to-Like (${esc(String(s.rows))} row${s.rows === 1 ? "" : "s"})</div>
       </div>`;
     })
     .join("");
