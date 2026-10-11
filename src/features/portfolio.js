@@ -82,7 +82,19 @@ function loadPortfolioFromStorage() {
   try {
     const raw = localStorage.getItem(PORTFOLIO_STORAGE_KEY);
     if (!raw) return;
-    const stored = JSON.parse(raw);
+    let stored;
+    try {
+      stored = JSON.parse(raw);
+    } catch (e) {
+      // A copy that cannot be read can still hold uploaded columns, and would never
+      // reach the freshness check, so it goes the same way as an expired one.
+      console.warn(
+        "Portfolio localStorage copy is unreadable, removing it:",
+        e,
+      );
+      localStorage.removeItem(PORTFOLIO_STORAGE_KEY);
+      return;
+    }
     if (!portfolioCopyIsFresh(stored)) {
       localStorage.removeItem(PORTFOLIO_STORAGE_KEY);
       return;
@@ -125,7 +137,11 @@ function receivePortfolio(payload) {
   results.priceSavings = cleanPriceSavings(payload.results.priceSavings);
   payload = {
     ...payload,
-    priceSavings: cleanPriceSavings(payload.priceSavings),
+    // Absent is not empty: with no top-level field the model must still reach the
+    // array property a direct in-page call carries.
+    priceSavings: isPlainObject(payload.priceSavings)
+      ? cleanPriceSavings(payload.priceSavings)
+      : results.priceSavings,
     results,
     providers: Array.isArray(payload.providers)
       ? payload.providers.filter((p) => typeof p === "string")

@@ -133,9 +133,39 @@ function coldOpen(payload) {
 {
   const r = coldOpen("{not json");
   check(
-    "an unreadable copy does not throw and is not shown",
-    !r.shown,
+    "an unreadable copy does not throw, is not shown, and is removed",
+    !r.shown && !r.kept,
     JSON.stringify(r),
+  );
+}
+
+// a direct in-page call carries the savings on the array only
+{
+  const withArrayOnly = (extra) => {
+    const list = rows.map((r) => ({ ...r }));
+    list.priceSavings = { AWS: { pct: 12, rows: 3 } };
+    store.clear();
+    run("portfolioData = null; portfolioModel = null;");
+    ctx.__payload = { ...extra, version: 1, providers: ["aws"], results: list };
+    run("receivePortfolio(__payload)");
+    return JSON.stringify(run("portfolioModel"));
+  };
+  check(
+    "savings carried only on the results array still reach the model",
+    withArrayOnly({}).includes('"pct":12'),
+  );
+  check(
+    "a top-level savings field still wins over the array property",
+    (() => {
+      const text = withArrayOnly({
+        priceSavings: { AWS: { pct: 40, rows: 9 } },
+      });
+      return text.includes('"pct":40') && !text.includes('"pct":12');
+    })(),
+  );
+  check(
+    "a top-level field that is not an object falls back to the array property",
+    withArrayOnly({ priceSavings: "<b>x</b>" }).includes('"pct":12'),
   );
 }
 
