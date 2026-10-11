@@ -162,7 +162,8 @@ async function fetchJson(
         headers: { Accept: "application/json", ...headers },
         signal: AbortSignal.timeout(timeoutMs),
       });
-      if (res.ok) return res.json();
+      // Awaited here so a body that fails to arrive is caught below and retried.
+      if (res.ok) return await res.json();
       reason = `HTTP ${res.status}`;
       if (!RETRYABLE_STATUS.has(res.status)) {
         permanent = new Error(`fetch failed: ${reason}${ctx}`);

@@ -304,6 +304,32 @@ async function runFetchJsonSuite() {
     );
   }
   {
+    // A 200 whose body then fails to arrive: the status was fine, the read was not.
+    const brokenBody = (message) => ({
+      ...reply(200, null),
+      json: async () => {
+        throw new TypeError(message);
+      },
+    });
+    const t = transport(brokenBody("terminated"), reply(200, { ok: 7 }));
+    const r = await run(t);
+    check(
+      "fetchJson: a body that fails to arrive is retried like any transport error",
+      r.value && r.value.ok === 7 && t.calls.length === 2,
+      r.error && r.error.message,
+    );
+    const t2 = transport(brokenBody("terminated"));
+    const r2 = await run(t2, { attempts: 2, errorContext: "for region r" });
+    check(
+      "fetchJson: a body that never arrives ends with the reason and the count",
+      r2.error &&
+        r2.error.message ===
+          "fetch failed: terminated for region r (after 2 attempts)" &&
+        t2.calls.length === 2,
+      r2.error && r2.error.message,
+    );
+  }
+  {
     const now = Date.parse("2026-10-11T00:00:00Z");
     check("parseRetryAfterMs: seconds", parseRetryAfterMs("5") === 5000);
     check(
