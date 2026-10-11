@@ -198,6 +198,8 @@ function handleFleetSnapshotSubmit(event) {
 // Text of a file that was refused only because its name is taken; kept until the
 // user picks a new name or leaves.
 let fleetPendingImportText = null;
+// The taken name and the suggested one, so the rename form can be shown again.
+let fleetPendingImportOffer = null;
 
 const IMPORT_REFUSALS = {
   "too-large": "That file is too large to be a snapshot.",
@@ -237,6 +239,10 @@ function finishFleetImport(result) {
     return;
   }
   if (result.reason === "duplicate") {
+    fleetPendingImportOffer = {
+      name: result.name,
+      suggestion: result.suggestion,
+    };
     renderFleetSnapshotsPanel(
       "That snapshot's name is already taken.",
       renderImportRenameHtml(result.name, result.suggestion),
@@ -280,6 +286,15 @@ function handleFleetSnapshotImportRename(event) {
     return true;
   }
   const name = document.getElementById("fleetSnapshotImportName")?.value ?? "";
+  if (name.trim() === "") {
+    // The typed name is empty; the file is fine, so keep it and ask again.
+    const offer = fleetPendingImportOffer;
+    renderFleetSnapshotsPanel(
+      "Type a name to import the file as.",
+      offer ? renderImportRenameHtml(offer.name, offer.suggestion) : "",
+    );
+    return true;
+  }
   finishFleetImport(
     FleetSnapshots.importText(fleetPendingImportText, { name }),
   );

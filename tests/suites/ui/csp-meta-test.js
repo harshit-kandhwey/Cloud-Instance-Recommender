@@ -37,11 +37,13 @@ const FORBIDDEN = ["'unsafe-inline'", "'unsafe-eval'", "http:", "https:", "*"];
 const policies = new Map();
 for (const page of PAGES) {
   const text = read(page);
-  const metas = [
-    ...text.matchAll(
-      /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"\s*\/>/g,
-    ),
-  ];
+  // Any <meta> tag that names the policy, whatever the order of its attributes.
+  const metas = [...text.matchAll(/<meta\b[^>]*>/g)]
+    .filter((m) => /http-equiv\s*=\s*"Content-Security-Policy"/i.test(m[0]))
+    .map((m) => {
+      const content = m[0].match(/\bcontent\s*=\s*"([^"]*)"/);
+      return { 0: m[0], 1: content ? content[1] : "", index: m.index };
+    });
   check(
     `${page}: exactly one policy meta`,
     metas.length === 1,
@@ -69,7 +71,14 @@ for (const page of PAGES) {
     missing.length === 0,
     missing.join("; "),
   );
-  const bad = FORBIDDEN.filter((d) => policy.split(/[\s;]+/).includes(d));
+  const bad = policy
+    .split(/[\s;]+/)
+    .filter(
+      (t) =>
+        FORBIDDEN.includes(t) ||
+        /^(https?|ftp|wss?):/i.test(t) ||
+        t.includes("*"),
+    );
   check(
     `${page}: the policy allows nothing broad`,
     bad.length === 0,

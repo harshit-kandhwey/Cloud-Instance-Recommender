@@ -69,8 +69,8 @@ for (const page of PAGES) {
   check(
     `${page}: exactly one description, 60 to 200 characters`,
     description.length === 1 &&
-      description[0].content.length >= 60 &&
-      description[0].content.length <= 200,
+      (description[0].content || "").length >= 60 &&
+      (description[0].content || "").length <= 200,
     description.map((d) => (d.content || "").length).join(","),
   );
   check(

@@ -67,7 +67,7 @@ Baseline score at introduction was 53%; it measured 40.24% in 3.19 and 43.18% in
 
 `tests/visual/` + `playwright-visual.config.js` pin the rendered look of the four provider pages in their empty, pre-upload state (`pages.visual.spec.js`) plus three richer states (`states.visual.spec.js`): the dark theme, the region-validation chips after an upload, and the populated results preview table. So an accidental CSS/layout/token regression fails even when every functional assertion still passes.
 
-The catch with pixel baselines is that they are **OS- and engine-specific**: a screenshot taken on Windows or macOS differs from ubuntu on font hinting alone. So the committed baselines are the `-linux` set, generated on the ubuntu CI runner — never on a contributor's machine. The baselines are committed under `tests/visual/__screenshots__/`, and the `visual` job compares against them on every push and pull request. To regenerate them after an intended visual change, run the CI workflow manually with `update_baselines=true` (Actions → CI → Run workflow): the `visual` job regenerates the PNGs and uploads them as the `visual-baselines-linux` artifact; review every changed PNG by eye, then commit them.
+The catch with pixel baselines is that they are **OS- and engine-specific**: a screenshot taken on Windows or macOS differs from ubuntu on font hinting alone. So the committed baselines are the `-linux` set, generated on the ubuntu CI runner — never on a contributor's machine. The baselines are committed under `tests/visual/__screenshots__/`, and the `visual` job compares against them on every push and pull request, provided at least one `-linux` baseline is committed (with none, the job skips the compare). To regenerate them after an intended visual change, run the CI workflow manually with `update_baselines=true` (Actions → CI → Run workflow): the `visual` job regenerates the PNGs and uploads them as the `visual-baselines-linux` artifact; review every changed PNG by eye, then commit them.
 
 ## What must be covered
 
@@ -94,7 +94,7 @@ Stated plainly, because a gate's silence reads as approval:
 - **Uncovered internal helpers.** Allowed by tier, unlisted by policy — the ledger names them all.
 - **A line that ran is not a line that was checked.** Coverage cannot tell a real assertion from a call with no oracle behind it. Only the mutation gate answers that, and it is scoped to two engine files.
 - **The suites are not a browser.** They run in `vm` against a simulated DOM, so real layout, real event dispatch, real storage and real workers are covered only by the `e2e` (Chromium + WebKit) and `visual` (Chromium) jobs.
-- **The visual gate skips rather than fails when a baseline is missing**, so an emptied `__screenshots__/` looks exactly like a pass.
+- **The visual gate skips when no `-linux` baseline is committed at all**, so an emptied `__screenshots__/` looks exactly like a pass; with any baseline present, a screenshot that lacks its own is written and reported as a failure by Playwright's default.
 - **Generated data is excluded from the coverage ledger**, not from every gate — the region files and the manifests are pinned for consistency by `suites/infra/data-integrity-test.js`, which `npm test` runs like any other suite.
 
 ## Layout

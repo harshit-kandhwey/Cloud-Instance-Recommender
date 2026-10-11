@@ -276,12 +276,14 @@ check(
   );
 
   run('fleetPendingImportText = "earlier refused file"');
+  const realReader = ctx.ctx.FileReader;
   ctx.ctx.FileReader = class {
     readAsText() {
       this.onerror();
     }
   };
   pick({ size: 10 });
+  ctx.ctx.FileReader = realReader;
   check(
     "choosing a file that cannot be read clears the earlier pending text",
     pending() === null,
@@ -341,6 +343,34 @@ check(
     unknown.includes("could not be imported") && pending() === null,
     unknown.slice(0, 300),
   );
+
+  // A rename left empty is the typed name's problem, not the file's: the file and the
+  // form are kept and the message says what to do.
+  run('fleetPendingImportText = "a file"');
+  finish({ ok: false, reason: "duplicate", name: "Q4", suggestion: "Q4 (2)" });
+  let typed = "   ";
+  ctx.ctx.document.getElementById = (id) =>
+    id === "fleetSnapshotsPanel"
+      ? host
+      : id === "fleetSnapshotImportName"
+        ? { value: typed }
+        : null;
+  host.innerHTML = "";
+  const handled = run("handleFleetSnapshotImportRename")({
+    target: { matches: () => true },
+    preventDefault() {},
+  });
+  check(
+    "an empty rename asks for a name, keeps the form and the file, and does not blame the file",
+    handled === true &&
+      host.innerHTML.includes("Type a name to import the file as.") &&
+      host.innerHTML.includes('id="fleetSnapshotImportForm"') &&
+      !host.innerHTML.includes("has no name") &&
+      pending() === "a file",
+    host.innerHTML.slice(0, 300),
+  );
+  typed = "Q4 renamed";
+  host.innerHTML = "";
 
   ctx.ctx.document.getElementById = realGet;
 }
