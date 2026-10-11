@@ -76,7 +76,8 @@ function craftedZip(declaredSizes) {
     "the line counter counts a text without splitting it",
     run(`countTextLines("a\\nb\\nc")`) === 3 &&
       run(`countTextLines("")`) === 1 &&
-      run(`countTextLines("a\\n")`) === 2,
+      run(`countTextLines("a\\n")`) === 1 &&
+      run(`countTextLines("a\\nb\\n")`) === 2,
   );
 
   // ── the declared size of a workbook ───────────────────────────────────────────
@@ -244,6 +245,26 @@ function craftedZip(declaredSizes) {
       (elements.fileStatus ? elements.fileStatus.innerHTML : "").includes(
         "the limit is 100,000",
       ) && rowsOf(ctx)[0]["VM Name"] === "keep-me",
+    );
+
+    // A file of exactly the limit that ends with a newline, as nearly every export does,
+    // is not one row over.
+    for (const key of Object.keys(elements)) delete elements[key];
+    const exactText =
+      "VM Name,CPU Count,Memory (GB)\n" + "x,1,1\n".repeat(MAX_ROWS);
+    ctx.FileReader = class {
+      onload = null;
+      readAsText() {
+        setTimeout(() => this.onload({ target: { result: exactText } }), 0);
+      }
+    };
+    await ctx.ingestFile({ name: "exact.csv", size: 1000 });
+    await sleep(2000);
+    const exactHtml = elements.fileStatus ? elements.fileStatus.innerHTML : "";
+    check(
+      "a CSV of exactly the row limit, ending with a newline, is not refused",
+      !exactHtml.includes("the limit is") && rowsOf(ctx).length === MAX_ROWS,
+      `${rowsOf(ctx).length} rows; ${exactHtml.slice(0, 160)}`,
     );
   }
 

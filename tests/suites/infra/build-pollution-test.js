@@ -156,6 +156,15 @@ const probe = (code) =>
     "toPlain passes primitives through",
     toPlain(5) === 5 && toPlain("a") === "a" && toPlain(null) === null,
   );
+  const withList = toPlain({ regions: ["a", { z: 1 }] });
+  check(
+    "toPlain keeps an array an array, so a list in a record is not turned into an object",
+    Array.isArray(withList.regions) &&
+      withList.regions.length === 2 &&
+      withList.regions[0] === "a" &&
+      withList.regions[1].z === 1,
+    JSON.stringify(withList),
+  );
 }
 
 // ── .env: only the keys the pipeline reads ──────────────────────────────────────

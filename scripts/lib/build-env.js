@@ -216,6 +216,7 @@ function reportText(value, maxLength = 120) {
 // data properties, so a key like "__proto__" stays a key instead of a prototype.
 function toPlain(value) {
   if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(toPlain);
   return Object.fromEntries(
     Object.entries(value).map(([k, v]) => [k, toPlain(v)]),
   );

@@ -124,15 +124,15 @@ function buildUserRulesExport(page, rules) {
   };
 }
 
-// Pure: shape-check a parsed import payload. Every entry is run through
-// normalizeUserRule (the same gate storage/UI/engine use), so a malformed rule
-// in the file is dropped, not trusted. Returns { ok:true, page, rules } with at
-// least one valid rule, or { ok:false, error }.
 // A person's own rule list is a handful of entries; a file beyond these is not one and
 // is refused before any rule is normalised.
 const USER_RULES_IMPORT_MAX_BYTES = 1024 * 1024;
 const USER_RULES_IMPORT_MAX_RULES = 500;
 
+// Pure: shape-check a parsed import payload. Every entry is run through
+// normalizeUserRule (the same gate storage/UI/engine use), so a malformed rule
+// in the file is dropped, not trusted. Returns { ok:true, page, rules } with at
+// least one valid rule, or { ok:false, error }.
 function validateUserRulesImport(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return { ok: false, error: "not a custom-rules export file." };

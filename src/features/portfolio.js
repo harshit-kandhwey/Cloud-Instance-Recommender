@@ -93,9 +93,6 @@ function loadPortfolioFromStorage() {
   }
 }
 
-// Accepts a handoff payload, ignoring anything that isn't a non-empty result
-// set. Idempotent: a postMessage delivery that duplicates the localStorage copy
-// simply re-renders the same data.
 // A payload from storage or another window is not trusted: only numeric pct and rows
 // survive, so the KPI tiles can never carry markup. defineProperty, not assignment, so
 // a provider key of "__proto__" stays a key.
@@ -115,6 +112,9 @@ function cleanPriceSavings(raw) {
   return out;
 }
 
+// Accepts a handoff payload, ignoring anything that isn't a non-empty result
+// set. Idempotent: a postMessage delivery that duplicates the localStorage copy
+// simply re-renders the same data.
 function receivePortfolio(payload) {
   if (!payload || !Array.isArray(payload.results)) return;
   // The payload arrives from storage or another window, so its shape is not

@@ -44,11 +44,13 @@ function inventoryLimitMessage(rowCount, columnCount) {
   return null;
 }
 
-// Newlines in a text, without splitting it into a line array first.
+// Lines in a text, without splitting it into a line array first. The newline that ends
+// the last line does not start another one: a file of exactly the row limit that ends
+// with it would otherwise be counted one row over.
 function countTextLines(text) {
   let n = 1;
   for (let i = text.indexOf("\n"); i !== -1; i = text.indexOf("\n", i + 1)) n++;
-  return n;
+  return text.endsWith("\n") ? n - 1 : n;
 }
 
 // The total uncompressed size a ZIP's central directory declares, Infinity when an
@@ -134,19 +136,6 @@ function setupFileDragAndDrop(fileInput) {
   });
 }
 
-// Loads the vendored SheetJS parser on first use only (~900KB; Excel uploads
-// are rare). "js/vendor/..." is relative to the PAGE (repo root), not
-// to this module's own location — a <script src> path always resolves
-// against the document, so this literal must track wherever the calling
-// page actually sits, not where ingest.js is.
-//
-// SECURITY — must be the FULL build, never the styling fork. Both vendored
-// bundles define window.XLSX with read(), but xlsx-js-style forks SheetJS
-// 0.18.x and predates the read-path fixes for CVE-2023-30533 (prototype
-// pollution) and CVE-2024-22363 (ReDoS). A prior Excel export can leave that
-// fork in window.XLSX, so an `if (window.XLSX)` guard would parse a later
-// untrusted upload with the unpatched engine. Capture the full build's own
-// reference and read through THAT, never the bare global.
 // The first SheetJS release with both read-path fixes (CVE-2024-22363 landed in 0.20.2).
 const XLSX_MIN_VERSION = [0, 20, 2];
 
@@ -166,6 +155,19 @@ function xlsxParserIsSafe(lib) {
   return true;
 }
 
+// Loads the vendored SheetJS parser on first use only (~900KB; Excel uploads
+// are rare). "js/vendor/..." is relative to the PAGE (repo root), not
+// to this module's own location — a <script src> path always resolves
+// against the document, so this literal must track wherever the calling
+// page actually sits, not where ingest.js is.
+//
+// SECURITY — must be the FULL build, never the styling fork. Both vendored
+// bundles define window.XLSX with read(), but xlsx-js-style forks SheetJS
+// 0.18.x and predates the read-path fixes for CVE-2023-30533 (prototype
+// pollution) and CVE-2024-22363 (ReDoS). A prior Excel export can leave that
+// fork in window.XLSX, so an `if (window.XLSX)` guard would parse a later
+// untrusted upload with the unpatched engine. Capture the full build's own
+// reference and read through THAT, never the bare global.
 function ensureXlsxLoaded() {
   if (window._xlsxParser) return Promise.resolve();
   if (!window._xlsxLoadPromise) {

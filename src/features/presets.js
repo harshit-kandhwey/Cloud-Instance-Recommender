@@ -440,13 +440,13 @@ function buildPresetExport(page, presets) {
   return { page, exportedAt: new Date().toISOString(), presets };
 }
 
-// Pure: shape-check a parsed import payload.
-// Returns { ok:true, page, presets } or { ok:false, error }.
 // A person's own presets are a short list; a file beyond these is not one and is
 // refused before any preset is read.
 const PRESET_IMPORT_MAX_BYTES = 1024 * 1024;
 const PRESET_IMPORT_MAX_PRESETS = 200;
 
+// Pure: shape-check a parsed import payload.
+// Returns { ok:true, page, presets } or { ok:false, error }.
 function validatePresetImport(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return { ok: false, error: "not a preset export file." };
