@@ -1,8 +1,8 @@
 // reserved-columns suite: the engine owns the names of the columns it writes, and an
-// uploaded column carrying one of them must not reach the results. Before 3.22 a row
-// was copied wholesale into its result, so a re-uploaded earlier export put a stale
-// "AWS Like-to-Like vCPUs" next to this run's output and the savings figures were
-// computed against it, with no error. Covered: the name predicate, that it covers
+// uploaded column carrying one of them must not reach the results; a re-uploaded
+// earlier export would otherwise put a stale "AWS Like-to-Like vCPUs" next to this
+// run's output and the savings figures would be computed against it, with no error.
+// Covered: the name predicate, that it covers
 // every column the factory source writes (a scan, so a new output column cannot be
 // added unreserved), the run itself, the savings figure, and the notice an upload gets.
 const fs = require("fs");

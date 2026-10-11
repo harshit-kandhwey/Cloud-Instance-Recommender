@@ -274,7 +274,7 @@ const mine = (id, name) => ({ v: 1, id, name, rows: [] });
   );
 }
 
-// ── Snapshot file (3.22): export, validated import, one door ──────────────────────
+// ── Snapshot file: export, validated import, one door ──────────────────────
 {
   const FILE = (over = {}) =>
     JSON.stringify({

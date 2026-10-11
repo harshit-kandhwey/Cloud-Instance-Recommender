@@ -71,10 +71,10 @@ const PROVIDERS = [
 //
 // `price` is DERIVED from scripts/lib/record-schema.js's priceFields(), not hand-listed — every
 // price field is officially-sourced (the official fetch IS the pricing API), so the two
-// lists have always agreed by coincidence, not by construction. data-diff.js hand-listed
-// this same fact independently and silently dropped GCP's localSsdGiB-adjacent field
-// additions in 3.15.7; the fix there was to stop hand-copying, and the same fix applies
-// here before a genuine drift has the chance to happen. `spec` stays hand-maintained: it
+// lists agree by coincidence, not by construction. Hand-listing the same fact
+// independently (as data-diff.js once did) silently drops a field added to one
+// partition, so the derivation applies here before a genuine drift has the chance to
+// happen. `spec` stays hand-maintained: it
 // is not a copy of anything — the set of spec fields an official source ACTUALLY
 // publishes is a fact with no other canonical home in this codebase.
 const OFFICIAL_FIELDS = {

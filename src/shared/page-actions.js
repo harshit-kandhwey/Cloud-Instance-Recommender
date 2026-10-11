@@ -1,4 +1,4 @@
-// One delegated listener per event type for the tool pages' controls (3.21 phase 5).
+// One delegated listener per event type for the tool pages' controls.
 // A control names the global function to run in data-on-click or data-on-change.
 // Arguments come from data-args, a JSON array, so numbers stay numbers. An object
 // marker stands in for a value only the browser knows: {"$":"this"} the element,

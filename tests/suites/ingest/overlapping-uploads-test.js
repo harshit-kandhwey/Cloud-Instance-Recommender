@@ -1,8 +1,8 @@
 // overlapping-uploads suite: the latest file chosen wins. A workbook is read through
 // an async buffer and a parse; a CSV is read through a FileReader. With two files in
-// flight the one that finished last used to commit last, so a slow workbook picked
-// first replaced a CSV picked second, and the rows on screen were not the file the
-// user last chose. Covered both orders, the sequential control, and that a stale
+// flight, the one that finishes last must not commit last: a slow workbook picked
+// first must not replace a CSV picked second, or the rows on screen are not the file
+// the user last chose. Covered both orders, the sequential control, and that a stale
 // file's failure does not overwrite the status of the file that won.
 const path = require("path");
 const { buildContext, rowsOf, REPO } = require("../harness");

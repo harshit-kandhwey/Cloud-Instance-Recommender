@@ -1,8 +1,8 @@
 // portfolio-copy-expiry suite: the App Portfolio's localStorage copy of the last
 // results is a convenience for reloads and cold opens, and it holds the uploaded
-// columns. It used to stay until the user cleared storage. A copy older than a day, or
-// whose date cannot be read, is now removed instead of shown; the postMessage hand-off
-// is a live delivery and is never expired.
+// columns, so it is not kept indefinitely: a copy older than a day, one whose date
+// cannot be read, or one that is not valid JSON is removed instead of shown. The
+// postMessage hand-off is a live delivery and is never expired.
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");

@@ -1,9 +1,8 @@
 // formula-guard-parity suite: one decision about what a spreadsheet would execute.
-// Three export paths each carried their own copy of the guard: the CSV cell, the
-// clipboard row, and the AWS bulk template. They had already diverged: the clipboard
-// prefixed a plain negative number that the CSV leaves alone, so a pasted column of
-// negatives arrived as text and stopped summing, and the template guarded characters
-// the clipboard did not. Covered: the decision table itself, that every surface
+// Three export paths (the CSV cell, the clipboard row and the AWS bulk template) share
+// one guard. Separate copies could disagree: a plain negative number prefixed on the
+// clipboard but not in the CSV pastes as text and stops summing, and one path could
+// guard characters another does not. Covered: the decision table itself, that every surface
 // agrees with it, and that the pattern exists in exactly one place so a fourth copy
 // cannot appear unnoticed.
 const fs = require("fs");

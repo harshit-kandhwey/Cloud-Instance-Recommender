@@ -1,4 +1,4 @@
-// End-to-end: a fleet snapshot exported as a file and imported back (3.22). The file
+// End-to-end: a fleet snapshot exported as a file and imported back. The file
 // is made and read in the browser, so this drives the real download, the hidden file
 // input and the rename form, which the Node suites cannot.
 

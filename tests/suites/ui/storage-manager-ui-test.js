@@ -213,7 +213,7 @@ check(
     capped.includes("Showing the first 50 of 60 changed VMs."),
 );
 
-// ── Snapshot file controls (3.22) ───────────────────────────────────────────────
+// ── Snapshot file controls ───────────────────────────────────────────────
 {
   const rows = run("renderFleetSnapshotRows")([
     { id: 's"1', name: "<b>x</b>", takenAt: "2026-10-01", rows: [{}, {}] },

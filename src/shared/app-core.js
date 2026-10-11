@@ -69,20 +69,18 @@ const COLUMN_MAPPINGS = {
   disk: "Disk (GB)",
   // Current running size (m5.xlarge, Standard_D4s_v3, n2-standard-4). Carried
   // through untouched; nothing derived from it by default. In cloud-to-cloud
-  // mode (3.13) a row with no CPU/Memory derives its specs from this column.
+  // mode a row with no CPU/Memory derives its specs from this column.
   currentInstance: "Current Instance Type",
   awsRegion: "AWS Region",
   azureRegion: "Azure Region",
   gcpRegion: "GCP Region",
-  // Added v3.16.17 — these 7 fields used to be entirely invisible to this
-  // table (read literally by rule-engine callers, no synonym match and no
-  // manual-mapping row), so a header named anything but the exact literal
-  // string silently fell through to that rule's default with no warning.
-  // ENV/OS keep the alt-name fallback callers already hardcoded
-  // (COLUMN_SYNONYMS below); Workload/Compliance/Exclude/Include Only never
-  // had one, so they're exact-match only, same as before, now just also
-  // manually mappable via "Edit mapping". Min Gen is per-provider like
-  // Region — pageCanonicals() filters it the same way.
+  // These 7 fields are canonicals so each gets a synonym match and a manual-mapping
+  // row: a field missing from this table is read literally by rule-engine callers,
+  // and a header named anything but the exact string would silently fall through to
+  // that rule's default with no warning. ENV/OS keep the alt-name fallback callers
+  // hardcode (COLUMN_SYNONYMS below); Workload/Compliance/Exclude/Include Only are
+  // exact-match only, and manually mappable via "Edit mapping". Min Gen is
+  // per-provider like Region — pageCanonicals() filters it the same way.
   env: "ENV",
   os: "OS",
   workload: "Workload",

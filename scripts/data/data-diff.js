@@ -46,9 +46,9 @@ const PROVIDERS = [
 // type). specFields/priceFields are DERIVED from scripts/lib/record-schema.js's FIELD_ORDER,
 // never hand-listed here: that module exists precisely because a field named in
 // only one of two partitions gets written by one tool and dropped by the other, and
-// hand-listing a second copy in THIS file reproduced exactly that failure — GCP's
-// localSsdGiB (added in 3.15.7) was never added here, so a refresh that changed only
-// a type's local-SSD size would report NO-CHANGES and never reach split-data.
+// hand-listing a second copy in THIS file reproduces exactly that failure — a field
+// missing here (GCP's localSsdGiB is the case) means a refresh that changed only that
+// field would report NO-CHANGES and never reach split-data.
 const PROVIDER_CFG = {};
 for (const { name } of PROVIDERS) {
   const familyField = { aws: "instanceFamily", azure: "family", gcp: "series" }[

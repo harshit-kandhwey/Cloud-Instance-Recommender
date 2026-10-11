@@ -1,7 +1,7 @@
 // User-defined rules — the authoring UI (companion to user-rules.js, which holds
-// the model/evaluator/storage). Its own top-level "Custom Rules" section (3.20:
-// promoted out of the Generate section, one of this project's two primary
-// interactions rather than a secondary control) lets the user add, list and
+// the model/evaluator/storage). Its own top-level "Custom Rules" section (one of
+// this project's two primary interactions rather than a secondary control) lets the
+// user add, list and
 // delete conditional rules ("if Workload = database, Include only r5"); the
 // rules are stored per page and picked up on the next Generate.
 //

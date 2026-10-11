@@ -1,6 +1,6 @@
-// xlsx-parser-integrity suite: ensureXlsxLoaded captured whatever window.XLSX held
-// when the full build's script finished loading and never asked what it was. Two
-// vendored bundles define window.XLSX; the styling fork (0.18.5) predates the
+// xlsx-parser-integrity suite: ensureXlsxLoaded must ask what window.XLSX is before
+// capturing it as the parser, not take whatever it held when the full build's script
+// finished loading. Two vendored bundles define window.XLSX; the styling fork (0.18.5) predates the
 // read-path fixes. The isolation suite pins the capture by reading source text; this
 // one pins the behaviour: a parser that is the fork, or older than the fixed release,
 // or has no readable version, is refused and never becomes the parser.

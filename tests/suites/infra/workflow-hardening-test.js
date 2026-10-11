@@ -81,9 +81,9 @@ for (const file of ["ci.yml", "data-refresh.yml"]) {
 
 // ── data-refresh.yml: no write credential reaches a step that evaluates feed data ──
 // The workflow fetches vendor data, evaluates it (the monolith is run through vm), and
-// opens a pull request. Its token used to be write-scoped for every job and the PAT was
-// persisted by checkout into .git/config, so every later step ran with a credential
-// that could push. The PAT is now attached to the remote in the final step only.
+// opens a pull request. A write-scoped token, or a PAT persisted by checkout into
+// .git/config, would give every later step a credential that could push, so the token
+// is read-only everywhere and the PAT is attached to the remote in the final step only.
 {
   const src = fs
     .readFileSync(

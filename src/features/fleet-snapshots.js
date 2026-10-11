@@ -1,4 +1,4 @@
-// Named snapshots of a generation run's per-VM outputs (3.21 phase 2). A snapshot
+// Named snapshots of a generation run's per-VM outputs. A snapshot
 // holds the result rows, the providers the run used and the user rules it applied.
 // Each result row carries the input columns of its VM as well as the recommendation,
 // so a snapshot and its exported file hold the uploaded columns too.
@@ -6,7 +6,7 @@
 // so copying rows cannot carry it, and nothing here reads that array property
 // (CLAUDE rule 7). Entries are versioned: an unknown version is ignored on read,
 // not migrated (CLAUDE rule 6), and left in storage untouched by a save or delete.
-// A snapshot file (3.22) is read back through the same build and save as a captured
+// A snapshot file is read back through the same build and save as a captured
 // run, after the checks in parseImport: nothing reaches storage by another route.
 const FleetSnapshots = (() => {
   const SCHEMA_VERSION = 1;
@@ -150,7 +150,7 @@ const FleetSnapshots = (() => {
     return { ok: true, overlap, added, removed };
   }
 
-  // ── Snapshot file (3.22) ──────────────────────────────────────────────────────
+  // ── Snapshot file ──────────────────────────────────────────────────────
   const FILE_FORMAT = "cir-fleet-snapshot";
   // Text longer than this is refused before JSON.parse allocates for it. Well under
   // the localStorage quota a snapshot must still fit into.

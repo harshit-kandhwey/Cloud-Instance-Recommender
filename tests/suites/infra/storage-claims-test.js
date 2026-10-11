@@ -1,9 +1,10 @@
 // storage-claims suite: pins what the product says it stores against what it stores.
-// The privacy note, the README, the architecture document and the snapshot panel each
-// said the inventory was never stored while every result row carries the uploaded
-// columns into a snapshot and into the App Portfolio copy. A claim that reads as
-// reassurance and is false is the hazard, so the false phrasings are banned and the
-// keys that hold uploaded data must be named where a reader looks.
+// Every result row carries the uploaded columns into a snapshot and into the App
+// Portfolio copy, so a statement that the inventory is never stored would be false in
+// the privacy note, the README, the architecture document, the user guide and the
+// snapshot panel. A claim that reads as reassurance and is false is the hazard, so the
+// false phrasings are banned and the keys that hold uploaded data must be named where
+// a reader looks.
 const fs = require("fs");
 const path = require("path");
 const { REPO, makeChecker } = require("../harness");

@@ -1,6 +1,6 @@
-// seo-meta suite: what a search result or a link preview shows for each of the seven
-// pages. Three of the four tool pages shared one generic title, so a result list could
-// not tell AWS from Azure from GCP, and no page had a description. Covered: each page
+// seo-meta suite: what a search result or a link preview shows for each page at the
+// repository root. Each page has to be identifiable (three tool pages sharing one generic title
+// would not tell AWS from Azure from GCP in a result list) and described. Covered: each page
 // has a distinct title, one description of a useful length, link-preview tags that say
 // the same thing as the title and description, and nothing in them that would make a
 // request (no image, no script, no stylesheet).
@@ -9,15 +9,11 @@ const path = require("path");
 const { REPO, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
-const PAGES = [
-  "index.html",
-  "aws.html",
-  "azure.html",
-  "gcp.html",
-  "multicloud.html",
-  "app-portfolio.html",
-  "user-guide.html",
-];
+// Every page at the repository root, so a page added later is held to the same rules.
+const PAGES = fs
+  .readdirSync(REPO)
+  .filter((f) => f.endsWith(".html"))
+  .sort();
 const SITE = "https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/";
 
 const read = (rel) =>
@@ -45,6 +41,21 @@ const titleOf = (html) => {
   const m = html.match(/<title>([^<]*)<\/title>/);
   return m ? decode(m[1].trim()) : null;
 };
+
+check(
+  "the scan sees the seven pages it was written for",
+  PAGES.length >= 7 &&
+    [
+      "index.html",
+      "aws.html",
+      "azure.html",
+      "gcp.html",
+      "multicloud.html",
+      "app-portfolio.html",
+      "user-guide.html",
+    ].every((p) => PAGES.includes(p)),
+  PAGES.join(", "),
+);
 
 const titles = [];
 for (const page of PAGES) {
@@ -92,7 +103,7 @@ for (const page of PAGES) {
   );
 }
 check(
-  "the seven page titles are all different",
+  "the page titles are all different",
   new Set(titles).size === PAGES.length,
   JSON.stringify(titles),
 );

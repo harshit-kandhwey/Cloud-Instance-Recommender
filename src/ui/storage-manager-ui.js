@@ -1,4 +1,4 @@
-// Storage panel (3.21 phase 1): lists the app's own localStorage keys with their
+// Storage panel: lists the app's own localStorage keys with their
 // measured size and lets the user clear one or all of them. Renders into
 // #storageManagerPanel and does nothing on a page that lacks it.
 //
