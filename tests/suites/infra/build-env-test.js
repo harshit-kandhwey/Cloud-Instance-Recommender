@@ -145,10 +145,193 @@ const { check, state } = makeChecker();
   );
 }
 
-if (state.failures) {
-  console.error(`\nbuild-env: ${state.failures} check(s) FAILED`);
-  process.exitCode = 1;
-} else {
-  console.log("\nbuild-env: all checks passed");
-  process.exitCode = 0;
+// ── fetchJson: bounded retry on a stub transport (no network, no real sleeping) ───
+async function runFetchJsonSuite() {
+  const {
+    fetchJson,
+    parseRetryAfterMs,
+  } = require("../../../scripts/lib/build-env");
+
+  /** A stub response carrying just what fetchJson reads. */
+  const reply = (status, body, retryAfter) => ({
+    ok: status >= 200 && status < 300,
+    status,
+    headers: {
+      get: (k) => (k === "retry-after" ? (retryAfter ?? null) : null),
+    },
+    json: async () => body,
+  });
+  /** A transport that plays the given outcomes in order; a function entry throws. */
+  const transport = (...outcomes) => {
+    const calls = [];
+    const fetchImpl = async (url) => {
+      calls.push(url);
+      const o = outcomes[Math.min(calls.length - 1, outcomes.length - 1)];
+      if (o instanceof Error) throw o;
+      return o;
+    };
+    return { fetchImpl, calls };
+  };
+  const waits = [];
+  const sleepImpl = async (ms) => {
+    waits.push(ms);
+  };
+  const run = async (t, opts = {}) => {
+    waits.length = 0;
+    try {
+      const value = await fetchJson("https://x.test/a", {
+        timeoutMs: 1000,
+        fetchImpl: t.fetchImpl,
+        sleepImpl,
+        ...opts,
+      });
+      return { value, waits: waits.slice() };
+    } catch (error) {
+      return { error, waits: waits.slice() };
+    }
+  };
+
+  {
+    const t = transport(reply(200, { ok: 1 }));
+    const r = await run(t);
+    check(
+      "fetchJson: a first-try success makes one request and never sleeps",
+      r.value &&
+        r.value.ok === 1 &&
+        t.calls.length === 1 &&
+        r.waits.length === 0,
+    );
+  }
+  {
+    const t = transport(
+      reply(429, null),
+      reply(429, null),
+      reply(200, { ok: 3 }),
+    );
+    const r = await run(t);
+    check(
+      "fetchJson: succeeds on the third try after two 429s",
+      r.value && r.value.ok === 3 && t.calls.length === 3,
+      JSON.stringify(r.error && r.error.message),
+    );
+    check(
+      "fetchJson: backoff doubles between attempts (1000 then 2000)",
+      JSON.stringify(r.waits) === "[1000,2000]",
+      JSON.stringify(r.waits),
+    );
+  }
+  {
+    const t = transport(reply(429, null, "7"), reply(200, { ok: 1 }));
+    const r = await run(t);
+    check(
+      "fetchJson: Retry-After seconds are honoured instead of the backoff",
+      r.value && JSON.stringify(r.waits) === "[7000]",
+      JSON.stringify(r.waits),
+    );
+  }
+  {
+    const t = transport(reply(429, null, "999"), reply(200, { ok: 1 }));
+    const r = await run(t, { maxDelayMs: 5000 });
+    check(
+      "fetchJson: a huge Retry-After is capped at maxDelayMs",
+      r.value && JSON.stringify(r.waits) === "[5000]",
+      JSON.stringify(r.waits),
+    );
+  }
+  {
+    const t = transport(reply(429, null));
+    const r = await run(t, {
+      attempts: 3,
+      errorContext: "for region mexicocentral",
+    });
+    const msg = r.error ? r.error.message : "";
+    check(
+      "fetchJson: gives up after the attempt limit",
+      !!r.error && t.calls.length === 3,
+      String(t.calls.length),
+    );
+    check(
+      "fetchJson: the final error names the status, the region and the attempts",
+      msg ===
+        "fetch failed: HTTP 429 for region mexicocentral (after 3 attempts)",
+      msg,
+    );
+    check(
+      "fetchJson: it does not sleep after the last attempt",
+      r.waits.length === 2,
+      JSON.stringify(r.waits),
+    );
+  }
+  {
+    const t = transport(reply(404, null), reply(200, { ok: 1 }));
+    const r = await run(t, { errorContext: "for region nowhere" });
+    check(
+      "fetchJson: a 404 is not retried and keeps its original message",
+      t.calls.length === 1 &&
+        r.error &&
+        r.error.message === "fetch failed: HTTP 404 for region nowhere",
+      r.error && r.error.message,
+    );
+  }
+  {
+    const t = transport(reply(400, null), reply(200, { ok: 1 }));
+    const r = await run(t);
+    check("fetchJson: a 400 is not retried", t.calls.length === 1 && !!r.error);
+  }
+  {
+    const t = transport(reply(503, null), reply(200, { ok: 1 }));
+    const r = await run(t);
+    check("fetchJson: a 503 is retried", r.value && t.calls.length === 2);
+  }
+  {
+    const t = transport(new TypeError("fetch failed"), reply(200, { ok: 1 }));
+    const r = await run(t);
+    check(
+      "fetchJson: a network error or timeout is retried",
+      r.value && t.calls.length === 2,
+      r.error && r.error.message,
+    );
+  }
+  {
+    const t = transport(new TypeError("socket hang up"));
+    const r = await run(t, { attempts: 2, errorContext: "for region r" });
+    check(
+      "fetchJson: a persistent network error ends with the reason and the count",
+      r.error &&
+        r.error.message ===
+          "fetch failed: socket hang up for region r (after 2 attempts)",
+      r.error && r.error.message,
+    );
+  }
+  {
+    const now = Date.parse("2026-10-11T00:00:00Z");
+    check("parseRetryAfterMs: seconds", parseRetryAfterMs("5") === 5000);
+    check(
+      "parseRetryAfterMs: an HTTP date is read relative to now",
+      parseRetryAfterMs("Sun, 11 Oct 2026 00:00:30 GMT", now) === 30000,
+    );
+    check(
+      "parseRetryAfterMs: a past date is zero, not negative",
+      parseRetryAfterMs("Sun, 11 Oct 2026 00:00:00 GMT", now + 5000) === 0,
+    );
+    check(
+      "parseRetryAfterMs: garbage and absent are null",
+      parseRetryAfterMs("soon") === null && parseRetryAfterMs(null) === null,
+    );
+  }
 }
+
+runFetchJsonSuite()
+  .catch((err) => {
+    console.error(err);
+    state.failures++;
+  })
+  .then(() => {
+    if (state.failures) {
+      console.error(`\nbuild-env: ${state.failures} check(s) FAILED`);
+      process.exitCode = 1;
+    } else {
+      console.log("\nbuild-env: all checks passed");
+      process.exitCode = 0;
+    }
+  });

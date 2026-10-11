@@ -98,24 +98,93 @@ function writeFileAtomic(target, contents) {
   }
 }
 
-// Shared JSON GET (timeout + "not ok" check) for the 4 refresh tools that
-// hit a network API — was independently hand-copied per tool before this.
-// timeoutMs is required: AbortSignal.timeout(undefined) throws.
+// A 4xx other than 429 means the request itself is wrong; retrying only delays the
+// real error.
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/** @param {number} ms */
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Retry-After is delta-seconds or an HTTP date; anything else is treated as absent.
+ * @param {string | null | undefined} value
+ * @param {number} [now]
+ * @returns {number | null} milliseconds
+ */
+function parseRetryAfterMs(value, now = Date.now()) {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (/^\d+$/.test(s)) return Number(s) * 1000;
+  const at = Date.parse(s);
+  return Number.isNaN(at) ? null : Math.max(0, at - now);
+}
+
+// Shared JSON GET (timeout + "not ok" check + bounded retry) for the 4 refresh
+// tools that hit a network API. timeoutMs is required and applies per attempt:
+// AbortSignal.timeout(undefined) throws. A request that still fails after
+// `attempts` tries throws, naming the status and the count — never a silent skip.
 /**
  * @param {string} url
- * @param {{ timeoutMs: number, headers?: Record<string, string>, errorContext?: string }} options
+ * @param {{
+ *   timeoutMs: number,
+ *   headers?: Record<string, string>,
+ *   errorContext?: string,
+ *   attempts?: number,
+ *   backoffMs?: number,
+ *   maxDelayMs?: number,
+ *   fetchImpl?: typeof fetch,
+ *   sleepImpl?: (ms: number) => Promise<void>,
+ * }} options
  */
-async function fetchJson(url, { timeoutMs, headers = {}, errorContext }) {
-  const res = await fetch(url, {
-    headers: { Accept: "application/json", ...headers },
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!res.ok) {
-    throw new Error(
-      `fetch failed: HTTP ${res.status}${errorContext ? ` ${errorContext}` : ""}`,
+async function fetchJson(
+  url,
+  {
+    timeoutMs,
+    headers = {},
+    errorContext,
+    attempts = 4,
+    backoffMs = 1000,
+    maxDelayMs = 60000,
+    fetchImpl = fetch,
+    sleepImpl = sleep,
+  },
+) {
+  const ctx = errorContext ? ` ${errorContext}` : "";
+  for (let attempt = 1; ; attempt++) {
+    /** @type {number | null} */
+    let retryAfterMs = null;
+    /** @type {string} */
+    let reason;
+    /** @type {Error | null} */
+    let permanent = null;
+    try {
+      const res = await fetchImpl(url, {
+        headers: { Accept: "application/json", ...headers },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (res.ok) return res.json();
+      reason = `HTTP ${res.status}`;
+      if (!RETRYABLE_STATUS.has(res.status)) {
+        permanent = new Error(`fetch failed: ${reason}${ctx}`);
+      } else {
+        retryAfterMs = parseRetryAfterMs(res.headers.get("retry-after"));
+      }
+    } catch (err) {
+      // A network error or timeout is transient and goes through the same loop.
+      reason = err instanceof Error ? err.message : String(err);
+    }
+    if (permanent) throw permanent;
+    if (attempt >= attempts) {
+      throw new Error(
+        `fetch failed: ${reason}${ctx} (after ${attempt} attempts)`,
+      );
+    }
+    const wait = Math.min(
+      retryAfterMs != null ? retryAfterMs : backoffMs * 2 ** (attempt - 1),
+      maxDelayMs,
     );
+    await sleepImpl(wait);
   }
-  return res.json();
 }
 
 module.exports = {
@@ -127,4 +196,5 @@ module.exports = {
   resolveDataDate,
   writeFileAtomic,
   fetchJson,
+  parseRetryAfterMs,
 };
