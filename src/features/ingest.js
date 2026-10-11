@@ -1286,6 +1286,18 @@ function readSavedMapping(entry) {
   };
 }
 
+// Writes a key taken from the uploaded file onto a plain object. defineProperty, not
+// assignment: a key of "__proto__" would otherwise set the prototype, and the save
+// would report success while storing nothing.
+function setOwnKey(target, key, value) {
+  Object.defineProperty(target, key, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
 function saveColumnMapping(signature, mapping, units) {
   const recorded = { ...(units || {}) };
   // Record the unit even when it's the default, for every size column: an absent
@@ -1298,7 +1310,11 @@ function saveColumnMapping(signature, mapping, units) {
   }
 
   const all = loadColumnMappings();
-  all[signature] = { v: SAVED_MAPPING_VERSION, mapping, units: recorded };
+  setOwnKey(all, signature, {
+    v: SAVED_MAPPING_VERSION,
+    mapping,
+    units: recorded,
+  });
   writeColumnMappings(all);
   renderSavedMappings();
 }
@@ -2516,7 +2532,7 @@ function applyAppMapping() {
   ).forEach((sel) => {
     const app = (sel.getAttribute("data-app") || "").toLowerCase();
     if (!app) return;
-    if (sel.value) map[app] = sel.value;
+    if (sel.value) setOwnKey(map, app, sel.value);
     else delete map[app];
   });
   const ok = saveAppWorkloadMap(map);

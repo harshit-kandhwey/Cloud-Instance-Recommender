@@ -119,7 +119,7 @@ class BaseInstanceSelector {
         usedFallback ? regionData : this._mergeSpecs(regionData, region),
         region,
       );
-      this.instanceData[region] = instances;
+      this._setRegionData(region, instances);
       if (!usedFallback) {
         this.loadedRegions.add(
           `${this.getProviderName().toLowerCase()}-${region}`,
@@ -130,8 +130,19 @@ class BaseInstanceSelector {
         `Failed to load data for ${this.getProviderName()} ${region}:`,
         error,
       );
-      this.instanceData[region] = this.getFallbackInstances(region);
+      this._setRegionData(region, this.getFallbackInstances(region));
     }
+  }
+
+  // defineProperty, not assignment: a region named "__proto__" would otherwise set
+  // this table's prototype instead of adding a key.
+  _setRegionData(region, instances) {
+    Object.defineProperty(this.instanceData, region, {
+      value: instances,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
   }
 
   // Merge each type's specifications back under its price record — the browser twin
@@ -536,7 +547,9 @@ class BaseInstanceSelector {
       this.instanceData,
       region,
     );
-    let regionData = this.instanceData[region];
+    // Own key only: region is a cell from the uploaded file, and "constructor"
+    // would otherwise resolve to an inherited function that passes the length test.
+    let regionData = hasExactRegion ? this.instanceData[region] : undefined;
     let usedRegion = region;
     if (!hasExactRegion) {
       const fuzzy = this._findFuzzyRegion(region);

@@ -829,11 +829,11 @@ const RuleEngine = (() => {
    */
   function getPreferredFamilies(workload, provider) {
     const wl = (workload || "general").toLowerCase().trim();
-    return (
-      (WORKLOAD_FAMILIES[provider] || {})[wl] ||
-      (WORKLOAD_FAMILIES[provider] || {})["general"] ||
-      []
-    );
+    // Own keys only: wl is a cell from the uploaded file, and "constructor" or
+    // "__proto__" would otherwise resolve to an inherited member, not a list.
+    const table = WORKLOAD_FAMILIES[provider] || {};
+    const own = (key) => Object.prototype.hasOwnProperty.call(table, key);
+    return (own(wl) && table[wl]) || table.general || [];
   }
 
   // A workload preference is a nudge toward an APPROPRIATE FAMILY, never a licence to
