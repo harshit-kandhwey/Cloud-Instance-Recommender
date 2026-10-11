@@ -289,6 +289,62 @@ check(
   );
 }
 
+// What the panel shows once an import finishes, with the panel present.
+{
+  const host = { innerHTML: "" };
+  const realGet = ctx.ctx.document.getElementById;
+  ctx.ctx.document.getElementById = (id) =>
+    id === "fleetSnapshotsPanel" ? host : null;
+  const finish = (result) => {
+    host.innerHTML = "";
+    run("finishFleetImport")(result);
+    return host.innerHTML;
+  };
+  const pending = () => run("fleetPendingImportText");
+
+  run('fleetPendingImportText = "a file"');
+  const ok = finish({ ok: true, entry: { name: 'Q4 <b>"plan"</b>' } });
+  check(
+    "a finished import names the snapshot, escaped, and drops the pending text",
+    ok.includes(
+      "Imported &quot;Q4 &lt;b&gt;&quot;plan&quot;&lt;/b&gt;&quot;.",
+    ) && pending() === null,
+    ok.slice(0, 300),
+  );
+
+  run('fleetPendingImportText = "a file"');
+  const dup = finish({
+    ok: false,
+    reason: "duplicate",
+    name: "Q4",
+    suggestion: "Q4 (2)",
+  });
+  check(
+    "a taken name shows the rename form and keeps the text for it",
+    dup.includes('id="fleetSnapshotImportForm"') &&
+      dup.includes("Q4 (2)") &&
+      pending() === "a file",
+    dup.slice(0, 300),
+  );
+
+  const refused = finish({ ok: false, reason: "version" });
+  check(
+    "a refusal shows its own message and drops the pending text",
+    refused.includes("different version") && pending() === null,
+    refused.slice(0, 300),
+  );
+
+  run('fleetPendingImportText = "a file"');
+  const unknown = finish({ ok: false, reason: "something-new" });
+  check(
+    "a reason with no message still says the file could not be imported",
+    unknown.includes("could not be imported") && pending() === null,
+    unknown.slice(0, 300),
+  );
+
+  ctx.ctx.document.getElementById = realGet;
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;
