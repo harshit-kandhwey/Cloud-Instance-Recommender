@@ -6,7 +6,7 @@ This is 3.20's groundwork step for treating the rule engine as a product surface
 
 ## How to load it
 
-There is no build step in this project (see `.claude/rules/coding.md` §9 for the constraints this implies — classic scripts, one global scope, `connect-src 'none'`). `rule-engine.js` is a plain `<script>` that assigns `window.RuleEngine` once loaded; nothing else it depends on beyond the browser global object. Loading it standalone (without the rest of the app) is sufficient to call every function documented below — it reads no other global and touches no DOM.
+There is no build step in this project (classic scripts sharing one global scope, and `connect-src 'none'`). `rule-engine.js` is a plain `<script>` that assigns `window.RuleEngine` once loaded; nothing else it depends on beyond the browser global object. Loading it standalone (without the rest of the app) is sufficient to call every function documented below — it reads no other global and touches no DOM.
 
 ## Version
 
@@ -26,7 +26,7 @@ A SemVer string. See [Version](#version) above and the [API changelog](#api-chan
 
 The main entry point. Filters and sorts a candidate `Instance[]` against one row's resolved rule inputs (`RuleOptions`), for one `Provider` (`"aws" | "azure" | "gcp"`). Returns `{ instances: Instance[], rules: string[] }` — the surviving/reordered candidates, plus a human-readable audit trail of which rules fired and how many candidates each one removed (or why a rule reports "not applied"). Every rule this file implements is described in the file's own header comment block (Rule 1a–1d, OS, MinGen, Workload preference, GPU, SQL, Burstable preference) — that comment block is the rule reference; this document is the API boundary around it, not a restatement of the rules themselves.
 
-Never throws on a malformed VALUE within `options`: an unrecognised ENV/OS/Workload/Compliance/MinGen string is treated as "no rule fires for this value" and reported as such in the `rules` array, never silently guessed into a different value (`.claude/rules/coding.md` §1 — never a plausible wrong answer). This guarantee assumes `options` itself is an object — `apply(instances, null, provider)` throws immediately on the first property read, the same as any other function called with a missing required argument; it is not part of the malformed-VALUE contract above.
+Never throws on a malformed VALUE within `options`: an unrecognised ENV/OS/Workload/Compliance/MinGen string is treated as "no rule fires for this value" and reported as such in the `rules` array, never silently guessed into a different value (the project's rule: never a plausible wrong answer). This guarantee assumes `options` itself is an object — `apply(instances, null, provider)` throws immediately on the first property read, the same as any other function called with a missing required argument; it is not part of the malformed-VALUE contract above.
 
 ### `RECOGNIZED`
 
@@ -38,7 +38,7 @@ Never throws on a malformed VALUE within `options`: an unrecognised ENV/OS/Workl
 
 ### `getPreferredFamilies(workload, provider)`
 
-`(string, Provider) => string[]`. Looks up `WORKLOAD_FAMILIES`, falling back to `"general"` for an unrecognised or blank workload. Pure, no side effects.
+`(string, Provider) => string[]`. Looks up `WORKLOAD_FAMILIES`, falling back to `"general"` for an unrecognised or blank workload. A name that is not an own key of the table (for example `constructor`) is unrecognised like any other. Pure, no side effects.
 
 ### `meetsMinGeneration(inst, minGen, provider)`
 

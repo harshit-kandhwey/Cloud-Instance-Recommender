@@ -34,7 +34,7 @@ Five interactive dropdowns set global defaults for the entire batch without edit
 | Dropdown | Purpose |
 | --- | --- |
 | **ENV** | Production / Staging / Dev / Test — tightens generation and burstable rules; Dev/Test at low utilization _prefers_ burstable |
-| **OS** | Linux / Windows / macOS — selects the price the row is ranked on; Windows excludes ARM/Graviton machines (the current proxy for Windows support, not a per-type check — see ROADMAP) |
+| **OS** | Linux / Windows / macOS — selects the price the row is ranked on; Windows excludes machines the provider does not sell with Windows, Arm/Graviton included |
 | **Workload** | General / Database / **SQL Server** / Web Server / Cache / ML/AI (GPU) / Batch / HPC / **SAP** — sorts preferred families first; **ML/AI requires an accelerator, every other workload excludes one; SQL Server enforces a 4-vCPU licence floor** |
 | **Compliance** | PCI / HIPAA / SOC2 / FIPS — enforces current-gen; Nitro Enclaves required for PCI/HIPAA (AWS) |
 | **Min Gen** | Minimum generation number/family, native to each cloud — excludes older instance generations |
@@ -45,9 +45,9 @@ Per-row CSV column values always override these global defaults.
 
 The Rule Engine highlights contradicting filter combinations in red and explains the conflict:
 
-- Current-Gen Only + Previous-Gen preference
-- Burstable excluded (Prod ENV) + Burstable family selected
-- Min Gen + Current Gen Only (redundant but not conflicting)
+- Windows selected + a processor filter restricted to Graviton/ARM only
+- Production or Staging ENV (burstable excluded) + a family filter restricted to burstable types only
+- ML/AI workload + a processor filter restricted to Intel/AMD only
 - macOS selected + Azure/GCP providers active (macOS is AWS-only)
 
 ### 🔧 Advanced Filtering
@@ -102,7 +102,7 @@ Upload a file, **paste rows straight from a spreadsheet**, **enter VMs by hand**
 
 ### 📗 Excel Upload
 
-Upload `.xlsx` files directly. In a multi-sheet workbook the sheet whose columns best match an inventory is opened, and a picker lets you switch. Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected.
+Upload `.xlsx` files directly. In a multi-sheet workbook the sheet whose columns best match an inventory is opened, and a picker lets you switch. Parsing runs fully in-browser via a vendored SheetJS; the ~930 KB parser script is loaded only when an Excel file is actually selected. A file may hold up to 100,000 rows and 500 columns, and a workbook that declares more than 200 MB uncompressed is refused before it is opened; a refused file leaves the previous upload loaded.
 
 Uploads are routed by their **content**, not their file extension: a workbook saved as `.csv` (or a CSV saved as `.xlsx`) is still read correctly, and you are told it happened. A legacy `.xls` or a file that is neither is rejected with an explanation rather than parsed into nonsense.
 
@@ -127,7 +127,7 @@ Everything runs client-side. The Overview tab's KPI row includes a relative-only
 
 ### ⭐ Filter Presets
 
-Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. **Export / Import** moves a page's presets to another browser or machine as a JSON file; importing never overwrites — a colliding name comes in with an "(imported)" suffix. Nothing is applied automatically — a preset takes effect only when you click Apply.
+Save the current filter configuration — recommendation type, optimization thresholds, Rule Engine defaults, provider filters, and exclude selections — under a name and re-apply it in two clicks from the bar above the Generate button. Presets are scoped per tool page (an AWS preset won't appear on Azure), stored in your browser's localStorage, and can be updated or deleted in place. **Export / Import** moves a page's presets to another browser or machine as a JSON file (at most 1 MB and 200 presets); importing never overwrites — a colliding name comes in with an "(imported)" suffix. Nothing is applied automatically — a preset takes effect only when you click Apply.
 
 - **Browser Storage and fleet snapshots** — a Browser Storage section on every tool page lists what the tool keeps in your browser, with sizes, and clears it. Save the last run as a named snapshot and compare it with a later run of the same estate: changed VMs and cells are shown, and a different estate is refused rather than paired. Snapshots stay in your browser. A snapshot can also be exported as a JSON file and imported back (nothing is sent anywhere; the file holds the per-VM results, which include the columns you uploaded; an import is validated first and never replaces an existing snapshot). See [user-guide.html](user-guide.html#browser-storage).
 
@@ -205,19 +205,23 @@ Cloud-Instance-Recommender/
 │
 ├── assets/
 │   └── templates/
-│       └── aws/             # AWS Pricing Calculator bulk upload templates (.xlsx)
+│       ├── aws/             # AWS Pricing Calculator bulk upload templates (.xlsx)
+│       └── cloud_instance_recommender_template.xlsx  # Validated input workbook (dropdowns); built by scripts/testing/make-template.js
 │
 ├── styles/
 │   ├── theme.css            # Light/dark theme tokens (CSS custom properties)
 │   ├── style.css            # Main application styles
 │   ├── portfolio.css        # App Portfolio dashboard styles
-│   └── index_style.css      # Landing page styles
+│   ├── index_style.css      # Landing page styles
+│   ├── user-guide.css       # User guide styles
+│   └── inline-utilities.css # Utility classes that replace inline style attributes (the CSP forbids them)
 │
 ├── logos/                   # Cloud provider logos
 │
 ├── docs/
+│   ├── ARCHITECTURE.md      # Module map, load order, worker protocol, stored data
 │   ├── architecture/        # Local-only design-decision reference (gitignored)
-│   ├── data/                # CANONICAL-SOURCES.md, DATA-SOURCES.md — provenance
+│   ├── data/                # CANONICAL-SOURCES.md, DATA-SOURCES.md, RULE-ENGINE-API.md
 │   ├── operations/          # RELEASING.md — the release process
 │   └── product/             # Local-only future-major working drafts (gitignored)
 │
@@ -289,7 +293,7 @@ Cloud-Instance-Recommender/
     │   ├── portfolio.js                    # App Portfolio: analytics, dashboard, executive Excel
     │   ├── xlsx-export.js                  # Styled results .xlsx export
     │   ├── downloads.js                    # CSV exports, bulk template, portfolio handoff
-    │   ├── fleet-snapshots.js              # Named, versioned snapshots of a run's per-VM outputs
+    │   ├── fleet-snapshots.js              # Named, versioned snapshots of a run's per-VM results; export/import as a file
     │   ├── scenario-compare.js             # Pin + diff two generation runs
     │   ├── manual-entry.js                 # Form-based VM entry
     │   └── presets.js                      # Filter presets (save/apply, localStorage)
@@ -299,7 +303,7 @@ Cloud-Instance-Recommender/
     │   ├── form-controls.js                # Filters, rule engine UI, option readers
     │   ├── multicloud-page.js              # Multicloud filter logic (multicloud.html only)
     │   ├── ui-shell.js                     # Page init, sticky button, accessibility
-    │   ├── storage-manager-ui.js          # Browser storage panel (measure, clear)
+    │   ├── storage-manager-ui.js           # Browser storage panel (measure, clear)
     │   └── user-rules-ui.js                # User-defined rules panel (add/list/delete)
     │
     └── shared/

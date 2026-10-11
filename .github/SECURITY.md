@@ -96,7 +96,7 @@ sha256sum js/vendor/*.js              # macOS: shasum -a 256 js/vendor/*.js
 
 If a checksum cannot be reproduced from the upstream URL, treat the artifact as compromised and do not commit it.
 
-The dev dependencies in `package.json` (TypeScript, Prettier) never reach a user's browser; they exist only for type-checking and formatting.
+The dev dependencies in `package.json` (TypeScript, Prettier, Playwright, axe-core, fast-check, Stryker) never reach a user's browser; they exist only for type-checking, formatting and testing.
 
 ### CVE watch
 
@@ -119,8 +119,12 @@ That is not merely a convention, because it very nearly failed. Both bundles def
 
 > upload a CSV → generate → **Download Results (Excel)** (loads 0.18.5) → **upload an .xlsx** (guard sees a truthy `window.XLSX`, parses with 0.18.5)
 
-Fixed by pinning each side to the engine it loaded, which the two bundles allow because they are separate objects: `window._xlsxParser` is always the full build and every read goes through it; `window._xlsxWriter` is the styling engine and every write goes through that. Neither path reads the bare global any more. `tests/suites/xlsx-engine-isolation-test.js` pins this, including that the two bundles genuinely collide — so the day that stops being true, the guard says so rather than quietly becoming decorative.
+Fixed by pinning each side to the engine it loaded, which the two bundles allow because they are separate objects: `window._xlsxParser` is always the full build and every read goes through it; `window._xlsxWriter` is the styling engine and every write goes through that. Neither path reads the bare global any more. `tests/suites/ingest/xlsx-engine-isolation-test.js` pins this, including that the two bundles genuinely collide — so the day that stops being true, the guard says so rather than quietly becoming decorative.
 
-**Residual risk:** the styling fork is unpatched and upstream is dormant, so its safety here rests on it never parsing input. Until it is replaced, any change that gives it a file to read reintroduces both CVEs — the rule contributors need is in [CONTRIBUTING.md](CONTRIBUTING.md) under Code Style ("Only one engine may parse a file"). Replacing it is scheduled in **[ROADMAP.md](../ROADMAP.md) § 3.11 — "Replace the unpatched styling engine"**, which also lists the dependent work (both styled writers, this assessment and the checksum table, the isolation suite, and a `sw.js` `CACHE` bump for the removed bundle).
+**Residual risk:** the styling fork is unpatched and upstream is dormant, so its safety here rests on it never parsing input. Until it is replaced, any change that gives it a file to read reintroduces both CVEs — the rule contributors need is in [CONTRIBUTING.md](CONTRIBUTING.md) under Code Style ("Only one engine may parse a file"). Replacing it is planned in **[ROADMAP.md](../ROADMAP.md) § 3.11 — "Replace the unpatched styling engine"** and has not been done; that item also lists the dependent work (both styled writers, this assessment and the checksum table, the isolation suite, and a `sw.js` `CACHE` bump for the removed bundle).
+
+**Assessment of record — 2026-10-11 (3.22 security review).** `xlsx.full` 0.20.3 carries no advisory beyond the two above in the sources read; the advisories a third-party fork attributes to 0.20.4 are those same two, both fixed before 0.20.3. `xlsx-js-style` 0.18.5 is unchanged and still write-only. A scanner such as Snyk flags the npm package name `xlsx`, whose registry copy is 0.18.5, rather than the vendored 0.20.3 build; that is expected. `npm audit` on the dev tree reported one high-severity advisory (`brace-expansion`, reached only through Stryker), fixed in 3.22.18.
+
+**Parser identity check (3.22).** Before an upload is read, `xlsxParserIsSafe` in `src/features/ingest.js` refuses a parser that has no `read()`, that defines `style_version` (only the styling fork does), or whose version is below 0.20.2; the upload then fails with a named error instead of being parsed.
 
 Never run a formatter over `js/vendor/` — the files must stay byte-identical to the upstream artifact so they can be diffed against it.

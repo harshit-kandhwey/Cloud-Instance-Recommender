@@ -2,7 +2,7 @@
 
 The instance specs and the internal ranking pricing are refreshed at **build time** by the `scripts/data/fetch-*.js` scripts and the scheduled data-refresh workflow (3.14). The shipped app never fetches anything — the served page keeps `connect-src 'none'`, and these sources are read only by CI/build tooling.
 
-Pricing is used **internally for ranking only** and is never printed in any output (decision D8).
+Pricing is used **internally for ranking only**: no dollar figure is printed in any output. The one price-derived figure shown is an aggregate relative percentage per provider (decision D8, narrowed in 3.17).
 
 ## Sources
 

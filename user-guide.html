@@ -44,7 +44,7 @@
         <span class="badge badge-mc">☁ Multi-Cloud</span>
       </div>
       <div class="cover-meta">
-        <span>📅 July 2026</span>
+        <span>📅 October 2026</span>
         <span>👥 IT Professionals · Cloud Architects · DevOps Engineers</span>
       </div>
     </div>
@@ -55,6 +55,47 @@
     <div class="content">
       <div class="section-heading" id="whats-new">
         <h2>🆕 What's New</h2>
+      </div>
+      <ul class="check">
+        <li>
+          <strong>Size against p90, p99 or a per-row policy</strong> — each VM
+          can be sized on a statistic chosen from its ENV, Criticality and
+          Workload, and a safety veto holds a downsize when the VM's own Peak or
+          p95 says it is saturating, marking the row in a Review Flag column.
+          Criticality is a new optional column.
+        </li>
+        <li>
+          <strong>Sizing confidence and a scale-out advisory</strong> — the
+          input check says how well your data supports a sizing, and the App
+          Portfolio flags VMs with a low median and a high peak as scale-out
+          candidates, as guidance with its reasons.
+        </li>
+        <li>
+          <strong>Validated Excel template</strong> —
+          <em>Download Excel Template</em> gives a workbook whose ENV, OS,
+          Workload and Criticality cells are dropdowns.
+        </li>
+        <li>
+          <strong>Browser Storage and fleet snapshots</strong> — see everything
+          the tool keeps in your browser, save a run as a named snapshot,
+          compare it with a later run of the same estate, and export or import a
+          snapshot as a file.
+        </li>
+        <li>
+          <strong>A relative savings figure</strong> — the stats bar, the App
+          Portfolio and the print report show how far Optimized ranks below
+          Like-to-Like, as a percentage only, never a dollar amount.
+        </li>
+        <li>
+          <strong>Input limits and a reserved-column notice</strong> — a file
+          over 100,000 rows or 500 columns is refused with the reason, and a
+          column named like one of this tool's own output columns is named in
+          the input check.
+        </li>
+      </ul>
+
+      <div class="section-heading" id="whats-new-earlier">
+        <h2>🕓 Recent Updates</h2>
       </div>
       <ul class="check">
         <li>
@@ -375,13 +416,13 @@
           </tr>
           <tr>
             <td><span class="chip chip-azure">Azure VMs</span></td>
-            <td>63 regions</td>
+            <td>60 regions</td>
             <td>B, D, E, F, H, L, M, N, NC, ND, NV…</td>
             <td>ARM (Dpdsv5, Bpsv2), Burstable B-series detection</td>
           </tr>
           <tr>
             <td><span class="chip chip-gcp">GCP Compute</span></td>
-            <td>47 regions</td>
+            <td>46 regions</td>
             <td>E2, N2, N4, C2, C3, C4, M1–M4, A2, A3, G2, T2A, H3, Z3…</td>
             <td>T2A ARM, shared-core detection, zone normalisation</td>
           </tr>
@@ -432,8 +473,10 @@
             <tr>
               <td>Local storage</td>
               <td>
-                Used for preferences only (usage statistics, theme, saved column
-                mappings, filter presets); no inventory data stored
+                Used for what you set or ask for: preferences, saved column
+                mappings, filter presets, custom rules, manual VMs and, if you
+                save them, fleet snapshots, which include the columns you
+                uploaded. The uploaded file itself is never stored
               </td>
             </tr>
           </tbody>
@@ -1028,10 +1071,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
 
       <div class="callout callout-info">
         <strong>Multi-Cloud Min Gen</strong>
-        On the Multi-Cloud page, Min Gen uses AWS generation numbers (5/6/7) as
-        a unified reference. Azure values are mapped by subtracting 2 (AWS 6 →
-        Azure v4), and GCP values are mapped to the corresponding generation
-        tier.
+        On the Multi-Cloud page, Min Gen has one dropdown per provider (AWS,
+        Azure, GCP), each in that cloud's own scale, and a file can carry
+        <code>AWS Min Gen</code>, <code>Azure Min Gen</code> and
+        <code>GCP Min Gen</code> columns. Nothing is translated between clouds.
       </div>
 
       <div id="rule-os"></div>
@@ -1297,46 +1340,14 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           Drag and drop your CSV onto the upload zone, or click it to browse.
         </li>
         <li>
-          The tool automatically validates the file, checks required columns,
-          shows a data preview, and assigns a quality score (0–100 %).
+          The tool validates the file, checks required columns, and shows a data
+          preview and an input check (see the FAQ below).
         </li>
         <li>
           Review any warnings before proceeding — common issues include missing
           region columns or non-numeric CPU/memory values.
         </li>
       </ol>
-
-      <table class="avoid-break">
-        <thead>
-          <tr>
-            <th>Quality Score</th>
-            <th>Level</th>
-            <th>Meaning</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>90–100 %</td>
-            <td>✅ Excellent</td>
-            <td>Complete data, minimal issues</td>
-          </tr>
-          <tr>
-            <td>70–89 %</td>
-            <td>🟡 Good</td>
-            <td>Some missing optional values</td>
-          </tr>
-          <tr>
-            <td>50–69 %</td>
-            <td>🟠 Fair</td>
-            <td>Multiple data quality issues</td>
-          </tr>
-          <tr>
-            <td>&lt; 50 %</td>
-            <td>🔴 Poor</td>
-            <td>Significant missing or invalid data</td>
-          </tr>
-        </tbody>
-      </table>
 
       <h3>Step 4 — Select Recommendation Type</h3>
 
@@ -1508,12 +1519,16 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
       <ul>
         <li>OS = Windows + processor filter restricted to Graviton/ARM only</li>
         <li>
-          ENV = Production + main families restricted to burstable types only
-          (t/B/e2)
+          ENV = Production or Staging + main families restricted to burstable
+          types only (t/B/e2)
         </li>
         <li>
           Workload = ML/AI + processor filter restricted to Intel/AMD only (no
           GPU available)
+        </li>
+        <li>
+          OS = macOS while an Azure or GCP provider is selected (macOS is
+          AWS-only)
         </li>
       </ul>
       <p>
@@ -1544,10 +1559,14 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           format, Optimized instances only
         </li>
         <li>
-          <strong>AWS page — single type selected:</strong> Results CSV + one
-          Bulk Template button.
+          <strong>AWS page — single type selected:</strong> Download Results
+          (Excel), the <strong>CSV ▾</strong> menu, and one Bulk Template
+          button.
         </li>
-        <li><strong>Azure / GCP pages:</strong> Results CSV only.</li>
+        <li>
+          <strong>Azure / GCP pages:</strong> Download Results (Excel), with the
+          Results CSV behind the <strong>CSV ▾</strong> menu.
+        </li>
       </ol>
 
       <!-- ══════════════════════════════════════════════════════════════════════
@@ -1902,8 +1921,16 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
               <td>On-Demand</td>
             </tr>
             <tr>
-              <td>Storage columns</td>
-              <td>Left blank for manual completion</td>
+              <td>Storage amount per Instance (GB)</td>
+              <td>
+                Disk (GB) column, rounded up to a whole GB (blank when the file
+                had none)
+              </td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Storage Type, IOPS, throughput</td>
+              <td>Always left blank for the calculator to default</td>
               <td>—</td>
             </tr>
           </tbody>
@@ -2127,9 +2154,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           matched and newly unmatched counts, and a table of only the changed
           rows with old → new values for each recommendation column. Rows are
           paired by VM Name (or by position when names aren't unique), so use
-          the same input file for both runs. Pinning a third run keeps the two
-          most recent; scenarios are held in memory and clear when the page
-          reloads.
+          the same input file for both runs. Up to six runs can be pinned and
+          named in place; with three or more, <strong>Compare all</strong>
+          shows an N-way matrix. Scenarios are held in memory and clear when the
+          page reloads.
         </p>
       </div>
 
@@ -2210,7 +2238,7 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
         <p>
           When a UI selection directly contradicts another filter, the
           conflicting control is highlighted with a red border and an inline
-          warning message. Three conflict types are detected:
+          warning message. Four conflict types are detected:
         </p>
         <table class="avoid-break">
           <thead>
@@ -2232,10 +2260,10 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
             <tr>
               <td>ENV/Compliance ↔ Families</td>
               <td>
-                ENV = Production or Compliance set, AND main family filter
-                includes only burstable types (t/B/e2)
+                ENV = Production or Staging, AND main family filter includes
+                only burstable types (t/B/e2)
               </td>
-              <td>Default Environment or Default Compliance dropdown</td>
+              <td>Default Environment dropdown</td>
             </tr>
             <tr>
               <td>Workload ↔ Processor</td>
@@ -2244,6 +2272,11 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
                 options
               </td>
               <td>Default Workload dropdown</td>
+            </tr>
+            <tr>
+              <td>OS ↔ Providers</td>
+              <td>OS = macOS AND an Azure or GCP provider is selected</td>
+              <td>Default OS dropdown</td>
             </tr>
           </tbody>
         </table>
@@ -2559,9 +2592,9 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
       </p>
 
       <pre>
-VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,Min Gen,Exclude,Current Instance Type
-web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,m5.xlarge
-db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,"Burstable,GPU",m5.2xlarge</pre>
+VM Name,App Name,CPU Count,Memory (GB),CPU Utilization,Memory Utilization,AWS Region,Azure Region,GCP Region,ENV,OS,Workload,Compliance,AWS Min Gen,Azure Min Gen,GCP Min Gen,Exclude,Current Instance Type
+web-server-01,Storefront,4,16,45,60,us-east-1,East US,us-central1-a,Production,Linux,Web Server,,,,,,m5.xlarge
+db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Windows,Database,PCI,,,,"Burstable,GPU",m5.2xlarge</pre>
 
       <h3>Regional Equivalents Reference</h3>
       <table class="avoid-break">
@@ -2783,9 +2816,10 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
           <tr>
             <td>Processing hangs on large files</td>
             <td>
-              Split files larger than 2,000 rows into batches. Close other
-              browser tabs to free memory. Refresh the page (this also clears
-              the loaded instance data — allow time to reload).
+              A very large file takes longer; if it stalls, split it into
+              batches. Close other browser tabs to free memory. Refresh the page
+              (this also clears the loaded instance data — allow time to
+              reload).
             </td>
           </tr>
           <tr>
@@ -3166,9 +3200,10 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
           immediately?</strong
         ><br />
         A: It populates all required columns with On-Demand, Always On, Shared
-        Instances defaults. You will need to manually add storage details (EBS
-        volume type, size, IOPS) in the calculator after import if required for
-        your estimate.
+        Instances defaults. Storage type, IOPS and throughput are left blank for
+        the calculator to default, and the storage amount is filled in only when
+        your file carried a Disk (GB) column; add the rest in the calculator
+        after import if your estimate needs it.
       </p>
 
       <!-- ══════════════════════════════════════════════════════════════════════
@@ -3222,7 +3257,7 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
 
       <div class="doc-footer">
         <span>Cloud Instance Recommender — User Guide</span>
-        <span>July 2026</span>
+        <span>October 2026</span>
         <span
           >Target: IT Professionals · Cloud Architects · DevOps Engineers</span
         >

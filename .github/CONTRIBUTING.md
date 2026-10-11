@@ -22,10 +22,10 @@ python -m http.server 8080
 # Then visit http://localhost:8080
 ```
 
-npm is used **only for development tooling** — Prettier and the TypeScript checker, both of which CI runs. Nothing from `node_modules` ever reaches a user's browser, and no npm step is needed to run the site. To use the tooling:
+npm is used **only for development tooling** — Prettier, the TypeScript checker and the test tooling (Playwright, fast-check, axe, and Stryker for the manual mutation gate). Nothing from `node_modules` ever reaches a user's browser, and no npm step is needed to run the site. To use the tooling:
 
 ```bash
-npm ci                      # install the dev dependencies (Prettier, TypeScript)
+npm ci                      # install the dev dependencies (Prettier, TypeScript, test tooling)
 npm run format              # or format:check — CI fails on unformatted files
 npm run typecheck
 ```
@@ -50,19 +50,23 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
 │   └── icon.svg            # App icon
 │
 ├── assets/
-│   └── templates/aws/      # AWS Pricing Calculator bulk upload templates
+│   └── templates/          # aws/ (AWS Pricing Calculator bulk templates) and
+│                           #   cloud_instance_recommender_template.xlsx (validated input workbook)
 │
 ├── styles/
 │   ├── theme.css           # Light/dark theme tokens — new colors go here
 │   ├── style.css           # Main styles (uses var(--token) only)
 │   ├── portfolio.css       # App Portfolio dashboard styles
-│   └── index_style.css     # Landing page styles
+│   ├── index_style.css     # Landing page styles
+│   ├── user-guide.css      # User guide styles
+│   └── inline-utilities.css # Utility classes that replace inline style attributes
 │
 ├── logos/                  # Cloud provider logos
 │
 ├── docs/
+│   ├── ARCHITECTURE.md     # Module map, load order, worker protocol, stored data
 │   ├── architecture/       # Local-only design-decision reference (gitignored)
-│   ├── data/               # CANONICAL-SOURCES.md, DATA-SOURCES.md — provenance
+│   ├── data/               # CANONICAL-SOURCES.md, DATA-SOURCES.md, RULE-ENGINE-API.md
 │   ├── operations/         # RELEASING.md — the release process
 │   └── product/            # Local-only future-major working drafts (gitignored)
 │
@@ -117,7 +121,7 @@ The module map, load order, worker protocol and stored-data schema are in [docs/
     │   ├── portfolio.js         # App Portfolio (loaded only on app-portfolio.html)
     │   ├── xlsx-export.js       # Styled results .xlsx export
     │   ├── downloads.js         # + App Portfolio handoff
-    │   ├── fleet-snapshots.js   # Named, versioned snapshots of a run's per-VM outputs
+    │   ├── fleet-snapshots.js   # Named, versioned snapshots of a run's per-VM results; export/import as a file
     │   ├── scenario-compare.js  # Pin + diff two generation runs
     │   ├── manual-entry.js
     │   └── presets.js           # Filter presets (save/apply, localStorage)
@@ -206,13 +210,13 @@ Versions live only in [CHANGELOG.md](../CHANGELOG.md) and git tags — never in 
 - **Reading anything a user supplied** goes through `window._xlsxParser` (`ensureXlsxLoaded()` in `ingest.js`), which is always the patched full build.
 - **Writing** goes through `window._xlsxWriter`, whichever engine that path loaded.
 
-Never read through the bare `window.XLSX` — whichever bundle loaded last owns it, so an export earlier in the session would decide which engine parses the next upload. `tests/suites/xlsx-engine-isolation-test.js` enforces this; the reasoning is in [SECURITY.md](SECURITY.md).
+Never read through the bare `window.XLSX` — whichever bundle loaded last owns it, so an export earlier in the session would decide which engine parses the next upload. `tests/suites/ingest/xlsx-engine-isolation-test.js` enforces this; the reasoning is in [SECURITY.md](SECURITY.md).
 
 Formatting is Prettier's job, not yours: run `npm run format` before you commit (`npm run format:check` shows what it would change, and is one of the CI gates). `.prettierignore` keeps Prettier away from the vendored SheetJS builds and the generated region data — never reformat those.
 
 ## Input Format
 
-The accepted input format includes these optional columns: `App Name`, `ENV`, `OS`, `Workload`, `Compliance`, `Min Gen`, `Exclude`
+The accepted input format includes these optional columns: `App Name`, `ENV`, `OS`, `Workload`, `Compliance`, `Criticality`, `Min Gen`, `Exclude`, `Include Only`, `Disk (GB)`, `Current Instance Type`, and utilization percentile or peak readings (`… p50`, `… p90`, `… p95`, `… p99`, `… Peak`). The README's column table is the full reference.
 
 `App Name` groups VMs by application (App Summary CSV + App Portfolio) and lets VMs inherit a workload from the app→workload mapping panel.
 
@@ -221,6 +225,8 @@ Any sample CSV templates in the repo or in the HTML `<pre>` previews should incl
 **Header matching.** Common variants (`vCPUs`, `RAM`, `Hostname`, …) are auto-mapped to the canonical names; the synonym table is `COLUMN_SYNONYMS` in `src/shared/app-core.js`. Anything ambiguous or missing opens the mapping panel rather than being guessed at.
 
 **Excel.** A multi-sheet workbook opens the sheet whose headers best look like an inventory — scored with `autoMatchHeaders`, see `pickBestSheet` in `src/features/ingest.js` — and a picker lets the user switch.
+
+**Limits.** An upload is refused above 10 MB, 100,000 rows, 500 columns, or a workbook that declares more than 200 MB uncompressed (`MAX_UPLOAD_SIZE`, `MAX_INVENTORY_ROWS`, `MAX_INVENTORY_COLUMNS` and `MAX_XLSX_UNCOMPRESSED_BYTES` in `src/features/ingest.js`). The user guide states the same numbers by hand, so change both together, and keep `tests/suites/ingest/inventory-limits-test.js` pinned to them.
 
 **Import presets** (`IMPORT_PRESETS`, `src/features/ingest.js`) auto-map a known tool's export — RVTools and AWS Application Discovery Service today. A preset identifies the format by headers that _only_ that tool ships, then names just what the generic matcher cannot work out for itself: the columns it would find ambiguous, the units the header hides, and (via `derive`) any canonical column the format carries only implicitly. ADS, for instance, reports memory _used_ in megabytes; the optimizer needs a percentage on a 0–100 scale, so the derivation is (used ÷ total) × 100.
 

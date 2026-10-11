@@ -68,6 +68,8 @@ const BANNED = [
   "never the raw inventory",
   "does not hold your original inventory",
   "it does not hold your inventory",
+  "no inventory data stored",
+  "used for preferences only",
 ];
 const SURFACES = [
   "index.html",

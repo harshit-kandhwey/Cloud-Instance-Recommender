@@ -6,7 +6,7 @@ How the tool is put together: where code lives, what loads in what order, how th
 
 Cloud Instance Recommender is a static, client-side application. There is no server and no build step. Every script is a classic `<script>` sharing one global scope, and the Content Security Policy sets `connect-src 'none'`, so page code cannot call the network. Region and pricing data ship as static files and are injected as same-origin scripts.
 
-Nothing a user uploads leaves the browser. The only persisted data is preferences, manually entered VMs, saved mappings, rules, presets, and (since 3.21) fleet snapshots and sizing policies, all in the browser's own storage. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
+Nothing a user uploads leaves the browser. The persisted data is preferences, manually entered VMs, saved mappings, rules, presets, sizing policies, fleet snapshots, and a copy of the last results for the App Portfolio page (removed after a day), all in the browser's own storage. Snapshots and that copy include the uploaded columns, not the original file. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
 
 ## Module map
 
@@ -111,6 +111,10 @@ Each result row carries the uploaded columns of its VM next to the recommendatio
 
 Drift comparison (`FleetSnapshots.compareFleet`) treats two runs as the same estate only when their `VM Name` sets overlap by at least `MIN_OVERLAP` (90%) of the larger side, and both sides have unique, non-blank names. Anything else is refused, and the refusal names what was added and removed.
 
+### Snapshot file (3.22)
+
+`exportEntry` writes one stored snapshot as JSON (`format: "cir-fleet-snapshot"`, `v: 1`, name, `takenAt`, providers, rules, rows) and `importText` reads such a file back through the same `build` and `save` as a captured run, so the quota check and the two-tab guard apply. `parseImport` refuses, with a named reason and without storing anything: text over 4 MB, anything that is not JSON, a file of another format or version, more than 20,000 rows, a row holding anything but plain values, a key that would reach an object's prototype (`__proto__`, `constructor`, `prototype`), more than 8 providers or 500 rules, and a missing date or name. A name already in use is a refusal that carries a suggested rename; an import never replaces an existing snapshot.
+
 ## Sizing policy
 
 `src/core/rules/sizing-policy.js` decides which utilization statistic a row is sized on (`avg`, `p90`, `p95`, `p99` or `peak`, ascending) from its ENV, Criticality and Workload. It is pure data plus a pure resolver (`resolvePolicyStatistic`). A run reads it only when **Size against** is set to `policy`: `generate.js` snapshots the stored policy into `options.sizingPolicy` (the worker cannot read storage), `recommendation-worker.js` imports the module, and `instance-selector-factory.js` validates the policy once per run and resolves each row's CPU and memory statistics from it. A policy that is not valid, or a missing module, stops that run with the problem named. Every other statistic leaves the policy unread. In a policy run `evaluateDownsizeVeto` (in the factory) checks, for each dimension the sizing pass would downsize, the row's own Peak and p95: Peak at or above `peakMin`, or p95 above `p95Max`, sets `holdCpuDownsize` or `holdMemoryDownsize` in the row's options (honoured by `getOptimizedInstance`, which then keeps that dimension's size) and records the reason in a `Review Flag` column that exists only on optimized policy runs. A missing reading never holds a downsize.
@@ -135,8 +139,10 @@ Prices rank recommendations internally. The only price figure shown is the relat
 - The Content Security Policy allows scripts and styles only from the site itself. Pages carry no inline script, no inline style block and no style attributes; data-driven styles are set through the CSS object model (`data-style`), and controls dispatch through `data-on-*` attributes. `unsafe-inline` is not used for scripts or styles.
 - Stored values are untrusted input. The stored-value loaders for presets, the app map, column mappings, user rules and sizing policies tolerate malformed and hostile values without throwing; `tests/suites/infra/storage-tamper-test.js` checks this.
 - User text reaches the page only through `escapeHtml`, and never through an inline event handler. New UI uses data attributes and a delegated listener.
-- Exports escape spreadsheet formula prefixes on every path.
+- Exports escape spreadsheet formula prefixes on every path, through one function (`guardFormula`).
+- An upload is refused before it is parsed when it is over 10 MB, 100,000 rows or 500 columns, or is a workbook that declares more than 200 MB uncompressed; imported JSON (presets, rules, snapshot files) is size-capped and shape-checked before anything is stored.
+- A control may invoke only a name in `PAGE_ACTION_NAMES`, and the spreadsheet parser is checked for identity and version (`xlsxParserIsSafe`) before it reads an upload.
 
 ## Tests and gates
 
-`tests/README.md` describes the six CI gates. The Node suites run under `tests/run-all.js` and drive the same module files the page loads. End-to-end specs under `tests/e2e/` run the shipped pages in a real browser.
+`tests/README.md` describes the six CI jobs. The Node suites run under `tests/run-all.js` and drive the same module files the page loads. End-to-end specs under `tests/e2e/` run the shipped pages in a real browser.
