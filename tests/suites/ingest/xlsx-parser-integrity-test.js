@@ -102,7 +102,7 @@ const bundle = (rel) => fs.readFileSync(path.join(REPO, rel), "utf8");
     );
   }
   {
-    const r = await load(FORK);
+    const r = /** @type {any} */ (await load(FORK));
     check(
       "a fork left in window.XLSX rejects with the integrity error",
       r.ok === false && /integrity check/.test(r.message),

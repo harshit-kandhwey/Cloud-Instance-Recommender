@@ -142,7 +142,7 @@ function coldOpen(payload) {
 // a direct in-page call carries the savings on the array only
 {
   const withArrayOnly = (extra) => {
-    const list = rows.map((r) => ({ ...r }));
+    const list = /** @type {any} */ (rows.map((r) => ({ ...r })));
     list.priceSavings = { AWS: { pct: 12, rows: 3 } };
     store.clear();
     run("portfolioData = null; portfolioModel = null;");

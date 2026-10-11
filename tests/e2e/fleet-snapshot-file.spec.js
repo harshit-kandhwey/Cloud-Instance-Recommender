@@ -43,8 +43,9 @@ test("a snapshot exports to a file and imports back, and a taken name asks for a
   expect(doc.id).toBeUndefined();
 
   // Delete the original (two-step), then bring it back from the file.
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await page
+  const panel = page.locator("#fleetSnapshotsPanel");
+  await panel.getByRole("button", { name: "Delete", exact: true }).click();
+  await panel
     .getByRole("button", { name: "Confirm delete", exact: true })
     .click();
   await expect(page.locator("#fleetSnapshotsPanel")).toContainText(

@@ -279,7 +279,7 @@ check(
   const realReader = ctx.ctx.FileReader;
   ctx.ctx.FileReader = class {
     readAsText() {
-      this.onerror();
+      /** @type {any} */ (this).onerror();
     }
   };
   pick({ size: 10 });

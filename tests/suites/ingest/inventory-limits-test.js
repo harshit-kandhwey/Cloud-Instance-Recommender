@@ -168,6 +168,7 @@ function craftedZip(declaredSizes) {
   {
     for (const key of Object.keys(elements)) delete elements[key];
     ctx.FileReader = class {
+      /** @type {any} */
       onload = null;
       readAsText() {
         setTimeout(
@@ -194,6 +195,7 @@ function craftedZip(declaredSizes) {
     const bigText =
       "VM Name,CPU Count,Memory (GB)\n" + "x,1,1\n".repeat(MAX_ROWS + 1);
     ctx.FileReader = class {
+      /** @type {any} */
       onload = null;
       readAsText() {
         setTimeout(() => this.onload({ target: { result: bigText } }), 0);
@@ -286,6 +288,7 @@ function craftedZip(declaredSizes) {
     const exactText =
       "VM Name,CPU Count,Memory (GB)\n" + "x,1,1\n".repeat(MAX_ROWS);
     ctx.FileReader = class {
+      /** @type {any} */
       onload = null;
       readAsText() {
         setTimeout(() => this.onload({ target: { result: exactText } }), 0);
@@ -307,6 +310,7 @@ function craftedZip(declaredSizes) {
       "VM Name,CPU Count,Memory (GB),Notes\n" +
       'x,1,1,"first line\nsecond line"\n'.repeat(MAX_ROWS);
     ctx.FileReader = class {
+      /** @type {any} */
       onload = null;
       readAsText() {
         setTimeout(() => this.onload({ target: { result: multiText } }), 0);
@@ -327,6 +331,7 @@ function craftedZip(declaredSizes) {
       "VM Name,CPU Count,Memory (GB),Notes\n" +
       'x,1,1,"first line\nsecond line"\n'.repeat(MAX_ROWS + 1);
     ctx.FileReader = class {
+      /** @type {any} */
       onload = null;
       readAsText() {
         setTimeout(() => this.onload({ target: { result: overText } }), 0);

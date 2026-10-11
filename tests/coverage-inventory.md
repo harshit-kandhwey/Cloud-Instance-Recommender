@@ -265,7 +265,7 @@ waiver still records the reason.
 | `handleFleetSnapshotExport` | src/ui/storage-manager-ui.js | function | internal | covered | ui/storage-handlers-test.js |
 | `handleFleetSnapshotImportFile` | src/ui/storage-manager-ui.js | function | behavioral | covered | ui/storage-manager-ui-test.js |
 | `handleFleetSnapshotImportPick` | src/ui/storage-manager-ui.js | function | internal | covered | ui/storage-handlers-test.js |
-| `handleFleetSnapshotImportRename` | src/ui/storage-manager-ui.js | function | internal | covered | ui/storage-handlers-test.js |
+| `handleFleetSnapshotImportRename` | src/ui/storage-manager-ui.js | function | internal | covered | ui/storage-handlers-test.js, ui/storage-manager-ui-test.js |
 | `handleFleetSnapshotSubmit` | src/ui/storage-manager-ui.js | function | behavioral | covered | ui/storage-handlers-test.js |
 | `handlePresetImportFile` | src/features/presets.js | function | behavioral | covered | ui/presets-test.js |
 | `handleRecommendationTypeChange` | src/ui/form-controls.js | function | behavioral | waived | _waived: Show/hide of #optimizationControls off the recommendation-type radio. Visibility-only wiring; browser residual deferred to the Playwright E2E suite (tests/e2e/, which runs outside this V8-instrumented node run)._ |

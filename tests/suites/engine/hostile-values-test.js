@@ -7,7 +7,7 @@
 // with each inherited member name, through the real factory and the real selector,
 // plus the rule-engine lookup on its own. A row with such a cell must be sized like
 // any row with an unrecognised value: no throw, no "Error" result.
-const { buildEngineContext, makeChecker } = require("../harness");
+const { buildContext, buildEngineContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 
@@ -164,7 +164,6 @@ const HOSTILE = [
 
   // ── the file-status label is text ────────────────────────────────────────────────
   {
-    const { buildContext } = require("../harness");
     const { run: page, elements } = buildContext();
     page(`window._ingestLabel = "<img src=x onerror=alert(1)>"`);
     page(
@@ -184,7 +183,6 @@ const HOSTILE = [
 
   // ── keys written back to storage (F-13) ─────────────────────────────────────────
   {
-    const { buildContext } = require("../harness");
     const { run: page, store } = buildContext();
     page(`saveColumnMapping("__proto__", { "VM Name": "VM Name" }, {})`);
     const raw = store.get("cloudInstanceRecommenderColumnMaps");
