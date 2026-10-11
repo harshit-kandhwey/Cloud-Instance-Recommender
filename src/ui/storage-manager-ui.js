@@ -123,6 +123,7 @@ function renderFleetSnapshotRows(entries) {
           <strong>${escapeHtml(e.name)}</strong>
           <span>${escapeHtml(String(e.rows.length))} VMs, saved ${escapeHtml(e.takenAt)}</span>
           <button type="button" class="btn btn-secondary" data-snapshot-compare="${id}">Compare with last run</button>
+          <button type="button" class="btn btn-secondary" data-snapshot-export="${id}">Export file</button>
           <button type="button" class="btn btn-secondary" data-snapshot-delete="${id}">${armed ? "Confirm delete" : "Delete"}</button>
         </li>`;
     })
@@ -136,18 +137,24 @@ function renderFleetSnapshotsPanel(status, detailHtml) {
   const typed = document.getElementById("fleetSnapshotName");
   const typedValue = typed ? typed.value : "";
   host.innerHTML = `
-        <p>Save the results of the last run as a named snapshot in this browser. A snapshot holds per-VM results, the providers and the rules the run used, never the inventory.</p>
+        <p>Save the results of the last run as a named snapshot in this browser. A snapshot holds the per-VM results, which include the columns you uploaded, plus the providers and the rules the run used.</p>
         <form id="fleetSnapshotForm">
           <label for="fleetSnapshotName">Snapshot name</label>
           <input id="fleetSnapshotName" type="text" maxlength="60" autocomplete="off" value="${escapeHtml(typedValue)}">
           <button type="submit" class="btn btn-secondary">Save snapshot</button>
         </form>
+        <p>To move a snapshot to another browser or person, export it as a file and import it there. The file is made and read on this device and is sent nowhere; it holds the same per-VM results as the snapshot, so handle it like the inventory.</p>
+        <p>
+          <button type="button" class="btn btn-secondary" data-snapshot-import-pick>Import snapshot file</button>
+          <input id="fleetSnapshotImportFile" type="file" accept=".json,application/json" hidden>
+        </p>
         <p role="status" aria-live="polite" id="fleetSnapshotStatus">${escapeHtml(status || "")}</p>
         ${detailHtml || ""}
         <ul>${entries.length ? renderFleetSnapshotRows(entries) : "<li>No snapshots saved.</li>"}</ul>`;
 }
 
 function handleFleetSnapshotSubmit(event) {
+  if (handleFleetSnapshotImportRename(event)) return;
   if (!event.target.matches("#fleetSnapshotForm")) return;
   event.preventDefault();
   const name = document.getElementById("fleetSnapshotName")?.value ?? "";
@@ -186,6 +193,117 @@ function handleFleetSnapshotSubmit(event) {
   renderFleetSnapshotsPanel(
     why[saved.reason] || "The snapshot could not be saved.",
   );
+}
+
+// Text of a file that was refused only because its name is taken; kept until the
+// user picks a new name or leaves.
+let fleetPendingImportText = null;
+
+const IMPORT_REFUSALS = {
+  "too-large": "That file is too large to be a snapshot.",
+  "not-json": "That file is not valid JSON.",
+  "not-snapshot": "That file is not a fleet snapshot.",
+  version:
+    "That snapshot file was written by a different version of this tool and is not read.",
+  "no-rows": "That snapshot file has no VMs in it.",
+  "too-many-rows":
+    "That snapshot file has more VMs than this tool will import.",
+  "bad-row": "That snapshot file has a row this tool will not read.",
+  "bad-providers":
+    "That snapshot file lists providers this tool will not read.",
+  "bad-rules": "That snapshot file has rules this tool will not read.",
+  "bad-date": "That snapshot file has no valid date.",
+  empty: "That snapshot file has no name.",
+  "too-long": "The snapshot name is longer than 60 characters.",
+  quota:
+    "This browser has no room for another snapshot. Delete one or clear app data first.",
+  changed:
+    "Another tab changed the snapshots while this one was importing. Try again.",
+};
+
+function renderImportRenameHtml(name, suggestion) {
+  return `<form id="fleetSnapshotImportForm">
+          <p>A snapshot named "${escapeHtml(name)}" already exists, and the file never replaces it. Choose another name to import it as.</p>
+          <label for="fleetSnapshotImportName">Import as</label>
+          <input id="fleetSnapshotImportName" type="text" maxlength="60" autocomplete="off" value="${escapeHtml(suggestion)}">
+          <button type="submit" class="btn btn-secondary">Import with this name</button>
+        </form>`;
+}
+
+function finishFleetImport(result) {
+  if (result.ok) {
+    fleetPendingImportText = null;
+    renderFleetSnapshotsPanel(`Imported "${result.entry.name}".`);
+    return;
+  }
+  if (result.reason === "duplicate") {
+    renderFleetSnapshotsPanel(
+      "That snapshot's name is already taken.",
+      renderImportRenameHtml(result.name, result.suggestion),
+    );
+    return;
+  }
+  fleetPendingImportText = null;
+  renderFleetSnapshotsPanel(
+    IMPORT_REFUSALS[result.reason] ||
+      "The snapshot file could not be imported.",
+  );
+}
+
+function handleFleetSnapshotImportFile(event) {
+  const input = event.target;
+  if (!input.matches("#fleetSnapshotImportFile")) return;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > FleetSnapshots.MAX_IMPORT_CHARS) {
+    renderFleetSnapshotsPanel(IMPORT_REFUSALS["too-large"]);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    fleetPendingImportText = text;
+    finishFleetImport(FleetSnapshots.importText(text));
+  };
+  reader.onerror = () =>
+    renderFleetSnapshotsPanel("That file could not be read.");
+  reader.readAsText(file);
+}
+
+function handleFleetSnapshotImportRename(event) {
+  if (!event.target.matches("#fleetSnapshotImportForm")) return false;
+  event.preventDefault();
+  if (fleetPendingImportText === null) {
+    renderFleetSnapshotsPanel("Choose the file again.");
+    return true;
+  }
+  const name = document.getElementById("fleetSnapshotImportName")?.value ?? "";
+  finishFleetImport(
+    FleetSnapshots.importText(fleetPendingImportText, { name }),
+  );
+  return true;
+}
+
+function handleFleetSnapshotExport(event) {
+  const button = event.target.closest("[data-snapshot-export]");
+  if (!button) return false;
+  const made = FleetSnapshots.exportEntry(
+    button.getAttribute("data-snapshot-export"),
+  );
+  if (!made.ok) {
+    renderFleetSnapshotsPanel("That snapshot no longer exists.");
+    return true;
+  }
+  downloadJson(made.text, made.filename);
+  renderFleetSnapshotsPanel(`Exported "${made.filename}".`);
+  return true;
+}
+
+function handleFleetSnapshotImportPick(event) {
+  if (!event.target.closest("[data-snapshot-import-pick]")) return false;
+  const input = document.getElementById("fleetSnapshotImportFile");
+  if (input) input.click();
+  return true;
 }
 
 const DIFF_ROW_LIMIT = 50;
@@ -277,6 +395,8 @@ function handleFleetSnapshotCompare(event) {
 
 function handleFleetSnapshotDelete(event) {
   if (handleFleetSnapshotCompare(event)) return;
+  if (handleFleetSnapshotExport(event)) return;
+  if (handleFleetSnapshotImportPick(event)) return;
   const button = event.target.closest("[data-snapshot-delete]");
   if (!button) return;
   const id = button.getAttribute("data-snapshot-delete");
@@ -302,6 +422,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (fleet) {
     fleet.addEventListener("submit", handleFleetSnapshotSubmit);
     fleet.addEventListener("click", handleFleetSnapshotDelete);
+    fleet.addEventListener("change", handleFleetSnapshotImportFile);
     renderFleetSnapshotsPanel();
   }
 });

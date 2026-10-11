@@ -2500,8 +2500,22 @@ ml-server-05,Analytics,8,64,80,75,us-west-2,Production,Linux,ML/AI,HIPAA,7,,r5.2
           A <strong>fleet snapshot</strong> saves the results of your last run
           under a name you choose, so you can come back to it. A snapshot holds
           the per-VM results, the providers and the custom rules that run used.
-          It does not hold your original inventory file. You need a completed
-          run to save one.
+          The per-VM results include the columns you uploaded, so a snapshot
+          holds your inventory's data as well as the recommendations, though not
+          the original file. You need a completed run to save one.
+        </p>
+        <p>
+          <strong>Export file</strong> saves one snapshot as a JSON file, and
+          <strong>Import snapshot file</strong> reads such a file back in, so a
+          fleet state can move to another browser or person without a server.
+          The file is made and read on your device and is sent nowhere. It holds
+          the same per-VM results as the snapshot, so handle it like the
+          inventory. An import is checked first: a file that is not a snapshot
+          from this tool, is from a different version, is too large or holds
+          anything other than plain values is refused with the reason, and
+          nothing is stored. If the name is already taken you are asked for
+          another one; an import never replaces an existing snapshot. This is a
+          way to share a file, not collaboration: nothing is kept in sync.
         </p>
         <p>
           <strong>Compare with last run</strong> checks a saved snapshot against

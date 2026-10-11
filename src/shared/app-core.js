@@ -863,6 +863,21 @@ function downloadCsv(csvContent, filename, { bom = true } = {}) {
   setTimeout(() => window.URL.revokeObjectURL(url), 0);
 }
 
+// The one place a JSON document becomes a download. Same deferred revoke as
+// downloadCsv, and no BOM: a program reads this file back.
+function downloadJson(text, filename) {
+  const blob = new Blob([text], { type: "application/json;charset=utf-8;" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.style.display = "none";
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => window.URL.revokeObjectURL(url), 0);
+}
+
 // ─── Shared result-set primitives ─────────────────────────────────────────────
 // Defined here (loaded first) so the stats bar, preview table, CSV/no-match/app
 // exports, and the Portfolio page agree on "no match" and which columns are

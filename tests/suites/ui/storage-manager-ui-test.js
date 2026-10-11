@@ -213,6 +213,51 @@ check(
     capped.includes("Showing the first 50 of 60 changed VMs."),
 );
 
+// ── Snapshot file controls (3.22) ───────────────────────────────────────────────
+{
+  const rows = run("renderFleetSnapshotRows")([
+    { id: 's"1', name: "<b>x</b>", takenAt: "2026-10-01", rows: [{}, {}] },
+  ]);
+  check(
+    "each snapshot row offers an export control carrying its escaped id",
+    rows.includes('data-snapshot-export="s&quot;1"'),
+    rows,
+  );
+  check(
+    "snapshot rows still carry no inline handler",
+    !/\son[a-z]+\s*=/i.test(rows),
+    rows,
+  );
+  const form = run("renderImportRenameHtml")(
+    'a"><img src=x>',
+    'a"><img src=y> (2)',
+  );
+  check(
+    "the rename form escapes both the taken name and the suggestion",
+    !form.includes("<img") && form.includes("&lt;img"),
+    form,
+  );
+  check(
+    "every refusal reason an import can return has a message",
+    [
+      "too-large",
+      "not-json",
+      "not-snapshot",
+      "version",
+      "no-rows",
+      "too-many-rows",
+      "bad-row",
+      "bad-providers",
+      "bad-rules",
+      "bad-date",
+      "empty",
+      "too-long",
+      "quota",
+      "changed",
+    ].every((r) => typeof run("IMPORT_REFUSALS")[r] === "string"),
+  );
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;

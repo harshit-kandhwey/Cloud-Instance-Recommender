@@ -274,6 +274,274 @@ const mine = (id, name) => ({ v: 1, id, name, rows: [] });
   );
 }
 
+// ── Snapshot file (3.22): export, validated import, one door ──────────────────────
+{
+  const FILE = (over = {}) =>
+    JSON.stringify({
+      format: "cir-fleet-snapshot",
+      v: 1,
+      exportedAt: "2026-10-11T00:00:00.000Z",
+      name: "Shared estate",
+      takenAt: "2026-10-10T08:00:00.000Z",
+      providers: ["aws"],
+      rules: [{ id: "r1", dimension: "env" }],
+      rows: [{ VM: "web-01", "AWS Optimized Instance": "m5.large", CPU: 4 }],
+      ...over,
+    });
+  const importText = (text, options) => {
+    ctx.__text = text;
+    ctx.__opts = options;
+    return run(`FleetSnapshots.importText(__text, __opts)`);
+  };
+  const names = () => run(`FleetSnapshots.list().map((e) => e.name)`);
+  const rawStore = (store) => store.getItem(KEY);
+
+  // round trip
+  {
+    fresh();
+    ctx.__results = sourceResults;
+    const built = run(
+      `FleetSnapshots.build({ name: "Q4 estate", rows: __results, providers: ["aws"], rules: [{ id: "r1" }], takenAt: "2026-10-01T00:00:00.000Z" })`,
+    );
+    run(`FleetSnapshots.save(${JSON.stringify(built.entry)})`);
+    const made = run(
+      `FleetSnapshots.exportEntry(${JSON.stringify(built.entry.id)})`,
+    );
+    check(
+      "an export is made for a stored snapshot",
+      made.ok === true && /\.json$/.test(made.filename),
+      JSON.stringify(made).slice(0, 200),
+    );
+    const doc = JSON.parse(made.text);
+    check(
+      "the file carries the format marker and the schema version",
+      doc.format === "cir-fleet-snapshot" && doc.v === 1,
+    );
+    check("the file does not carry the snapshot's id", !("id" in doc));
+    check(
+      "the file name is derived from the snapshot name",
+      made.filename === "fleet_snapshot_q4_estate.json",
+      made.filename,
+    );
+    check(
+      "exporting an id that is not stored is refused",
+      run(`FleetSnapshots.exportEntry("nope")`).ok === false,
+    );
+
+    fresh();
+    const back = importText(made.text);
+    check(
+      "the exported file imports into an empty browser",
+      back.ok === true,
+      JSON.stringify(back),
+    );
+    const kept = run(`FleetSnapshots.list()`)[0];
+    check(
+      "the imported snapshot keeps name, date, providers, rules and rows",
+      kept.name === "Q4 estate" &&
+        kept.takenAt === "2026-10-01T00:00:00.000Z" &&
+        JSON.stringify(kept.providers) === '["aws"]' &&
+        JSON.stringify(kept.rules) === '[{"id":"r1"}]' &&
+        JSON.stringify(kept.rows) === JSON.stringify(sourceRows),
+      JSON.stringify(kept).slice(0, 240),
+    );
+    check(
+      "an import is a new snapshot with its own id",
+      kept.id !== built.entry.id,
+    );
+    check(
+      "imported rows are plain objects",
+      run(
+        `Object.getPrototypeOf(FleetSnapshots.list()[0].rows[0]) === Object.prototype`,
+      ) === true,
+    );
+  }
+
+  // refusals leave storage exactly as it was
+  {
+    const store = fresh();
+    ctx.__results = sourceResults;
+    run(
+      `FleetSnapshots.save(FleetSnapshots.build({ name: "Existing", rows: __results }).entry)`,
+    );
+    const before = rawStore(store);
+    const bigText = "x".repeat(run(`FleetSnapshots.MAX_IMPORT_CHARS`) + 1);
+    const manyRows = Array.from(
+      { length: run(`FleetSnapshots.MAX_IMPORT_ROWS`) + 1 },
+      () => ({ VM: "v" }),
+    );
+    const cases = [
+      ["not JSON", "{{", "not-json"],
+      ["a JSON array", "[]", "not-snapshot"],
+      ["JSON null", "null", "not-snapshot"],
+      [
+        "the wrong format marker",
+        FILE({ format: "something-else" }),
+        "not-snapshot",
+      ],
+      ["a future schema version", FILE({ v: 2 }), "version"],
+      ["no rows", FILE({ rows: [] }), "no-rows"],
+      ["rows that are not an array", FILE({ rows: "web-01" }), "no-rows"],
+      ["text over the size cap", bigText, "too-large"],
+      ["too many rows", FILE({ rows: manyRows }), "too-many-rows"],
+      [
+        "a nested object in a cell",
+        FILE({ rows: [{ VM: { a: 1 } }] }),
+        "bad-row",
+      ],
+      ["a row that is an array", FILE({ rows: [["web-01"]] }), "bad-row"],
+      [
+        "a __proto__ key in a row",
+        FILE().replace('"VM":"web-01"', '"__proto__":"x"'),
+        "bad-row",
+      ],
+      [
+        "a constructor key in a row",
+        FILE().replace('"VM":"web-01"', '"constructor":"x"'),
+        "bad-row",
+      ],
+      [
+        "providers that are not strings",
+        FILE({ providers: [1] }),
+        "bad-providers",
+      ],
+      [
+        "providers that are not a list",
+        FILE({ providers: "aws" }),
+        "bad-providers",
+      ],
+      [
+        "a provider name over the length cap",
+        FILE({ providers: ["p".repeat(33)] }),
+        "bad-providers",
+      ],
+      [
+        "more providers than the cap",
+        FILE({ providers: Array.from({ length: 9 }, () => "aws") }),
+        "bad-providers",
+      ],
+      [
+        "rules carrying a __proto__ key",
+        FILE().replace('"id":"r1"', '"__proto__":{"x":1}'),
+        "bad-rules",
+      ],
+      ["a date that is not a date", FILE({ takenAt: "yesterday" }), "bad-date"],
+      [
+        "a name of only control characters",
+        FILE({ name: "\u0000\u0007" }),
+        "empty",
+      ],
+      ["a name over 60 characters", FILE({ name: "n".repeat(61) }), "too-long"],
+    ];
+    for (const [label, text, reason] of cases) {
+      const r = importText(text);
+      check(
+        `refused: ${label}`,
+        r.ok === false && r.reason === reason,
+        JSON.stringify(r),
+      );
+    }
+    check(
+      "every refusal left the stored list byte-identical",
+      rawStore(store) === before,
+    );
+    check(
+      "and the existing snapshot is still the only one",
+      JSON.stringify(names()) === '["Existing"]',
+    );
+  }
+
+  // a name that exists is a refusal with a rename offer, never an overwrite
+  {
+    const store = fresh();
+    check(
+      "the first import of a name succeeds",
+      importText(FILE()).ok === true,
+    );
+    const stored = rawStore(store);
+    const again = importText(FILE({ rows: [{ VM: "other-vm" }] }));
+    check(
+      "the same name again is refused as a duplicate with a suggested rename",
+      again.ok === false &&
+        again.reason === "duplicate" &&
+        again.suggestion === "Shared estate (2)",
+      JSON.stringify(again),
+    );
+    check(
+      "the refusal left the stored list untouched",
+      rawStore(store) === stored,
+    );
+    const renamed = importText(FILE({ rows: [{ VM: "other-vm" }] }), {
+      name: again.suggestion,
+    });
+    check(
+      "importing under the suggested name succeeds",
+      renamed.ok === true,
+      JSON.stringify(renamed),
+    );
+    check(
+      "both snapshots exist and the first one's rows were not replaced",
+      JSON.stringify(names()) === '["Shared estate","Shared estate (2)"]' &&
+        run(`FleetSnapshots.list()[0].rows[0].VM`) === "web-01",
+      JSON.stringify(names()),
+    );
+    const third = importText(FILE());
+    check(
+      "the next suggestion skips a name already taken",
+      third.suggestion === "Shared estate (3)",
+      JSON.stringify(third),
+    );
+  }
+
+  // names are cleaned of control characters, and kept as typed otherwise
+  {
+    fresh();
+    importText(FILE({ name: "  Q4\tplan\u0007\n v2 " }));
+    check(
+      "control characters in an imported name become single spaces",
+      JSON.stringify(names()) === '["Q4 plan v2"]',
+      JSON.stringify(names()),
+    );
+    importText(FILE({ name: '=HYPERLINK("x")' }));
+    check(
+      "a formula-looking name is stored as plain text for the export guards to handle",
+      names().includes('=HYPERLINK("x")'),
+      JSON.stringify(names()),
+    );
+  }
+
+  // the one door: quota, other-version entries, malformed neighbours
+  {
+    const store = fresh(120);
+    const r = importText(FILE());
+    check(
+      "a full browser refuses the import with the quota reason",
+      r.ok === false && r.reason === "quota",
+      JSON.stringify(r),
+    );
+    check(
+      "and stores nothing",
+      rawStore(store) === null || rawStore(store) === "[]",
+    );
+  }
+  {
+    const store = fresh();
+    store.setItem(
+      KEY,
+      JSON.stringify([{ v: 99, id: "future", name: "From later", rows: [] }]),
+    );
+    const r = importText(FILE());
+    const kept = JSON.parse(rawStore(store));
+    check(
+      "an import keeps a stored entry written by another version",
+      r.ok === true &&
+        kept.some((e) => e.id === "future" && e.v === 99) &&
+        kept.length === 2,
+      rawStore(store).slice(0, 200),
+    );
+  }
+}
+
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);
   process.exitCode = 1;
