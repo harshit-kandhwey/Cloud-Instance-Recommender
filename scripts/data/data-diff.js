@@ -21,7 +21,10 @@
 
 const fs = require("fs");
 const vm = require("vm");
-const { argValue, monolithPath } = require("../lib/build-env");
+const { argValue, monolithPath, reportText } = require("../lib/build-env");
+
+// Vendor-derived names and values are placed in a pull-request body.
+const names = (list) => list.map((x) => reportText(x)).join(", ");
 const {
   round8,
   loadCommittedRegions,
@@ -262,35 +265,37 @@ function renderProvider(d) {
   }
 
   if (d.regionsAdded.length)
-    L.push(`- Regions added: ${d.regionsAdded.join(", ")}`);
+    L.push(`- Regions added: ${names(d.regionsAdded)}`);
   if (d.regionsRemoved.length)
     L.push(
-      `- Regions removed: ${d.regionsRemoved.join(", ")} ` +
+      `- Regions removed: ${names(d.regionsRemoved)} ` +
         `(⚠ bump CACHE in sw.js so clients drop the stale copies)`,
     );
   if (d.familiesAdded.length)
-    L.push(`- Families added: ${d.familiesAdded.join(", ")}`);
+    L.push(`- Families added: ${names(d.familiesAdded)}`);
   if (d.familiesRemoved.length)
-    L.push(`- Families removed: ${d.familiesRemoved.join(", ")}`);
+    L.push(`- Families removed: ${names(d.familiesRemoved)}`);
 
   if (d.typesAdded.length) {
     L.push(`- Instance types added (${d.typesAdded.length}):`);
     for (const t of d.typesAdded)
       L.push(
-        `  - ${t.type} [${t.family}] — ${regionSpan(t.regions, d.totalRegions)}`,
+        `  - ${reportText(t.type)} [${reportText(t.family)}] — ${regionSpan(t.regions, d.totalRegions)}`,
       );
   }
   if (d.typesRemoved.length) {
     L.push(`- Instance types retired (${d.typesRemoved.length}):`);
     for (const t of d.typesRemoved)
       L.push(
-        `  - ${t.type} [${t.family}] — was in ${regionSpan(t.regions, d.totalRegions)}`,
+        `  - ${reportText(t.type)} [${reportText(t.family)}] — was in ${regionSpan(t.regions, d.totalRegions)}`,
       );
   }
   if (d.specChanges.length) {
     L.push(`- Spec changes (${d.specChanges.length}):`);
     for (const c of d.specChanges)
-      L.push(`  - ${c.type} ${c.field}: ${c.old} → ${c.new}`);
+      L.push(
+        `  - ${reportText(c.type)} ${reportText(c.field)}: ${reportText(c.old)} → ${reportText(c.new)}`,
+      );
   }
   if (d.priceChanges.length) {
     L.push(`- Price moves (${d.priceChanges.length}):`);
@@ -310,8 +315,8 @@ function renderProvider(d) {
           ? "from 0"
           : "unparseable";
       L.push(
-        `  - ${c.type} ${c.field}: ${regionSpan(c.regionsChanged, d.totalRegions)}, ` +
-          `${range} (${s.region} ${s.old} → ${s.new} ${sPct})`,
+        `  - ${reportText(c.type)} ${reportText(c.field)}: ${regionSpan(c.regionsChanged, d.totalRegions)}, ` +
+          `${range} (${reportText(s.region)} ${reportText(s.old)} → ${reportText(s.new)} ${sPct})`,
       );
     }
   }
@@ -349,7 +354,7 @@ function renderUnpriced(diffs) {
     );
     for (const u of d.unpriced)
       L.push(
-        `- ${u.type} [${u.family}] — unpriced in ${u.regions.join(", ")} ` +
+        `- ${reportText(u.type)} [${reportText(u.family)}] — unpriced in ${names(u.regions)} ` +
           `(priced in ${u.pricedIn} other region${u.pricedIn === 1 ? "" : "s"})`,
       );
     L.push("");

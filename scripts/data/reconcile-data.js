@@ -38,8 +38,12 @@ const {
   argValue,
   writeFileAtomic,
   monolithPath,
+  reportText,
 } = require("../lib/build-env");
 const { priceFields } = require("../lib/record-schema");
+
+// Vendor-derived names and values are placed in a pull-request body.
+const names = (list) => list.map((x) => reportText(x)).join(", ");
 
 /** @type {{ name: "aws"|"azure"|"gcp", prefix: "AWS"|"AZURE"|"GCP", source: string }[]} */
 const PROVIDERS = [
@@ -204,12 +208,12 @@ function renderProviderReport(r) {
     L.push(`- ⚠ Spec conflicts (${r.specConflicts.length}, official taken):`);
     for (const c of r.specConflicts)
       L.push(
-        `  - ${c.type} ${c.field}: Vantage ${c.vantage} → official ${c.official}`,
+        `  - ${reportText(c.type)} ${reportText(c.field)}: Vantage ${reportText(c.vantage)} → official ${reportText(c.official)}`,
       );
   }
   if (r.unverifiedPrices.length) {
     const n = r.unverifiedPrices.length;
-    const sample = r.unverifiedPrices.slice(0, 8).join(", ");
+    const sample = names(r.unverifiedPrices.slice(0, 8));
     L.push(
       `- ${n} type×region kept Vantage pricing (no official rate), UNVERIFIED` +
         (n > 8 ? ` — e.g. ${sample}, …` : `: ${sample}`),
@@ -217,7 +221,7 @@ function renderProviderReport(r) {
   }
   if (r.nonFiniteOfficialSpecs.length) {
     const n = r.nonFiniteOfficialSpecs.length;
-    const sample = r.nonFiniteOfficialSpecs.slice(0, 8).join(", ");
+    const sample = names(r.nonFiniteOfficialSpecs.slice(0, 8));
     L.push(
       `- ⚠ ${n} official spec value(s) were non-numeric (NaN), Vantage kept, UNVERIFIED` +
         (n > 8 ? ` — e.g. ${sample}, …` : `: ${sample}`),

@@ -187,6 +187,31 @@ async function fetchJson(
   }
 }
 
+// A string that came from a vendor feed, made safe to place in a Markdown report that
+// becomes a pull-request body. Ordinary names (m5.large, us-east-1, 0.0416) pass through
+// unchanged; what is neutralised is what Markdown or GitHub would act on: a line break
+// (forges a new list item or heading), a backtick, a link or table delimiter, an HTML
+// tag, a @mention or #reference (notifies someone or links an issue) and a bare URL.
+// A zero-width space breaks the last three without changing how the text reads. A
+// mention or reference is only one when no word character precedes the sign, so the
+// type@region identifiers the reports print are left whole.
+const ZWSP = "\u200b";
+function reportText(value, maxLength = 120) {
+  let s = String(value == null ? "" : value)
+    .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (s.length > maxLength) s = s.slice(0, maxLength - 1) + "…";
+  return s
+    .replace(/`/g, "'")
+    .replace(/[\\[\]|]/g, (c) => "\\" + c)
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/(?<![A-Za-z0-9_])@(?=[A-Za-z0-9])/g, "@" + ZWSP)
+    .replace(/(?<![A-Za-z0-9_])#(?=[A-Za-z0-9])/g, "#" + ZWSP)
+    .replace(/:\/\//g, ":" + ZWSP + "//");
+}
+
 // A plain-object copy of a null-prototype accumulator. fromEntries defines own
 // data properties, so a key like "__proto__" stays a key instead of a prototype.
 function toPlain(value) {
@@ -199,6 +224,7 @@ function toPlain(value) {
 module.exports = {
   ROOT,
   toPlain,
+  reportText,
   argValue,
   runFiles,
   loadGlobals,

@@ -28,7 +28,12 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { regionsFromMonolith } = require("./data-diff");
-const { ROOT, argValue, monolithPath } = require("../lib/build-env");
+const {
+  ROOT,
+  argValue,
+  monolithPath,
+  reportText,
+} = require("../lib/build-env");
 const { loadCommittedRegions } = require("../lib/record-schema");
 const {
   SAMPLE_CSV,
@@ -116,7 +121,9 @@ function renderReport(perScenario) {
     if (!flips.length) continue;
     L.push(`### ${file}`);
     for (const f of flips) {
-      L.push(`- ${f.vm} — ${f.column}: ${f.from || "—"} → ${f.to || "—"}`);
+      L.push(
+        `- ${reportText(f.vm)} — ${reportText(f.column)}: ${reportText(f.from) || "—"} → ${reportText(f.to) || "—"}`,
+      );
     }
     L.push("");
   }
