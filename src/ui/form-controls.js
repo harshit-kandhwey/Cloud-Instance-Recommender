@@ -584,8 +584,11 @@ function updateExcludeControls() {
   excludeControls.innerHTML = "";
 
   if (selectedProviders.length === 0) {
-    excludeControls.innerHTML =
-      "<p style='color: var(--text-muted); font-style: italic; padding: 15px;'>Please select cloud providers first to see exclusion options.</p>";
+    excludeControls.innerHTML = `<p${dataStyleAttr({
+      color: "var(--text-muted)",
+      "font-style": "italic",
+      padding: "15px",
+    })}>Please select cloud providers first to see exclusion options.</p>`;
     return;
   }
 

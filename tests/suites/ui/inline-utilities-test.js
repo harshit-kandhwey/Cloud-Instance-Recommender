@@ -3,7 +3,7 @@
 // must have a rule there, so a removed rule cannot silently drop a style.
 const fs = require("fs");
 const path = require("path");
-const { REPO, makeChecker } = require("../harness");
+const { REPO, buildContext, makeChecker } = require("../harness");
 
 const { check, state } = makeChecker();
 const read = (f) => fs.readFileSync(path.join(REPO, f), "utf8");
@@ -50,9 +50,13 @@ const walkJs = (dir) =>
     const f = path.join(dir, e.name);
     return e.isDirectory() ? walkJs(f) : f.endsWith(".js") ? [f] : [];
   });
+// Either quote: a single-quoted style='...' in a template string is the same attribute,
+// and a double-quote-only pattern let one through. One pattern, used by the scan and by
+// the self-test below, so weakening it fails the self-test.
+const STYLE_ATTRIBUTE = /\sstyle\s*=\s*['"]/g;
 let styleAttrsInSrc = 0;
 for (const f of walkJs(path.join(REPO, "src"))) {
-  styleAttrsInSrc += (fs.readFileSync(f, "utf8").match(/ style="/g) || [])
+  styleAttrsInSrc += (fs.readFileSync(f, "utf8").match(STYLE_ATTRIBUTE) || [])
     .length;
 }
 check(
@@ -169,6 +173,40 @@ check(
   inlineCode.length === 0,
   inlineCode.join(", "),
 );
+
+// The scan above is only worth its verdict if its pattern sees both quote styles and
+// ignores the CSSOM property access the code legitimately uses.
+{
+  const re = STYLE_ATTRIBUTE;
+  const hits = (text) => (text.match(re) || []).length;
+  check(
+    "the style-attribute pattern matches double and single quotes",
+    hits('<p style="a">') === 1 &&
+      hits("<p style='a'>") === 1 &&
+      hits("<p style = 'a'>") === 1,
+  );
+  check(
+    "and ignores el.style assignments and data-style",
+    ("el.style.color = 'red'; <p data-style=\"{}\">".match(re) || []).length ===
+      0,
+  );
+}
+
+// The one generated message that carried an inline style, run for real: with no
+// provider selected the exclusion panel says so, and its styling travels as data-style.
+{
+  const { run, elements } = buildContext();
+  run("selectedProviders.length = 0; updateExcludeControls();");
+  const panel = elements.excludeTypeControls;
+  const html = panel ? panel.innerHTML : "";
+  check(
+    "the empty exclusion panel styles itself through data-style",
+    html.includes("Please select cloud providers") &&
+      html.includes('data-style="') &&
+      !/\sstyle\s*=/.test(html),
+    html.slice(0, 200),
+  );
+}
 
 if (state.failures > 0) {
   console.log(`\n${state.failures} check(s) failed`);

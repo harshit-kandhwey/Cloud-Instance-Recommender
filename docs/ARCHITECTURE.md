@@ -131,6 +131,7 @@ Prices rank recommendations internally. The only price figure shown is the relat
 
 ## Security boundaries
 
+- The Content Security Policy is delivered in a `<meta>` placed before anything that loads a resource, so it governs every script on the page. A meta policy cannot carry `frame-ancestors`, and the static host sets no response headers, so the pages can be embedded in another site's frame; they hold no account and no state-changing action, but a hosting layer that can set headers should add `frame-ancestors 'none'`.
 - The Content Security Policy allows scripts and styles only from the site itself. Pages carry no inline script, no inline style block and no style attributes; data-driven styles are set through the CSS object model (`data-style`), and controls dispatch through `data-on-*` attributes. `unsafe-inline` is not used for scripts or styles.
 - Stored values are untrusted input. The stored-value loaders for presets, the app map, column mappings, user rules and sizing policies tolerate malformed and hostile values without throwing; `tests/suites/infra/storage-tamper-test.js` checks this.
 - User text reaches the page only through `escapeHtml`, and never through an inline event handler. New UI uses data attributes and a delegated listener.

@@ -490,7 +490,8 @@ function buildPortfolioModel(payload) {
 // ─── Render (tabbed dashboard) ────────────────────────────────────────────────
 // Overview tab (KPIs + sortable/searchable app table + callouts) plus one tab
 // per app (and an Unassigned tab). Pure CSS/DOM, theme-aware via portfolio.css.
-// Interactions use inline onclick/oninput handlers (CSP allows 'unsafe-inline').
+// Interactions go through the delegated dispatcher (actionAttrs); the CSP forbids
+// inline handlers and inline styles.
 
 // Guaranteed-safe HTML escaping. Prefers app-core.js#escapeHtml, but never
 // degrades to raw output if that global is somehow absent — every rendered
