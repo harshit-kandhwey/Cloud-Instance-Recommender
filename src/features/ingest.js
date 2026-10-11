@@ -89,6 +89,25 @@ function setupFileDragAndDrop(fileInput) {
 // fork in window.XLSX, so an `if (window.XLSX)` guard would parse a later
 // untrusted upload with the unpatched engine. Capture the full build's own
 // reference and read through THAT, never the bare global.
+// The first SheetJS release with both read-path fixes (CVE-2024-22363 landed in 0.20.2).
+const XLSX_MIN_VERSION = [0, 20, 2];
+
+// What window.XLSX must be before an untrusted file is read through it: a parser
+// that is not the styling fork (it alone defines style_version) and is at least the
+// fixed release. A version that cannot be read fails closed.
+function xlsxParserIsSafe(lib) {
+  if (!lib || typeof lib.read !== "function") return false;
+  if (lib.style_version != null) return false;
+  const parts = String(lib.version || "")
+    .split(".")
+    .map((n) => Number.parseInt(n, 10));
+  if (parts.length < 3 || parts.some((n) => !Number.isFinite(n))) return false;
+  for (let i = 0; i < 3; i++) {
+    if (parts[i] !== XLSX_MIN_VERSION[i]) return parts[i] > XLSX_MIN_VERSION[i];
+  }
+  return true;
+}
+
 function ensureXlsxLoaded() {
   if (window._xlsxParser) return Promise.resolve();
   if (!window._xlsxLoadPromise) {
@@ -96,7 +115,17 @@ function ensureXlsxLoaded() {
       const script = document.createElement("script");
       script.src = "js/vendor/xlsx.full.min.js";
       script.onload = () => {
-        // Whatever the global held before, the parser is this build.
+        // Whatever the global held before, the parser is this build, and it is
+        // checked to be: the styling fork also defines read() and predates the fixes.
+        if (!xlsxParserIsSafe(window.XLSX)) {
+          window._xlsxLoadPromise = null;
+          reject(
+            new Error(
+              "The Excel parser failed its integrity check (js/vendor/xlsx.full.min.js)",
+            ),
+          );
+          return;
+        }
         window._xlsxParser = window.XLSX;
         resolve(undefined);
       };
