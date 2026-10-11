@@ -21,6 +21,7 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
+  toPlain,
 } = require("../lib/build-env");
 const { round8, readShippedRegionKeys } = require("../lib/record-schema");
 
@@ -52,8 +53,9 @@ const isSpotOrLowPriority = (skuName) =>
  * @returns {Object<string, Object<string, object>>} region → type → { linuxPrice?, windowsPrice? }
  */
 function parseAzureItems(items) {
+  // Null prototypes: region and type names come from the feed.
   /** @type {Record<string, Record<string, any>>} */
-  const byRegion = {};
+  const byRegion = Object.create(null);
   for (const it of items || []) {
     if (!it) continue;
     if (it.serviceName !== "Virtual Machines") continue;
@@ -68,12 +70,13 @@ function parseAzureItems(items) {
     const usd = price(Number(it.unitPrice));
     if (!Number.isFinite(usd)) continue;
 
-    const forRegion = byRegion[region] || (byRegion[region] = {});
+    const forRegion =
+      byRegion[region] || (byRegion[region] = Object.create(null));
     const rec = forRegion[type] || (forRegion[type] = {});
     if (/windows/i.test(it.productName || "")) rec.windowsPrice = usd;
     else rec.linuxPrice = usd;
   }
-  return byRegion;
+  return toPlain(byRegion);
 }
 
 // OData $filter for one region's consumption VM meters. A single quote in the region

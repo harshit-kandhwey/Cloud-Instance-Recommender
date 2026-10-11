@@ -40,6 +40,7 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
+  toPlain,
 } = require("../lib/build-env");
 const {
   round8,
@@ -199,6 +200,7 @@ function classifyCoreRam(description) {
  * @param {object[]} skus  the `skus` array from one or more catalog pages
  */
 function parseCoreRamSkus(skus) {
+  // Null prototypes: region names come from the feed.
   const rates = {};
   for (const sku of skus || []) {
     if (!sku) continue;
@@ -212,13 +214,14 @@ function parseCoreRamSkus(skus) {
     if (!Number.isFinite(usd)) continue;
     for (const sr of sku.serviceRegions || []) {
       const rk = regionKeyFromServiceRegion(sr);
-      const forSeries = rates[hit.series] || (rates[hit.series] = {});
+      const forSeries =
+        rates[hit.series] || (rates[hit.series] = Object.create(null));
       const rec = forSeries[rk] || (forSeries[rk] = {});
       if (hit.component === "core") rec.coreHr = usd;
       else rec.ramHr = usd;
     }
   }
-  return rates;
+  return toPlain(rates);
 }
 
 /**
@@ -264,10 +267,10 @@ function parseLocalSsdSkus(skus) {
     if (!Number.isFinite(usd)) continue;
     for (const sr of sku.serviceRegions || []) {
       const rk = regionKeyFromServiceRegion(sr);
-      (rates[name] || (rates[name] = {}))[rk] = usd;
+      (rates[name] || (rates[name] = Object.create(null)))[rk] = usd;
     }
   }
-  return rates;
+  return toPlain(rates);
 }
 
 /**

@@ -133,10 +133,20 @@ function missingKeys({ pricing }, env) {
 
 // ── Side-effecting runner ──────────────────────────────────────────────────────
 
+// The pipeline reads these two and nothing else. Importing every key would let a
+// .env set NODE_OPTIONS or PATH for the child processes spawned below.
+const ENV_KEYS = ["VANTAGE_API_KEY", "GCP_BILLING_API_KEY"];
+
+function pickAllowedEnv(vals) {
+  return Object.fromEntries(
+    Object.entries(vals).filter(([k]) => ENV_KEYS.includes(k)),
+  );
+}
+
 function loadDotEnv() {
   const p = path.join(ROOT, ".env");
   if (!fs.existsSync(p)) return;
-  const vals = parseEnv(fs.readFileSync(p, "utf8"));
+  const vals = pickAllowedEnv(parseEnv(fs.readFileSync(p, "utf8")));
   for (const [k, v] of Object.entries(vals)) {
     if (process.env[k] === undefined) process.env[k] = v; // real env wins
   }
@@ -215,7 +225,13 @@ function main() {
   );
 }
 
-module.exports = { planSteps, skipNotice, parseEnv, missingKeys };
+module.exports = {
+  planSteps,
+  skipNotice,
+  parseEnv,
+  missingKeys,
+  pickAllowedEnv,
+};
 
 if (require.main === module) {
   try {

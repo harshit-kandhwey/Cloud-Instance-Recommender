@@ -187,8 +187,18 @@ async function fetchJson(
   }
 }
 
+// A plain-object copy of a null-prototype accumulator. fromEntries defines own
+// data properties, so a key like "__proto__" stays a key instead of a prototype.
+function toPlain(value) {
+  if (value === null || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([k, v]) => [k, toPlain(v)]),
+  );
+}
+
 module.exports = {
   ROOT,
+  toPlain,
   argValue,
   runFiles,
   loadGlobals,

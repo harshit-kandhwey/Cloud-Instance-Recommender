@@ -22,6 +22,7 @@ const {
   argValue,
   writeFileAtomic,
   fetchJson,
+  toPlain,
 } = require("../lib/build-env");
 const { round8, readShippedRegionKeys } = require("../lib/record-schema");
 
@@ -81,7 +82,9 @@ function onDemandUsdHr(terms, sku) {
 function parseAwsRegion(regionJson) {
   const products = (regionJson && regionJson.products) || {};
   const terms = (regionJson && regionJson.terms) || {};
-  const byType = {};
+  // Null prototype: type names come from the feed, and "__proto__" or
+  // "constructor" must be plain keys, not writes to Object.prototype.
+  const byType = Object.create(null);
 
   for (const [sku, product] of Object.entries(products)) {
     if (!product || product.productFamily !== "Compute Instance") continue;
@@ -110,7 +113,7 @@ function parseAwsRegion(regionJson) {
     else rec.onDemandWindowsHr = usd;
   }
 
-  return byType;
+  return toPlain(byType);
 }
 
 // ── Network ────────────────────────────────────────────────────────────────────
