@@ -128,12 +128,23 @@ function buildUserRulesExport(page, rules) {
 // normalizeUserRule (the same gate storage/UI/engine use), so a malformed rule
 // in the file is dropped, not trusted. Returns { ok:true, page, rules } with at
 // least one valid rule, or { ok:false, error }.
+// A person's own rule list is a handful of entries; a file beyond these is not one and
+// is refused before any rule is normalised.
+const USER_RULES_IMPORT_MAX_BYTES = 1024 * 1024;
+const USER_RULES_IMPORT_MAX_RULES = 500;
+
 function validateUserRulesImport(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return { ok: false, error: "not a custom-rules export file." };
   }
   if (!Array.isArray(payload.rules)) {
     return { ok: false, error: "no custom rules found in the file." };
+  }
+  if (payload.rules.length > USER_RULES_IMPORT_MAX_RULES) {
+    return {
+      ok: false,
+      error: `the file lists ${payload.rules.length} rules; at most ${USER_RULES_IMPORT_MAX_RULES} can be imported.`,
+    };
   }
   const rules =
     typeof normalizeUserRule === "function"
@@ -218,6 +229,11 @@ function importUserRules() {
 function handleUserRulesImportFile(event) {
   const file = event.target && event.target.files && event.target.files[0];
   if (!file) return;
+  if (file.size > USER_RULES_IMPORT_MAX_BYTES) {
+    setUserRulesStatus("Import failed: the file is larger than 1 MB.", false);
+    event.target.value = "";
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => applyUserRulesImportText(String(reader.result || ""));
   reader.onerror = () =>
@@ -228,6 +244,10 @@ function handleUserRulesImportFile(event) {
 }
 
 function applyUserRulesImportText(text) {
+  if (text.length > USER_RULES_IMPORT_MAX_BYTES) {
+    setUserRulesStatus("Import failed: the file is larger than 1 MB.", false);
+    return;
+  }
   let payload;
   try {
     payload = JSON.parse(text);

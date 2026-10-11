@@ -26,6 +26,64 @@ function handleFileUpload(event) {
 
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
 
+// What one inventory may hold. Generous for a real estate; they exist so a file that is
+// not one (a database dump, a workbook that expands from a few megabytes to gigabytes) is
+// refused at once instead of freezing the tab while it is parsed.
+const MAX_INVENTORY_ROWS = 100000;
+const MAX_INVENTORY_COLUMNS = 500;
+const MAX_XLSX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024;
+
+// The refusal for a file over the row or column limit, or null when it fits.
+function inventoryLimitMessage(rowCount, columnCount) {
+  if (rowCount > MAX_INVENTORY_ROWS) {
+    return `This file has ${rowCount.toLocaleString("en-US")} rows; the limit is ${MAX_INVENTORY_ROWS.toLocaleString("en-US")}. Split it and upload the parts separately.`;
+  }
+  if (columnCount > MAX_INVENTORY_COLUMNS) {
+    return `This file has ${columnCount.toLocaleString("en-US")} columns; the limit is ${MAX_INVENTORY_COLUMNS}. Remove the columns that are not inventory data and upload it again.`;
+  }
+  return null;
+}
+
+// Newlines in a text, without splitting it into a line array first.
+function countTextLines(text) {
+  let n = 1;
+  for (let i = text.indexOf("\n"); i !== -1; i = text.indexOf("\n", i + 1)) n++;
+  return n;
+}
+
+// The total uncompressed size a ZIP's central directory declares, Infinity when an
+// entry needs ZIP64, or null when the bytes are not a ZIP this can walk. A declared
+// size can be false, so this is a refusal before the parser allocates, not a proof.
+function zipDeclaredUncompressedBytes(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const tail = Math.max(0, bytes.length - 22 - 65535);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= tail; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) return null;
+  const entries = view.getUint16(eocd + 10, true);
+  let at = view.getUint32(eocd + 16, true);
+  let total = 0;
+  for (let n = 0; n < entries; n++) {
+    if (at + 46 > bytes.length || view.getUint32(at, true) !== 0x02014b50) {
+      return null;
+    }
+    const size = view.getUint32(at + 24, true);
+    if (size === 0xffffffff) return Infinity;
+    total += size;
+    at +=
+      46 +
+      view.getUint16(at + 28, true) +
+      view.getUint16(at + 30, true) +
+      view.getUint16(at + 32, true);
+  }
+  return total;
+}
+
 function showUploadError(message) {
   const fileStatus = document.getElementById("fileStatus");
   if (!fileStatus) return;
@@ -292,6 +350,14 @@ async function ingestFile(file) {
       // intact, matching the module's own "nothing torn down until known
       // usable" invariant (see the ingestFile comment above).
       if (superseded()) return;
+      const csvText = /** @type {string} */ (
+        /** @type {FileReader} */ (/** @type {unknown} */ (e.target)).result
+      );
+      const csvLimit = inventoryLimitMessage(countTextLines(csvText) - 1, 0);
+      if (csvLimit) {
+        showUploadError(csvLimit);
+        return;
+      }
       resetIngestState();
       window._uploadNote = uploadNote;
       parseCSV(
@@ -315,6 +381,12 @@ async function ingestFile(file) {
 
   try {
     const buffer = await file.arrayBuffer();
+    const declared = zipDeclaredUncompressedBytes(new Uint8Array(buffer));
+    if (declared !== null && declared > MAX_XLSX_UNCOMPRESSED_BYTES) {
+      throw new Error(
+        `The workbook expands to more than ${MAX_XLSX_UNCOMPRESSED_BYTES / (1024 * 1024)} MB, which is more than this tool will open`,
+      );
+    }
     await ensureXlsxLoaded();
     // Through the captured full build, never the bare global — see
     // ensureXlsxLoaded: the global may be the unpatched styling fork.
@@ -328,6 +400,11 @@ async function ingestFile(file) {
     if (!sheets.length) throw new Error("The workbook has no sheets with data");
 
     const chosen = pickBestSheet(sheets);
+    const sheetLimit = inventoryLimitMessage(
+      chosen.rows.length,
+      chosen.headers.length,
+    );
+    if (sheetLimit) throw new Error(sheetLimit);
     // Commit point: only past here is the old file's state torn down — a
     // parse failure above (empty workbook, a thrown SheetJS error) leaves the
     // previous upload's rows and controls intact, same invariant as the CSV
@@ -1494,6 +1571,13 @@ function forgetAllColumnMappings() {
 // mapping silently when unambiguous; otherwise defers the whole pipeline
 // (csvData stays empty) until the user confirms in the mapping panel.
 function ingestRows(headers, rows) {
+  // The one door every route passes: a file over the limits is refused before any state
+  // is touched.
+  const limit = inventoryLimitMessage(rows.length, headers.length);
+  if (limit) {
+    showUploadError(limit);
+    return;
+  }
   // The signature identifies the FILE, so it's taken from the headers the file
   // actually has, before anything is derived — signing derived headers saves a
   // mapping under a key no later upload can reproduce. Kept on window because every

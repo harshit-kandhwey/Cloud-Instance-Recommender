@@ -442,6 +442,11 @@ function buildPresetExport(page, presets) {
 
 // Pure: shape-check a parsed import payload.
 // Returns { ok:true, page, presets } or { ok:false, error }.
+// A person's own presets are a short list; a file beyond these is not one and is
+// refused before any preset is read.
+const PRESET_IMPORT_MAX_BYTES = 1024 * 1024;
+const PRESET_IMPORT_MAX_PRESETS = 200;
+
 function validatePresetImport(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     return { ok: false, error: "not a preset export file." };
@@ -453,6 +458,12 @@ function validatePresetImport(payload) {
   const names = Object.keys(presets);
   if (!names.length) {
     return { ok: false, error: "the file contains no presets." };
+  }
+  if (names.length > PRESET_IMPORT_MAX_PRESETS) {
+    return {
+      ok: false,
+      error: `the file holds ${names.length} presets; at most ${PRESET_IMPORT_MAX_PRESETS} can be imported.`,
+    };
   }
   for (const name of names) {
     if (RESERVED_PRESET_NAMES.includes(name)) {
@@ -538,6 +549,11 @@ function importPresets() {
 function handlePresetImportFile(event) {
   const file = event.target && event.target.files && event.target.files[0];
   if (!file) return;
+  if (file.size > PRESET_IMPORT_MAX_BYTES) {
+    setPresetStatus("Import failed: the file is larger than 1 MB.", false);
+    event.target.value = "";
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => applyPresetImportText(String(reader.result || ""));
   reader.onerror = () =>
@@ -548,6 +564,10 @@ function handlePresetImportFile(event) {
 }
 
 function applyPresetImportText(text) {
+  if (text.length > PRESET_IMPORT_MAX_BYTES) {
+    setPresetStatus("Import failed: the file is larger than 1 MB.", false);
+    return;
+  }
   let payload;
   try {
     payload = JSON.parse(text);

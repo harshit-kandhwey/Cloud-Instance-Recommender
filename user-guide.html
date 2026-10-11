@@ -415,7 +415,11 @@
             </tr>
             <tr>
               <td>CSV file size</td>
-              <td>Up to 10 MB (≈ 5,000–10,000 VMs)</td>
+              <td>
+                Up to 10 MB (≈ 5,000–10,000 VMs), at most 100,000 rows and 500
+                columns; a workbook that expands to more than 200 MB is refused
+                before it is opened
+              </td>
             </tr>
             <tr>
               <td>Internet</td>
@@ -2656,10 +2660,14 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
           </tr>
           <tr>
             <td>"File too large"</td>
-            <td>CSV exceeds 10 MB</td>
+            <td>
+              The file exceeds 10 MB, has more than 100,000 rows or 500 columns,
+              or is a workbook that expands to more than 200 MB
+            </td>
             <td>
               Split into smaller batches. Remove unused columns. Filter to the
-              VMs you need recommendations for.
+              VMs you need recommendations for. The previous upload stays loaded
+              when a file is refused.
             </td>
           </tr>
           <tr>
