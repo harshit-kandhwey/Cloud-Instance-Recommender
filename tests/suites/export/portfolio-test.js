@@ -97,7 +97,7 @@ const payload = {
   dataDates: { AWS: "2026-06-27", AZURE: "2026-06-27" },
   hasOptimized: true,
   hasLikeToLike: true,
-  // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed
+  // Aggregate-only relative price comparison (the no-pricing rule, narrowed
   // 2026-09-14). A plain top-level payload field, not results.priceSavings —
   // that's how downloads.js's handoff carries it through the JSON.stringify
   // localStorage fallback, which drops a non-index array property.

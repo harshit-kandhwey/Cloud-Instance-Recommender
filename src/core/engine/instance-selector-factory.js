@@ -161,7 +161,7 @@ window.getInstanceRecommendationWithSelector = async function (
   // Process each row with all providers
   /** @type {any[] & { priceSavings?: any }} */
   const results = [];
-  // Aggregate-only relative price comparison (CLAUDE.md rule 7, reversed 2026-09-14
+  // Aggregate-only relative price comparison (the no-pricing rule, narrowed 2026-09-14
   // — see ROADMAP.md's 3.17). Summed per provider from the same rows
   // computeSizingSavings already pairs (both a like-to-like AND an optimized match),
   // reading `.price` off the result objects BEFORE it is dropped below — the row

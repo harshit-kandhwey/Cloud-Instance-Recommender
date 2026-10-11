@@ -1,4 +1,4 @@
-// The stats bar's relative-only price line (CLAUDE.md rule 7, reversed
+// The stats bar's relative-only price line (the no-pricing rule, narrowed
 // 2026-09-14). `results.priceSavings` is set by the engine on the ARRAY, so
 // this reads it straight off a synthetic `rows` array — no data/selector
 // setup needed, unlike the engine-level computation test

@@ -509,7 +509,7 @@ console.log("[no library, no literal colours]");
 }
 
 console.log(
-  "[the Executive Print Report's Relative cost block (CLAUDE.md rule 7, reversed 2026-09-14)]",
+  "[the Executive Print Report's Relative cost block (the no-pricing rule, narrowed 2026-09-14)]",
 );
 {
   const { ctx } = buildContext();

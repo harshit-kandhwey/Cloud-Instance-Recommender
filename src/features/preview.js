@@ -164,7 +164,7 @@ function _buildStatsHtml(results) {
     .map(([k, v]) => `${escapeHtml(k)}(${v})`)
     .join(" · ");
 
-  // Relative-only price comparison (CLAUDE.md rule 7, reversed 2026-09-14 — see
+  // Relative-only price comparison (the no-pricing rule, narrowed 2026-09-14 — see
   // CANONICAL-SOURCES.md). `results.priceSavings` is attached to the ARRAY by
   // instance-selector-factory.js, never to a row, so this is the only place that
   // reads it — no export or column-derivation code touches it. Never a bare

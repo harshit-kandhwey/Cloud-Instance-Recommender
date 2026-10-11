@@ -325,7 +325,7 @@ function _reportHeadline(results) {
       </figure>`
     : "";
 
-  // Relative-only price comparison (CLAUDE.md rule 7, reversed 2026-09-14 —
+  // Relative-only price comparison (the no-pricing rule, narrowed 2026-09-14 —
   // see CANONICAL-SOURCES.md). `results` is the live in-page array here (this
   // report is never sent through postMessage/localStorage), so the array
   // property is read directly rather than a copied plain field.

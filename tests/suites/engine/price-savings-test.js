@@ -1,7 +1,7 @@
 // results.priceSavings (src/core/engine/instance-selector-factory.js): the one
 // place in the codebase that computes an absolute price at all — an aggregate,
 // per-provider relative percentage, attached to the ARRAY (never a row), added
-// when CLAUDE.md rule 7 ("no pricing in outputs") was reversed 2026-09-14. See
+// when the "no pricing in outputs" rule was narrowed 2026-09-14. See
 // docs/data/CANONICAL-SOURCES.md and ROADMAP.md's 3.17.
 const { buildContext, makeChecker } = require("../harness");
 const vm = require("vm");
