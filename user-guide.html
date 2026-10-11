@@ -3000,7 +3000,11 @@ db-server-02,Billing,8,32,70,80,us-west-2,West US 2,us-west1-b,Production,Window
         numbers as your spreadsheet shows them. It is a report, not a gate: the
         file still loads and you can still generate. If the same VM name appears
         more than once, it asks whether those are one VM listed twice or
-        different VMs that share a name, because only you know.
+        different VMs that share a name, because only you know. If a column is
+        named like one of this tool's own output columns (typically because an
+        earlier export was uploaded again), it says so: a run ignores that
+        column and writes its own, so the old values are never mixed into the
+        new results. Rename the column in your file to keep its values.
       </p>
 
       <p>

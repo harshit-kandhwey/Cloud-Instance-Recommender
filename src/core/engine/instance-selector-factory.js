@@ -170,7 +170,7 @@ window.getInstanceRecommendationWithSelector = async function (
   const priceSavings = {};
   for (let index = 0; index < csvData.length; index++) {
     const row = csvData[index];
-    const result = { ...row };
+    const result = withoutEngineColumns(row);
 
     // Which statistic sized the row. Recorded on every row so a small-looking
     // recommendation can be traced to its basis — especially a fallback, or CPU
@@ -885,6 +885,68 @@ function describeFamilyEquivalence(result, providers) {
   return allSame
     ? `${classes[0]} on ${entries.map(([P]) => P).join(", ")}`
     : `Differs — ${entries.map(([P, cls]) => `${P} ${cls}`).join(", ")}`;
+}
+
+// The columns the engine writes into a result row, in one place because this module
+// writes them and loads in both the worker and the main thread. An uploaded column
+// with one of these names would survive the row copy and be read back as this run's
+// output: a stale Like-to-Like baseline for the savings figures, a spoofed Review
+// Flag. A new engine column is added here, and a test fails until it is.
+const ENGINE_COLUMN_PROVIDERS = ["AWS", "AZURE", "GCP"];
+const ENGINE_COLUMN_SUFFIXES = [
+  "Like-to-Like Instance",
+  "Like-to-Like Family",
+  "Like-to-Like vCPUs",
+  "Like-to-Like Memory (GiB)",
+  "Optimized Instance",
+  "Optimized Family",
+  "Optimized vCPUs",
+  "Optimized Memory (GiB)",
+  "Rules Applied",
+  "No Match Reason",
+  "Nearest Miss",
+  "Most Cost Optimized",
+  "Workload Based",
+  "Newest Generation",
+  "Best Network",
+];
+const ENGINE_COLUMN_SINGLES = [
+  "Sized On",
+  "Sized From",
+  "Review Flag",
+  "GCP Custom Fit",
+  "Family Equivalence",
+];
+// Other modules find these columns by substring, so a header that merely contains one
+// is read as engine output even when it is not an exact name.
+const ENGINE_COLUMN_SUBSTRINGS = [
+  "Like-to-Like Instance",
+  "Optimized Instance",
+  "Rules Applied",
+  "No Match Reason",
+  "Nearest Miss",
+];
+const ENGINE_COLUMN_NAMES = new Set([
+  ...ENGINE_COLUMN_SINGLES,
+  ...ENGINE_COLUMN_PROVIDERS.flatMap((p) =>
+    ENGINE_COLUMN_SUFFIXES.map((s) => `${p} ${s}`),
+  ),
+]);
+
+function isEngineOutputColumn(name) {
+  const text = String(name);
+  return (
+    ENGINE_COLUMN_NAMES.has(text) ||
+    ENGINE_COLUMN_SUBSTRINGS.some((s) => text.includes(s))
+  );
+}
+
+// fromEntries, not assignment, so an input column literally named "__proto__" is kept
+// as a column rather than setting a prototype.
+function withoutEngineColumns(row) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([key]) => !isEngineOutputColumn(key)),
+  );
 }
 
 // Own-property-only map lookup. Keys come from untrusted CSV data; a plain object /

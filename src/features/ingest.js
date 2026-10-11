@@ -1900,7 +1900,19 @@ function analyzeInputHygiene(rows) {
       ? { median: medianMemory(rows, MEM) }
       : null;
 
-  return { issues, duplicates, memoryUnit, confidence: confidenceNotice(rows) };
+  // Uploaded columns the engine would overwrite or misread as its own output. They are
+  // left in the data and ignored by a run, so the user is told rather than surprised.
+  const reservedColumns =
+    typeof isEngineOutputColumn === "function" && rows.length
+      ? Object.keys(rows[0]).filter(isEngineOutputColumn)
+      : [];
+  return {
+    issues,
+    duplicates,
+    memoryUnit,
+    confidence: confidenceNotice(rows),
+    reservedColumns,
+  };
 }
 
 // Documented defaults, not tuned constants: a fleet this small is one unusual VM
@@ -2022,7 +2034,8 @@ function reportInputHygiene() {
     !report.issues.length &&
     !report.duplicates.length &&
     !report.memoryUnit &&
-    !report.confidence
+    !report.confidence &&
+    !report.reservedColumns.length
   ) {
     el.classList.add("hidden");
     el.innerHTML = "";
@@ -2113,6 +2126,19 @@ function reportInputHygiene() {
       <p class="inl-54d32d80">Whole file: <strong>${c.fleet.charAt(0).toUpperCase() + c.fleet.slice(1)}</strong> — ${fleetReason}.</p>`;
   }
 
+  let reservedBlock = "";
+  if (report.reservedColumns.length) {
+    const one = report.reservedColumns.length === 1;
+    const names = report.reservedColumns
+      .map((c) => `<code>${escapeHtml(c)}</code>`)
+      .join(", ");
+    reservedBlock = `
+      <p class="inl-54d32d80"><strong>🏷️ ${one ? "A column is" : "Columns are"} named like this tool's own output</strong>
+      — ${names}. A run ignores ${one ? "it" : "them"} and writes its own column${one ? "" : "s"} of ${one ? "that name" : "those names"},
+      so the ${one ? "value" : "values"} here ${one ? "is" : "are"} not carried into the results. This usually means an earlier export was
+      uploaded again. Rename ${one ? "it" : "them"} in the file to keep ${one ? "its values" : "their values"} next to the results.</p>`;
+  }
+
   const headline = lines
     ? "the file loaded, but some rows look wrong."
     : unitBlock || dupBlock
@@ -2125,6 +2151,7 @@ function reportInputHygiene() {
     ${lines ? `<ul class="inl-8c01764b">${lines}</ul>` : ""}
     ${unitBlock}
     ${dupBlock}
+    ${reservedBlock}
     ${confidenceBlock}`;
   el.classList.remove("hidden");
 }
