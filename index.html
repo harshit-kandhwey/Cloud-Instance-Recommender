@@ -12,6 +12,22 @@
     <link rel="icon" href="public/icon.svg" />
     <script defer src="js/pwa-register.js"></script>
     <title>Cloud Instance Recommender</title>
+    <meta
+      name="description"
+      content="A client-side rule engine that recommends right-sized AWS, Azure and GCP instances from your VM inventory. Nothing you upload leaves your browser."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cloud Instance Recommender" />
+    <meta property="og:title" content="Cloud Instance Recommender" />
+    <meta
+      property="og:description"
+      content="A client-side rule engine that recommends right-sized AWS, Azure and GCP instances from your VM inventory. Nothing you upload leaves your browser."
+    />
+    <meta
+      property="og:url"
+      content="https://harshit-kandhwey.github.io/Cloud-Instance-Recommender/"
+    />
+    <meta name="twitter:card" content="summary" />
     <script src="src/shared/storage-keys.js"></script>
     <script src="src/shared/theme-init.js"></script>
     <script defer src="src/shared/page-actions.js"></script>
@@ -70,10 +86,10 @@
               recommendation engine.
             </p>
             <ul class="cloud-features">
-              <li>EC2 instance optimization</li>
-              <li>Cost reduction analysis</li>
-              <li>Performance benchmarking</li>
-              <li>Reserved instance planning</li>
+              <li>EC2 sizing from CPU, memory and utilization</li>
+              <li>Graviton (Arm) and Nitro Enclaves rules</li>
+              <li>Windows and macOS compatibility rules</li>
+              <li>AWS Pricing Calculator bulk template</li>
             </ul>
             <div class="cloud-action">Get AWS Recommendations →</div>
           </a>
@@ -90,10 +106,10 @@
               recommendations.
             </p>
             <ul class="cloud-features">
-              <li>VM size optimization</li>
-              <li>Azure cost management</li>
-              <li>Resource utilization</li>
-              <li>Hybrid cloud support</li>
+              <li>VM size sizing from CPU, memory and utilization</li>
+              <li>Arm (Ampere) and burstable B-series rules</li>
+              <li>Trusted Launch and confidential-VM filters</li>
+              <li>Windows compatibility rules</li>
             </ul>
             <div class="cloud-action">Get Azure Recommendations →</div>
           </a>
@@ -106,10 +122,10 @@
               recommendations.
             </p>
             <ul class="cloud-features">
-              <li>Compute Engine optimization</li>
-              <li>Machine learning insights</li>
-              <li>Sustainable computing</li>
-              <li>Custom machine types</li>
+              <li>Compute Engine sizing from CPU, memory and utilization</li>
+              <li>Custom machine shape suggestions for wasteful sizes</li>
+              <li>T2A (Arm) and shared-core handling</li>
+              <li>Machine family and CPU platform filters</li>
             </ul>
             <div class="cloud-action">Get GCP Recommendations →</div>
           </a>
@@ -126,10 +142,10 @@
               efficiency.
             </p>
             <ul class="cloud-features">
-              <li>Cross-cloud comparison</li>
-              <li>Unified cost analysis</li>
-              <li>Migration planning</li>
-              <li>Vendor lock-in prevention</li>
+              <li>AWS, Azure and GCP side by side in one run</li>
+              <li>A family-equivalence column across clouds</li>
+              <li>One minimum-generation setting per cloud</li>
+              <li>Instance categories that work across providers</li>
             </ul>
             <div class="cloud-action">Compare All Clouds →</div>
           </a>
