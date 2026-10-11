@@ -335,6 +335,10 @@ check(
     refused.includes("different version") && pending() === null,
     refused.slice(0, 300),
   );
+  check(
+    "a refusal also drops the rename offer, so the two never disagree",
+    run("fleetPendingImportOffer") === null,
+  );
 
   run('fleetPendingImportText = "a file"');
   const unknown = finish({ ok: false, reason: "something-new" });

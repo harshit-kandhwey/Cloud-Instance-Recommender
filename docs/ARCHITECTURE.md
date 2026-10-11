@@ -6,7 +6,7 @@ How the tool is put together: where code lives, what loads in what order, how th
 
 Cloud Instance Recommender is a static, client-side application. There is no server and no build step. Every script is a classic `<script>` sharing one global scope, and the Content Security Policy sets `connect-src 'none'`, so page code cannot call the network. Region and pricing data ship as static files and are injected as same-origin scripts.
 
-Nothing a user uploads leaves the browser. The persisted data is preferences, manually entered VMs, saved mappings, rules, presets, sizing policies, fleet snapshots, and a copy of the last results for the App Portfolio page (removed after a day), all in the browser's own storage. Snapshots and that copy include the uploaded columns, not the original file. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
+Nothing a user uploads leaves the browser. The persisted data is preferences, manually entered VMs, saved mappings, rules, presets, sizing policies, fleet snapshots, and a copy of the last results for the App Portfolio page (removed the next time that page is opened after it is a day old), all in the browser's own storage. Snapshots and that copy include the uploaded columns, not the original file. The Browser Storage section on every tool page shows what is stored and lets the user clear it.
 
 ## Module map
 

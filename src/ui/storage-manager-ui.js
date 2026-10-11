@@ -235,6 +235,7 @@ function renderImportRenameHtml(name, suggestion) {
 function finishFleetImport(result) {
   if (result.ok) {
     fleetPendingImportText = null;
+    fleetPendingImportOffer = null;
     renderFleetSnapshotsPanel(`Imported "${result.entry.name}".`);
     return;
   }
@@ -250,6 +251,7 @@ function finishFleetImport(result) {
     return;
   }
   fleetPendingImportText = null;
+  fleetPendingImportOffer = null;
   renderFleetSnapshotsPanel(
     IMPORT_REFUSALS[result.reason] ||
       "The snapshot file could not be imported.",
@@ -263,6 +265,9 @@ function handleFleetSnapshotImportFile(event) {
   if (!file) return;
   // A new choice replaces whatever an earlier refused file left for the rename form.
   fleetPendingImportText = null;
+  fleetPendingImportOffer = null;
+  // The file's byte size is the user-facing 4 MB cap; parseImport re-checks the decoded
+  // text length, which can only be smaller.
   if (file.size > FleetSnapshots.MAX_IMPORT_CHARS) {
     renderFleetSnapshotsPanel(IMPORT_REFUSALS["too-large"]);
     return;

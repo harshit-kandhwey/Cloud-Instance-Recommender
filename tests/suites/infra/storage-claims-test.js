@@ -115,8 +115,10 @@ check(
     text.slice(0, 200),
   );
   check(
-    "the privacy note states how long the portfolio copy is kept",
-    text.includes("removed after a day"),
+    "the privacy note says the portfolio copy goes when that page is next opened after a day",
+    text.includes(
+      "removed the next time that page is opened after it is a day old",
+    ),
   );
   check(
     "the privacy note says the original file itself is not stored",
