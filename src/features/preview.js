@@ -805,10 +805,9 @@ function buildPreviewTsv(rows, displayCols) {
     const s = String(v ?? "")
       .replace(/[\t\r\n]+/g, " ")
       .trim();
-    // The same formula-injection guard escapeCsvCell applies to downloads: the
-    // clipboard lands in a spreadsheet like a CSV, and a VM named `=cmd|'…'!A1` from
-    // an uploaded file must not execute just because it was copied.
-    return /^[=+\-@|]/.test(s) ? `'${s}` : s;
+    // The clipboard lands in a spreadsheet like a CSV, and a VM named `=cmd|'…'!A1`
+    // from an uploaded file must not execute just because it was copied.
+    return guardFormula(s);
   };
   return [
     displayCols.map(cell).join("\t"),

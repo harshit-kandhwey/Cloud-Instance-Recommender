@@ -471,10 +471,7 @@ function downloadAWSBulkTemplate(type) {
     const vmName = row["VM Name"] || row["Server Name"] || "VM";
     const region = row["AWS Region"] || "";
     const env = row["ENV"] || row["Environment"] || "Default";
-    const sanitize = (s) => {
-      const clean = String(s).replace(/[><&]/g, "");
-      return /^[=+\-@|\t\r]/.test(clean) ? `'${clean}` : clean;
-    };
+    const sanitize = (s) => guardFormula(String(s).replace(/[><&]/g, ""));
 
     // Per-row OS overrides the page-level default
     const rowOS = (row["OS"] || row["Operating System"] || pageOS).trim();
@@ -541,8 +538,7 @@ function downloadAWSBulkTemplate(type) {
   }
 
   const escapeCell = (v) => {
-    const s = String(v == null ? "" : v);
-    const safe = /^[=+\-@|\t\r]/.test(s) ? `'${s}` : s;
+    const safe = guardFormula(v);
     return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
 

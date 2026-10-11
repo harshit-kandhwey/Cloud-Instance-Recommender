@@ -832,10 +832,16 @@ function exportFilename(base, extension) {
 // "-" stay hardened.
 const CSV_FORMULA_START = /^[=+\-@|\t\r]/;
 const CSV_PLAIN_NUMBER = /^-\d+(\.\d+)?$/;
-function escapeCsvCell(val) {
+// The one formula guard every export path uses (CSV, clipboard, AWS bulk template):
+// a cell a spreadsheet would execute is prefixed with an apostrophe. Quoting and
+// separators are each path's own concern; the decision lives only here.
+function guardFormula(val) {
   const s = String(val == null ? "" : val);
-  const needsHardening = CSV_FORMULA_START.test(s) && !CSV_PLAIN_NUMBER.test(s);
-  const safe = needsHardening ? `'${s}` : s;
+  return CSV_FORMULA_START.test(s) && !CSV_PLAIN_NUMBER.test(s) ? `'${s}` : s;
+}
+
+function escapeCsvCell(val) {
+  const safe = guardFormula(val);
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
